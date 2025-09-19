@@ -66,6 +66,15 @@ export default function Home() {
         <Button appName="web" className={styles.secondary}>
           Open alert
         </Button>
+        <div className={styles.ctas}>
+          <a
+            href="/api-test"
+            className={styles.primary}
+            style={{ textDecoration: 'none', display: 'inline-block', marginTop: '1rem' }}
+          >
+            🔗 Test API Connection
+          </a>
+        </div>
       </main>
       <footer className={styles.footer}>
         <a
