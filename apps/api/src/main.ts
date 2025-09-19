@@ -6,7 +6,11 @@ async function bootstrap() {
 
   // Enable CORS for web app
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'https://web-production-79cf2.up.railway.app'
+    ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true,
   });
