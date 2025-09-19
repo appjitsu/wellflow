@@ -30,7 +30,7 @@ export default function ApiTestPage() {
   const [error, setError] = useState<string | null>(null);
   const [newUser, setNewUser] = useState({ name: '', email: '' });
 
-  const API_BASE_URL = 'http://localhost:3001';
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
   const testHealthEndpoint = async () => {
     setLoading(true);
@@ -178,7 +178,7 @@ export default function ApiTestPage() {
         <div className={styles.error}>
           <h3>❌ Error</h3>
           <p>{error}</p>
-          <small>Make sure the API server is running on http://localhost:3001</small>
+          <small>Make sure the API server is running on {API_BASE_URL}</small>
         </div>
       )}
 
