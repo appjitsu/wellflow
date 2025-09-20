@@ -35,26 +35,48 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       throw error;
     }
 
-    // Run migrations after successful connection
+    // Create database tables directly (temporary solution until migration files are properly copied)
     try {
-      console.log('🔄 Running database migrations...');
+      console.log('🔄 Creating database tables...');
 
-      // Use different paths for development vs production
-      const migrationsFolder = process.env.NODE_ENV === 'production'
-        ? './dist/src/database/migrations'
-        : './src/database/migrations';
+      // Create users table
+      await this.pool.query(`
+        CREATE TABLE IF NOT EXISTS "users" (
+          "id" serial PRIMARY KEY NOT NULL,
+          "email" varchar(255) NOT NULL,
+          "name" varchar(255) NOT NULL,
+          "created_at" timestamp DEFAULT now() NOT NULL,
+          "updated_at" timestamp DEFAULT now() NOT NULL,
+          CONSTRAINT "users_email_unique" UNIQUE("email")
+        );
+      `);
 
-      await migrate(this.db, {
-        migrationsFolder,
-        migrationsTable: '__drizzle_migrations'
-      });
+      // Create posts table
+      await this.pool.query(`
+        CREATE TABLE IF NOT EXISTS "posts" (
+          "id" serial PRIMARY KEY NOT NULL,
+          "title" varchar(255) NOT NULL,
+          "content" text,
+          "author_id" integer,
+          "published" boolean DEFAULT false NOT NULL,
+          "created_at" timestamp DEFAULT now() NOT NULL,
+          "updated_at" timestamp DEFAULT now() NOT NULL
+        );
+      `);
 
-      console.log('✅ Database migrations completed successfully');
+      // Add foreign key constraint
+      await this.pool.query(`
+        ALTER TABLE "posts"
+        ADD CONSTRAINT IF NOT EXISTS "posts_author_id_users_id_fk"
+        FOREIGN KEY ("author_id") REFERENCES "public"."users"("id")
+        ON DELETE no action ON UPDATE no action;
+      `);
+
+      console.log('✅ Database tables created successfully');
     } catch (error) {
-      console.error('❌ Database migration failed:', error);
-      // Don't throw here - let the app start even if migrations fail
-      // This allows manual intervention if needed
-      console.warn('⚠️ Application starting without migrations - manual intervention may be required');
+      console.error('❌ Database table creation failed:', error);
+      // Don't throw here - let the app start even if table creation fails
+      console.warn('⚠️ Application starting without tables - manual intervention may be required');
     }
   }
 
