@@ -1,0 +1,59 @@
+{
+  "timestamp": "2025-09-20T20:58:14.072Z",
+  "repository": "wellflow",
+  "branch": "local",
+  "commit": "local",
+  "overall": {
+    "passed": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "totalViolations": 0
+  },
+  "checks": {
+    "bundleSizes": {
+      "passed": true,
+      "violations": []
+    },
+    "apiPerformance": {
+      "passed": true,
+      "violations": []
+    },
+    "coreWebVitals": {
+      "passed": true,
+      "violations": []
+    }
+  },
+  "violations": [],
+  "recommendations": [],
+  "compliance": {
+    "industryStandards": [
+      "NIST Cybersecurity Framework",
+      "IEC 62443 Industrial Cybersecurity",
+      "API 1164 Pipeline SCADA Security"
+    ],
+    "oilGasRequirements": {
+      "description": "Oil & gas industry specific performance requirements",
+      "critical_infrastructure": {
+        "max_load_time_ms": 3000,
+        "description": "Maximum acceptable load time for critical monitoring systems"
+      },
+      "field_operations": {
+        "mobile_optimization": true,
+        "low_bandwidth_support": true,
+        "offline_capability": false,
+        "description": "Requirements for remote field operations"
+      },
+      "emergency_response": {
+        "max_response_time_ms": 1000,
+        "high_availability": true,
+        "description": "Performance requirements for emergency scenarios"
+      },
+      "regulatory_compliance": {
+        "audit_trail": true,
+        "data_retention_years": 7,
+        "performance_monitoring": true,
+        "description": "Compliance requirements affecting performance"
+      }
+    }
+  }
+}

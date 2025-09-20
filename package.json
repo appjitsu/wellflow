@@ -33,7 +33,10 @@
     "test:web": "cd apps/web && pnpm test",
     "test:api:coverage": "cd apps/api && pnpm test:coverage",
     "test:web:coverage": "cd apps/web && pnpm test:coverage",
-    "test:coverage:report": "pnpm run test:coverage && open coverage/html-report/index.html"
+    "test:coverage:report": "pnpm run test:coverage && open coverage/html-report/index.html",
+    "performance:analyze": "pnpm run build && node scripts/performance-analysis.js",
+    "performance:budget": "node scripts/check-performance-budget.js",
+    "performance:report": "mkdir -p performance-reports && pnpm run performance:analyze && pnpm run performance:budget"
   },
   "devDependencies": {
     "husky": "^9.1.7",

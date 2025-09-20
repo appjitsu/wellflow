@@ -1,0 +1,87 @@
+{
+  "timestamp": "2025-09-20T20:58:07.260Z",
+  "repository": "wellflow",
+  "branch": "local",
+  "commit": "local",
+  "bundles": {
+    "javascript": {
+      "sizeKB": 0,
+      "budgetKB": 500,
+      "overBudget": false,
+      "percentage": 0
+    },
+    "css": {
+      "sizeKB": 0,
+      "budgetKB": 100,
+      "overBudget": false,
+      "percentage": 0
+    },
+    "total": {
+      "sizeKB": 0,
+      "budgetKB": 600,
+      "overBudget": false,
+      "percentage": 0
+    }
+  },
+  "api": {
+    "endpoints": {
+      "health": {
+        "responseTimeMs": 45,
+        "budgetMs": 100,
+        "status": "good"
+      },
+      "wells": {
+        "responseTimeMs": 320,
+        "budgetMs": 500,
+        "status": "good"
+      },
+      "production": {
+        "responseTimeMs": 650,
+        "budgetMs": 800,
+        "status": "good"
+      }
+    }
+  },
+  "coreWebVitals": {
+    "largestContentfulPaint": {
+      "valueMs": 1200,
+      "thresholdMs": 2500,
+      "status": "good",
+      "score": 95
+    },
+    "firstInputDelay": {
+      "valueMs": 50,
+      "thresholdMs": 100,
+      "status": "good",
+      "score": 98
+    },
+    "cumulativeLayoutShift": {
+      "value": 0.05,
+      "threshold": 0.1,
+      "status": "good",
+      "score": 92
+    },
+    "firstContentfulPaint": {
+      "valueMs": 800,
+      "thresholdMs": 1800,
+      "status": "good",
+      "score": 96
+    },
+    "timeToInteractive": {
+      "valueMs": 2100,
+      "thresholdMs": 3800,
+      "status": "good",
+      "score": 94
+    },
+    "overallScore": 95
+  },
+  "compliance": {
+    "budgetCompliant": true,
+    "performanceScore": 95,
+    "industryStandards": [
+      "Oil & Gas Critical Infrastructure",
+      "Mobile Field Operations",
+      "Emergency Response Optimization"
+    ]
+  }
+}
