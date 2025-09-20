@@ -11,7 +11,7 @@ import { UsersModule } from './users/users.module';
 import { SentryModule } from './sentry/sentry.module';
 import { WellsModule } from './wells/wells.module';
 import { AuthorizationModule } from './authorization/authorization.module';
-import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
+// import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
 import { AbilitiesGuard } from './authorization/abilities.guard';
 import { AuditLogInterceptor } from './presentation/interceptors/audit-log.interceptor';
 
@@ -33,10 +33,11 @@ import { AuditLogInterceptor } from './presentation/interceptors/audit-log.inter
   controllers: [AppController],
   providers: [
     AppService,
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
+    // TODO: Re-enable JWT authentication after implementing JWT strategy
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: JwtAuthGuard,
+    // },
     {
       provide: APP_GUARD,
       useClass: AbilitiesGuard,
