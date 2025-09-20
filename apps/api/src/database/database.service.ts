@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Pool } from 'pg';
 import * as schema from './schema';
 
@@ -32,6 +33,28 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       console.error('❌ Database connection failed:', error);
       throw error;
+    }
+
+    // Run migrations after successful connection
+    try {
+      console.log('🔄 Running database migrations...');
+
+      // Use different paths for development vs production
+      const migrationsFolder = process.env.NODE_ENV === 'production'
+        ? './dist/src/database/migrations'
+        : './src/database/migrations';
+
+      await migrate(this.db, {
+        migrationsFolder,
+        migrationsTable: '__drizzle_migrations'
+      });
+
+      console.log('✅ Database migrations completed successfully');
+    } catch (error) {
+      console.error('❌ Database migration failed:', error);
+      // Don't throw here - let the app start even if migrations fail
+      // This allows manual intervention if needed
+      console.warn('⚠️ Application starting without migrations - manual intervention may be required');
     }
   }
 
