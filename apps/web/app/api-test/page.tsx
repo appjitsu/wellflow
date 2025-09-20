@@ -182,6 +182,7 @@ export default function ApiTestPage() {
           <h3>❌ Error</h3>
           <p>{error}</p>
           <small>Make sure the API server is running on {API_BASE_URL}</small>
+          <small>Environment: {process.env.NODE_ENV}</small>
         </div>
       )}
 
