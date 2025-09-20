@@ -1,8 +1,25 @@
 import LogRocket from "logrocket";
-import setupLogRocketReact from "logrocket-react";
 import * as Sentry from "@sentry/nextjs";
 
+/**
+ * LogRocket integration for WellFlow
+ *
+ * Note: logrocket-react@6.0.3 may not be fully compatible with React 19.
+ * If React integration fails, LogRocket will still provide:
+ * - Session recording
+ * - Error tracking
+ * - Network monitoring
+ * - User identification
+ * - Custom event tracking
+ *
+ * React-specific features that may not work:
+ * - Component name tracking in recordings
+ * - React-specific error boundaries
+ */
+
 let isInitialized = false;
+
+
 
 export const initLogRocket = () => {
   if (typeof window === "undefined" || isInitialized) {
@@ -68,8 +85,10 @@ export const initLogRocket = () => {
       },
     });
 
-    // Set up LogRocket React integration
-    setupLogRocketReact(LogRocket);
+    // Skip LogRocket React integration for React 19+ compatibility
+    // LogRocket core features (session recording, error tracking, network monitoring) work without React integration
+    console.log("📝 LogRocket React integration disabled for React 19+ compatibility");
+    console.log("✅ LogRocket core features enabled: session recording, error tracking, network monitoring");
 
     // Set up LogRocket-Sentry integration
     LogRocket.getSessionURL(sessionURL => {

@@ -65,6 +65,9 @@ importers:
       drizzle-orm:
         specifier: ^0.44.5
         version: 0.44.5(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(pg@8.16.3)
+      logrocket:
+        specifier: ^10.1.0
+        version: 10.1.0
       passport:
         specifier: ^0.7.0
         version: 0.7.0
@@ -250,9 +253,6 @@ importers:
       logrocket:
         specifier: ^10.1.0
         version: 10.1.0
-      logrocket-react:
-        specifier: ^6.0.3
-        version: 6.0.3(logrocket@10.1.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       next:
         specifier: ^15.5.0
         version: 15.5.0(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -4492,13 +4492,6 @@ packages:
   log-symbols@4.1.0:
     resolution: {integrity: sha512-8XPvpAA8uyhfteu8pIvQxpJZ7SYYdpUivZpGy6sFsBuKRY/7rQGavedeB8aK+Zkyq6upMFVL/9AW6vOYzfRyLg==}
     engines: {node: '>=10'}
-
-  logrocket-react@6.0.3:
-    resolution: {integrity: sha512-mU2QMFy5lfogXeAb+djy5XcAL5lAxPovRiN62lb4EzeuvuYmXJJmArniK3K2P9Gu02auWTiSwKHISFS0JH+eyA==}
-    peerDependencies:
-      logrocket: '>=2.0'
-      react: '>=18'
-      react-dom: '>=18'
 
   logrocket@10.1.0:
     resolution: {integrity: sha512-wcVb+fkM7V6+nhUkhpTdnY/b31C5xy0hlEEs8UOMZiHFUrv0/2kIV+NjtmOlksniIQmUawC5ozw6ZID4qbJmUg==}
@@ -10584,12 +10577,6 @@ snapshots:
     dependencies:
       chalk: 4.1.2
       is-unicode-supported: 0.1.0
-
-  logrocket-react@6.0.3(logrocket@10.1.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
-    dependencies:
-      logrocket: 10.1.0
-      react: 19.1.0
-      react-dom: 19.1.0(react@19.1.0)
 
   logrocket@10.1.0: {}
 
