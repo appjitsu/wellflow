@@ -67,7 +67,7 @@ describe('UpdateWellStatusHandler', () => {
       'well-123',
       WellStatus.DRILLING,
       'user-456',
-      'Starting drilling operations'
+      'Starting drilling operations',
     );
 
     it('should update well status successfully', async () => {
@@ -77,7 +77,10 @@ describe('UpdateWellStatusHandler', () => {
       await handler.execute(validCommand);
 
       expect(wellRepository.findById).toHaveBeenCalledWith('well-123');
-      expect(mockWell.updateStatus).toHaveBeenCalledWith(WellStatus.DRILLING, 'user-456');
+      expect(mockWell.updateStatus).toHaveBeenCalledWith(
+        WellStatus.DRILLING,
+        'user-456',
+      );
       expect(wellRepository.save).toHaveBeenCalledWith(mockWell);
       expect(mockWell.getDomainEvents).toHaveBeenCalled();
       expect(mockWell.clearDomainEvents).toHaveBeenCalled();
@@ -86,25 +89,39 @@ describe('UpdateWellStatusHandler', () => {
     it('should throw NotFoundException if well does not exist', async () => {
       wellRepository.findById.mockResolvedValue(null);
 
-      await expect(handler.execute(validCommand)).rejects.toThrow(NotFoundException);
-      await expect(handler.execute(validCommand)).rejects.toThrow('Well with ID well-123 not found');
+      await expect(handler.execute(validCommand)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(handler.execute(validCommand)).rejects.toThrow(
+        'Well with ID well-123 not found',
+      );
       expect(wellRepository.save).not.toHaveBeenCalled();
       expect(eventBus.publish).not.toHaveBeenCalled();
     });
 
     it('should handle repository findById errors', async () => {
-      wellRepository.findById.mockRejectedValue(new Error('Database connection failed'));
+      wellRepository.findById.mockRejectedValue(
+        new Error('Database connection failed'),
+      );
 
-      await expect(handler.execute(validCommand)).rejects.toThrow(BadRequestException);
-      await expect(handler.execute(validCommand)).rejects.toThrow('Failed to update well status: Database connection failed');
+      await expect(handler.execute(validCommand)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(handler.execute(validCommand)).rejects.toThrow(
+        'Failed to update well status: Database connection failed',
+      );
     });
 
     it('should handle repository save errors', async () => {
       wellRepository.findById.mockResolvedValue(mockWell as any);
       wellRepository.save.mockRejectedValue(new Error('Database save failed'));
 
-      await expect(handler.execute(validCommand)).rejects.toThrow(BadRequestException);
-      await expect(handler.execute(validCommand)).rejects.toThrow('Failed to update well status: Database save failed');
+      await expect(handler.execute(validCommand)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(handler.execute(validCommand)).rejects.toThrow(
+        'Failed to update well status: Database save failed',
+      );
     });
 
     it('should handle domain validation errors', async () => {
@@ -113,16 +130,24 @@ describe('UpdateWellStatusHandler', () => {
         throw new Error('Invalid status transition');
       });
 
-      await expect(handler.execute(validCommand)).rejects.toThrow(BadRequestException);
-      await expect(handler.execute(validCommand)).rejects.toThrow('Failed to update well status: Invalid status transition');
+      await expect(handler.execute(validCommand)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(handler.execute(validCommand)).rejects.toThrow(
+        'Failed to update well status: Invalid status transition',
+      );
     });
 
     it('should publish domain events after updating status', async () => {
       const mockEvents = [
-        { type: 'WellStatusChanged', wellId: 'well-123', newStatus: WellStatus.DRILLING },
-        { type: 'WellUpdated', wellId: 'well-123' }
+        {
+          type: 'WellStatusChanged',
+          wellId: 'well-123',
+          newStatus: WellStatus.DRILLING,
+        },
+        { type: 'WellUpdated', wellId: 'well-123' },
       ];
-      
+
       mockWell.getDomainEvents.mockReturnValue(mockEvents);
       wellRepository.findById.mockResolvedValue(mockWell as any);
       wellRepository.save.mockResolvedValue(undefined);
@@ -139,7 +164,7 @@ describe('UpdateWellStatusHandler', () => {
       const commandWithoutReason = new UpdateWellStatusCommand(
         'well-123',
         WellStatus.COMPLETED,
-        'user-789'
+        'user-789',
       );
 
       wellRepository.findById.mockResolvedValue(mockWell as any);
@@ -147,7 +172,10 @@ describe('UpdateWellStatusHandler', () => {
 
       await handler.execute(commandWithoutReason);
 
-      expect(mockWell.updateStatus).toHaveBeenCalledWith(WellStatus.COMPLETED, 'user-789');
+      expect(mockWell.updateStatus).toHaveBeenCalledWith(
+        WellStatus.COMPLETED,
+        'user-789',
+      );
       expect(wellRepository.save).toHaveBeenCalledWith(mockWell);
     });
 
@@ -169,7 +197,7 @@ describe('UpdateWellStatusHandler', () => {
           'well-123',
           status,
           'user-123',
-          `Updating to ${status}`
+          `Updating to ${status}`,
         );
 
         await handler.execute(command);
@@ -190,7 +218,7 @@ describe('UpdateWellStatusHandler', () => {
         const command = new UpdateWellStatusCommand(
           wellId,
           WellStatus.DRILLING,
-          'user-123'
+          'user-123',
         );
 
         await handler.execute(command);
@@ -211,12 +239,15 @@ describe('UpdateWellStatusHandler', () => {
         const command = new UpdateWellStatusCommand(
           'well-123',
           WellStatus.PRODUCING,
-          userId
+          userId,
         );
 
         await handler.execute(command);
 
-        expect(mockWell.updateStatus).toHaveBeenCalledWith(WellStatus.PRODUCING, userId);
+        expect(mockWell.updateStatus).toHaveBeenCalledWith(
+          WellStatus.PRODUCING,
+          userId,
+        );
       }
 
       expect(mockWell.updateStatus).toHaveBeenCalledTimes(userIds.length);
@@ -227,7 +258,7 @@ describe('UpdateWellStatusHandler', () => {
         'well-123',
         WellStatus.SHUT_IN,
         'emergency-user',
-        'EMERGENCY: Equipment failure detected - immediate shutdown required'
+        'EMERGENCY: Equipment failure detected - immediate shutdown required',
       );
 
       wellRepository.findById.mockResolvedValue(mockWell as any);
@@ -235,7 +266,10 @@ describe('UpdateWellStatusHandler', () => {
 
       await handler.execute(emergencyCommand);
 
-      expect(mockWell.updateStatus).toHaveBeenCalledWith(WellStatus.SHUT_IN, 'emergency-user');
+      expect(mockWell.updateStatus).toHaveBeenCalledWith(
+        WellStatus.SHUT_IN,
+        'emergency-user',
+      );
       expect(wellRepository.save).toHaveBeenCalledWith(mockWell);
     });
 
@@ -244,7 +278,7 @@ describe('UpdateWellStatusHandler', () => {
         'well-123',
         WellStatus.PLUGGED,
         'regulatory-officer',
-        'Regulatory compliance - well abandonment required per state regulations'
+        'Regulatory compliance - well abandonment required per state regulations',
       );
 
       wellRepository.findById.mockResolvedValue(mockWell as any);
@@ -252,7 +286,10 @@ describe('UpdateWellStatusHandler', () => {
 
       await handler.execute(regulatoryCommand);
 
-      expect(mockWell.updateStatus).toHaveBeenCalledWith(WellStatus.PLUGGED, 'regulatory-officer');
+      expect(mockWell.updateStatus).toHaveBeenCalledWith(
+        WellStatus.PLUGGED,
+        'regulatory-officer',
+      );
       expect(wellRepository.save).toHaveBeenCalledWith(mockWell);
     });
 
@@ -261,7 +298,7 @@ describe('UpdateWellStatusHandler', () => {
         'well-123',
         WellStatus.COMPLETED,
         'user-123',
-        'A'.repeat(1000) // Very long reason
+        'A'.repeat(1000), // Very long reason
       );
 
       wellRepository.findById.mockResolvedValue(mockWell as any);
@@ -269,7 +306,10 @@ describe('UpdateWellStatusHandler', () => {
 
       await handler.execute(longReasonCommand);
 
-      expect(mockWell.updateStatus).toHaveBeenCalledWith(WellStatus.COMPLETED, 'user-123');
+      expect(mockWell.updateStatus).toHaveBeenCalledWith(
+        WellStatus.COMPLETED,
+        'user-123',
+      );
       expect(wellRepository.save).toHaveBeenCalledWith(mockWell);
     });
 
@@ -278,7 +318,7 @@ describe('UpdateWellStatusHandler', () => {
         'well-123',
         WellStatus.SHUT_IN,
         'user-123',
-        'Status change due to: weather conditions (high winds > 50mph) & equipment issues!'
+        'Status change due to: weather conditions (high winds > 50mph) & equipment issues!',
       );
 
       wellRepository.findById.mockResolvedValue(mockWell as any);
@@ -286,7 +326,10 @@ describe('UpdateWellStatusHandler', () => {
 
       await handler.execute(specialCharCommand);
 
-      expect(mockWell.updateStatus).toHaveBeenCalledWith(WellStatus.SHUT_IN, 'user-123');
+      expect(mockWell.updateStatus).toHaveBeenCalledWith(
+        WellStatus.SHUT_IN,
+        'user-123',
+      );
       expect(wellRepository.save).toHaveBeenCalledWith(mockWell);
     });
 
@@ -307,8 +350,12 @@ describe('UpdateWellStatusHandler', () => {
         throw new NotFoundException('Well not found in domain');
       });
 
-      await expect(handler.execute(validCommand)).rejects.toThrow(NotFoundException);
-      await expect(handler.execute(validCommand)).rejects.toThrow('Well not found in domain');
+      await expect(handler.execute(validCommand)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(handler.execute(validCommand)).rejects.toThrow(
+        'Well not found in domain',
+      );
     });
   });
 });

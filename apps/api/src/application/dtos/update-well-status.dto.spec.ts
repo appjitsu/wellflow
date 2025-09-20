@@ -28,7 +28,7 @@ describe('UpdateWellStatusDto', () => {
       dto.status = 'invalid-status' as any;
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      const statusError = errors.find(error => error.property === 'status');
+      const statusError = errors.find((error) => error.property === 'status');
       expect(statusError).toBeDefined();
     });
 
@@ -36,7 +36,7 @@ describe('UpdateWellStatusDto', () => {
       delete (dto as any).status;
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      const statusError = errors.find(error => error.property === 'status');
+      const statusError = errors.find((error) => error.property === 'status');
       expect(statusError).toBeDefined();
     });
 
@@ -61,7 +61,7 @@ describe('UpdateWellStatusDto', () => {
       dto.reason = 123 as any; // Invalid type
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      const reasonError = errors.find(error => error.property === 'reason');
+      const reasonError = errors.find((error) => error.property === 'reason');
       expect(reasonError).toBeDefined();
     });
   });
@@ -140,7 +140,8 @@ describe('UpdateWellStatusDto', () => {
     });
 
     it('should handle special characters in reason', async () => {
-      dto.reason = 'Status change due to: weather conditions (high winds > 50mph) & equipment issues!';
+      dto.reason =
+        'Status change due to: weather conditions (high winds > 50mph) & equipment issues!';
       const errors = await validate(dto);
       expect(errors).toHaveLength(0);
     });
@@ -152,7 +153,8 @@ describe('UpdateWellStatusDto', () => {
     });
 
     it('should handle multiline reason text', async () => {
-      dto.reason = 'Line 1: Equipment failure\nLine 2: Safety concerns\nLine 3: Immediate shutdown required';
+      dto.reason =
+        'Line 1: Equipment failure\nLine 2: Safety concerns\nLine 3: Immediate shutdown required';
       const errors = await validate(dto);
       expect(errors).toHaveLength(0);
     });
@@ -168,16 +170,17 @@ describe('UpdateWellStatusDto', () => {
     it('should serialize to JSON correctly', () => {
       const json = JSON.stringify(dto);
       const parsed = JSON.parse(json);
-      
+
       expect(parsed.status).toBe(WellStatus.DRILLING);
       expect(parsed.reason).toBe('Starting drilling operations');
     });
 
     it('should deserialize from JSON correctly', () => {
-      const json = '{"status":"completed","reason":"Drilling finished successfully"}';
+      const json =
+        '{"status":"completed","reason":"Drilling finished successfully"}';
       const parsed = JSON.parse(json);
       const newDto = plainToClass(UpdateWellStatusDto, parsed);
-      
+
       expect(newDto.status).toBe('completed');
       expect(newDto.reason).toBe('Drilling finished successfully');
     });
@@ -186,7 +189,7 @@ describe('UpdateWellStatusDto', () => {
       const json = '{"status":"shut_in"}';
       const parsed = JSON.parse(json);
       const newDto = plainToClass(UpdateWellStatusDto, parsed);
-      
+
       expect(newDto.status).toBe('shut_in');
       expect(newDto.reason).toBeUndefined();
     });

@@ -25,7 +25,7 @@ describe('AbilitiesFactory', () => {
     state: string = 'TX',
   ): Well => {
     const apiNumber = new ApiNumber('4212345678');
-    const coordinates = new Coordinates(32.7767, -96.7970);
+    const coordinates = new Coordinates(32.7767, -96.797);
     const location = new Location(coordinates, {
       address: '123 Test St',
       county: 'Dallas',
@@ -159,12 +159,20 @@ describe('AbilitiesFactory', () => {
       const ability = factory.createForUser(user);
 
       // Can update active wells
-      const activeWell = createTestWell('well-1', 'operator-1', WellStatus.PRODUCING);
+      const activeWell = createTestWell(
+        'well-1',
+        'operator-1',
+        WellStatus.PRODUCING,
+      );
       expect(ability.can('update', activeWell)).toBe(true);
 
       // For now, operators can update all wells (simplified implementation)
       // In a full implementation, this would be restricted by well status
-      const pluggedWell = createTestWell('well-2', 'operator-1', WellStatus.PLUGGED);
+      const pluggedWell = createTestWell(
+        'well-2',
+        'operator-1',
+        WellStatus.PLUGGED,
+      );
       expect(ability.can('update', pluggedWell)).toBe(true);
     });
 
@@ -180,11 +188,21 @@ describe('AbilitiesFactory', () => {
       const ability = factory.createForUser(texasUser);
 
       // Texas operator can access wells in Texas
-      const texasWell = createTestWell('well-1', 'texas-operator', WellStatus.PLANNED, 'TX');
+      const texasWell = createTestWell(
+        'well-1',
+        'texas-operator',
+        WellStatus.PLANNED,
+        'TX',
+      );
       expect(ability.can('read', texasWell)).toBe(true);
 
       // But cannot access wells in other states (if they had access)
-      const oklahomaWell = createTestWell('well-2', 'texas-operator', WellStatus.PLANNED, 'OK');
+      const oklahomaWell = createTestWell(
+        'well-2',
+        'texas-operator',
+        WellStatus.PLANNED,
+        'OK',
+      );
       // This would depend on specific business rules
       // For now, assuming operators can access their wells regardless of state
       expect(ability.can('read', oklahomaWell)).toBe(true);
@@ -289,7 +307,11 @@ describe('AbilitiesFactory', () => {
       };
 
       const well = createTestWell('well-1', 'operator-1', WellStatus.DRILLING);
-      const canComplete = factory.createForWellOperation(user, well, 'completion');
+      const canComplete = factory.createForWellOperation(
+        user,
+        well,
+        'completion',
+      );
 
       expect(canComplete).toBe(true);
     });
@@ -303,7 +325,11 @@ describe('AbilitiesFactory', () => {
       };
 
       const well = createTestWell('well-1', 'operator-1', WellStatus.COMPLETED);
-      const canProduce = factory.createForWellOperation(user, well, 'production');
+      const canProduce = factory.createForWellOperation(
+        user,
+        well,
+        'production',
+      );
 
       expect(canProduce).toBe(true);
     });
@@ -317,7 +343,11 @@ describe('AbilitiesFactory', () => {
       };
 
       const well = createTestWell('well-1', 'operator-1', WellStatus.PLUGGED);
-      const canAbandon = factory.createForWellOperation(user, well, 'abandonment');
+      const canAbandon = factory.createForWellOperation(
+        user,
+        well,
+        'abandonment',
+      );
 
       expect(canAbandon).toBe(false);
     });

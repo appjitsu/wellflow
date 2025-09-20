@@ -124,7 +124,7 @@ describe('SentryService', () => {
       const message = 'Test message';
       const levels = ['debug', 'info', 'warning', 'error', 'fatal'] as const;
 
-      levels.forEach(level => {
+      levels.forEach((level) => {
         service.captureMessage(message, level);
         expect(mockSentry.captureMessage).toHaveBeenCalledWith(message, level);
       });
@@ -194,13 +194,16 @@ describe('SentryService', () => {
       const wellContext = {
         wellId: 'well-123',
         operatorId: 'op-456',
-        location: { lat: 32.7767, lng: -96.7970 },
+        location: { lat: 32.7767, lng: -96.797 },
         status: 'PRODUCING',
       };
 
       service.setExtra('wellContext', wellContext);
 
-      expect(mockSentry.setExtra).toHaveBeenCalledWith('wellContext', wellContext);
+      expect(mockSentry.setExtra).toHaveBeenCalledWith(
+        'wellContext',
+        wellContext,
+      );
     });
   });
 
@@ -279,7 +282,10 @@ describe('SentryService', () => {
       operations.forEach(([name, op]) => {
         const callback = () => ({ status: 'success' });
         service.startSpan(name, op, callback);
-        expect(mockSentry.startSpan).toHaveBeenCalledWith({ name, op }, callback);
+        expect(mockSentry.startSpan).toHaveBeenCalledWith(
+          { name, op },
+          callback,
+        );
       });
     });
   });
@@ -319,7 +325,7 @@ describe('SentryService', () => {
         },
       ];
 
-      breadcrumbs.forEach(breadcrumb => {
+      breadcrumbs.forEach((breadcrumb) => {
         service.addBreadcrumb(breadcrumb);
         expect(mockSentry.addBreadcrumb).toHaveBeenCalledWith(breadcrumb);
       });
@@ -343,11 +349,15 @@ describe('SentryService', () => {
           message: 'Compliance check completed',
           category: 'compliance',
           level: 'info' as const,
-          data: { wellId: 'well-789', status: 'PASSED', inspector: 'inspector-123' },
+          data: {
+            wellId: 'well-789',
+            status: 'PASSED',
+            inspector: 'inspector-123',
+          },
         },
       ];
 
-      oilGasBreadcrumbs.forEach(breadcrumb => {
+      oilGasBreadcrumbs.forEach((breadcrumb) => {
         service.addBreadcrumb(breadcrumb);
         expect(mockSentry.addBreadcrumb).toHaveBeenCalledWith(breadcrumb);
       });
@@ -436,7 +446,10 @@ describe('SentryService', () => {
         data: { wellId: 'well-789', newStatus: 'PRODUCING' },
       });
 
-      expect(mockSentry.startSpan).toHaveBeenCalledWith({ name: spanName, op: operation }, callback);
+      expect(mockSentry.startSpan).toHaveBeenCalledWith(
+        { name: spanName, op: operation },
+        callback,
+      );
       expect(mockSentry.addBreadcrumb).toHaveBeenCalled();
     });
   });

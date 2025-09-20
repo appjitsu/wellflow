@@ -25,7 +25,10 @@ describe('Public Decorator', () => {
         publicMethod() {}
       }
 
-      const metadata = reflector.get('isPublic', TestController.prototype.publicMethod);
+      const metadata = reflector.get(
+        'isPublic',
+        TestController.prototype.publicMethod,
+      );
       expect(metadata).toBe(true);
     });
 
@@ -37,8 +40,14 @@ describe('Public Decorator', () => {
         privateMethod() {}
       }
 
-      const publicMetadata = reflector.get('isPublic', TestController.prototype.publicMethod);
-      const privateMetadata = reflector.get('isPublic', TestController.prototype.privateMethod);
+      const publicMetadata = reflector.get(
+        'isPublic',
+        TestController.prototype.publicMethod,
+      );
+      const privateMetadata = reflector.get(
+        'isPublic',
+        TestController.prototype.privateMethod,
+      );
 
       expect(publicMetadata).toBe(true);
       expect(privateMetadata).toBeUndefined();
@@ -57,9 +66,18 @@ describe('Public Decorator', () => {
         privateMethod() {}
       }
 
-      const public1Metadata = reflector.get('isPublic', TestController.prototype.publicMethod1);
-      const public2Metadata = reflector.get('isPublic', TestController.prototype.publicMethod2);
-      const privateMetadata = reflector.get('isPublic', TestController.prototype.privateMethod);
+      const public1Metadata = reflector.get(
+        'isPublic',
+        TestController.prototype.publicMethod1,
+      );
+      const public2Metadata = reflector.get(
+        'isPublic',
+        TestController.prototype.publicMethod2,
+      );
+      const privateMetadata = reflector.get(
+        'isPublic',
+        TestController.prototype.privateMethod,
+      );
 
       expect(public1Metadata).toBe(true);
       expect(public2Metadata).toBe(true);
@@ -76,8 +94,14 @@ describe('Public Decorator', () => {
       }
 
       const classMetadata = reflector.get('isPublic', TestController);
-      const methodMetadata = reflector.get('isPublic', TestController.prototype.publicMethod);
-      const normalMethodMetadata = reflector.get('isPublic', TestController.prototype.normalMethod);
+      const methodMetadata = reflector.get(
+        'isPublic',
+        TestController.prototype.publicMethod,
+      );
+      const normalMethodMetadata = reflector.get(
+        'isPublic',
+        TestController.prototype.normalMethod,
+      );
 
       expect(classMetadata).toBe(true);
       expect(methodMetadata).toBe(true);
@@ -94,7 +118,10 @@ describe('Public Decorator', () => {
         }
       }
 
-      const metadata = reflector.get('isPublic', HealthController.prototype.healthCheck);
+      const metadata = reflector.get(
+        'isPublic',
+        HealthController.prototype.healthCheck,
+      );
       expect(metadata).toBe(true);
     });
 
@@ -113,10 +140,22 @@ describe('Public Decorator', () => {
         profile() {}
       }
 
-      const loginMetadata = reflector.get('isPublic', AuthController.prototype.login);
-      const registerMetadata = reflector.get('isPublic', AuthController.prototype.register);
-      const forgotPasswordMetadata = reflector.get('isPublic', AuthController.prototype.forgotPassword);
-      const profileMetadata = reflector.get('isPublic', AuthController.prototype.profile);
+      const loginMetadata = reflector.get(
+        'isPublic',
+        AuthController.prototype.login,
+      );
+      const registerMetadata = reflector.get(
+        'isPublic',
+        AuthController.prototype.register,
+      );
+      const forgotPasswordMetadata = reflector.get(
+        'isPublic',
+        AuthController.prototype.forgotPassword,
+      );
+      const profileMetadata = reflector.get(
+        'isPublic',
+        AuthController.prototype.profile,
+      );
 
       expect(loginMetadata).toBe(true);
       expect(registerMetadata).toBe(true);
@@ -133,8 +172,14 @@ describe('Public Decorator', () => {
         getSwaggerJson() {}
       }
 
-      const docsMetadata = reflector.get('isPublic', DocsController.prototype.getApiDocs);
-      const swaggerMetadata = reflector.get('isPublic', DocsController.prototype.getSwaggerJson);
+      const docsMetadata = reflector.get(
+        'isPublic',
+        DocsController.prototype.getApiDocs,
+      );
+      const swaggerMetadata = reflector.get(
+        'isPublic',
+        DocsController.prototype.getSwaggerJson,
+      );
 
       expect(docsMetadata).toBe(true);
       expect(swaggerMetadata).toBe(true);
@@ -154,9 +199,18 @@ describe('Public Decorator', () => {
         getDetailedWellData() {}
       }
 
-      const publicWellMetadata = reflector.get('isPublic', RegulatoryController.prototype.getPublicWellData);
-      const envReportsMetadata = reflector.get('isPublic', RegulatoryController.prototype.getEnvironmentalReports);
-      const detailedMetadata = reflector.get('isPublic', RegulatoryController.prototype.getDetailedWellData);
+      const publicWellMetadata = reflector.get(
+        'isPublic',
+        RegulatoryController.prototype.getPublicWellData,
+      );
+      const envReportsMetadata = reflector.get(
+        'isPublic',
+        RegulatoryController.prototype.getEnvironmentalReports,
+      );
+      const detailedMetadata = reflector.get(
+        'isPublic',
+        RegulatoryController.prototype.getDetailedWellData,
+      );
 
       expect(publicWellMetadata).toBe(true);
       expect(envReportsMetadata).toBe(true);
@@ -175,9 +229,18 @@ describe('Public Decorator', () => {
         getIncidentReports() {}
       }
 
-      const emergencyMetadata = reflector.get('isPublic', SafetyController.prototype.getEmergencyContacts);
-      const guidelinesMetadata = reflector.get('isPublic', SafetyController.prototype.getSafetyGuidelines);
-      const incidentMetadata = reflector.get('isPublic', SafetyController.prototype.getIncidentReports);
+      const emergencyMetadata = reflector.get(
+        'isPublic',
+        SafetyController.prototype.getEmergencyContacts,
+      );
+      const guidelinesMetadata = reflector.get(
+        'isPublic',
+        SafetyController.prototype.getSafetyGuidelines,
+      );
+      const incidentMetadata = reflector.get(
+        'isPublic',
+        SafetyController.prototype.getIncidentReports,
+      );
 
       expect(emergencyMetadata).toBe(true);
       expect(guidelinesMetadata).toBe(true);
@@ -193,7 +256,7 @@ describe('Public Decorator', () => {
       // Test that the metadata key is exactly 'isPublic'
       const metadata = reflector.get('isPublic', TestController);
       expect(metadata).toBe(true);
-      
+
       // Test that other keys don't return the metadata
       const wrongMetadata1 = reflector.get('public', TestController);
       const wrongMetadata2 = reflector.get('is_public', TestController);
@@ -211,7 +274,10 @@ describe('Public Decorator', () => {
       }
 
       const classMetadata = reflector.get('isPublic', TestController1);
-      const methodMetadata = reflector.get('isPublic', TestController2.prototype.method);
+      const methodMetadata = reflector.get(
+        'isPublic',
+        TestController2.prototype.method,
+      );
 
       expect(classMetadata).toBe(true);
       expect(methodMetadata).toBe(true);
@@ -222,7 +288,7 @@ describe('Public Decorator', () => {
   describe('decorator function behavior', () => {
     it('should be a function that returns a decorator', () => {
       expect(typeof Public).toBe('function');
-      
+
       const decorator = Public();
       expect(typeof decorator).toBe('function');
     });
@@ -241,8 +307,14 @@ describe('Public Decorator', () => {
         method2() {}
       }
 
-      const metadata1 = reflector.get('isPublic', TestController1.prototype.method1);
-      const metadata2 = reflector.get('isPublic', TestController2.prototype.method2);
+      const metadata1 = reflector.get(
+        'isPublic',
+        TestController1.prototype.method1,
+      );
+      const metadata2 = reflector.get(
+        'isPublic',
+        TestController2.prototype.method2,
+      );
 
       expect(metadata1).toBe(true);
       expect(metadata2).toBe(true);

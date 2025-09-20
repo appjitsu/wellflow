@@ -104,7 +104,11 @@ describe('RolesGuard', () => {
     });
 
     it('should allow access when user has one of multiple required roles', () => {
-      mockReflector.getAllAndOverride.mockReturnValue(['ADMIN', 'OPERATOR', 'VIEWER']);
+      mockReflector.getAllAndOverride.mockReturnValue([
+        'ADMIN',
+        'OPERATOR',
+        'VIEWER',
+      ]);
       mockRequest.user = {
         id: 'user-123',
         roles: ['OPERATOR'],
@@ -256,7 +260,11 @@ describe('RolesGuard', () => {
     });
 
     it('should allow VIEWER access to read-only operations', () => {
-      mockReflector.getAllAndOverride.mockReturnValue(['VIEWER', 'OPERATOR', 'ADMIN']);
+      mockReflector.getAllAndOverride.mockReturnValue([
+        'VIEWER',
+        'OPERATOR',
+        'ADMIN',
+      ]);
       mockRequest.user = {
         id: 'viewer-123',
         roles: ['VIEWER'],
@@ -300,7 +308,11 @@ describe('RolesGuard', () => {
     });
 
     it('should handle complex role requirements', () => {
-      mockReflector.getAllAndOverride.mockReturnValue(['PRODUCTION_MANAGER', 'FIELD_SUPERVISOR', 'OPERATOR']);
+      mockReflector.getAllAndOverride.mockReturnValue([
+        'PRODUCTION_MANAGER',
+        'FIELD_SUPERVISOR',
+        'OPERATOR',
+      ]);
       mockRequest.user = {
         id: 'supervisor-123',
         roles: ['FIELD_SUPERVISOR', 'SAFETY_OFFICER'],
@@ -313,7 +325,10 @@ describe('RolesGuard', () => {
     });
 
     it('should deny access when user has insufficient role level', () => {
-      mockReflector.getAllAndOverride.mockReturnValue(['ADMIN', 'PRODUCTION_MANAGER']);
+      mockReflector.getAllAndOverride.mockReturnValue([
+        'ADMIN',
+        'PRODUCTION_MANAGER',
+      ]);
       mockRequest.user = {
         id: 'worker-123',
         roles: ['FIELD_WORKER', 'VIEWER'],
@@ -383,7 +398,7 @@ describe('RolesGuard', () => {
     it('should check both handler and class for roles metadata', () => {
       const mockHandler = jest.fn();
       const mockClass = jest.fn();
-      
+
       mockExecutionContext.getHandler = jest.fn().mockReturnValue(mockHandler);
       mockExecutionContext.getClass = jest.fn().mockReturnValue(mockClass);
       mockReflector.getAllAndOverride.mockReturnValue(undefined);
@@ -403,7 +418,7 @@ describe('RolesGuard', () => {
       const mockSwitchToHttp = jest.fn().mockReturnValue({
         getRequest: mockGetRequest,
       });
-      
+
       mockExecutionContext.switchToHttp = mockSwitchToHttp;
       mockReflector.getAllAndOverride.mockReturnValue(['OPERATOR']);
       mockRequest.user = {

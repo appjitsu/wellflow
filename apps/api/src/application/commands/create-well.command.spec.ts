@@ -10,7 +10,7 @@ describe('CreateWellCommand', () => {
       const wellType = WellType.OIL;
       const location = {
         latitude: 32.7767,
-        longitude: -96.7970,
+        longitude: -96.797,
         address: '123 Main St',
         county: 'Dallas',
         state: 'TX',
@@ -51,7 +51,7 @@ describe('CreateWellCommand', () => {
       const wellType = WellType.GAS;
       const location = {
         latitude: 32.7767,
-        longitude: -96.7970,
+        longitude: -96.797,
       };
 
       const command = new CreateWellCommand(
@@ -76,7 +76,7 @@ describe('CreateWellCommand', () => {
     it('should create a command with partial location data', () => {
       const location = {
         latitude: 32.7767,
-        longitude: -96.7970,
+        longitude: -96.797,
         county: 'Dallas',
         state: 'TX',
       };
@@ -90,7 +90,7 @@ describe('CreateWellCommand', () => {
       );
 
       expect(command.location.latitude).toBe(32.7767);
-      expect(command.location.longitude).toBe(-96.7970);
+      expect(command.location.longitude).toBe(-96.797);
       expect(command.location.county).toBe('Dallas');
       expect(command.location.state).toBe('TX');
       expect(command.location.address).toBeUndefined();
@@ -103,7 +103,7 @@ describe('CreateWellCommand', () => {
         'Oil Well',
         'operator-123',
         WellType.OIL,
-        { latitude: 32.7767, longitude: -96.7970 },
+        { latitude: 32.7767, longitude: -96.797 },
       );
 
       const gasCommand = new CreateWellCommand(
@@ -111,7 +111,7 @@ describe('CreateWellCommand', () => {
         'Gas Well',
         'operator-123',
         WellType.GAS,
-        { latitude: 32.7767, longitude: -96.7970 },
+        { latitude: 32.7767, longitude: -96.797 },
       );
 
       expect(oilCommand.wellType).toBe(WellType.OIL);
@@ -125,7 +125,7 @@ describe('CreateWellCommand', () => {
         'Test Well',
         'operator-123',
         WellType.OIL,
-        { latitude: 32.7767, longitude: -96.7970 },
+        { latitude: 32.7767, longitude: -96.797 },
         undefined,
         dateString,
       );
@@ -140,7 +140,7 @@ describe('CreateWellCommand', () => {
         'Shallow Well',
         'operator-123',
         WellType.OIL,
-        { latitude: 32.7767, longitude: -96.7970 },
+        { latitude: 32.7767, longitude: -96.797 },
         undefined,
         undefined,
         1500,
@@ -151,7 +151,7 @@ describe('CreateWellCommand', () => {
         'Deep Well',
         'operator-123',
         WellType.GAS,
-        { latitude: 32.7767, longitude: -96.7970 },
+        { latitude: 32.7767, longitude: -96.797 },
         undefined,
         undefined,
         15000,
@@ -169,7 +169,7 @@ describe('CreateWellCommand', () => {
         'Test Well',
         'operator-123',
         WellType.OIL,
-        { latitude: 32.7767, longitude: -96.7970 },
+        { latitude: 32.7767, longitude: -96.797 },
       );
 
       // Properties should be accessible
@@ -183,7 +183,7 @@ describe('CreateWellCommand', () => {
     it('should maintain object references for complex properties', () => {
       const location = {
         latitude: 32.7767,
-        longitude: -96.7970,
+        longitude: -96.797,
         address: '123 Main St',
       };
 
@@ -207,7 +207,7 @@ describe('CreateWellCommand', () => {
         'Test Well',
         'operator-123',
         WellType.OIL,
-        { latitude: 32.7767, longitude: -96.7970 },
+        { latitude: 32.7767, longitude: -96.797 },
         '', // empty lease ID
         undefined,
         undefined,
@@ -224,7 +224,7 @@ describe('CreateWellCommand', () => {
         'Test Well',
         'operator-123',
         WellType.OIL,
-        { latitude: 32.7767, longitude: -96.7970 },
+        { latitude: 32.7767, longitude: -96.797 },
         undefined,
         undefined,
         0,
@@ -236,7 +236,7 @@ describe('CreateWellCommand', () => {
     it('should handle location with negative coordinates', () => {
       const location = {
         latitude: -32.7767,
-        longitude: -96.7970,
+        longitude: -96.797,
       };
 
       const command = new CreateWellCommand(
@@ -248,7 +248,7 @@ describe('CreateWellCommand', () => {
       );
 
       expect(command.location.latitude).toBe(-32.7767);
-      expect(command.location.longitude).toBe(-96.7970);
+      expect(command.location.longitude).toBe(-96.797);
     });
   });
 
@@ -259,7 +259,7 @@ describe('CreateWellCommand', () => {
         'Test Well',
         'operator-123',
         WellType.OIL,
-        { latitude: 32.7767, longitude: -96.7970 },
+        { latitude: 32.7767, longitude: -96.797 },
       );
 
       const apiNumber1 = command.apiNumber;

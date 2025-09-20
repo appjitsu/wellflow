@@ -10,7 +10,9 @@ import { Well } from '../domain/entities/well.entity';
 import { WellStatus } from '../domain/enums/well-status.enum';
 
 // Define all subjects that can be used in permissions
-type Subjects = InferSubjects<typeof Well | 'Well' | 'User' | 'Operator'> | 'all';
+type Subjects =
+  | InferSubjects<typeof Well | 'Well' | 'User' | 'Operator'>
+  | 'all';
 
 // Define all actions that can be performed
 export type Actions =
@@ -43,7 +45,9 @@ export interface User {
 @Injectable()
 export class AbilitiesFactory {
   createForUser(user: User): AppAbility {
-    const { can, cannot, rules } = new AbilityBuilder<AppAbility>(createMongoAbility);
+    const { can, cannot, rules } = new AbilityBuilder<AppAbility>(
+      createMongoAbility,
+    );
 
     // Admin permissions - can do everything
     if (user.roles.includes('ADMIN')) {
@@ -193,7 +197,9 @@ export class AbilitiesFactory {
    * Create abilities for guest users (no authentication)
    */
   createForGuest(): AppAbility {
-    const { can, cannot, rules } = new AbilityBuilder<AppAbility>(createMongoAbility);
+    const { can, cannot, rules } = new AbilityBuilder<AppAbility>(
+      createMongoAbility,
+    );
 
     // Guests can only read public wells
     can('read', 'Well', { isPublic: true });

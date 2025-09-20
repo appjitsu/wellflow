@@ -83,7 +83,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       console.error('❌ Database table creation failed:', error);
       // Don't throw here - let the app start even if table creation fails
-      console.warn('⚠️ Application starting without tables - manual intervention may be required');
+      console.warn(
+        '⚠️ Application starting without tables - manual intervention may be required',
+      );
     }
   }
 

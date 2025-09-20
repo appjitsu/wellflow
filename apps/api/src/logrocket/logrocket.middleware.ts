@@ -45,14 +45,21 @@ export class LogRocketMiddleware implements NestMiddleware {
 
         // Add response tags
         this.logRocketService.addTag('api.status', statusCode.toString());
-        this.logRocketService.addTag('api.success', statusCode < 400 ? 'true' : 'false');
+        this.logRocketService.addTag(
+          'api.success',
+          statusCode < 400 ? 'true' : 'false',
+        );
 
         // Log slow requests
         if (duration > 1000) {
-          this.logRocketService.log(`Slow API request: ${method} ${url}`, 'warn', {
-            duration,
-            statusCode,
-          });
+          this.logRocketService.log(
+            `Slow API request: ${method} ${url}`,
+            'warn',
+            {
+              duration,
+              statusCode,
+            },
+          );
         }
 
         // Log errors

@@ -32,7 +32,7 @@ describe('GetWellByIdHandler', () => {
     getLocation: jest.fn().mockReturnValue({
       getCoordinates: () => ({
         getLatitude: () => 40.7128,
-        getLongitude: () => -74.0060,
+        getLongitude: () => -74.006,
       }),
       getAddress: () => '123 Main St',
       getCounty: () => 'Dallas',
@@ -41,7 +41,7 @@ describe('GetWellByIdHandler', () => {
       toObject: () => ({
         coordinates: {
           latitude: 40.7128,
-          longitude: -74.0060,
+          longitude: -74.006,
         },
         address: '123 Main St',
         county: 'Dallas',
@@ -98,8 +98,12 @@ describe('GetWellByIdHandler', () => {
     it('should throw NotFoundException when well does not exist', async () => {
       wellRepository.findById.mockResolvedValue(null);
 
-      await expect(handler.execute(validQuery)).rejects.toThrow(NotFoundException);
-      await expect(handler.execute(validQuery)).rejects.toThrow('Well with ID well-123 not found');
+      await expect(handler.execute(validQuery)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(handler.execute(validQuery)).rejects.toThrow(
+        'Well with ID well-123 not found',
+      );
       expect(wellRepository.findById).toHaveBeenCalledWith('well-123');
     });
 
@@ -120,16 +124,22 @@ describe('GetWellByIdHandler', () => {
     });
 
     it('should handle repository errors', async () => {
-      wellRepository.findById.mockRejectedValue(new Error('Database connection failed'));
+      wellRepository.findById.mockRejectedValue(
+        new Error('Database connection failed'),
+      );
 
-      await expect(handler.execute(validQuery)).rejects.toThrow('Database connection failed');
+      await expect(handler.execute(validQuery)).rejects.toThrow(
+        'Database connection failed',
+      );
       expect(wellRepository.findById).toHaveBeenCalledWith('well-123');
     });
 
     it('should handle well with minimal data', async () => {
       const minimalWell = {
         getId: jest.fn().mockReturnValue('well-minimal'),
-        getApiNumber: jest.fn().mockReturnValue({ getValue: () => '42-123-00000' }),
+        getApiNumber: jest
+          .fn()
+          .mockReturnValue({ getValue: () => '42-123-00000' }),
         getName: jest.fn().mockReturnValue('Minimal Well'),
         getOperatorId: jest.fn().mockReturnValue('operator-minimal'),
         getWellType: jest.fn().mockReturnValue(WellType.GAS),
@@ -137,7 +147,7 @@ describe('GetWellByIdHandler', () => {
         getLocation: jest.fn().mockReturnValue({
           getCoordinates: () => ({
             getLatitude: () => 32.7767,
-            getLongitude: () => -96.7970,
+            getLongitude: () => -96.797,
           }),
           getAddress: () => null,
           getCounty: () => null,
@@ -146,7 +156,7 @@ describe('GetWellByIdHandler', () => {
           toObject: () => ({
             coordinates: {
               latitude: 32.7767,
-              longitude: -96.7970,
+              longitude: -96.797,
             },
             address: null,
             county: null,
@@ -158,8 +168,12 @@ describe('GetWellByIdHandler', () => {
         getSpudDate: jest.fn().mockReturnValue(null),
         getCompletionDate: jest.fn().mockReturnValue(null),
         getTotalDepth: jest.fn().mockReturnValue(null),
-        getCreatedAt: jest.fn().mockReturnValue(new Date('2024-02-01T10:00:00Z')),
-        getUpdatedAt: jest.fn().mockReturnValue(new Date('2024-02-01T10:00:00Z')),
+        getCreatedAt: jest
+          .fn()
+          .mockReturnValue(new Date('2024-02-01T10:00:00Z')),
+        getUpdatedAt: jest
+          .fn()
+          .mockReturnValue(new Date('2024-02-01T10:00:00Z')),
         getVersion: jest.fn().mockReturnValue(1),
       };
 
@@ -182,7 +196,9 @@ describe('GetWellByIdHandler', () => {
     it('should handle well with all optional fields populated', async () => {
       const fullWell = {
         getId: jest.fn().mockReturnValue('well-full'),
-        getApiNumber: jest.fn().mockReturnValue({ getValue: () => '42-123-99999' }),
+        getApiNumber: jest
+          .fn()
+          .mockReturnValue({ getValue: () => '42-123-99999' }),
         getName: jest.fn().mockReturnValue('Full Well'),
         getOperatorId: jest.fn().mockReturnValue('operator-full'),
         getWellType: jest.fn().mockReturnValue(WellType.OIL),
@@ -211,8 +227,12 @@ describe('GetWellByIdHandler', () => {
         getSpudDate: jest.fn().mockReturnValue(new Date('2024-03-15')),
         getCompletionDate: jest.fn().mockReturnValue(new Date('2024-04-15')),
         getTotalDepth: jest.fn().mockReturnValue(8500),
-        getCreatedAt: jest.fn().mockReturnValue(new Date('2024-03-01T10:00:00Z')),
-        getUpdatedAt: jest.fn().mockReturnValue(new Date('2024-04-20T10:00:00Z')),
+        getCreatedAt: jest
+          .fn()
+          .mockReturnValue(new Date('2024-03-01T10:00:00Z')),
+        getUpdatedAt: jest
+          .fn()
+          .mockReturnValue(new Date('2024-04-20T10:00:00Z')),
         getVersion: jest.fn().mockReturnValue(3),
       };
 
@@ -298,7 +318,8 @@ describe('GetWellByIdHandler', () => {
     });
 
     it('should handle long string well IDs', async () => {
-      const longWellId = 'very-long-well-identifier-with-many-characters-and-dashes';
+      const longWellId =
+        'very-long-well-identifier-with-many-characters-and-dashes';
       wellRepository.findById.mockResolvedValue(mockWell as any);
 
       const query = new GetWellByIdQuery(longWellId);
@@ -328,11 +349,11 @@ describe('GetWellByIdHandler', () => {
         new GetWellByIdQuery('well-3'),
       ];
 
-      const promises = queries.map(query => handler.execute(query));
+      const promises = queries.map((query) => handler.execute(query));
       const results = await Promise.all(promises);
 
       expect(results).toHaveLength(3);
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result).toBeDefined();
       });
       expect(wellRepository.findById).toHaveBeenCalledTimes(3);
@@ -341,14 +362,20 @@ describe('GetWellByIdHandler', () => {
     it('should handle repository timeout errors', async () => {
       wellRepository.findById.mockRejectedValue(new Error('Query timeout'));
 
-      await expect(handler.execute(validQuery)).rejects.toThrow('Query timeout');
+      await expect(handler.execute(validQuery)).rejects.toThrow(
+        'Query timeout',
+      );
       expect(wellRepository.findById).toHaveBeenCalledWith('well-123');
     });
 
     it('should handle repository network errors', async () => {
-      wellRepository.findById.mockRejectedValue(new Error('Network unreachable'));
+      wellRepository.findById.mockRejectedValue(
+        new Error('Network unreachable'),
+      );
 
-      await expect(handler.execute(validQuery)).rejects.toThrow('Network unreachable');
+      await expect(handler.execute(validQuery)).rejects.toThrow(
+        'Network unreachable',
+      );
       expect(wellRepository.findById).toHaveBeenCalledWith('well-123');
     });
   });

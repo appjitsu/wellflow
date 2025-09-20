@@ -55,8 +55,6 @@ import { AuditLogInterceptor } from './presentation/interceptors/audit-log.inter
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(LogRocketMiddleware)
-      .forRoutes('*'); // Apply to all routes
+    consumer.apply(LogRocketMiddleware).forRoutes('*'); // Apply to all routes
   }
 }

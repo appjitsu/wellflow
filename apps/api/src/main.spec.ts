@@ -1,5 +1,4 @@
 describe('Bootstrap Function', () => {
-
   describe('Application Bootstrap', () => {
     it('should be testable', () => {
       // Bootstrap function should be testable without execution

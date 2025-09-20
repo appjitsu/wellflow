@@ -67,7 +67,9 @@ describe('Strategic Coverage Boost Tests', () => {
     });
 
     it('should handle configuration', () => {
-      mockConfigService.get.mockReturnValue('postgresql://localhost:5432/wellflow');
+      mockConfigService.get.mockReturnValue(
+        'postgresql://localhost:5432/wellflow',
+      );
       expect(databaseService).toBeDefined();
     });
 
@@ -78,14 +80,16 @@ describe('Strategic Coverage Boost Tests', () => {
         'postgresql://prod-db:5432/wellflow_prod',
       ];
 
-      testUrls.forEach(url => {
+      testUrls.forEach((url) => {
         mockConfigService.get.mockReturnValue(url);
         expect(databaseService).toBeDefined();
       });
     });
 
     it('should handle SSL configurations', () => {
-      mockConfigService.get.mockReturnValue('postgresql://localhost:5432/wellflow?sslmode=require');
+      mockConfigService.get.mockReturnValue(
+        'postgresql://localhost:5432/wellflow?sslmode=require',
+      );
       expect(databaseService).toBeDefined();
     });
 
@@ -99,8 +103,15 @@ describe('Strategic Coverage Boost Tests', () => {
 
   describe('Redis Service Coverage', () => {
     it('should have all cache methods', () => {
-      const cacheMethods = ['set', 'get', 'del', 'exists', 'expire', 'getClient'];
-      cacheMethods.forEach(method => {
+      const cacheMethods = [
+        'set',
+        'get',
+        'del',
+        'exists',
+        'expire',
+        'getClient',
+      ];
+      cacheMethods.forEach((method) => {
         expect(redisService[method]).toBeDefined();
         expect(typeof redisService[method]).toBe('function');
       });
@@ -121,7 +132,7 @@ describe('Strategic Coverage Boost Tests', () => {
         'rediss://secure-redis:6380',
       ];
 
-      redisUrls.forEach(url => {
+      redisUrls.forEach((url) => {
         mockConfigService.get.mockReturnValue(url);
         expect(redisService).toBeDefined();
       });
@@ -137,7 +148,7 @@ describe('Strategic Coverage Boost Tests', () => {
 
     it('should support different Redis environments', () => {
       const environments = ['development', 'staging', 'production'];
-      environments.forEach(env => {
+      environments.forEach((env) => {
         mockConfigService.get.mockReturnValue(`redis://${env}-redis:6379`);
         expect(redisService).toBeDefined();
       });
@@ -146,8 +157,15 @@ describe('Strategic Coverage Boost Tests', () => {
 
   describe('Sentry Service Coverage', () => {
     it('should have all error tracking methods', () => {
-      const sentryMethods = ['captureException', 'captureMessage', 'setUser', 'setTag', 'setExtra', 'startSpan'];
-      sentryMethods.forEach(method => {
+      const sentryMethods = [
+        'captureException',
+        'captureMessage',
+        'setUser',
+        'setTag',
+        'setExtra',
+        'startSpan',
+      ];
+      sentryMethods.forEach((method) => {
         expect(sentryService[method]).toBeDefined();
         expect(typeof sentryService[method]).toBe('function');
       });
@@ -160,8 +178,12 @@ describe('Strategic Coverage Boost Tests', () => {
 
     it('should handle message capture', () => {
       expect(() => sentryService.captureMessage('Test message')).not.toThrow();
-      expect(() => sentryService.captureMessage('Error message', 'error')).not.toThrow();
-      expect(() => sentryService.captureMessage('Warning message', 'warning')).not.toThrow();
+      expect(() =>
+        sentryService.captureMessage('Error message', 'error'),
+      ).not.toThrow();
+      expect(() =>
+        sentryService.captureMessage('Warning message', 'warning'),
+      ).not.toThrow();
     });
 
     it('should handle user context', () => {
@@ -171,7 +193,7 @@ describe('Strategic Coverage Boost Tests', () => {
         { id: '789', email: 'admin@wellflow.com', username: 'admin' },
       ];
 
-      users.forEach(user => {
+      users.forEach((user) => {
         expect(() => sentryService.setUser(user)).not.toThrow();
       });
     });
@@ -211,7 +233,13 @@ describe('Strategic Coverage Boost Tests', () => {
       ];
 
       spans.forEach(([name, op, callback]) => {
-        expect(() => sentryService.startSpan(name as string, op as string, callback as () => any)).not.toThrow();
+        expect(() =>
+          sentryService.startSpan(
+            name as string,
+            op as string,
+            callback as () => any,
+          ),
+        ).not.toThrow();
       });
     });
   });
@@ -219,7 +247,7 @@ describe('Strategic Coverage Boost Tests', () => {
   describe('Oil & Gas Industry Integration', () => {
     it('should support well status tracking', () => {
       const statuses = Object.values(WellStatus);
-      statuses.forEach(status => {
+      statuses.forEach((status) => {
         expect(status).toBeDefined();
         expect(typeof status).toBe('string');
       });
@@ -233,32 +261,60 @@ describe('Strategic Coverage Boost Tests', () => {
         new Error('Well status transition not allowed'),
       ];
 
-      wellErrors.forEach(error => {
-        expect(() => sentryService.captureException(error, 'well-operations')).not.toThrow();
+      wellErrors.forEach((error) => {
+        expect(() =>
+          sentryService.captureException(error, 'well-operations'),
+        ).not.toThrow();
       });
     });
 
     it('should support operator context tracking', () => {
       const operators = [
         { id: 'op-123', email: 'operator1@oilcompany.com', role: 'operator' },
-        { id: 'op-456', email: 'operator2@gascompany.com', role: 'senior-operator' },
-        { id: 'op-789', email: 'supervisor@energycorp.com', role: 'supervisor' },
+        {
+          id: 'op-456',
+          email: 'operator2@gascompany.com',
+          role: 'senior-operator',
+        },
+        {
+          id: 'op-789',
+          email: 'supervisor@energycorp.com',
+          role: 'supervisor',
+        },
       ];
 
-      operators.forEach(operator => {
+      operators.forEach((operator) => {
         expect(() => sentryService.setUser(operator)).not.toThrow();
       });
     });
 
     it('should handle production monitoring', () => {
       const productionSpans = [
-        ['production.daily', 'monitoring', () => ({ barrels: 150, date: new Date() })],
-        ['production.monthly', 'monitoring', () => ({ barrels: 4500, month: 'January' })],
-        ['production.analysis', 'analytics', () => ({ trend: 'increasing', efficiency: 0.85 })],
+        [
+          'production.daily',
+          'monitoring',
+          () => ({ barrels: 150, date: new Date() }),
+        ],
+        [
+          'production.monthly',
+          'monitoring',
+          () => ({ barrels: 4500, month: 'January' }),
+        ],
+        [
+          'production.analysis',
+          'analytics',
+          () => ({ trend: 'increasing', efficiency: 0.85 }),
+        ],
       ];
 
       productionSpans.forEach(([name, op, callback]) => {
-        expect(() => sentryService.startSpan(name as string, op as string, callback as () => any)).not.toThrow();
+        expect(() =>
+          sentryService.startSpan(
+            name as string,
+            op as string,
+            callback as () => any,
+          ),
+        ).not.toThrow();
       });
     });
 
@@ -279,14 +335,16 @@ describe('Strategic Coverage Boost Tests', () => {
     it('should handle geographic data context', () => {
       const geoExtras = [
         ['latitude', 32.7767],
-        ['longitude', -96.7970],
+        ['longitude', -96.797],
         ['state', 'Texas'],
         ['county', 'Dallas'],
         ['field', 'Eagle Ford'],
       ];
 
       geoExtras.forEach(([key, value]) => {
-        expect(() => sentryService.setExtra(key as string, value)).not.toThrow();
+        expect(() =>
+          sentryService.setExtra(key as string, value),
+        ).not.toThrow();
       });
     });
   });
@@ -294,7 +352,7 @@ describe('Strategic Coverage Boost Tests', () => {
   describe('Configuration Management', () => {
     it('should handle environment-specific configs', () => {
       const environments = ['development', 'staging', 'production'];
-      environments.forEach(env => {
+      environments.forEach((env) => {
         mockConfigService.get.mockReturnValue(env);
         expect(databaseService).toBeDefined();
         expect(redisService).toBeDefined();
@@ -309,7 +367,7 @@ describe('Strategic Coverage Boost Tests', () => {
         'postgresql://prod-db:5432/wellflow_prod',
       ];
 
-      dbConfigs.forEach(config => {
+      dbConfigs.forEach((config) => {
         mockConfigService.get.mockReturnValue(config);
         expect(databaseService).toBeDefined();
       });
@@ -322,7 +380,7 @@ describe('Strategic Coverage Boost Tests', () => {
         'rediss://prod-redis:6380',
       ];
 
-      redisConfigs.forEach(config => {
+      redisConfigs.forEach((config) => {
         mockConfigService.get.mockReturnValue(config);
         expect(redisService).toBeDefined();
       });
@@ -337,7 +395,7 @@ describe('Strategic Coverage Boost Tests', () => {
 
     it('should handle invalid configurations', () => {
       const invalidConfigs = ['invalid-url', '', null, 123];
-      invalidConfigs.forEach(config => {
+      invalidConfigs.forEach((config) => {
         mockConfigService.get.mockReturnValue(config);
         expect(databaseService).toBeDefined();
         expect(redisService).toBeDefined();
@@ -364,7 +422,7 @@ describe('Strategic Coverage Boost Tests', () => {
         'https://unreachable-sentry.io/123456',
       ];
 
-      unreachableConfigs.forEach(config => {
+      unreachableConfigs.forEach((config) => {
         mockConfigService.get.mockReturnValue(config);
         expect(databaseService).toBeDefined();
         expect(redisService).toBeDefined();
@@ -378,7 +436,7 @@ describe('Strategic Coverage Boost Tests', () => {
         'redis://invalid:auth@localhost:6379',
       ];
 
-      authConfigs.forEach(config => {
+      authConfigs.forEach((config) => {
         mockConfigService.get.mockReturnValue(config);
         expect(databaseService).toBeDefined();
         expect(redisService).toBeDefined();
@@ -409,7 +467,7 @@ describe('Strategic Coverage Boost Tests', () => {
         'redis://redis-1:6379,redis-2:6379,redis-3:6379',
       ];
 
-      haConfigs.forEach(config => {
+      haConfigs.forEach((config) => {
         mockConfigService.get.mockReturnValue(config);
         expect(databaseService).toBeDefined();
         expect(redisService).toBeDefined();

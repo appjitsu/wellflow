@@ -71,7 +71,9 @@ export class Location {
    */
   getFullAddress(): string {
     // Only include country if other address components are present
-    const addressParts = [this.address, this.county, this.state].filter(Boolean);
+    const addressParts = [this.address, this.county, this.state].filter(
+      Boolean,
+    );
     if (addressParts.length > 0) {
       addressParts.push(this.country);
     }

@@ -62,7 +62,9 @@ describe('RedisService', () => {
   describe('onModuleInit', () => {
     it('should create Redis client with default URL', async () => {
       // Mock the get method to return the default value when called
-      mockConfigService.get.mockImplementation((key, defaultValue) => defaultValue);
+      mockConfigService.get.mockImplementation(
+        (key, defaultValue) => defaultValue,
+      );
 
       await service.onModuleInit();
 
@@ -92,9 +94,18 @@ describe('RedisService', () => {
     it('should set up event listeners', async () => {
       await service.onModuleInit();
 
-      expect(mockRedisClient.on).toHaveBeenCalledWith('error', expect.any(Function));
-      expect(mockRedisClient.on).toHaveBeenCalledWith('connect', expect.any(Function));
-      expect(mockRedisClient.on).toHaveBeenCalledWith('disconnect', expect.any(Function));
+      expect(mockRedisClient.on).toHaveBeenCalledWith(
+        'error',
+        expect.any(Function),
+      );
+      expect(mockRedisClient.on).toHaveBeenCalledWith(
+        'connect',
+        expect.any(Function),
+      );
+      expect(mockRedisClient.on).toHaveBeenCalledWith(
+        'disconnect',
+        expect.any(Function),
+      );
     });
 
     it('should handle connection errors', async () => {
@@ -111,16 +122,27 @@ describe('RedisService', () => {
       await service.onModuleInit();
 
       // Simulate event callbacks
-      const errorCallback = mockRedisClient.on.mock.calls.find(call => call[0] === 'error')[1];
-      const connectCallback = mockRedisClient.on.mock.calls.find(call => call[0] === 'connect')[1];
-      const disconnectCallback = mockRedisClient.on.mock.calls.find(call => call[0] === 'disconnect')[1];
+      const errorCallback = mockRedisClient.on.mock.calls.find(
+        (call) => call[0] === 'error',
+      )[1];
+      const connectCallback = mockRedisClient.on.mock.calls.find(
+        (call) => call[0] === 'connect',
+      )[1];
+      const disconnectCallback = mockRedisClient.on.mock.calls.find(
+        (call) => call[0] === 'disconnect',
+      )[1];
 
       errorCallback(new Error('Test error'));
       connectCallback();
       disconnectCallback();
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Redis Client Error:', expect.any(Error));
-      expect(consoleSpy).toHaveBeenCalledWith('✅ Redis connected successfully');
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Redis Client Error:',
+        expect.any(Error),
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '✅ Redis connected successfully',
+      );
       expect(consoleSpy).toHaveBeenCalledWith('🔌 Redis disconnected');
 
       consoleSpy.mockRestore();
@@ -201,14 +223,21 @@ describe('RedisService', () => {
       it('should set value without TTL', async () => {
         await service.set('test-key', 'test-value');
 
-        expect(mockRedisClient.set).toHaveBeenCalledWith('test-key', 'test-value');
+        expect(mockRedisClient.set).toHaveBeenCalledWith(
+          'test-key',
+          'test-value',
+        );
         expect(mockRedisClient.setEx).not.toHaveBeenCalled();
       });
 
       it('should set value with TTL', async () => {
         await service.set('test-key', 'test-value', 3600);
 
-        expect(mockRedisClient.setEx).toHaveBeenCalledWith('test-key', 3600, 'test-value');
+        expect(mockRedisClient.setEx).toHaveBeenCalledWith(
+          'test-key',
+          3600,
+          'test-value',
+        );
         expect(mockRedisClient.set).not.toHaveBeenCalled();
       });
     });
@@ -302,7 +331,11 @@ describe('RedisService', () => {
 
         const result = await service.hSet('hash-key', 'field', 'value');
 
-        expect(mockRedisClient.hSet).toHaveBeenCalledWith('hash-key', 'field', 'value');
+        expect(mockRedisClient.hSet).toHaveBeenCalledWith(
+          'hash-key',
+          'field',
+          'value',
+        );
         expect(result).toBe(1);
       });
     });
@@ -342,12 +375,16 @@ describe('RedisService', () => {
         waterProduction: 50,
       });
 
-      await service.set(`well:${wellId}:production:2024-01-01`, productionData, 86400);
+      await service.set(
+        `well:${wellId}:production:2024-01-01`,
+        productionData,
+        86400,
+      );
 
       expect(mockRedisClient.setEx).toHaveBeenCalledWith(
         `well:${wellId}:production:2024-01-01`,
         86400,
-        productionData
+        productionData,
       );
     });
 
@@ -360,7 +397,7 @@ describe('RedisService', () => {
       expect(mockRedisClient.hSet).toHaveBeenCalledWith(
         'operator:permissions',
         operatorId,
-        permissions
+        permissions,
       );
     });
 
@@ -377,7 +414,7 @@ describe('RedisService', () => {
       expect(mockRedisClient.setEx).toHaveBeenCalledWith(
         `compliance:${wellId}`,
         3600,
-        complianceStatus
+        complianceStatus,
       );
     });
 
@@ -395,7 +432,7 @@ describe('RedisService', () => {
       expect(mockRedisClient.setEx).toHaveBeenCalledWith(
         `session:${sessionId}`,
         1800,
-        sessionData
+        sessionData,
       );
     });
   });
@@ -414,13 +451,17 @@ describe('RedisService', () => {
     it('should handle connection errors during operations', async () => {
       mockRedisClient.set.mockRejectedValue(new Error('Connection lost'));
 
-      await expect(service.set('test-key', 'value')).rejects.toThrow('Connection lost');
+      await expect(service.set('test-key', 'value')).rejects.toThrow(
+        'Connection lost',
+      );
     });
 
     it('should handle hash operation errors', async () => {
       mockRedisClient.hGet.mockRejectedValue(new Error('Hash error'));
 
-      await expect(service.hGet('hash-key', 'field')).rejects.toThrow('Hash error');
+      await expect(service.hGet('hash-key', 'field')).rejects.toThrow(
+        'Hash error',
+      );
     });
   });
 });

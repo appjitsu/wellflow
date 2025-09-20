@@ -5,7 +5,9 @@ import { LogRocketService } from '../logrocket/logrocket.service';
 @Injectable()
 export class SentryService {
   constructor(
-    @Optional() @Inject(LogRocketService) private readonly logRocketService?: LogRocketService,
+    @Optional()
+    @Inject(LogRocketService)
+    private readonly logRocketService?: LogRocketService,
   ) {}
   /**
    * Capture an exception with Sentry and LogRocket integration

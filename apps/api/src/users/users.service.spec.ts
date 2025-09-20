@@ -57,26 +57,26 @@ describe('UsersService', () => {
     const mockDb = {
       insert: jest.fn().mockReturnValue({
         values: jest.fn().mockReturnValue({
-          returning: jest.fn().mockResolvedValue([mockUser])
-        })
+          returning: jest.fn().mockResolvedValue([mockUser]),
+        }),
       }),
       select: jest.fn().mockReturnValue({
         from: jest.fn().mockReturnValue({
           where: jest.fn().mockReturnValue({
-            limit: jest.fn().mockResolvedValue([mockUser])
-          })
-        })
+            limit: jest.fn().mockResolvedValue([mockUser]),
+          }),
+        }),
       }),
       update: jest.fn().mockReturnValue({
         set: jest.fn().mockReturnValue({
           where: jest.fn().mockReturnValue({
-            returning: jest.fn().mockResolvedValue([mockUser])
-          })
-        })
+            returning: jest.fn().mockResolvedValue([mockUser]),
+          }),
+        }),
       }),
       delete: jest.fn().mockReturnValue({
-        where: jest.fn().mockResolvedValue({ rowCount: 1 })
-      })
+        where: jest.fn().mockResolvedValue({ rowCount: 1 }),
+      }),
     };
 
     // Override the database service to return our mock
@@ -127,8 +127,8 @@ describe('UsersService', () => {
       const mockDb = mockDatabaseService.getDb();
       mockDb.insert.mockReturnValue({
         values: jest.fn().mockReturnValue({
-          returning: jest.fn().mockRejectedValue(error)
-        })
+          returning: jest.fn().mockRejectedValue(error),
+        }),
       });
 
       await expect(service.createUser(mockNewUser)).rejects.toThrow(error);
@@ -147,8 +147,8 @@ describe('UsersService', () => {
       const mockDb = mockDatabaseService.getDb();
       mockDb.insert.mockReturnValue({
         values: jest.fn().mockReturnValue({
-          returning: jest.fn().mockResolvedValue([createdUser])
-        })
+          returning: jest.fn().mockResolvedValue([createdUser]),
+        }),
       });
 
       const result = await service.createUser(minimalUser);
@@ -197,9 +197,9 @@ describe('UsersService', () => {
       mockDb.select.mockReturnValue({
         from: jest.fn().mockReturnValue({
           where: jest.fn().mockReturnValue({
-            limit: jest.fn().mockResolvedValue([])
-          })
-        })
+            limit: jest.fn().mockResolvedValue([]),
+          }),
+        }),
       });
 
       const result = await service.getUserById(999);
@@ -223,9 +223,9 @@ describe('UsersService', () => {
       mockDb.select.mockReturnValue({
         from: jest.fn().mockReturnValue({
           where: jest.fn().mockReturnValue({
-            limit: jest.fn().mockRejectedValue(error)
-          })
-        })
+            limit: jest.fn().mockRejectedValue(error),
+          }),
+        }),
       });
 
       await expect(service.getUserById(1)).rejects.toThrow(error);
@@ -276,9 +276,9 @@ describe('UsersService', () => {
       mockDb.select.mockReturnValue({
         from: jest.fn().mockReturnValue({
           where: jest.fn().mockReturnValue({
-            limit: jest.fn().mockResolvedValue([])
-          })
-        })
+            limit: jest.fn().mockResolvedValue([]),
+          }),
+        }),
       });
 
       const result = await service.getUserByEmail(email);
@@ -300,9 +300,9 @@ describe('UsersService', () => {
       mockDb.select.mockReturnValue({
         from: jest.fn().mockReturnValue({
           where: jest.fn().mockReturnValue({
-            limit: jest.fn().mockResolvedValue([userWithSpecialEmail])
-          })
-        })
+            limit: jest.fn().mockResolvedValue([userWithSpecialEmail]),
+          }),
+        }),
       });
 
       const result = await service.getUserByEmail(specialEmail);
@@ -314,12 +314,15 @@ describe('UsersService', () => {
 
   describe('getAllUsers', () => {
     it('should return all users from database', async () => {
-      const users = [mockUser, { ...mockUser, id: 2, email: 'user2@example.com' }];
+      const users = [
+        mockUser,
+        { ...mockUser, id: 2, email: 'user2@example.com' },
+      ];
 
       // Override the default mock to return multiple users
       const mockDb = mockDatabaseService.getDb();
       mockDb.select.mockReturnValue({
-        from: jest.fn().mockResolvedValue(users)
+        from: jest.fn().mockResolvedValue(users),
       });
 
       const result = await service.getAllUsers();
@@ -332,7 +335,7 @@ describe('UsersService', () => {
       // Override the default mock to return empty array
       const mockDb = mockDatabaseService.getDb();
       mockDb.select.mockReturnValue({
-        from: jest.fn().mockResolvedValue([])
+        from: jest.fn().mockResolvedValue([]),
       });
 
       const result = await service.getAllUsers();
@@ -346,7 +349,7 @@ describe('UsersService', () => {
       // Override the default mock to throw error
       const mockDb = mockDatabaseService.getDb();
       mockDb.select.mockReturnValue({
-        from: jest.fn().mockRejectedValue(error)
+        from: jest.fn().mockRejectedValue(error),
       });
 
       await expect(service.getAllUsers()).rejects.toThrow(error);
@@ -366,9 +369,9 @@ describe('UsersService', () => {
       mockDb.update.mockReturnValue({
         set: jest.fn().mockReturnValue({
           where: jest.fn().mockReturnValue({
-            returning: jest.fn().mockResolvedValue([updatedUser])
-          })
-        })
+            returning: jest.fn().mockResolvedValue([updatedUser]),
+          }),
+        }),
       });
 
       const result = await service.updateUser(1, updateData);
@@ -384,22 +387,28 @@ describe('UsersService', () => {
 
     it('should update email and manage email cache', async () => {
       const emailUpdateData = { email: 'newemail@example.com' };
-      const updatedUser = { ...mockUser, ...emailUpdateData, updatedAt: new Date() };
+      const updatedUser = {
+        ...mockUser,
+        ...emailUpdateData,
+        updatedAt: new Date(),
+      };
 
       // Override the default mock to return updated user
       const mockDb = mockDatabaseService.getDb();
       mockDb.update.mockReturnValue({
         set: jest.fn().mockReturnValue({
           where: jest.fn().mockReturnValue({
-            returning: jest.fn().mockResolvedValue([updatedUser])
-          })
-        })
+            returning: jest.fn().mockResolvedValue([updatedUser]),
+          }),
+        }),
       });
 
       const result = await service.updateUser(1, emailUpdateData);
 
       expect(result).toEqual(updatedUser);
-      expect(mockRedisService.del).toHaveBeenCalledWith(`user:email:${emailUpdateData.email}`);
+      expect(mockRedisService.del).toHaveBeenCalledWith(
+        `user:email:${emailUpdateData.email}`,
+      );
       expect(mockRedisService.set).toHaveBeenCalledWith(
         `user:email:${updatedUser.email}`,
         JSON.stringify(updatedUser),
@@ -413,9 +422,9 @@ describe('UsersService', () => {
       mockDb.update.mockReturnValue({
         set: jest.fn().mockReturnValue({
           where: jest.fn().mockReturnValue({
-            returning: jest.fn().mockResolvedValue([])
-          })
-        })
+            returning: jest.fn().mockResolvedValue([]),
+          }),
+        }),
       });
 
       const result = await service.updateUser(999, updateData);
@@ -432,9 +441,9 @@ describe('UsersService', () => {
       mockDb.update.mockReturnValue({
         set: jest.fn().mockReturnValue({
           where: jest.fn().mockReturnValue({
-            returning: jest.fn().mockRejectedValue(error)
-          })
-        })
+            returning: jest.fn().mockRejectedValue(error),
+          }),
+        }),
       });
 
       await expect(service.updateUser(1, updateData)).rejects.toThrow(error);
@@ -451,7 +460,7 @@ describe('UsersService', () => {
       // Override the default mock to return rowCount: 1
       const mockDb = mockDatabaseService.getDb();
       mockDb.delete.mockReturnValue({
-        where: jest.fn().mockResolvedValue({ rowCount: 1 })
+        where: jest.fn().mockResolvedValue({ rowCount: 1 }),
       });
 
       const result = await service.deleteUser(1);
@@ -460,14 +469,16 @@ describe('UsersService', () => {
       expect(service.getUserById).toHaveBeenCalledWith(1);
       expect(mockDatabaseService.getDb).toHaveBeenCalled();
       expect(mockRedisService.del).toHaveBeenCalledWith('user:1');
-      expect(mockRedisService.del).toHaveBeenCalledWith(`user:email:${mockUser.email}`);
+      expect(mockRedisService.del).toHaveBeenCalledWith(
+        `user:email:${mockUser.email}`,
+      );
     });
 
     it('should return false if user not found during deletion', async () => {
       // Override the default mock to return rowCount: 0
       const mockDb = mockDatabaseService.getDb();
       mockDb.delete.mockReturnValue({
-        where: jest.fn().mockResolvedValue({ rowCount: 0 })
+        where: jest.fn().mockResolvedValue({ rowCount: 0 }),
       });
 
       const result = await service.deleteUser(999);
@@ -484,7 +495,9 @@ describe('UsersService', () => {
 
       expect(result).toBe(true);
       expect(mockRedisService.del).toHaveBeenCalledWith('user:1');
-      expect(mockRedisService.del).not.toHaveBeenCalledWith(expect.stringContaining('user:email:'));
+      expect(mockRedisService.del).not.toHaveBeenCalledWith(
+        expect.stringContaining('user:email:'),
+      );
     });
 
     it('should handle database errors during deletion', async () => {
@@ -493,7 +506,7 @@ describe('UsersService', () => {
       // Override the default mock to throw error
       const mockDb = mockDatabaseService.getDb();
       mockDb.delete.mockReturnValue({
-        where: jest.fn().mockRejectedValue(error)
+        where: jest.fn().mockRejectedValue(error),
       });
 
       await expect(service.deleteUser(1)).rejects.toThrow(error);
@@ -550,9 +563,9 @@ describe('UsersService', () => {
       mockDb.select.mockReturnValue({
         from: jest.fn().mockReturnValue({
           where: jest.fn().mockReturnValue({
-            limit: jest.fn().mockResolvedValue([])
-          })
-        })
+            limit: jest.fn().mockResolvedValue([]),
+          }),
+        }),
       });
 
       const result = await service.getUserById(-1);
@@ -569,9 +582,9 @@ describe('UsersService', () => {
       mockDb.select.mockReturnValue({
         from: jest.fn().mockReturnValue({
           where: jest.fn().mockReturnValue({
-            limit: jest.fn().mockResolvedValue([])
-          })
-        })
+            limit: jest.fn().mockResolvedValue([]),
+          }),
+        }),
       });
 
       const result = await service.getUserById(0);
@@ -589,9 +602,9 @@ describe('UsersService', () => {
       mockDb.select.mockReturnValue({
         from: jest.fn().mockReturnValue({
           where: jest.fn().mockReturnValue({
-            limit: jest.fn().mockResolvedValue([])
-          })
-        })
+            limit: jest.fn().mockResolvedValue([]),
+          }),
+        }),
       });
 
       const result = await service.getUserById(largeId);

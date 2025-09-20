@@ -1,7 +1,6 @@
 import { RedisModule } from './redis.module';
 
 describe('RedisModule', () => {
-
   describe('Module Configuration', () => {
     it('should be defined', () => {
       expect(RedisModule).toBeDefined();

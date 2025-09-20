@@ -84,7 +84,7 @@ describe('RedisService (Simple)', () => {
   describe('configuration', () => {
     it('should use config service for Redis URL', () => {
       mockConfigService.get.mockReturnValue('redis://localhost:6379');
-      
+
       // Verify config service is used
       expect(configService).toBeDefined();
       expect(mockConfigService.get).toBeDefined();
@@ -92,7 +92,7 @@ describe('RedisService (Simple)', () => {
 
     it('should handle default configuration', () => {
       mockConfigService.get.mockReturnValue(undefined);
-      
+
       // Service should handle undefined config gracefully
       expect(service).toBeDefined();
     });
@@ -100,14 +100,14 @@ describe('RedisService (Simple)', () => {
     it('should handle custom Redis URL', () => {
       const customUrl = 'redis://custom-host:6380';
       mockConfigService.get.mockReturnValue(customUrl);
-      
+
       expect(service).toBeDefined();
     });
 
     it('should handle Redis URL with auth', () => {
       const authUrl = 'redis://user:pass@localhost:6379';
       mockConfigService.get.mockReturnValue(authUrl);
-      
+
       expect(service).toBeDefined();
     });
   });
@@ -124,22 +124,29 @@ describe('RedisService (Simple)', () => {
 
     it('should handle invalid Redis URL', () => {
       mockConfigService.get.mockReturnValue('invalid-url');
-      
+
       expect(service).toBeDefined();
     });
 
     it('should handle null config values', () => {
       mockConfigService.get.mockReturnValue(null);
-      
+
       expect(service).toBeDefined();
     });
   });
 
   describe('service methods', () => {
     it('should have all required cache methods', () => {
-      const requiredMethods = ['set', 'get', 'del', 'exists', 'expire', 'getClient'];
-      
-      requiredMethods.forEach(method => {
+      const requiredMethods = [
+        'set',
+        'get',
+        'del',
+        'exists',
+        'expire',
+        'getClient',
+      ];
+
+      requiredMethods.forEach((method) => {
         expect(service[method]).toBeDefined();
         expect(typeof service[method]).toBe('function');
       });
@@ -147,8 +154,8 @@ describe('RedisService (Simple)', () => {
 
     it('should have lifecycle methods', () => {
       const lifecycleMethods = ['onModuleInit', 'onModuleDestroy'];
-      
-      lifecycleMethods.forEach(method => {
+
+      lifecycleMethods.forEach((method) => {
         expect(service[method]).toBeDefined();
         expect(typeof service[method]).toBe('function');
       });

@@ -21,7 +21,7 @@ describe('WellRepositoryImpl', () => {
     location: {
       coordinates: {
         latitude: 32.7767,
-        longitude: -96.7970,
+        longitude: -96.797,
       },
       address: '123 Oil Field Rd',
       county: 'Dallas',
@@ -84,7 +84,7 @@ describe('WellRepositoryImpl', () => {
     let testWell: Well;
 
     beforeEach(() => {
-      const coordinates = new Coordinates(32.7767, -96.7970);
+      const coordinates = new Coordinates(32.7767, -96.797);
       const location = new Location(coordinates, {
         address: '123 Oil Field Rd',
         county: 'Dallas',
@@ -162,7 +162,9 @@ describe('WellRepositoryImpl', () => {
     it('should handle database errors during findById', async () => {
       mockDb.limit.mockRejectedValueOnce(new Error('Database error'));
 
-      await expect(repository.findById('well-123')).rejects.toThrow('Database error');
+      await expect(repository.findById('well-123')).rejects.toThrow(
+        'Database error',
+      );
     });
   });
 
@@ -190,7 +192,10 @@ describe('WellRepositoryImpl', () => {
 
   describe('findByOperatorId', () => {
     it('should return wells for operator', async () => {
-      mockDb.where.mockResolvedValueOnce([mockWellData, { ...mockWellData, id: 'well-456' }]);
+      mockDb.where.mockResolvedValueOnce([
+        mockWellData,
+        { ...mockWellData, id: 'well-456' },
+      ]);
 
       const result = await repository.findByOperatorId('operator-123');
 
@@ -231,7 +236,7 @@ describe('WellRepositoryImpl', () => {
     it('should return wells within radius', async () => {
       mockDb.where.mockResolvedValueOnce([mockWellData]);
 
-      const result = await repository.findByLocation(32.7767, -96.7970, 10);
+      const result = await repository.findByLocation(32.7767, -96.797, 10);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toBeInstanceOf(Well);
@@ -315,7 +320,9 @@ describe('WellRepositoryImpl', () => {
     it('should handle database errors during delete', async () => {
       mockDb.where.mockRejectedValueOnce(new Error('Database error'));
 
-      await expect(repository.delete('well-123')).rejects.toThrow('Database error');
+      await expect(repository.delete('well-123')).rejects.toThrow(
+        'Database error',
+      );
     });
   });
 
@@ -360,8 +367,12 @@ describe('WellRepositoryImpl', () => {
       const result = await repository.findById('well-123');
 
       expect(result?.getLocation()).toBeInstanceOf(Location);
-      expect(result?.getLocation().getCoordinates().getLatitude()).toBe(32.7767);
-      expect(result?.getLocation().getCoordinates().getLongitude()).toBe(-96.7970);
+      expect(result?.getLocation().getCoordinates().getLatitude()).toBe(
+        32.7767,
+      );
+      expect(result?.getLocation().getCoordinates().getLongitude()).toBe(
+        -96.797,
+      );
     });
   });
 });

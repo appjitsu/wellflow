@@ -21,7 +21,7 @@ describe('GetWellByIdQuery', () => {
         'WellWithCamelCase',
       ];
 
-      wellIds.forEach(wellId => {
+      wellIds.forEach((wellId) => {
         const query = new GetWellByIdQuery(wellId);
         expect(query.wellId).toBe(wellId);
       });
@@ -32,7 +32,9 @@ describe('GetWellByIdQuery', () => {
       const query = new GetWellByIdQuery(uuidWellId);
 
       expect(query.wellId).toBe(uuidWellId);
-      expect(query.wellId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+      expect(query.wellId).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+      );
     });
 
     it('should handle numeric string wellIds', () => {
@@ -54,7 +56,7 @@ describe('GetWellByIdQuery', () => {
         'well=jkl',
       ];
 
-      specialWellIds.forEach(wellId => {
+      specialWellIds.forEach((wellId) => {
         const query = new GetWellByIdQuery(wellId);
         expect(query.wellId).toBe(wellId);
       });
@@ -93,7 +95,7 @@ describe('GetWellByIdQuery', () => {
       // Multiple accesses should return same value
       expect(query.wellId).toBe(wellId);
       expect(query.wellId).toBe(query.wellId);
-      
+
       const firstAccess = query.wellId;
       const secondAccess = query.wellId;
       expect(firstAccess).toBe(secondAccess);
@@ -101,7 +103,7 @@ describe('GetWellByIdQuery', () => {
 
     it('should be accessible as public readonly', () => {
       const query = new GetWellByIdQuery('well-789');
-      
+
       // Should be able to access the property
       expect(query.wellId).toBeDefined();
       expect(typeof query.wellId).toBe('string');
@@ -119,7 +121,7 @@ describe('GetWellByIdQuery', () => {
         'well\n123',
       ];
 
-      wellIds.forEach(wellId => {
+      wellIds.forEach((wellId) => {
         const query = new GetWellByIdQuery(wellId);
         expect(query.wellId).toBe(wellId);
       });
@@ -134,7 +136,7 @@ describe('GetWellByIdQuery', () => {
         'well-def-Ω',
       ];
 
-      unicodeWellIds.forEach(wellId => {
+      unicodeWellIds.forEach((wellId) => {
         const query = new GetWellByIdQuery(wellId);
         expect(query.wellId).toBe(wellId);
       });
@@ -150,7 +152,7 @@ describe('GetWellByIdQuery', () => {
         'well-abc',
       ];
 
-      wellIds.forEach(wellId => {
+      wellIds.forEach((wellId) => {
         const query = new GetWellByIdQuery(wellId);
         expect(query.wellId).toBe(wellId);
 
@@ -195,17 +197,17 @@ describe('GetWellByIdQuery', () => {
   describe('type checking', () => {
     it('should have string type for wellId', () => {
       const query = new GetWellByIdQuery('well-123');
-      
+
       expect(typeof query.wellId).toBe('string');
       expect(query.wellId).toEqual(expect.any(String));
     });
 
     it('should implement IQuery interface', () => {
       const query = new GetWellByIdQuery('well-123');
-      
+
       // Should be an instance of GetWellByIdQuery
       expect(query).toBeInstanceOf(GetWellByIdQuery);
-      
+
       // Should have the expected structure
       expect(query).toHaveProperty('wellId');
     });

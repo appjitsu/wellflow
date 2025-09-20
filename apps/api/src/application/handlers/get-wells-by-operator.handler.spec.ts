@@ -21,7 +21,13 @@ describe('GetWellsByOperatorHandler', () => {
     findWithPagination: jest.fn(),
   };
 
-  const createMockWell = (id: string, apiNumber: string, name: string, status: WellStatus = WellStatus.PLANNED, wellType: WellType = WellType.OIL) => ({
+  const createMockWell = (
+    id: string,
+    apiNumber: string,
+    name: string,
+    status: WellStatus = WellStatus.PLANNED,
+    wellType: WellType = WellType.OIL,
+  ) => ({
     getId: jest.fn().mockReturnValue(id),
     getApiNumber: jest.fn().mockReturnValue({ getValue: () => apiNumber }),
     getName: jest.fn().mockReturnValue(name),
@@ -31,7 +37,7 @@ describe('GetWellsByOperatorHandler', () => {
     getLocation: jest.fn().mockReturnValue({
       getCoordinates: () => ({
         getLatitude: () => 40.7128,
-        getLongitude: () => -74.0060,
+        getLongitude: () => -74.006,
       }),
       getAddress: () => '123 Main St',
       getCounty: () => 'Dallas',
@@ -40,7 +46,7 @@ describe('GetWellsByOperatorHandler', () => {
       toObject: () => ({
         coordinates: {
           latitude: 40.7128,
-          longitude: -74.0060,
+          longitude: -74.006,
         },
         address: '123 Main St',
         county: 'Dallas',
@@ -100,7 +106,7 @@ describe('GetWellsByOperatorHandler', () => {
           operatorId: 'operator-123',
           status: undefined,
           wellType: undefined,
-        }
+        },
       );
 
       expect(result).toEqual({
@@ -142,17 +148,29 @@ describe('GetWellsByOperatorHandler', () => {
       // Test page 1
       const query1 = new GetWellsByOperatorQuery('operator-123', 1, 10);
       await handler.execute(query1);
-      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(0, 10, expect.any(Object));
+      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(
+        0,
+        10,
+        expect.any(Object),
+      );
 
       // Test page 2
       const query2 = new GetWellsByOperatorQuery('operator-123', 2, 10);
       await handler.execute(query2);
-      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(10, 10, expect.any(Object));
+      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(
+        10,
+        10,
+        expect.any(Object),
+      );
 
       // Test page 3
       const query3 = new GetWellsByOperatorQuery('operator-123', 3, 10);
       await handler.execute(query3);
-      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(20, 10, expect.any(Object));
+      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(
+        20,
+        10,
+        expect.any(Object),
+      );
     });
 
     it('should handle different page sizes', async () => {
@@ -165,21 +183,40 @@ describe('GetWellsByOperatorHandler', () => {
       // Test page size 5
       const query1 = new GetWellsByOperatorQuery('operator-123', 1, 5);
       await handler.execute(query1);
-      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(0, 5, expect.any(Object));
+      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(
+        0,
+        5,
+        expect.any(Object),
+      );
 
       // Test page size 25
       const query2 = new GetWellsByOperatorQuery('operator-123', 1, 25);
       await handler.execute(query2);
-      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(0, 25, expect.any(Object));
+      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(
+        0,
+        25,
+        expect.any(Object),
+      );
 
       // Test page size 100
       const query3 = new GetWellsByOperatorQuery('operator-123', 1, 100);
       await handler.execute(query3);
-      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(0, 100, expect.any(Object));
+      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(
+        0,
+        100,
+        expect.any(Object),
+      );
     });
 
     it('should handle status filter', async () => {
-      const mockWells = [createMockWell('well-1', '42-123-00001', 'Well 1', WellStatus.PRODUCING)];
+      const mockWells = [
+        createMockWell(
+          'well-1',
+          '42-123-00001',
+          'Well 1',
+          WellStatus.PRODUCING,
+        ),
+      ];
       wellRepository.findWithPagination.mockResolvedValue({
         wells: mockWells as any,
         total: 1,
@@ -189,27 +226,31 @@ describe('GetWellsByOperatorHandler', () => {
         'operator-123',
         1,
         10,
-        { status: WellStatus.PRODUCING }
+        { status: WellStatus.PRODUCING },
       );
 
       const result = await handler.execute(queryWithStatusFilter);
 
-      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(
-        0,
-        10,
-        {
-          operatorId: 'operator-123',
-          status: WellStatus.PRODUCING,
-          wellType: undefined,
-        }
-      );
+      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(0, 10, {
+        operatorId: 'operator-123',
+        status: WellStatus.PRODUCING,
+        wellType: undefined,
+      });
 
       expect(result.wells).toHaveLength(1);
       expect(result.wells[0].status).toBe(WellStatus.PRODUCING);
     });
 
     it('should handle well type filter', async () => {
-      const mockWells = [createMockWell('well-1', '42-123-00001', 'Well 1', WellStatus.PLANNED, WellType.GAS)];
+      const mockWells = [
+        createMockWell(
+          'well-1',
+          '42-123-00001',
+          'Well 1',
+          WellStatus.PLANNED,
+          WellType.GAS,
+        ),
+      ];
       wellRepository.findWithPagination.mockResolvedValue({
         wells: mockWells as any,
         total: 1,
@@ -219,27 +260,31 @@ describe('GetWellsByOperatorHandler', () => {
         'operator-123',
         1,
         10,
-        { wellType: WellType.GAS }
+        { wellType: WellType.GAS },
       );
 
       const result = await handler.execute(queryWithTypeFilter);
 
-      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(
-        0,
-        10,
-        {
-          operatorId: 'operator-123',
-          status: undefined,
-          wellType: WellType.GAS,
-        }
-      );
+      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(0, 10, {
+        operatorId: 'operator-123',
+        status: undefined,
+        wellType: WellType.GAS,
+      });
 
       expect(result.wells).toHaveLength(1);
       expect(result.wells[0].wellType).toBe(WellType.GAS);
     });
 
     it('should handle both status and well type filters', async () => {
-      const mockWells = [createMockWell('well-1', '42-123-00001', 'Well 1', WellStatus.DRILLING, WellType.GAS)];
+      const mockWells = [
+        createMockWell(
+          'well-1',
+          '42-123-00001',
+          'Well 1',
+          WellStatus.DRILLING,
+          WellType.GAS,
+        ),
+      ];
       wellRepository.findWithPagination.mockResolvedValue({
         wells: mockWells as any,
         total: 1,
@@ -249,23 +294,19 @@ describe('GetWellsByOperatorHandler', () => {
         'operator-123',
         1,
         10,
-        { 
+        {
           status: WellStatus.DRILLING,
-          wellType: WellType.GAS
-        }
+          wellType: WellType.GAS,
+        },
       );
 
       const result = await handler.execute(queryWithBothFilters);
 
-      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(
-        0,
-        10,
-        {
-          operatorId: 'operator-123',
-          status: WellStatus.DRILLING,
-          wellType: WellType.GAS,
-        }
-      );
+      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(0, 10, {
+        operatorId: 'operator-123',
+        status: WellStatus.DRILLING,
+        wellType: WellType.GAS,
+      });
 
       expect(result.wells).toHaveLength(1);
       expect(result.wells[0].status).toBe(WellStatus.DRILLING);
@@ -285,23 +326,25 @@ describe('GetWellsByOperatorHandler', () => {
         const query = new GetWellsByOperatorQuery(operatorId, 1, 10);
         await handler.execute(query);
 
-        expect(wellRepository.findWithPagination).toHaveBeenCalledWith(
-          0,
-          10,
-          {
-            operatorId,
-            status: undefined,
-            wellType: undefined,
-          }
-        );
+        expect(wellRepository.findWithPagination).toHaveBeenCalledWith(0, 10, {
+          operatorId,
+          status: undefined,
+          wellType: undefined,
+        });
       }
 
-      expect(wellRepository.findWithPagination).toHaveBeenCalledTimes(operatorIds.length);
+      expect(wellRepository.findWithPagination).toHaveBeenCalledTimes(
+        operatorIds.length,
+      );
     });
 
     it('should handle large datasets with proper pagination', async () => {
-      const mockWells = Array.from({ length: 10 }, (_, i) => 
-        createMockWell(`well-${i + 1}`, `42-123-${String(i + 1).padStart(5, '0')}`, `Well ${i + 1}`)
+      const mockWells = Array.from({ length: 10 }, (_, i) =>
+        createMockWell(
+          `well-${i + 1}`,
+          `42-123-${String(i + 1).padStart(5, '0')}`,
+          `Well ${i + 1}`,
+        ),
       );
 
       wellRepository.findWithPagination.mockResolvedValue({
@@ -315,7 +358,7 @@ describe('GetWellsByOperatorHandler', () => {
       expect(wellRepository.findWithPagination).toHaveBeenCalledWith(
         40, // (5-1) * 10 = 40
         10,
-        expect.any(Object)
+        expect.any(Object),
       );
 
       expect(result.wells).toHaveLength(10);
@@ -323,22 +366,38 @@ describe('GetWellsByOperatorHandler', () => {
     });
 
     it('should handle repository errors', async () => {
-      wellRepository.findWithPagination.mockRejectedValue(new Error('Database connection failed'));
+      wellRepository.findWithPagination.mockRejectedValue(
+        new Error('Database connection failed'),
+      );
 
-      await expect(handler.execute(validQuery)).rejects.toThrow('Database connection failed');
-      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(0, 10, expect.any(Object));
+      await expect(handler.execute(validQuery)).rejects.toThrow(
+        'Database connection failed',
+      );
+      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(
+        0,
+        10,
+        expect.any(Object),
+      );
     });
 
     it('should handle query timeout errors', async () => {
-      wellRepository.findWithPagination.mockRejectedValue(new Error('Query timeout'));
+      wellRepository.findWithPagination.mockRejectedValue(
+        new Error('Query timeout'),
+      );
 
-      await expect(handler.execute(validQuery)).rejects.toThrow('Query timeout');
+      await expect(handler.execute(validQuery)).rejects.toThrow(
+        'Query timeout',
+      );
     });
 
     it('should handle network errors', async () => {
-      wellRepository.findWithPagination.mockRejectedValue(new Error('Network unreachable'));
+      wellRepository.findWithPagination.mockRejectedValue(
+        new Error('Network unreachable'),
+      );
 
-      await expect(handler.execute(validQuery)).rejects.toThrow('Network unreachable');
+      await expect(handler.execute(validQuery)).rejects.toThrow(
+        'Network unreachable',
+      );
     });
 
     it('should handle all well statuses in filters', async () => {
@@ -352,13 +411,17 @@ describe('GetWellsByOperatorHandler', () => {
       ];
 
       for (const status of statuses) {
-        const mockWells = [createMockWell('well-1', '42-123-00001', 'Well 1', status)];
+        const mockWells = [
+          createMockWell('well-1', '42-123-00001', 'Well 1', status),
+        ];
         wellRepository.findWithPagination.mockResolvedValue({
           wells: mockWells as any,
           total: 1,
         });
 
-        const query = new GetWellsByOperatorQuery('operator-123', 1, 10, { status });
+        const query = new GetWellsByOperatorQuery('operator-123', 1, 10, {
+          status,
+        });
         const result = await handler.execute(query);
 
         expect(result.wells[0].status).toBe(status);
@@ -369,13 +432,23 @@ describe('GetWellsByOperatorHandler', () => {
       const types = [WellType.OIL, WellType.GAS];
 
       for (const wellType of types) {
-        const mockWells = [createMockWell('well-1', '42-123-00001', 'Well 1', WellStatus.PLANNED, wellType)];
+        const mockWells = [
+          createMockWell(
+            'well-1',
+            '42-123-00001',
+            'Well 1',
+            WellStatus.PLANNED,
+            wellType,
+          ),
+        ];
         wellRepository.findWithPagination.mockResolvedValue({
           wells: mockWells as any,
           total: 1,
         });
 
-        const query = new GetWellsByOperatorQuery('operator-123', 1, 10, { wellType });
+        const query = new GetWellsByOperatorQuery('operator-123', 1, 10, {
+          wellType,
+        });
         const result = await handler.execute(query);
 
         expect(result.wells[0].wellType).toBe(wellType);
@@ -392,12 +465,20 @@ describe('GetWellsByOperatorHandler', () => {
       // Test page 1, limit 1
       const query1 = new GetWellsByOperatorQuery('operator-123', 1, 1);
       await handler.execute(query1);
-      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(0, 1, expect.any(Object));
+      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(
+        0,
+        1,
+        expect.any(Object),
+      );
 
       // Test large page number
       const query2 = new GetWellsByOperatorQuery('operator-123', 1000, 10);
       await handler.execute(query2);
-      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(9990, 10, expect.any(Object));
+      expect(wellRepository.findWithPagination).toHaveBeenCalledWith(
+        9990,
+        10,
+        expect.any(Object),
+      );
     });
 
     it('should handle concurrent queries for different operators', async () => {
@@ -413,12 +494,14 @@ describe('GetWellsByOperatorHandler', () => {
         new GetWellsByOperatorQuery('operator-3', 1, 10),
       ];
 
-      const promises = queries.map(query => handler.execute(query));
+      const promises = queries.map((query) => handler.execute(query));
       const results = await Promise.all(promises);
 
       expect(results).toHaveLength(3);
-      results.forEach(result => {
-        expect(result.wells).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'well-1' })]));
+      results.forEach((result) => {
+        expect(result.wells).toEqual(
+          expect.arrayContaining([expect.objectContaining({ id: 'well-1' })]),
+        );
         expect(result.total).toBe(1);
       });
       expect(wellRepository.findWithPagination).toHaveBeenCalledTimes(3);
@@ -426,9 +509,27 @@ describe('GetWellsByOperatorHandler', () => {
 
     it('should handle mixed well types and statuses in results', async () => {
       const mockWells = [
-        createMockWell('well-1', '42-123-00001', 'Oil Well 1', WellStatus.PRODUCING, WellType.OIL),
-        createMockWell('well-2', '42-123-00002', 'Gas Well 1', WellStatus.DRILLING, WellType.GAS),
-        createMockWell('well-3', '42-123-00003', 'Oil Well 2', WellStatus.COMPLETED, WellType.OIL),
+        createMockWell(
+          'well-1',
+          '42-123-00001',
+          'Oil Well 1',
+          WellStatus.PRODUCING,
+          WellType.OIL,
+        ),
+        createMockWell(
+          'well-2',
+          '42-123-00002',
+          'Gas Well 1',
+          WellStatus.DRILLING,
+          WellType.GAS,
+        ),
+        createMockWell(
+          'well-3',
+          '42-123-00003',
+          'Oil Well 2',
+          WellStatus.COMPLETED,
+          WellType.OIL,
+        ),
       ];
 
       wellRepository.findWithPagination.mockResolvedValue({

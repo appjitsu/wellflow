@@ -1,7 +1,6 @@
 import { UsersModule } from './users.module';
 
 describe('UsersModule', () => {
-
   describe('Module Configuration', () => {
     it('should be defined', () => {
       expect(UsersModule).toBeDefined();

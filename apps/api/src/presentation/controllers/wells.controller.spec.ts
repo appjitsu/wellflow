@@ -89,7 +89,7 @@ describe('WellsController', () => {
         wellType: WellType.OIL,
         location: {
           latitude: 32.7767,
-          longitude: -96.7970,
+          longitude: -96.797,
           address: '123 Main St',
           county: 'Dallas County',
           state: 'TX',
@@ -110,7 +110,7 @@ describe('WellsController', () => {
       const result = await controller.createWell(createWellDto, mockRequest);
 
       expect(commandBus.execute).toHaveBeenCalledWith(
-        expect.any(CreateWellCommand)
+        expect.any(CreateWellCommand),
       );
       expect(result).toEqual({
         id: expectedWellId,
@@ -126,7 +126,7 @@ describe('WellsController', () => {
         wellType: WellType.OIL,
         location: {
           latitude: 32.7767,
-          longitude: -96.7970,
+          longitude: -96.797,
         },
       } as CreateWellDto;
 
@@ -134,13 +134,11 @@ describe('WellsController', () => {
         user: { id: 'user-123' },
       };
 
-      mockCommandBus.execute.mockRejectedValue(
-        new Error('Validation failed')
-      );
+      mockCommandBus.execute.mockRejectedValue(new Error('Validation failed'));
 
-      await expect(controller.createWell(invalidDto, mockRequest)).rejects.toThrow(
-        'Validation failed'
-      );
+      await expect(
+        controller.createWell(invalidDto, mockRequest),
+      ).rejects.toThrow('Validation failed');
     });
 
     it('should handle command execution errors', async () => {
@@ -151,7 +149,7 @@ describe('WellsController', () => {
         wellType: WellType.OIL,
         location: {
           latitude: 32.7767,
-          longitude: -96.7970,
+          longitude: -96.797,
         },
         spudDate: '2024-01-15',
         totalDepth: 8500,
@@ -162,12 +160,12 @@ describe('WellsController', () => {
       };
 
       mockCommandBus.execute.mockRejectedValue(
-        new Error('Database connection failed')
+        new Error('Database connection failed'),
       );
 
-      await expect(controller.createWell(createWellDto, mockRequest)).rejects.toThrow(
-        'Database connection failed'
-      );
+      await expect(
+        controller.createWell(createWellDto, mockRequest),
+      ).rejects.toThrow('Database connection failed');
     });
   });
 
@@ -189,7 +187,7 @@ describe('WellsController', () => {
       const result = await controller.getWellById(wellId);
 
       expect(queryBus.execute).toHaveBeenCalledWith(
-        expect.any(GetWellByIdQuery)
+        expect.any(GetWellByIdQuery),
       );
       expect(result).toEqual(expectedWell);
     });
@@ -208,11 +206,11 @@ describe('WellsController', () => {
       const wellId = 'well-123';
 
       mockQueryBus.execute.mockRejectedValue(
-        new Error('Database query failed')
+        new Error('Database query failed'),
       );
 
       await expect(controller.getWellById(wellId)).rejects.toThrow(
-        'Database query failed'
+        'Database query failed',
       );
     });
   });
@@ -247,7 +245,7 @@ describe('WellsController', () => {
       const result = await controller.getWellsByOperator(operatorId);
 
       expect(queryBus.execute).toHaveBeenCalledWith(
-        expect.any(GetWellsByOperatorQuery)
+        expect.any(GetWellsByOperatorQuery),
       );
       expect(result).toEqual({
         wells: expectedWells,
@@ -300,10 +298,14 @@ describe('WellsController', () => {
 
       mockQueryBus.execute.mockResolvedValue(mockQueryResult);
 
-      const result = await controller.getWellsByOperator(operatorId, page, limit);
+      const result = await controller.getWellsByOperator(
+        operatorId,
+        page,
+        limit,
+      );
 
       expect(queryBus.execute).toHaveBeenCalledWith(
-        expect.any(GetWellsByOperatorQuery)
+        expect.any(GetWellsByOperatorQuery),
       );
       expect(result).toEqual({
         wells: expectedWells,
@@ -329,10 +331,14 @@ describe('WellsController', () => {
 
       mockCommandBus.execute.mockResolvedValue(undefined);
 
-      const result = await controller.updateWellStatus(wellId, updateDto, mockRequest);
+      const result = await controller.updateWellStatus(
+        wellId,
+        updateDto,
+        mockRequest,
+      );
 
       expect(commandBus.execute).toHaveBeenCalledWith(
-        expect.any(UpdateWellStatusCommand)
+        expect.any(UpdateWellStatusCommand),
       );
       expect(result).toEqual({
         message: 'Well status updated successfully',
@@ -351,11 +357,11 @@ describe('WellsController', () => {
       };
 
       mockCommandBus.execute.mockRejectedValue(
-        new Error('Invalid status transition')
+        new Error('Invalid status transition'),
       );
 
       await expect(
-        controller.updateWellStatus(wellId, updateDto, mockRequest)
+        controller.updateWellStatus(wellId, updateDto, mockRequest),
       ).rejects.toThrow('Invalid status transition');
     });
 
@@ -370,12 +376,10 @@ describe('WellsController', () => {
         user: { id: 'user-456' },
       };
 
-      mockCommandBus.execute.mockRejectedValue(
-        new Error('Well not found')
-      );
+      mockCommandBus.execute.mockRejectedValue(new Error('Well not found'));
 
       await expect(
-        controller.updateWellStatus(wellId, updateDto, mockRequest)
+        controller.updateWellStatus(wellId, updateDto, mockRequest),
       ).rejects.toThrow('Well not found');
     });
   });
@@ -387,7 +391,7 @@ describe('WellsController', () => {
         apiNumber: '4212312345',
         operatorId: 'op-123',
         wellType: WellType.OIL,
-        location: { latitude: 32.7767, longitude: -96.7970 },
+        location: { latitude: 32.7767, longitude: -96.797 },
         spudDate: '2024-01-15',
         totalDepth: 8500,
       };
@@ -397,35 +401,33 @@ describe('WellsController', () => {
       };
 
       mockCommandBus.execute.mockRejectedValue(
-        new Error('Internal server error')
+        new Error('Internal server error'),
       );
 
-      await expect(controller.createWell(createWellDto, mockRequest)).rejects.toThrow(
-        'Internal server error'
-      );
+      await expect(
+        controller.createWell(createWellDto, mockRequest),
+      ).rejects.toThrow('Internal server error');
     });
 
     it('should handle query bus errors gracefully', async () => {
       const wellId = 'well-123';
 
       mockQueryBus.execute.mockRejectedValue(
-        new Error('Query execution failed')
+        new Error('Query execution failed'),
       );
 
       await expect(controller.getWellById(wellId)).rejects.toThrow(
-        'Query execution failed'
+        'Query execution failed',
       );
     });
 
     it('should handle timeout errors', async () => {
       const wellId = 'well-123';
 
-      mockQueryBus.execute.mockRejectedValue(
-        new Error('Request timeout')
-      );
+      mockQueryBus.execute.mockRejectedValue(new Error('Request timeout'));
 
       await expect(controller.getWellById(wellId)).rejects.toThrow(
-        'Request timeout'
+        'Request timeout',
       );
     });
   });
@@ -450,12 +452,10 @@ describe('WellsController', () => {
     it('should handle unauthorized access attempts', async () => {
       const wellId = 'well-unauthorized';
 
-      mockQueryBus.execute.mockRejectedValue(
-        new Error('Unauthorized access')
-      );
+      mockQueryBus.execute.mockRejectedValue(new Error('Unauthorized access'));
 
       await expect(controller.getWellById(wellId)).rejects.toThrow(
-        'Unauthorized access'
+        'Unauthorized access',
       );
     });
   });

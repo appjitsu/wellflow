@@ -163,7 +163,7 @@ describe('WellStatusChangedEvent', () => {
 
     it('should preserve metadata object reference', () => {
       const metadata = { key: 'value', nested: { prop: 'test' } };
-      
+
       const event = new WellStatusChangedEvent(
         'well-123',
         '42-123-45678',
@@ -212,7 +212,9 @@ describe('WellStatusChangedEvent', () => {
         'user-789',
       );
 
-      expect(event2.occurredAt.getTime()).toBeGreaterThan(event1.occurredAt.getTime());
+      expect(event2.occurredAt.getTime()).toBeGreaterThan(
+        event1.occurredAt.getTime(),
+      );
     });
   });
 

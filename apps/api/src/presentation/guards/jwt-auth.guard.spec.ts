@@ -44,7 +44,10 @@ describe('JwtAuthGuard', () => {
 
     it('should call super.canActivate for protected routes', () => {
       mockReflector.getAllAndOverride.mockReturnValue(false);
-      const superCanActivateSpy = jest.spyOn(Object.getPrototypeOf(Object.getPrototypeOf(guard)), 'canActivate');
+      const superCanActivateSpy = jest.spyOn(
+        Object.getPrototypeOf(Object.getPrototypeOf(guard)),
+        'canActivate',
+      );
       superCanActivateSpy.mockReturnValue(true);
 
       const result = guard.canActivate(mockExecutionContext);
@@ -61,7 +64,10 @@ describe('JwtAuthGuard', () => {
 
     it('should call super.canActivate when isPublic is undefined', () => {
       mockReflector.getAllAndOverride.mockReturnValue(undefined);
-      const superCanActivateSpy = jest.spyOn(Object.getPrototypeOf(Object.getPrototypeOf(guard)), 'canActivate');
+      const superCanActivateSpy = jest.spyOn(
+        Object.getPrototypeOf(Object.getPrototypeOf(guard)),
+        'canActivate',
+      );
       superCanActivateSpy.mockReturnValue(true);
 
       const result = guard.canActivate(mockExecutionContext);
@@ -74,7 +80,10 @@ describe('JwtAuthGuard', () => {
 
     it('should call super.canActivate when isPublic is null', () => {
       mockReflector.getAllAndOverride.mockReturnValue(null);
-      const superCanActivateSpy = jest.spyOn(Object.getPrototypeOf(Object.getPrototypeOf(guard)), 'canActivate');
+      const superCanActivateSpy = jest.spyOn(
+        Object.getPrototypeOf(Object.getPrototypeOf(guard)),
+        'canActivate',
+      );
       superCanActivateSpy.mockReturnValue(true);
 
       const result = guard.canActivate(mockExecutionContext);
@@ -183,7 +192,10 @@ describe('JwtAuthGuard', () => {
 
     it('should handle protected well management endpoint', () => {
       mockReflector.getAllAndOverride.mockReturnValue(false);
-      const superCanActivateSpy = jest.spyOn(Object.getPrototypeOf(Object.getPrototypeOf(guard)), 'canActivate');
+      const superCanActivateSpy = jest.spyOn(
+        Object.getPrototypeOf(Object.getPrototypeOf(guard)),
+        'canActivate',
+      );
       superCanActivateSpy.mockReturnValue(true);
 
       const result = guard.canActivate(mockExecutionContext);
@@ -196,7 +208,10 @@ describe('JwtAuthGuard', () => {
 
     it('should handle authentication failure for protected endpoint', () => {
       mockReflector.getAllAndOverride.mockReturnValue(false);
-      const superCanActivateSpy = jest.spyOn(Object.getPrototypeOf(Object.getPrototypeOf(guard)), 'canActivate');
+      const superCanActivateSpy = jest.spyOn(
+        Object.getPrototypeOf(Object.getPrototypeOf(guard)),
+        'canActivate',
+      );
       superCanActivateSpy.mockReturnValue(false);
 
       const result = guard.canActivate(mockExecutionContext);
@@ -288,7 +303,7 @@ describe('JwtAuthGuard', () => {
     it('should check both handler and class for public metadata', () => {
       const mockHandler = jest.fn();
       const mockClass = jest.fn();
-      
+
       mockExecutionContext.getHandler = jest.fn().mockReturnValue(mockHandler);
       mockExecutionContext.getClass = jest.fn().mockReturnValue(mockClass);
       mockReflector.getAllAndOverride.mockReturnValue(true);

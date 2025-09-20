@@ -27,11 +27,7 @@ describe('UpdateWellStatusCommand', () => {
       const newStatus = WellStatus.COMPLETED;
       const updatedBy = 'user-456';
 
-      const command = new UpdateWellStatusCommand(
-        wellId,
-        newStatus,
-        updatedBy,
-      );
+      const command = new UpdateWellStatusCommand(wellId, newStatus, updatedBy);
 
       expect(command.wellId).toBe(wellId);
       expect(command.newStatus).toBe(newStatus);
@@ -52,12 +48,8 @@ describe('UpdateWellStatusCommand', () => {
         WellStatus.PLUGGED,
       ];
 
-      statuses.forEach(status => {
-        const command = new UpdateWellStatusCommand(
-          wellId,
-          status,
-          updatedBy,
-        );
+      statuses.forEach((status) => {
+        const command = new UpdateWellStatusCommand(wellId, status, updatedBy);
 
         expect(command.newStatus).toBe(status);
         expect(command.wellId).toBe(wellId);
@@ -78,7 +70,7 @@ describe('UpdateWellStatusCommand', () => {
         '',
       ];
 
-      reasons.forEach(reason => {
+      reasons.forEach((reason) => {
         const command = new UpdateWellStatusCommand(
           wellId,
           newStatus,
@@ -102,12 +94,8 @@ describe('UpdateWellStatusCommand', () => {
         'john.doe@company.com',
       ];
 
-      userIds.forEach(userId => {
-        const command = new UpdateWellStatusCommand(
-          wellId,
-          newStatus,
-          userId,
-        );
+      userIds.forEach((userId) => {
+        const command = new UpdateWellStatusCommand(wellId, newStatus, userId);
 
         expect(command.updatedBy).toBe(userId);
       });
@@ -125,7 +113,7 @@ describe('UpdateWellStatusCommand', () => {
         'api-4212345678',
       ];
 
-      wellIds.forEach(wellId => {
+      wellIds.forEach((wellId) => {
         const command = new UpdateWellStatusCommand(
           wellId,
           newStatus,
@@ -202,8 +190,11 @@ describe('UpdateWellStatusCommand', () => {
     });
 
     it('should handle long reason text', () => {
-      const longReason = 'This is a very long reason that explains in great detail why the well status is being changed. '.repeat(5);
-      
+      const longReason =
+        'This is a very long reason that explains in great detail why the well status is being changed. '.repeat(
+          5,
+        );
+
       const command = new UpdateWellStatusCommand(
         'well-123',
         WellStatus.PLUGGED,
@@ -236,16 +227,44 @@ describe('UpdateWellStatusCommand', () => {
 
       // Common transition scenarios
       const transitions = [
-        { from: 'initial', to: WellStatus.PLANNED, reason: 'Well planning completed' },
-        { from: WellStatus.PLANNED, to: WellStatus.DRILLING, reason: 'Drilling commenced' },
-        { from: WellStatus.DRILLING, to: WellStatus.COMPLETED, reason: 'Drilling completed' },
-        { from: WellStatus.COMPLETED, to: WellStatus.PRODUCING, reason: 'Production started' },
-        { from: WellStatus.PRODUCING, to: WellStatus.SHUT_IN, reason: 'Temporary shutdown' },
-        { from: WellStatus.SHUT_IN, to: WellStatus.PRODUCING, reason: 'Resumed production' },
-        { from: WellStatus.PRODUCING, to: WellStatus.PLUGGED, reason: 'End of life' },
+        {
+          from: 'initial',
+          to: WellStatus.PLANNED,
+          reason: 'Well planning completed',
+        },
+        {
+          from: WellStatus.PLANNED,
+          to: WellStatus.DRILLING,
+          reason: 'Drilling commenced',
+        },
+        {
+          from: WellStatus.DRILLING,
+          to: WellStatus.COMPLETED,
+          reason: 'Drilling completed',
+        },
+        {
+          from: WellStatus.COMPLETED,
+          to: WellStatus.PRODUCING,
+          reason: 'Production started',
+        },
+        {
+          from: WellStatus.PRODUCING,
+          to: WellStatus.SHUT_IN,
+          reason: 'Temporary shutdown',
+        },
+        {
+          from: WellStatus.SHUT_IN,
+          to: WellStatus.PRODUCING,
+          reason: 'Resumed production',
+        },
+        {
+          from: WellStatus.PRODUCING,
+          to: WellStatus.PLUGGED,
+          reason: 'End of life',
+        },
       ];
 
-      transitions.forEach(transition => {
+      transitions.forEach((transition) => {
         const command = new UpdateWellStatusCommand(
           wellId,
           transition.to,

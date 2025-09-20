@@ -14,9 +14,11 @@ export class LogRocketService {
    */
   private initialize(): void {
     const appId = process.env.LOGROCKET_APP_ID;
-    
+
     if (!appId) {
-      console.warn('LogRocket: LOGROCKET_APP_ID not found in environment variables');
+      console.warn(
+        'LogRocket: LOGROCKET_APP_ID not found in environment variables',
+      );
       return;
     }
 
@@ -98,7 +100,11 @@ export class LogRocketService {
   /**
    * Add custom log entry
    */
-  log(message: string, level: 'info' | 'warn' | 'error' = 'info', extra?: Record<string, any>): void {
+  log(
+    message: string,
+    level: 'info' | 'warn' | 'error' = 'info',
+    extra?: Record<string, any>,
+  ): void {
     if (!this.isInitialized) {
       console.warn('LogRocket: Service not initialized');
       return;

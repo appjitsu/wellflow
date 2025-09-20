@@ -16,7 +16,7 @@ describe('CreateWellDto', () => {
       spudDate: '2024-01-15',
       location: {
         latitude: 32.7767,
-        longitude: -96.7970,
+        longitude: -96.797,
         address: '123 Main St',
         county: 'Dallas',
         state: 'TX',
@@ -35,7 +35,7 @@ describe('CreateWellDto', () => {
       dto.name = '';
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      const nameError = errors.find(error => error.property === 'name');
+      const nameError = errors.find((error) => error.property === 'name');
       expect(nameError).toBeDefined();
     });
 
@@ -43,7 +43,9 @@ describe('CreateWellDto', () => {
       dto.apiNumber = '';
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      const apiNumberError = errors.find(error => error.property === 'apiNumber');
+      const apiNumberError = errors.find(
+        (error) => error.property === 'apiNumber',
+      );
       expect(apiNumberError).toBeDefined();
     });
 
@@ -51,7 +53,9 @@ describe('CreateWellDto', () => {
       dto.operatorId = '';
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      const operatorIdError = errors.find(error => error.property === 'operatorId');
+      const operatorIdError = errors.find(
+        (error) => error.property === 'operatorId',
+      );
       expect(operatorIdError).toBeDefined();
     });
 
@@ -59,7 +63,9 @@ describe('CreateWellDto', () => {
       dto.wellType = 'invalid' as any;
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      const wellTypeError = errors.find(error => error.property === 'wellType');
+      const wellTypeError = errors.find(
+        (error) => error.property === 'wellType',
+      );
       expect(wellTypeError).toBeDefined();
     });
 
@@ -67,7 +73,9 @@ describe('CreateWellDto', () => {
       dto.location.latitude = 200; // Invalid latitude
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      const locationError = errors.find(error => error.property === 'location');
+      const locationError = errors.find(
+        (error) => error.property === 'location',
+      );
       expect(locationError).toBeDefined();
     });
 
@@ -75,7 +83,9 @@ describe('CreateWellDto', () => {
       dto.location.longitude = 200; // Invalid longitude
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      const locationError = errors.find(error => error.property === 'location');
+      const locationError = errors.find(
+        (error) => error.property === 'location',
+      );
       expect(locationError).toBeDefined();
     });
 
@@ -83,7 +93,9 @@ describe('CreateWellDto', () => {
       dto.spudDate = 'invalid-date';
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      const spudDateError = errors.find(error => error.property === 'spudDate');
+      const spudDateError = errors.find(
+        (error) => error.property === 'spudDate',
+      );
       expect(spudDateError).toBeDefined();
     });
 
@@ -95,7 +107,7 @@ describe('CreateWellDto', () => {
         wellType: WellType.GAS,
         location: {
           latitude: 32.7767,
-          longitude: -96.7970,
+          longitude: -96.797,
         },
       });
 
@@ -126,7 +138,7 @@ describe('CreateWellDto', () => {
       expect(dto.totalDepth).toBe(5000);
       expect(dto.spudDate).toBe('2024-01-15');
       expect(dto.location.latitude).toBe(32.7767);
-      expect(dto.location.longitude).toBe(-96.7970);
+      expect(dto.location.longitude).toBe(-96.797);
       expect(dto.location.address).toBe('123 Main St');
       expect(dto.location.county).toBe('Dallas');
       expect(dto.location.state).toBe('TX');
@@ -141,7 +153,7 @@ describe('CreateWellDto', () => {
         wellType: WellType.GAS,
         location: {
           latitude: 32.7767,
-          longitude: -96.7970,
+          longitude: -96.797,
         },
       });
 

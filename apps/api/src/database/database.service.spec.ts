@@ -131,8 +131,9 @@ describe('DatabaseService', () => {
 
     it('should use default values when config is missing', async () => {
       // Mock config service to return default values
-      mockConfigService.get
-        .mockImplementation((key: string, defaultValue?: any) => defaultValue);
+      mockConfigService.get.mockImplementation(
+        (key: string, defaultValue?: any) => defaultValue,
+      );
 
       mockPool.query.mockResolvedValue({ rows: [{ '?column?': 1 }] });
 

@@ -72,7 +72,10 @@ export class AppController {
   @Get('health/database')
   @Public()
   @ApiOperation({ summary: 'Database health and table status' })
-  @ApiResponse({ status: 200, description: 'Database status and table information' })
+  @ApiResponse({
+    status: 200,
+    description: 'Database status and table information',
+  })
   async getDatabaseHealth() {
     try {
       // Get database connection from service
@@ -90,8 +93,8 @@ export class AppController {
             migrationTableExists: false,
             usersTableExists: false,
             userCount: 0,
-            totalTables: 0
-          }
+            totalTables: 0,
+          },
         };
       }
 
@@ -105,7 +108,7 @@ export class AppController {
       `;
 
       const result = await db.execute(tablesQuery);
-      const tables = result.rows.map(row => row.table_name);
+      const tables = result.rows.map((row) => row.table_name);
 
       // Check if migration table exists
       const migrationTableExists = tables.includes('__drizzle_migrations');
@@ -117,7 +120,9 @@ export class AppController {
       let userCount = 0;
       if (usersTableExists) {
         try {
-          const countResult = await db.execute('SELECT COUNT(*) as count FROM users');
+          const countResult = await db.execute(
+            'SELECT COUNT(*) as count FROM users',
+          );
           userCount = parseInt(countResult.rows[0].count as string);
         } catch (error) {
           // Ignore count errors
@@ -133,8 +138,8 @@ export class AppController {
           migrationTableExists,
           usersTableExists,
           userCount,
-          totalTables: tables.length
-        }
+          totalTables: tables.length,
+        },
       };
     } catch (error) {
       return {
@@ -147,8 +152,8 @@ export class AppController {
           migrationTableExists: false,
           usersTableExists: false,
           userCount: 0,
-          totalTables: 0
-        }
+          totalTables: 0,
+        },
       };
     }
   }

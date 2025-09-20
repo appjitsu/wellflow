@@ -57,9 +57,15 @@ describe('High-Impact Coverage Tests', () => {
         }
       };
 
-      expect(getStatusDescription(WellStatus.DRILLING)).toBe('Well is being drilled');
-      expect(getStatusDescription(WellStatus.PRODUCING)).toBe('Well is producing oil/gas');
-      expect(getStatusDescription(WellStatus.PLUGGED)).toBe('Well is permanently plugged');
+      expect(getStatusDescription(WellStatus.DRILLING)).toBe(
+        'Well is being drilled',
+      );
+      expect(getStatusDescription(WellStatus.PRODUCING)).toBe(
+        'Well is producing oil/gas',
+      );
+      expect(getStatusDescription(WellStatus.PLUGGED)).toBe(
+        'Well is permanently plugged',
+      );
     });
   });
 
@@ -79,12 +85,15 @@ describe('High-Impact Coverage Tests', () => {
     });
 
     it('should format coordinates', () => {
-      const formatCoordinate = (coord: number, precision: number = 4): string => {
+      const formatCoordinate = (
+        coord: number,
+        precision: number = 4,
+      ): string => {
         return coord.toFixed(precision);
       };
 
       expect(formatCoordinate(32.7767)).toBe('32.7767');
-      expect(formatCoordinate(-96.7970)).toBe('-96.7970');
+      expect(formatCoordinate(-96.797)).toBe('-96.7970');
       expect(formatCoordinate(32.7767123, 2)).toBe('32.78');
     });
 
@@ -102,8 +111,8 @@ describe('High-Impact Coverage Tests', () => {
       expect(isValidLatitude(91)).toBe(false);
       expect(isValidLatitude(-91)).toBe(false);
 
-      expect(isValidLongitude(-96.7970)).toBe(true);
-      expect(isValidLongitude(96.7970)).toBe(true);
+      expect(isValidLongitude(-96.797)).toBe(true);
+      expect(isValidLongitude(96.797)).toBe(true);
       expect(isValidLongitude(181)).toBe(false);
       expect(isValidLongitude(-181)).toBe(false);
     });
@@ -112,8 +121,7 @@ describe('High-Impact Coverage Tests', () => {
       const calculateWellAge = (spudDate: Date): number => {
         const now = new Date();
         const diffTime = Math.abs(now.getTime() - spudDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays;
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       };
 
       const recentDate = new Date();
@@ -152,7 +160,10 @@ describe('High-Impact Coverage Tests', () => {
     });
 
     it('should handle well status transitions', () => {
-      const canTransitionTo = (currentStatus: WellStatus, newStatus: WellStatus): boolean => {
+      const canTransitionTo = (
+        currentStatus: WellStatus,
+        newStatus: WellStatus,
+      ): boolean => {
         // Plugged wells cannot transition to other statuses
         if (currentStatus === WellStatus.PLUGGED) {
           return false;
@@ -162,10 +173,18 @@ describe('High-Impact Coverage Tests', () => {
         return true;
       };
 
-      expect(canTransitionTo(WellStatus.DRILLING, WellStatus.COMPLETED)).toBe(true);
-      expect(canTransitionTo(WellStatus.COMPLETED, WellStatus.PRODUCING)).toBe(true);
-      expect(canTransitionTo(WellStatus.PRODUCING, WellStatus.SHUT_IN)).toBe(true);
-      expect(canTransitionTo(WellStatus.PLUGGED, WellStatus.PRODUCING)).toBe(false);
+      expect(canTransitionTo(WellStatus.DRILLING, WellStatus.COMPLETED)).toBe(
+        true,
+      );
+      expect(canTransitionTo(WellStatus.COMPLETED, WellStatus.PRODUCING)).toBe(
+        true,
+      );
+      expect(canTransitionTo(WellStatus.PRODUCING, WellStatus.SHUT_IN)).toBe(
+        true,
+      );
+      expect(canTransitionTo(WellStatus.PLUGGED, WellStatus.PRODUCING)).toBe(
+        false,
+      );
     });
 
     it('should calculate production metrics', () => {
@@ -173,7 +192,10 @@ describe('High-Impact Coverage Tests', () => {
         return monthlyProduction / 30; // Simple daily average
       };
 
-      const calculateMonthlyRevenue = (dailyProduction: number, pricePerBarrel: number): number => {
+      const calculateMonthlyRevenue = (
+        dailyProduction: number,
+        pricePerBarrel: number,
+      ): number => {
         return dailyProduction * pricePerBarrel * 30;
       };
 
@@ -200,7 +222,10 @@ describe('High-Impact Coverage Tests', () => {
     });
 
     it('should validate required fields', () => {
-      const validateRequiredFields = (data: Record<string, any>, requiredFields: string[]): string[] => {
+      const validateRequiredFields = (
+        data: Record<string, any>,
+        requiredFields: string[],
+      ): string[] => {
         const missing: string[] = [];
         for (const field of requiredFields) {
           if (!data[field] || data[field] === '') {
@@ -228,7 +253,10 @@ describe('High-Impact Coverage Tests', () => {
 
   describe('Configuration Coverage', () => {
     it('should handle environment variables', () => {
-      const getConfigValue = (key: string, defaultValue: string = ''): string => {
+      const getConfigValue = (
+        key: string,
+        defaultValue: string = '',
+      ): string => {
         return process.env[key] || defaultValue;
       };
 
@@ -244,7 +272,7 @@ describe('High-Impact Coverage Tests', () => {
     it('should validate configuration', () => {
       const validateConfig = (config: Record<string, any>): boolean => {
         const requiredKeys = ['database', 'redis', 'sentry'];
-        return requiredKeys.every(key => config[key] !== undefined);
+        return requiredKeys.every((key) => config[key] !== undefined);
       };
 
       const validConfig = {
