@@ -30,7 +30,7 @@ export default function ApiTestPage() {
   const [error, setError] = useState<string | null>(null);
   const [newUser, setNewUser] = useState({ name: "", email: "" });
 
-  // Force rebuild to embed NEXT_PUBLIC_API_URL environment variable - v2
+  // Force rebuild to embed NEXT_PUBLIC_API_URL environment variable - v3 (with turbo.json fix)
   const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
