@@ -10,7 +10,13 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml,css,scss,html}\"",
     "check-types": "turbo run check-types",
     "prepare": "husky",
-    "pre-commit": "lint-staged"
+    "pre-commit": "lint-staged",
+    "security:audit": "pnpm audit --audit-level moderate",
+    "security:audit:fix": "pnpm audit --fix",
+    "security:audit:report": "pnpm audit --json > security-audit-report.json",
+    "security:check": "pnpm run security:audit && pnpm run security:licenses",
+    "security:licenses": "pnpm licenses list --json > license-report.json",
+    "security:outdated": "pnpm outdated --format json > outdated-report.json"
   },
   "devDependencies": {
     "husky": "^9.1.7",
