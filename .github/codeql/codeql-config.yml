@@ -1,0 +1,144 @@
+name: "WellFlow CodeQL Configuration"
+description: "CodeQL configuration for oil & gas production monitoring platform security analysis"
+
+# Disable default queries and use custom security-focused queries
+disable-default-queries: false
+
+# Query packs to include
+packs:
+  - codeql/javascript-queries:security-and-quality
+  - codeql/javascript-queries:security-extended
+
+# Custom queries for oil & gas specific security patterns
+queries:
+  - name: OWASP Top 10 Security Queries
+    uses: security-and-quality
+  - name: Extended Security Analysis
+    uses: security-extended
+
+# Paths to analyze
+paths:
+  - "apps/web/src"
+  - "apps/web/components"
+  - "apps/web/lib"
+  - "apps/web/pages"
+  - "apps/api/src"
+  - "packages"
+
+# Paths to ignore during analysis
+paths-ignore:
+  - "node_modules"
+  - "dist"
+  - "build"
+  - ".next"
+  - "coverage"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "**/*.d.ts"
+  - "scripts"
+  - "docs"
+  - ".github"
+
+# Query filters for oil & gas compliance
+query-filters:
+  # Include all security-related queries
+  - include:
+      kind:
+        - problem
+        - path-problem
+      tags:
+        - security
+        - external/cwe
+        - external/owasp
+
+  # Focus on critical vulnerabilities for oil & gas infrastructure
+  - include:
+      tags:
+        - external/cwe/cwe-079 # Cross-site scripting
+        - external/cwe/cwe-089 # SQL injection
+        - external/cwe/cwe-078 # Command injection
+        - external/cwe/cwe-022 # Path traversal
+        - external/cwe/cwe-094 # Code injection
+        - external/cwe/cwe-352 # CSRF
+        - external/cwe/cwe-918 # SSRF
+        - external/cwe/cwe-798 # Hard-coded credentials
+        - external/cwe/cwe-327 # Weak cryptography
+        - external/cwe/cwe-287 # Authentication bypass
+
+# Analysis configuration
+analysis:
+  # Enable all security-related analysis
+  security: true
+
+  # Performance settings for large codebase
+  timeout: 120 # 2 hours timeout
+
+  # Memory settings
+  ram: 4096 # 4GB RAM limit
+
+# Oil & gas specific security patterns
+custom-queries:
+  # Authentication and authorization patterns
+  - name: "Missing authentication checks"
+    description: "Detect API endpoints without proper authentication"
+    severity: "high"
+
+  - name: "Hardcoded secrets detection"
+    description: "Find hardcoded API keys, passwords, and secrets"
+    severity: "critical"
+
+  - name: "Unsafe database queries"
+    description: "Detect potential SQL/NoSQL injection vulnerabilities"
+    severity: "high"
+
+  - name: "Input validation bypass"
+    description: "Find missing or insufficient input validation"
+    severity: "medium"
+
+  - name: "Logging sensitive data"
+    description: "Detect logging of sensitive information"
+    severity: "medium"
+
+# Compliance mapping
+compliance:
+  standards:
+    - name: "NIST Cybersecurity Framework"
+      categories:
+        - "PR.AC: Identity Management and Access Control"
+        - "PR.DS: Data Security"
+        - "PR.PT: Protective Technology"
+        - "DE.CM: Security Continuous Monitoring"
+
+    - name: "IEC 62443 Industrial Cybersecurity"
+      requirements:
+        - "SR 1.1: Human user identification and authentication"
+        - "SR 1.2: Software process and device identification"
+        - "SR 2.1: Authorization enforcement"
+        - "SR 3.1: Communication integrity"
+        - "SR 3.4: Software and information integrity"
+
+    - name: "API 1164 Pipeline SCADA Security"
+      controls:
+        - "Access Control and Authentication"
+        - "Data Integrity and Confidentiality"
+        - "Network Security"
+        - "Incident Response and Recovery"
+
+# Reporting configuration
+reporting:
+  format: "sarif"
+  include-rule-metadata: true
+  include-flow-information: true
+
+  # Custom report sections for compliance
+  sections:
+    - name: "Executive Summary"
+      include: true
+    - name: "OWASP Top 10 Findings"
+      include: true
+    - name: "Critical Infrastructure Compliance"
+      include: true
+    - name: "Remediation Recommendations"
+      include: true

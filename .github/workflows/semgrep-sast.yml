@@ -1,0 +1,225 @@
+name: Semgrep SAST Security Scanning
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run Semgrep scan daily at 3 AM UTC
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+env:
+  SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+jobs:
+  semgrep:
+    name: Semgrep SAST Analysis
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      security-events: write
+      pull-requests: write
+
+    container:
+      image: returntocorp/semgrep
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create security reports directory
+        run: mkdir -p security-reports
+
+      # Run Semgrep with OWASP Top 10 rules
+      - name: Run Semgrep SAST Scan
+        run: |
+          echo "🔍 Running Semgrep SAST security analysis..."
+
+          # Run Semgrep with custom configuration
+          semgrep --config=.semgrep.yml \
+            --sarif \
+            --output=security-reports/semgrep-results.sarif \
+            --verbose \
+            --metrics=off \
+            .
+            
+          # Also generate JSON output for processing
+          semgrep --config=.semgrep.yml \
+            --json \
+            --output=security-reports/semgrep-results.json \
+            --metrics=off \
+            .
+            
+          echo "✅ Semgrep SAST scan completed"
+
+      # Process results and generate summary
+      - name: Process Semgrep Results
+        run: |
+          echo "📊 Processing Semgrep results..."
+
+          # Count findings by severity
+          CRITICAL=$(jq '[.results[] | select(.extra.severity == "ERROR")] | length' security-reports/semgrep-results.json)
+          WARNING=$(jq '[.results[] | select(.extra.severity == "WARNING")] | length' security-reports/semgrep-results.json)
+          INFO=$(jq '[.results[] | select(.extra.severity == "INFO")] | length' security-reports/semgrep-results.json)
+          TOTAL=$(jq '.results | length' security-reports/semgrep-results.json)
+
+          echo "CRITICAL_COUNT=$CRITICAL" >> $GITHUB_ENV
+          echo "WARNING_COUNT=$WARNING" >> $GITHUB_ENV
+          echo "INFO_COUNT=$INFO" >> $GITHUB_ENV
+          echo "TOTAL_COUNT=$TOTAL" >> $GITHUB_ENV
+
+          # Generate summary report
+          cat > security-reports/semgrep-summary.md << EOF
+          # Semgrep SAST Security Analysis Report
+
+          **Scan Date:** $(date)
+          **Repository:** ${{ github.repository }}
+          **Commit:** ${{ github.sha }}
+          **Workflow:** ${{ github.workflow }}
+
+          ## Summary
+
+          | Severity | Count |
+          |----------|-------|
+          | 🔴 Critical (ERROR) | $CRITICAL |
+          | 🟡 Warning | $WARNING |
+          | 🔵 Info | $INFO |
+          | **Total** | **$TOTAL** |
+
+          ## OWASP Top 10 Coverage
+
+          This scan covers the following OWASP Top 10 2021 categories:
+          - ✅ A01: Broken Access Control
+          - ✅ A02: Cryptographic Failures  
+          - ✅ A03: Injection
+          - ✅ A05: Security Misconfiguration
+          - ✅ A07: Identification and Authentication Failures
+          - ✅ A08: Software and Data Integrity Failures
+          - ✅ A09: Security Logging and Monitoring Failures
+          - ✅ A10: Server-Side Request Forgery (SSRF)
+
+          ## Compliance Standards
+
+          - 🛡️ **NIST Cybersecurity Framework**
+          - 🏭 **IEC 62443** (Industrial Cybersecurity)
+          - ⛽ **API 1164** (Pipeline SCADA Security)
+
+          ## Files Analyzed
+
+          - Node.js/NestJS API backend
+          - Next.js/React web application
+          - Shared TypeScript packages
+          - Configuration files
+
+          EOF
+
+          echo "📋 Summary report generated"
+
+      # Upload SARIF results to GitHub Security tab
+      - name: Upload SARIF to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: security-reports/semgrep-results.sarif
+          category: semgrep
+
+      # Upload security reports as artifacts
+      - name: Upload Security Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-security-reports-${{ github.run_id }}
+          path: security-reports/
+          retention-days: 90
+
+      # Generate GitHub Step Summary
+      - name: Generate Step Summary
+        if: always()
+        run: |
+          echo "## 🔍 Semgrep SAST Security Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Analysis Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "**Total Findings:** ${{ env.TOTAL_COUNT }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Findings by Severity" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔴 **Critical:** ${{ env.CRITICAL_COUNT }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🟡 **Warning:** ${{ env.WARNING_COUNT }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔵 **Info:** ${{ env.INFO_COUNT }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### OWASP Top 10 Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Injection attacks, authentication flaws, access control issues" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Cryptographic failures, security misconfigurations" >> $GITHUB_STEP_SUMMARY
+          echo "✅ SSRF, logging failures, data integrity issues" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 **Detailed Results:** Available in Security tab and workflow artifacts" >> $GITHUB_STEP_SUMMARY
+
+      # Comment on PR with results
+      - name: Comment PR with Semgrep Results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const critical = ${{ env.CRITICAL_COUNT }};
+            const warning = ${{ env.WARNING_COUNT }};
+            const info = ${{ env.INFO_COUNT }};
+            const total = ${{ env.TOTAL_COUNT }};
+
+            let statusIcon = '✅';
+            let statusText = 'No critical security issues found';
+
+            if (critical > 0) {
+              statusIcon = '🔴';
+              statusText = `${critical} critical security issue(s) found`;
+            } else if (warning > 0) {
+              statusIcon = '🟡';
+              statusText = `${warning} security warning(s) found`;
+            }
+
+            const comment = `## 🔍 Semgrep SAST Security Analysis
+
+            ${statusIcon} **Status:** ${statusText}
+
+            ### Findings Summary
+            | Severity | Count |
+            |----------|-------|
+            | 🔴 Critical | ${critical} |
+            | 🟡 Warning | ${warning} |
+            | 🔵 Info | ${info} |
+            | **Total** | **${total}** |
+
+            ### OWASP Top 10 Coverage
+            ✅ Comprehensive scanning for injection, authentication, access control, and crypto vulnerabilities
+
+            ### Compliance Standards
+            - 🛡️ NIST Cybersecurity Framework
+            - 🏭 IEC 62443 (Industrial Cybersecurity)
+            - ⛽ API 1164 (Pipeline SCADA Security)
+
+            📊 **Detailed Results:** Check the Security tab for complete findings
+            🔗 **Workflow:** [View Analysis Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            > This SAST analysis helps ensure WellFlow meets critical infrastructure security requirements.`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      # Fail job if critical vulnerabilities found
+      - name: Security Gate Check
+        if: always()
+        run: |
+          if [ "${{ env.CRITICAL_COUNT }}" -gt "0" ]; then
+            echo "❌ Security gate failed: ${{ env.CRITICAL_COUNT }} critical vulnerabilities found"
+            echo "Please review and fix critical security issues before merging"
+            exit 1
+          else
+            echo "✅ Security gate passed: No critical vulnerabilities found"
+          fi
