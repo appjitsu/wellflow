@@ -92,9 +92,9 @@ optimization, and system reliability improvements for production readiness.
 export class MFAService {
   async enableMFA(userId: string): Promise<MFASetup> {
     const secret = speakeasy.generateSecret({
-      name: 'WellFlow',
+      name: "WellFlow",
       account: await this.getUserEmail(userId),
-      issuer: 'WellFlow Energy',
+      issuer: "WellFlow Energy",
     });
 
     await this.storeMFASecret(userId, secret.base32);
@@ -134,7 +134,7 @@ export class RateLimitingService {
   async checkRateLimit(
     identifier: string,
     limit: number,
-    windowMs: number
+    windowMs: number,
   ): Promise<RateLimitResult> {
     const key = `rate_limit:${identifier}`;
     const current = await this.redis.incr(key);
@@ -163,41 +163,41 @@ export class OptimizedProductionService {
   async getProductionData(
     organizationId: string,
     filters: ProductionFilters,
-    pagination: PaginationOptions
+    pagination: PaginationOptions,
   ): Promise<PaginatedResult<ProductionRecord>> {
     // Use optimized query with proper indexes
     const query = this.db
       .select([
-        'pr.id',
-        'pr.production_date',
-        'pr.oil_volume',
-        'pr.gas_volume',
-        'pr.water_volume',
-        'w.well_name',
-        'w.api_number',
+        "pr.id",
+        "pr.production_date",
+        "pr.oil_volume",
+        "pr.gas_volume",
+        "pr.water_volume",
+        "w.well_name",
+        "w.api_number",
       ])
-      .from('production_records as pr')
-      .innerJoin('wells as w', 'pr.well_id', 'w.id')
-      .where('pr.organization_id', organizationId);
+      .from("production_records as pr")
+      .innerJoin("wells as w", "pr.well_id", "w.id")
+      .where("pr.organization_id", organizationId);
 
     // Apply filters with indexed columns first
     if (filters.dateRange) {
-      query.whereBetween('pr.production_date', [
+      query.whereBetween("pr.production_date", [
         filters.dateRange.start,
         filters.dateRange.end,
       ]);
     }
 
     if (filters.wellIds?.length) {
-      query.whereIn('pr.well_id', filters.wellIds);
+      query.whereIn("pr.well_id", filters.wellIds);
     }
 
     // Use cursor-based pagination for better performance
     if (pagination.cursor) {
-      query.where('pr.id', '>', pagination.cursor);
+      query.where("pr.id", ">", pagination.cursor);
     }
 
-    const results = await query.orderBy('pr.id').limit(pagination.limit + 1); // +1 to check for next page
+    const results = await query.orderBy("pr.id").limit(pagination.limit + 1); // +1 to check for next page
 
     const hasNextPage = results.length > pagination.limit;
     const records = hasNextPage ? results.slice(0, -1) : results;
@@ -221,7 +221,7 @@ export class CacheService {
   async getOrSet<T>(
     key: string,
     fetcher: () => Promise<T>,
-    ttlSeconds: number = 300
+    ttlSeconds: number = 300,
   ): Promise<T> {
     const cached = await this.redis.get(key);
 
@@ -255,22 +255,22 @@ export class MonitoringService {
   constructor() {
     // Define custom metrics
     this.apiResponseTime = new Histogram({
-      name: 'api_response_time_seconds',
-      help: 'API response time in seconds',
-      labelNames: ['method', 'route', 'status_code'],
+      name: "api_response_time_seconds",
+      help: "API response time in seconds",
+      labelNames: ["method", "route", "status_code"],
       registers: [this.metrics],
     });
 
     this.databaseQueryTime = new Histogram({
-      name: 'database_query_time_seconds',
-      help: 'Database query time in seconds',
-      labelNames: ['query_type', 'table'],
+      name: "database_query_time_seconds",
+      help: "Database query time in seconds",
+      labelNames: ["query_type", "table"],
       registers: [this.metrics],
     });
 
     this.activeUsers = new Gauge({
-      name: 'active_users_total',
-      help: 'Number of active users',
+      name: "active_users_total",
+      help: "Number of active users",
       registers: [this.metrics],
     });
   }
@@ -279,7 +279,7 @@ export class MonitoringService {
     method: string,
     route: string,
     statusCode: number,
-    duration: number
+    duration: number,
   ): void {
     this.apiResponseTime
       .labels(method, route, statusCode.toString())
@@ -289,7 +289,7 @@ export class MonitoringService {
   recordDatabaseQuery(
     queryType: string,
     table: string,
-    duration: number
+    duration: number,
   ): void {
     this.databaseQueryTime.labels(queryType, table).observe(duration / 1000);
   }

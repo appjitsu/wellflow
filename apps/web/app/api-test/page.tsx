@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import styles from './page.module.css';
+import { useState, useEffect, useCallback } from "react";
+import styles from "./page.module.css";
 
 interface HealthResponse {
   status: string;
@@ -28,11 +28,12 @@ export default function ApiTestPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [newUser, setNewUser] = useState({ name: '', email: '' });
+  const [newUser, setNewUser] = useState({ name: "", email: "" });
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-  const testHealthEndpoint = async () => {
+  const testHealthEndpoint = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -43,11 +44,13 @@ export default function ApiTestPage() {
       const data = await response.json();
       setHealthData(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch health data');
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch health data",
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE_URL]);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -60,7 +63,7 @@ export default function ApiTestPage() {
       const data = await response.json();
       setUsers(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch users');
+      setError(err instanceof Error ? err.message : "Failed to fetch users");
     } finally {
       setLoading(false);
     }
@@ -68,7 +71,7 @@ export default function ApiTestPage() {
 
   const createUser = async () => {
     if (!newUser.name || !newUser.email) {
-      setError('Please fill in both name and email');
+      setError("Please fill in both name and email");
       return;
     }
 
@@ -76,22 +79,22 @@ export default function ApiTestPage() {
     setError(null);
     try {
       const response = await fetch(`${API_BASE_URL}/users`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(newUser),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       setUsers([...users, data]);
-      setNewUser({ name: '', email: '' });
+      setNewUser({ name: "", email: "" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create user');
+      setError(err instanceof Error ? err.message : "Failed to create user");
     } finally {
       setLoading(false);
     }
@@ -99,22 +102,22 @@ export default function ApiTestPage() {
 
   useEffect(() => {
     testHealthEndpoint();
-  }, []);
+  }, [testHealthEndpoint]);
 
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>API Connection Test</h1>
-      
+
       <div className={styles.section}>
         <h2>Health Check</h2>
-        <button 
-          onClick={testHealthEndpoint} 
+        <button
+          onClick={testHealthEndpoint}
           disabled={loading}
           className={styles.button}
         >
-          {loading ? 'Testing...' : 'Test Health Endpoint'}
+          {loading ? "Testing..." : "Test Health Endpoint"}
         </button>
-        
+
         {healthData && (
           <div className={styles.healthData}>
             <h3>✅ API is healthy!</h3>
@@ -125,12 +128,12 @@ export default function ApiTestPage() {
 
       <div className={styles.section}>
         <h2>Users API Test</h2>
-        <button 
-          onClick={fetchUsers} 
+        <button
+          onClick={fetchUsers}
           disabled={loading}
           className={styles.button}
         >
-          {loading ? 'Loading...' : 'Fetch Users'}
+          {loading ? "Loading..." : "Fetch Users"}
         </button>
 
         <div className={styles.createUser}>
@@ -149,12 +152,12 @@ export default function ApiTestPage() {
             onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
             className={styles.input}
           />
-          <button 
-            onClick={createUser} 
+          <button
+            onClick={createUser}
             disabled={loading}
             className={styles.button}
           >
-            {loading ? 'Creating...' : 'Create User'}
+            {loading ? "Creating..." : "Create User"}
           </button>
         </div>
 
@@ -185,10 +188,18 @@ export default function ApiTestPage() {
       <div className={styles.instructions}>
         <h3>Instructions</h3>
         <ol>
-          <li>Make sure the API server is running: <code>cd apps/api && pnpm run start:dev</code></li>
-          <li>Make sure PostgreSQL and Redis are running: <code>cd apps/api && pnpm run dev:services</code></li>
-          <li>Click "Test Health Endpoint" to verify API connectivity</li>
-          <li>Click "Fetch Users" to test the users endpoint</li>
+          <li>
+            Make sure the API server is running:{" "}
+            <code>cd apps/api && pnpm run start:dev</code>
+          </li>
+          <li>
+            Make sure PostgreSQL and Redis are running:{" "}
+            <code>cd apps/api && pnpm run dev:services</code>
+          </li>
+          <li>
+            Click &ldquo;Test Health Endpoint&rdquo; to verify API connectivity
+          </li>
+          <li>Click &ldquo;Fetch Users&rdquo; to test the users endpoint</li>
           <li>Try creating a new user to test POST requests</li>
         </ol>
       </div>

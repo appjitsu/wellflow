@@ -8,10 +8,18 @@
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
     "lint": "next lint --max-warnings 0",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage"
   },
   "dependencies": {
+    "@casl/ability": "^6.7.3",
+    "@casl/react": "^5.0.0",
     "@repo/ui": "workspace:*",
+    "@sentry/nextjs": "^10.12.0",
+    "logrocket": "^10.1.0",
+    "logrocket-react": "^6.0.3",
     "next": "^15.5.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"

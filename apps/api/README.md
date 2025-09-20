@@ -29,11 +29,13 @@ pnpm install
 ## Environment Setup
 
 1. Copy the environment template:
+
 ```bash
 cp .env.example .env
 ```
 
 2. Update the `.env` file with your database and Redis configurations:
+
 ```env
 # Database Configuration
 DB_HOST=localhost
@@ -55,6 +57,7 @@ NODE_ENV=development
 1. Create a PostgreSQL database named `wellflow` (or whatever you specified in DB_NAME)
 
 2. Generate and run database migrations:
+
 ```bash
 # Generate migration files
 pnpm run db:generate
@@ -67,6 +70,7 @@ pnpm run db:push
 ```
 
 3. (Optional) Open Drizzle Studio to view your database:
+
 ```bash
 pnpm run db:studio
 ```
@@ -89,6 +93,7 @@ The API will be available at `http://localhost:3001`
 ## API Endpoints
 
 ### Users
+
 - `GET /users` - Get all users
 - `GET /users/:id` - Get user by ID
 - `GET /users/email/:email` - Get user by email
@@ -97,6 +102,7 @@ The API will be available at `http://localhost:3001`
 - `DELETE /users/:id` - Delete user
 
 ### Example User Object
+
 ```json
 {
   "name": "John Doe",
