@@ -1,5 +1,6 @@
 import LogRocket from "logrocket";
 import setupLogRocketReact from "logrocket-react";
+import * as Sentry from "@sentry/nextjs";
 
 let isInitialized = false;
 
@@ -70,8 +71,13 @@ export const initLogRocket = () => {
     // Set up LogRocket React integration
     setupLogRocketReact(LogRocket);
 
+    // Set up LogRocket-Sentry integration
+    LogRocket.getSessionURL(sessionURL => {
+      Sentry.setExtra("sessionURL", sessionURL);
+    });
+
     isInitialized = true;
-    console.log("✅ LogRocket initialized");
+    console.log("✅ LogRocket initialized with Sentry integration");
   } catch (error) {
     console.error("❌ Failed to initialize LogRocket:", error);
   }
