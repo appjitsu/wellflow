@@ -98,9 +98,9 @@ interface JWTPayload {
 
 // Role definitions
 enum UserRole {
-  OWNER = "owner", // Full access
-  MANAGER = "manager", // Operations access
-  PUMPER = "pumper", // Field data entry only
+  OWNER = 'owner', // Full access
+  MANAGER = 'manager', // Operations access
+  PUMPER = 'pumper', // Field data entry only
 }
 ```
 
@@ -109,18 +109,18 @@ enum UserRole {
 ```typescript
 // Permission definitions
 const permissions = {
-  owner: ["manage", "all"],
+  owner: ['manage', 'all'],
   manager: [
-    "read",
-    "wells",
-    "create",
-    "production",
-    "read",
-    "compliance",
-    "update",
-    "equipment",
+    'read',
+    'wells',
+    'create',
+    'production',
+    'read',
+    'compliance',
+    'update',
+    'equipment',
   ],
-  pumper: ["create", "production", "read", "wells", "update", "production"],
+  pumper: ['create', 'production', 'read', 'wells', 'update', 'production'],
 };
 ```
 

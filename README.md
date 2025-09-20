@@ -1,6 +1,7 @@
 # WellFlow
 
-A comprehensive oil & gas well management platform built with modern web technologies and designed for cross-platform compatibility.
+A comprehensive oil & gas well management platform built with modern web
+technologies and designed for cross-platform compatibility.
 
 ## Architecture
 
@@ -29,7 +30,8 @@ WellFlow is built as a monorepo using Turborepo with the following structure:
 - **Push Notifications**: Firebase
 - **File Storage**: UploadThing
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/) with strict type checking enabled.
+Each package/app is 100% [TypeScript](https://www.typescriptlang.org/) with
+strict type checking enabled.
 
 ## Quick Start
 
@@ -127,7 +129,8 @@ pnpm build --filter=web
 
 ## External Services
 
-WellFlow integrates with several external services for cross-platform functionality:
+WellFlow integrates with several external services for cross-platform
+functionality:
 
 - **Sentry**: Error tracking and performance monitoring
 - **LogRocket**: Session recording and user analytics
@@ -138,7 +141,8 @@ WellFlow integrates with several external services for cross-platform functional
 - **MailPit**: Local email testing (development)
 - **UploadThing**: File upload and storage
 
-See [External Services Setup Guide](docs/external-services-setup.md) for detailed configuration instructions.
+See [External Services Setup Guide](docs/external-services-setup.md) for
+detailed configuration instructions.
 
 ## Deployment
 

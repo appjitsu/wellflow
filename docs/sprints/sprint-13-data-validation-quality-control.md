@@ -94,7 +94,7 @@ export class DataValidationEngine {
   async validateRecord<T>(
     record: T,
     validationRules: ValidationRule[],
-    context: ValidationContext,
+    context: ValidationContext
   ): Promise<ValidationResult> {
     const errors: ValidationError[] = [];
     const warnings: ValidationWarning[] = [];
@@ -104,7 +104,7 @@ export class DataValidationEngine {
         const result = await this.executeRule(record, rule, context);
 
         if (!result.isValid) {
-          if (result.severity === "error") {
+          if (result.severity === 'error') {
             errors.push({
               field: result.field,
               rule: rule.name,
@@ -122,7 +122,7 @@ export class DataValidationEngine {
         }
       } catch (error) {
         errors.push({
-          field: "system",
+          field: 'system',
           rule: rule.name,
           message: `Validation rule execution failed: ${error.message}`,
           value: null,
@@ -141,16 +141,16 @@ export class DataValidationEngine {
   private async executeRule(
     record: any,
     rule: ValidationRule,
-    context: ValidationContext,
+    context: ValidationContext
   ): Promise<RuleResult> {
     switch (rule.type) {
-      case "range":
+      case 'range':
         return this.validateRange(record[rule.field], rule.parameters);
-      case "format":
+      case 'format':
         return this.validateFormat(record[rule.field], rule.parameters);
-      case "business_rule":
+      case 'business_rule':
         return this.validateBusinessRule(record, rule, context);
-      case "consistency":
+      case 'consistency':
         return this.validateConsistency(record, rule, context);
       default:
         throw new Error(`Unknown validation rule type: ${rule.type}`);
@@ -167,18 +167,18 @@ export class DataValidationEngine {
 export class DataQualityMonitoringService {
   async generateQualityReport(
     organizationId: string,
-    dateRange: DateRange,
+    dateRange: DateRange
   ): Promise<QualityReport> {
     // Get all data quality metrics
     const productionQuality = await this.assessProductionDataQuality(
       organizationId,
-      dateRange,
+      dateRange
     );
     const wellQuality = await this.assessWellDataQuality(organizationId);
     const partnerQuality = await this.assessPartnerDataQuality(organizationId);
     const complianceQuality = await this.assessComplianceDataQuality(
       organizationId,
-      dateRange,
+      dateRange
     );
 
     // Calculate overall quality score
@@ -206,7 +206,7 @@ export class DataQualityMonitoringService {
 
   private async assessProductionDataQuality(
     organizationId: string,
-    dateRange: DateRange,
+    dateRange: DateRange
   ): Promise<CategoryQuality> {
     const records = await this.getProductionRecords(organizationId, dateRange);
 
@@ -217,10 +217,10 @@ export class DataQualityMonitoringService {
     for (const record of records) {
       // Completeness: Are all required fields populated?
       const completeness = this.calculateCompleteness(record, [
-        "oilVolume",
-        "gasVolume",
-        "waterVolume",
-        "productionDate",
+        'oilVolume',
+        'gasVolume',
+        'waterVolume',
+        'productionDate',
       ]);
       completenessScore += completeness;
 
@@ -231,13 +231,13 @@ export class DataQualityMonitoringService {
       // Timeliness: Was data entered promptly?
       const timeliness = this.calculateTimeliness(
         record.productionDate,
-        record.createdAt,
+        record.createdAt
       );
       timelinessScore += timeliness;
     }
 
     return {
-      category: "production",
+      category: 'production',
       completeness: completenessScore / records.length,
       accuracy: accuracyScore / records.length,
       timeliness: timelinessScore / records.length,
@@ -257,7 +257,7 @@ export class DataQualityMonitoringService {
 export class DataCorrectionService {
   async createCorrectionWorkflow(
     errors: ValidationError[],
-    userId: string,
+    userId: string
   ): Promise<CorrectionWorkflow> {
     // Group errors by type and priority
     const groupedErrors = this.groupErrorsByType(errors);
@@ -291,7 +291,7 @@ export class DataCorrectionService {
 
   async applyCorrectionBatch(
     corrections: DataCorrection[],
-    approvedBy: string,
+    approvedBy: string
   ): Promise<CorrectionResult> {
     const results: CorrectionResult[] = [];
 
@@ -466,32 +466,32 @@ export class DataCorrectionService {
 // Production data validation rules
 const productionValidationRules: ValidationRule[] = [
   {
-    name: "oil_volume_range",
-    type: "range",
-    field: "oilVolume",
+    name: 'oil_volume_range',
+    type: 'range',
+    field: 'oilVolume',
     parameters: { min: 0, max: 10000 },
-    severity: "error",
-    message: "Oil volume must be between 0 and 10,000 BBL",
+    severity: 'error',
+    message: 'Oil volume must be between 0 and 10,000 BBL',
   },
   {
-    name: "production_date_future",
-    type: "business_rule",
-    field: "productionDate",
-    parameters: { rule: "not_future_date" },
-    severity: "error",
-    message: "Production date cannot be in the future",
+    name: 'production_date_future',
+    type: 'business_rule',
+    field: 'productionDate',
+    parameters: { rule: 'not_future_date' },
+    severity: 'error',
+    message: 'Production date cannot be in the future',
   },
   {
-    name: "volume_variance_check",
-    type: "consistency",
-    field: "oilVolume",
+    name: 'volume_variance_check',
+    type: 'consistency',
+    field: 'oilVolume',
     parameters: {
-      rule: "variance_check",
+      rule: 'variance_check',
       threshold: 0.5,
       lookback_days: 7,
     },
-    severity: "warning",
-    message: "Oil volume varies significantly from recent average",
+    severity: 'warning',
+    message: 'Oil volume varies significantly from recent average',
   },
 ];
 ```
@@ -502,23 +502,23 @@ const productionValidationRules: ValidationRule[] = [
 // Well data validation rules
 const wellValidationRules: ValidationRule[] = [
   {
-    name: "api_number_format",
-    type: "format",
-    field: "apiNumber",
-    parameters: { pattern: "^\\d{14}$" },
-    severity: "error",
-    message: "API number must be exactly 14 digits",
+    name: 'api_number_format',
+    type: 'format',
+    field: 'apiNumber',
+    parameters: { pattern: '^\\d{14}$' },
+    severity: 'error',
+    message: 'API number must be exactly 14 digits',
   },
   {
-    name: "well_location_consistency",
-    type: "consistency",
-    field: "location",
+    name: 'well_location_consistency',
+    type: 'consistency',
+    field: 'location',
     parameters: {
-      rule: "lease_boundary_check",
+      rule: 'lease_boundary_check',
       tolerance_meters: 1000,
     },
-    severity: "warning",
-    message: "Well location may be outside lease boundary",
+    severity: 'warning',
+    message: 'Well location may be outside lease boundary',
   },
 ];
 ```

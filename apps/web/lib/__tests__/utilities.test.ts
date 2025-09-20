@@ -207,14 +207,17 @@ describe('Web Utilities Coverage', () => {
         array: T[],
         keyFn: (item: T) => K
       ): Record<K, T[]> => {
-        return array.reduce((groups, item) => {
-          const key = keyFn(item);
-          if (!groups[key]) {
-            groups[key] = [];
-          }
-          groups[key].push(item);
-          return groups;
-        }, {} as Record<K, T[]>);
+        return array.reduce(
+          (groups, item) => {
+            const key = keyFn(item);
+            if (!groups[key]) {
+              groups[key] = [];
+            }
+            groups[key].push(item);
+            return groups;
+          },
+          {} as Record<K, T[]>
+        );
       };
 
       const items = [
@@ -237,9 +240,15 @@ describe('Web Utilities Coverage', () => {
       let store: Record<string, string> = {};
       return {
         getItem: (key: string) => store[key] || null,
-        setItem: (key: string, value: string) => { store[key] = value; },
-        removeItem: (key: string) => { delete store[key]; },
-        clear: () => { store = {}; },
+        setItem: (key: string, value: string) => {
+          store[key] = value;
+        },
+        removeItem: (key: string) => {
+          delete store[key];
+        },
+        clear: () => {
+          store = {};
+        },
       };
     })();
 

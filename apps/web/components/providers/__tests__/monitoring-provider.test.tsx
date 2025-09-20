@@ -23,7 +23,7 @@ describe('MonitoringProvider', () => {
   it('should render children', () => {
     render(
       <MonitoringProvider>
-        <div data-testid="test-child">Test Child</div>
+        <div data-testid='test-child'>Test Child</div>
       </MonitoringProvider>
     );
 
@@ -54,7 +54,7 @@ describe('MonitoringProvider', () => {
     // Test that the component renders without errors even if LogRocket fails
     render(
       <MonitoringProvider>
-        <div data-testid="ssr-test">Server-side content</div>
+        <div data-testid='ssr-test'>Server-side content</div>
       </MonitoringProvider>
     );
 
@@ -65,9 +65,9 @@ describe('MonitoringProvider', () => {
   it('should render multiple children correctly', () => {
     render(
       <MonitoringProvider>
-        <div data-testid="child-1">First Child</div>
-        <div data-testid="child-2">Second Child</div>
-        <span data-testid="child-3">Third Child</span>
+        <div data-testid='child-1'>First Child</div>
+        <div data-testid='child-2'>Second Child</div>
+        <span data-testid='child-3'>Third Child</span>
       </MonitoringProvider>
     );
 
@@ -81,7 +81,7 @@ describe('MonitoringProvider', () => {
 
   it('should render nested components correctly', () => {
     const NestedComponent = () => (
-      <div data-testid="nested">
+      <div data-testid='nested'>
         <h1>Nested Title</h1>
         <p>Nested content</p>
       </div>
@@ -99,11 +99,7 @@ describe('MonitoringProvider', () => {
   });
 
   it('should handle empty children', () => {
-    const { container } = render(
-      <MonitoringProvider>
-        {null}
-      </MonitoringProvider>
-    );
+    const { container } = render(<MonitoringProvider>{null}</MonitoringProvider>);
 
     // Should render without errors
     expect(container).toBeInTheDocument();
@@ -114,8 +110,8 @@ describe('MonitoringProvider', () => {
 
     render(
       <MonitoringProvider>
-        {showChild && <div data-testid="conditional-child">Conditional Content</div>}
-        {!showChild && <div data-testid="hidden-child">Hidden Content</div>}
+        {showChild && <div data-testid='conditional-child'>Conditional Content</div>}
+        {!showChild && <div data-testid='hidden-child'>Hidden Content</div>}
       </MonitoringProvider>
     );
 
@@ -162,7 +158,7 @@ describe('MonitoringProvider', () => {
     expect(() => {
       render(
         <MonitoringProvider>
-          <div data-testid="error-test">Content should still render</div>
+          <div data-testid='error-test'>Content should still render</div>
         </MonitoringProvider>
       );
     }).toThrow('LogRocket initialization failed');

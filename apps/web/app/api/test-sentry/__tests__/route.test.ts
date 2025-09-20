@@ -26,7 +26,7 @@ describe('/api/test-sentry', () => {
 
   it('should successfully proxy request to API endpoint', async () => {
     const mockResponseData = { message: 'Sentry test triggered', eventId: 'abc123' };
-    
+
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockResponseData),
@@ -71,7 +71,7 @@ describe('/api/test-sentry', () => {
 
   it('should handle API response errors', async () => {
     const errorText = 'Sentry configuration error';
-    
+
     mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 500,
@@ -101,7 +101,10 @@ describe('/api/test-sentry', () => {
 
     await POST();
 
-    expect(consoleSpy).toHaveBeenCalledWith('Error calling API test-sentry endpoint:', networkError);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Error calling API test-sentry endpoint:',
+      networkError
+    );
     expect(NextResponse.json).toHaveBeenCalledWith(
       { error: 'Failed to call API endpoint', details: networkError },
       { status: 500 }
@@ -112,7 +115,7 @@ describe('/api/test-sentry', () => {
 
   it('should handle unauthorized API responses', async () => {
     const errorText = 'Unauthorized';
-    
+
     mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 401,
@@ -132,7 +135,7 @@ describe('/api/test-sentry', () => {
 
   it('should handle service unavailable responses', async () => {
     const errorText = 'Service Unavailable';
-    
+
     mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 503,
@@ -164,7 +167,10 @@ describe('/api/test-sentry', () => {
 
     await POST();
 
-    expect(consoleSpy).toHaveBeenCalledWith('Error calling API test-sentry endpoint:', expect.any(Error));
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Error calling API test-sentry endpoint:',
+      expect.any(Error)
+    );
     expect(NextResponse.json).toHaveBeenCalledWith(
       { error: 'Failed to call API endpoint', details: expect.any(Error) },
       { status: 500 }
@@ -199,10 +205,10 @@ describe('/api/test-sentry', () => {
       metadata: {
         environment: 'test',
         release: '1.0.0',
-        tags: ['test', 'sentry']
-      }
+        tags: ['test', 'sentry'],
+      },
     };
-    
+
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(complexResponseData),

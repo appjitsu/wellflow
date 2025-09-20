@@ -5,15 +5,15 @@ import { AbilitiesProvider, useAbilities } from '../abilities-provider';
 // Test component that uses the abilities context
 const TestComponent = () => {
   const { ability, Can } = useAbilities();
-  
+
   return (
     <div>
-      <div data-testid="ability-exists">{ability ? 'true' : 'false'}</div>
-      <Can I="read" a="Well">
-        <div data-testid="can-read-well">Can read well</div>
+      <div data-testid='ability-exists'>{ability ? 'true' : 'false'}</div>
+      <Can I='read' a='Well'>
+        <div data-testid='can-read-well'>Can read well</div>
       </Can>
-      <Can I="create" a="Well">
-        <div data-testid="can-create-well">Can create well</div>
+      <Can I='create' a='Well'>
+        <div data-testid='can-create-well'>Can create well</div>
       </Can>
     </div>
   );
@@ -109,17 +109,17 @@ describe('AbilitiesProvider', () => {
 
     const ConditionalComponent = () => {
       const { Can } = useAbilities();
-      
+
       return (
         <div>
-          <Can I="read" a="Well">
-            <button data-testid="read-button">Read Wells</button>
+          <Can I='read' a='Well'>
+            <button data-testid='read-button'>Read Wells</button>
           </Can>
-          <Can I="create" a="Well">
-            <button data-testid="create-button">Create Well</button>
+          <Can I='create' a='Well'>
+            <button data-testid='create-button'>Create Well</button>
           </Can>
-          <Can I="delete" a="Well">
-            <button data-testid="delete-button">Delete Well</button>
+          <Can I='delete' a='Well'>
+            <button data-testid='delete-button'>Delete Well</button>
           </Can>
         </div>
       );
@@ -134,7 +134,7 @@ describe('AbilitiesProvider', () => {
     // Operator can read and create wells
     expect(screen.getByTestId('read-button')).toBeInTheDocument();
     expect(screen.getByTestId('create-button')).toBeInTheDocument();
-    
+
     // But cannot delete wells
     expect(screen.queryByTestId('delete-button')).not.toBeInTheDocument();
   });
@@ -152,14 +152,14 @@ describe('AbilitiesProvider', () => {
 
       return (
         <div>
-          <Can I="update" a="Well">
-            <div data-testid="can-update-well">Can update wells</div>
+          <Can I='update' a='Well'>
+            <div data-testid='can-update-well'>Can update wells</div>
           </Can>
-          <Can I="delete" a="Well">
-            <div data-testid="can-delete-well">Can delete wells</div>
+          <Can I='delete' a='Well'>
+            <div data-testid='can-delete-well'>Can delete wells</div>
           </Can>
-          <Can I="audit" a="Well">
-            <div data-testid="can-audit-well">Can audit wells</div>
+          <Can I='audit' a='Well'>
+            <div data-testid='can-audit-well'>Can audit wells</div>
           </Can>
         </div>
       );

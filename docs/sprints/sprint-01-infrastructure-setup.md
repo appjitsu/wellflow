@@ -4,8 +4,8 @@
 
 **Duration:** 2 weeks  
 **Story Points:** 8 points  
-**Sprint Goal:** Establish foundational infrastructure and development environment
-for WellFlow MVP development.
+**Sprint Goal:** Establish foundational infrastructure and development
+environment for WellFlow MVP development.
 
 ## Sprint Objectives
 
@@ -89,7 +89,8 @@ External Services (Cross-Platform Compatible):
 - **Code Quality**: ESLint + Prettier with pre-commit hooks
 - **Testing**: Jest for unit tests, Playwright for E2E
 - **Documentation**: JSDoc for code, OpenAPI for APIs
-- **Cross-Platform**: Services selected for compatibility with both Next.js web and React Native mobile apps
+- **Cross-Platform**: Services selected for compatibility with both Next.js web
+  and React Native mobile apps
 
 ## Acceptance Criteria
 

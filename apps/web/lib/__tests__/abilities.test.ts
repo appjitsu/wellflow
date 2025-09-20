@@ -196,7 +196,6 @@ describe('Abilities', () => {
       expect(ability.can('update', 'Well')).toBe(true);
       expect(ability.can('delete', 'Well')).toBe(false);
     });
-
   });
 
   describe('createAbilityForGuest', () => {

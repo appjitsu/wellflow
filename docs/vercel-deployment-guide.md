@@ -1,6 +1,7 @@
 # Vercel Deployment Guide for WellFlow MVP
 
-This guide covers the complete setup of Vercel frontend infrastructure for the WellFlow MVP Next.js application.
+This guide covers the complete setup of Vercel frontend infrastructure for the
+WellFlow MVP Next.js application.
 
 ## Prerequisites
 
@@ -133,7 +134,8 @@ Value: cname.vercel-dns.com
 
 ### 4.3 SSL Certificate
 
-Vercel automatically provisions SSL certificates for all domains. No additional configuration needed.
+Vercel automatically provisions SSL certificates for all domains. No additional
+configuration needed.
 
 ## Step 5: Performance Optimization
 
@@ -277,4 +279,6 @@ Expected response:
 
 ---
 
-**Note**: This deployment guide assumes the Railway backend is already configured and running. Ensure the backend API is accessible before deploying the frontend.
+**Note**: This deployment guide assumes the Railway backend is already
+configured and running. Ensure the backend API is accessible before deploying
+the frontend.

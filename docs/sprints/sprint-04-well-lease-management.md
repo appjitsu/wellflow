@@ -90,9 +90,9 @@ regulatory compliance features and asset tracking.
 // API number validation (14-digit format)
 const apiNumberSchema = z
   .string()
-  .length(14, "API number must be exactly 14 digits")
-  .regex(/^\d{14}$/, "API number must contain only digits")
-  .refine(validateStateCountyCodes, "Invalid state/county codes");
+  .length(14, 'API number must be exactly 14 digits')
+  .regex(/^\d{14}$/, 'API number must contain only digits')
+  .refine(validateStateCountyCodes, 'Invalid state/county codes');
 
 // Legal description structure
 interface LegalDescription {

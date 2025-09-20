@@ -1,12 +1,14 @@
 # Monitoring & Error Tracking Setup
 
-This document covers the complete setup and configuration of Sentry and LogRocket for cross-platform error tracking and session recording.
+This document covers the complete setup and configuration of Sentry and
+LogRocket for cross-platform error tracking and session recording.
 
 ## Overview
 
 WellFlow uses a comprehensive monitoring stack:
 
-- **Sentry**: Error tracking, performance monitoring, and alerting for both API and web app
+- **Sentry**: Error tracking, performance monitoring, and alerting for both API
+  and web app
 - **LogRocket**: Session recording, user analytics, and debugging for web app
 - **Railway Monitoring**: Built-in infrastructure monitoring and metrics
 
@@ -20,7 +22,8 @@ The API uses `@sentry/nestjs` for comprehensive error tracking:
 
 - `apps/api/src/sentry/sentry.module.ts` - Sentry module configuration
 - `apps/api/src/sentry/sentry.service.ts` - Sentry service wrapper
-- `apps/api/src/common/filters/sentry-exception.filter.ts` - Global exception filter
+- `apps/api/src/common/filters/sentry-exception.filter.ts` - Global exception
+  filter
 
 **Features:**
 
@@ -236,10 +239,10 @@ Enable debug mode in development:
 
 ```typescript
 // Sentry debug mode
-debug: process.env.NODE_ENV === "development";
+debug: process.env.NODE_ENV === 'development';
 
 // LogRocket debug mode
-console.log("LogRocket initialized:", isInitialized);
+console.log('LogRocket initialized:', isInitialized);
 ```
 
 ## Next Steps

@@ -113,8 +113,8 @@ const ProductionDashboard = () => {
 
 ```typescript
 // End-to-end test example
-describe("Mobile to Web Data Flow", () => {
-  it("should sync production data from mobile to web", async () => {
+describe('Mobile to Web Data Flow', () => {
+  it('should sync production data from mobile to web', async () => {
     // Create production record on mobile
     const mobileRecord = await createProductionRecordMobile(testData);
 
@@ -145,8 +145,8 @@ const DataValidationWorkflow = {
   },
 
   async approveRecord(recordId: string, userId: string): Promise<void> {
-    await this.updateRecordStatus(recordId, "approved", userId);
-    await this.createAuditEntry(recordId, "approved", userId);
+    await this.updateRecordStatus(recordId, 'approved', userId);
+    await this.createAuditEntry(recordId, 'approved', userId);
   },
 };
 ```

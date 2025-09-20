@@ -34,9 +34,9 @@ async function testApiConnection() {
     console.log('\n3. Testing user creation...');
     const testUser = {
       name: 'API Test User',
-      email: `test-${Date.now()}@example.com`
+      email: `test-${Date.now()}@example.com`,
     };
-    
+
     const createResponse = await fetch(`${API_BASE_URL}/users`, {
       method: 'POST',
       headers: {
@@ -56,7 +56,6 @@ async function testApiConnection() {
 
     console.log('\n🎉 All API tests passed!');
     console.log('\n📱 You can now test the web app at: http://localhost:3000/api-test');
-
   } catch (error) {
     console.error('\n❌ API test failed:', error.message);
     console.log('\n🔧 Make sure:');

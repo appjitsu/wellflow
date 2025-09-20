@@ -189,11 +189,11 @@
   .container {
     padding: 1rem;
   }
-  
+
   .title {
     font-size: 2rem;
   }
-  
+
   .usersList {
     grid-template-columns: 1fr;
   }

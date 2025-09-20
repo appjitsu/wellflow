@@ -90,7 +90,7 @@ validation engine, and API endpoints to support mobile and web applications.
 @Injectable()
 export class ProductionDataService {
   async createProductionRecord(
-    data: CreateProductionDto,
+    data: CreateProductionDto
   ): Promise<ProductionRecord> {
     // Validate data against business rules
     await this.validateProductionData(data);
@@ -110,7 +110,7 @@ export class ProductionDataService {
   }
 
   async validateProductionData(
-    data: CreateProductionDto,
+    data: CreateProductionDto
   ): Promise<ValidationResult> {
     const rules = await this.getValidationRules(data.wellId);
     return this.validationEngine.validate(data, rules);
@@ -127,7 +127,7 @@ export class ProductionDataService {
 
 ```typescript
 // Production data management endpoints
-@Controller("api/v1/production")
+@Controller('api/v1/production')
 export class ProductionController {
   @Post()
   async createProduction(@Body() data: CreateProductionDto) {
@@ -139,20 +139,20 @@ export class ProductionController {
     return this.productionService.getProductionRecords(query);
   }
 
-  @Put(":id")
+  @Put(':id')
   async updateProduction(
-    @Param("id") id: string,
-    @Body() data: UpdateProductionDto,
+    @Param('id') id: string,
+    @Body() data: UpdateProductionDto
   ) {
     return this.productionService.updateProductionRecord(id, data);
   }
 
-  @Post("bulk")
+  @Post('bulk')
   async bulkCreateProduction(@Body() data: CreateProductionDto[]) {
     return this.productionService.bulkCreateProductionRecords(data);
   }
 
-  @Get("export")
+  @Get('export')
   async exportProduction(@Query() query: ExportQueryDto) {
     return this.productionService.exportProductionData(query);
   }
@@ -166,25 +166,25 @@ interface ValidationRule {
   name: string;
   field: string;
   condition: (value: any, context: ValidationContext) => boolean;
-  severity: "error" | "warning" | "info";
+  severity: 'error' | 'warning' | 'info';
   message: string;
 }
 
 const productionValidationRules: ValidationRule[] = [
   {
-    name: "oil_volume_range",
-    field: "oilVolume",
+    name: 'oil_volume_range',
+    field: 'oilVolume',
     condition: (value) => value >= 0 && value <= 10000,
-    severity: "error",
-    message: "Oil volume must be between 0 and 10,000 BBL",
+    severity: 'error',
+    message: 'Oil volume must be between 0 and 10,000 BBL',
   },
   {
-    name: "volume_variance",
-    field: "oilVolume",
+    name: 'volume_variance',
+    field: 'oilVolume',
     condition: (value, context) =>
       checkVolumeVariance(value, context.historicalData),
-    severity: "warning",
-    message: "Volume differs significantly from recent average",
+    severity: 'warning',
+    message: 'Volume differs significantly from recent average',
   },
 ];
 ```

@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import styles from "./page.module.css";
+import { useState, useEffect, useCallback } from 'react';
+import styles from './page.module.css';
 
 interface HealthResponse {
   status: string;
@@ -28,19 +28,19 @@ export default function ApiTestPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [newUser, setNewUser] = useState({ name: "", email: "" });
+  const [newUser, setNewUser] = useState({ name: '', email: '' });
 
   // Temporary fix: Use Railway API URL directly until environment variable embedding is resolved
   const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL || "https://api-wellflow-pr-1.up.railway.app";
+    process.env.NEXT_PUBLIC_API_URL || 'https://api-wellflow-pr-1.up.railway.app';
 
   // Debug info to verify environment variable embedding
   const debugInfo = {
     nodeEnv: process.env.NODE_ENV,
     apiUrl: process.env.NEXT_PUBLIC_API_URL,
-    fallbackUrl: "http://localhost:3001",
+    fallbackUrl: 'http://localhost:3001',
     actualUrl: API_BASE_URL,
-    buildTime: new Date().toISOString()
+    buildTime: new Date().toISOString(),
   };
 
   const testHealthEndpoint = useCallback(async () => {
@@ -54,9 +54,7 @@ export default function ApiTestPage() {
       const data = await response.json();
       setHealthData(data);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch health data",
-      );
+      setError(err instanceof Error ? err.message : 'Failed to fetch health data');
     } finally {
       setLoading(false);
     }
@@ -73,7 +71,7 @@ export default function ApiTestPage() {
       const data = await response.json();
       setUsers(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch users");
+      setError(err instanceof Error ? err.message : 'Failed to fetch users');
     } finally {
       setLoading(false);
     }
@@ -81,7 +79,7 @@ export default function ApiTestPage() {
 
   const createUser = async () => {
     if (!newUser.name || !newUser.email) {
-      setError("Please fill in both name and email");
+      setError('Please fill in both name and email');
       return;
     }
 
@@ -89,9 +87,9 @@ export default function ApiTestPage() {
     setError(null);
     try {
       const response = await fetch(`${API_BASE_URL}/users`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(newUser),
       });
@@ -102,9 +100,9 @@ export default function ApiTestPage() {
 
       const data = await response.json();
       setUsers([...users, data]);
-      setNewUser({ name: "", email: "" });
+      setNewUser({ name: '', email: '' });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create user");
+      setError(err instanceof Error ? err.message : 'Failed to create user');
     } finally {
       setLoading(false);
     }
@@ -120,12 +118,8 @@ export default function ApiTestPage() {
 
       <div className={styles.section}>
         <h2>Health Check</h2>
-        <button
-          onClick={testHealthEndpoint}
-          disabled={loading}
-          className={styles.button}
-        >
-          {loading ? "Testing..." : "Test Health Endpoint"}
+        <button onClick={testHealthEndpoint} disabled={loading} className={styles.button}>
+          {loading ? 'Testing...' : 'Test Health Endpoint'}
         </button>
 
         {healthData && (
@@ -138,36 +132,28 @@ export default function ApiTestPage() {
 
       <div className={styles.section}>
         <h2>Users API Test</h2>
-        <button
-          onClick={fetchUsers}
-          disabled={loading}
-          className={styles.button}
-        >
-          {loading ? "Loading..." : "Fetch Users"}
+        <button onClick={fetchUsers} disabled={loading} className={styles.button}>
+          {loading ? 'Loading...' : 'Fetch Users'}
         </button>
 
         <div className={styles.createUser}>
           <h3>Create New User</h3>
           <input
-            type="text"
-            placeholder="Name"
+            type='text'
+            placeholder='Name'
             value={newUser.name}
             onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
             className={styles.input}
           />
           <input
-            type="email"
-            placeholder="Email"
+            type='email'
+            placeholder='Email'
             value={newUser.email}
             onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
             className={styles.input}
           />
-          <button
-            onClick={createUser}
-            disabled={loading}
-            className={styles.button}
-          >
-            {loading ? "Creating..." : "Create User"}
+          <button onClick={createUser} disabled={loading} className={styles.button}>
+            {loading ? 'Creating...' : 'Create User'}
           </button>
         </div>
 
@@ -192,13 +178,22 @@ export default function ApiTestPage() {
           <h3>❌ Error</h3>
           <p>{error}</p>
           <small>Make sure the API server is running on {API_BASE_URL}</small>
-          <small>Environment: {process.env.NODE_ENV} | API URL: {API_BASE_URL}</small>
-        <details style={{ marginTop: "10px", fontSize: "12px" }}>
-          <summary>Debug Info</summary>
-          <pre style={{ fontSize: "10px", background: "#f5f5f5", padding: "8px", borderRadius: "4px" }}>
-            {JSON.stringify(debugInfo, null, 2)}
-          </pre>
-        </details>
+          <small>
+            Environment: {process.env.NODE_ENV} | API URL: {API_BASE_URL}
+          </small>
+          <details style={{ marginTop: '10px', fontSize: '12px' }}>
+            <summary>Debug Info</summary>
+            <pre
+              style={{
+                fontSize: '10px',
+                background: '#f5f5f5',
+                padding: '8px',
+                borderRadius: '4px',
+              }}
+            >
+              {JSON.stringify(debugInfo, null, 2)}
+            </pre>
+          </details>
         </div>
       )}
 
@@ -206,16 +201,13 @@ export default function ApiTestPage() {
         <h3>Instructions</h3>
         <ol>
           <li>
-            Make sure the API server is running:{" "}
-            <code>cd apps/api && pnpm run start:dev</code>
+            Make sure the API server is running: <code>cd apps/api && pnpm run start:dev</code>
           </li>
           <li>
-            Make sure PostgreSQL and Redis are running:{" "}
+            Make sure PostgreSQL and Redis are running:{' '}
             <code>cd apps/api && pnpm run dev:services</code>
           </li>
-          <li>
-            Click &ldquo;Test Health Endpoint&rdquo; to verify API connectivity
-          </li>
+          <li>Click &ldquo;Test Health Endpoint&rdquo; to verify API connectivity</li>
           <li>Click &ldquo;Fetch Users&rdquo; to test the users endpoint</li>
           <li>Try creating a new user to test POST requests</li>
         </ol>

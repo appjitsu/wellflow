@@ -14,13 +14,14 @@ describe('ApiTestPage', () => {
     // Mock successful health check to complete initial loading
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({
-        status: 'ok',
-        timestamp: '2024-01-01T00:00:00.000Z',
-        uptime: 123.456,
-        environment: 'test',
-        version: '1.0.0',
-      }),
+      json: () =>
+        Promise.resolve({
+          status: 'ok',
+          timestamp: '2024-01-01T00:00:00.000Z',
+          uptime: 123.456,
+          environment: 'test',
+          version: '1.0.0',
+        }),
     } as Response);
 
     render(<ApiTestPage />);
@@ -34,22 +35,30 @@ describe('ApiTestPage', () => {
   });
 
   it('should display loading state when testing health endpoint', async () => {
-    mockFetch.mockImplementation(() => 
-      new Promise(resolve => setTimeout(() => resolve({
-        ok: true,
-        json: () => Promise.resolve({
-          status: 'ok',
-          timestamp: '2024-01-01T00:00:00.000Z',
-          uptime: 123.456,
-          environment: 'test',
-          version: '1.0.0',
-          services: {
-            database: 'connected',
-            redis: 'connected',
-            sentry: true,
-          },
-        }),
-      } as Response), 100))
+    mockFetch.mockImplementation(
+      () =>
+        new Promise((resolve) =>
+          setTimeout(
+            () =>
+              resolve({
+                ok: true,
+                json: () =>
+                  Promise.resolve({
+                    status: 'ok',
+                    timestamp: '2024-01-01T00:00:00.000Z',
+                    uptime: 123.456,
+                    environment: 'test',
+                    version: '1.0.0',
+                    services: {
+                      database: 'connected',
+                      redis: 'connected',
+                      sentry: true,
+                    },
+                  }),
+              } as Response),
+            100
+          )
+        )
     );
 
     render(<ApiTestPage />);
@@ -151,19 +160,21 @@ describe('ApiTestPage', () => {
     // First successful call (for initial useEffect)
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({
-        status: 'ok',
-        environment: 'test',
-      }),
+      json: () =>
+        Promise.resolve({
+          status: 'ok',
+          environment: 'test',
+        }),
     } as Response);
 
     // Second successful call (for button click)
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({
-        status: 'ok',
-        environment: 'test',
-      }),
+      json: () =>
+        Promise.resolve({
+          status: 'ok',
+          environment: 'test',
+        }),
     } as Response);
 
     render(<ApiTestPage />);
@@ -244,8 +255,20 @@ describe('ApiTestPage', () => {
 
   it('should test fetch users functionality', async () => {
     const mockUsers = [
-      { id: 1, name: 'John Doe', email: 'john@example.com', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
-      { id: 2, name: 'Jane Smith', email: 'jane@example.com', createdAt: '2024-01-01', updatedAt: '2024-01-01' }
+      {
+        id: 1,
+        name: 'John Doe',
+        email: 'john@example.com',
+        createdAt: '2024-01-01',
+        updatedAt: '2024-01-01',
+      },
+      {
+        id: 2,
+        name: 'Jane Smith',
+        email: 'jane@example.com',
+        createdAt: '2024-01-01',
+        updatedAt: '2024-01-01',
+      },
     ];
 
     // Mock initial health check
@@ -281,7 +304,13 @@ describe('ApiTestPage', () => {
   });
 
   it('should test create user functionality', async () => {
-    const newUser = { id: 3, name: 'Bob Wilson', email: 'bob@example.com', createdAt: '2024-01-01', updatedAt: '2024-01-01' };
+    const newUser = {
+      id: 3,
+      name: 'Bob Wilson',
+      email: 'bob@example.com',
+      createdAt: '2024-01-01',
+      updatedAt: '2024-01-01',
+    };
 
     // Mock initial health check
     mockFetch.mockResolvedValueOnce({
