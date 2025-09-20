@@ -23,7 +23,17 @@
     "sast:check": "pnpm run sast:scan",
     "secrets:gitleaks": "gitleaks detect --config=.gitleaks.toml --report-path=security-reports/gitleaks-report.json .",
     "secrets:scan": "mkdir -p security-reports && pnpm run secrets:gitleaks",
-    "secrets:check": "pnpm run secrets:scan"
+    "secrets:check": "pnpm run secrets:scan",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:coverage:watch": "jest --coverage --watch",
+    "test:ci": "jest --coverage --ci --watchAll=false --passWithNoTests",
+    "test:api": "cd apps/api && pnpm test",
+    "test:web": "cd apps/web && pnpm test",
+    "test:api:coverage": "cd apps/api && pnpm test:coverage",
+    "test:web:coverage": "cd apps/web && pnpm test:coverage",
+    "test:coverage:report": "pnpm run test:coverage && open coverage/html-report/index.html"
   },
   "devDependencies": {
     "husky": "^9.1.7",

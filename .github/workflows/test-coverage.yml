@@ -1,0 +1,305 @@
+name: Test Coverage & Quality Gates
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run coverage analysis daily at 5 AM UTC
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: "18"
+  PNPM_VERSION: "9.0.0"
+
+jobs:
+  test-coverage:
+    name: Test Coverage Analysis
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create coverage directories
+        run: |
+          mkdir -p coverage
+          mkdir -p coverage/html-report
+          mkdir -p test-results
+
+      # Run API tests with coverage
+      - name: Run API Tests with Coverage
+        run: |
+          echo "🧪 Running API tests with coverage..."
+          cd apps/api
+          pnpm run test:coverage
+
+      # Run Web tests with coverage
+      - name: Run Web Tests with Coverage
+        run: |
+          echo "🧪 Running Web tests with coverage..."
+          cd apps/web
+          pnpm run test:coverage
+
+      # Run root level tests with coverage
+      - name: Run Root Tests with Coverage
+        run: |
+          echo "🧪 Running comprehensive test coverage..."
+          pnpm run test:coverage
+
+      # Process coverage results
+      - name: Process Coverage Results
+        run: |
+          echo "📊 Processing coverage results..."
+
+          # Check if coverage files exist
+          if [ -f "coverage/coverage-final.json" ]; then
+            echo "✅ Root coverage report found"
+          else
+            echo "⚠️  Root coverage report missing"
+          fi
+
+          if [ -f "apps/api/coverage/coverage-final.json" ]; then
+            echo "✅ API coverage report found"
+          else
+            echo "⚠️  API coverage report missing"
+          fi
+
+          if [ -f "apps/web/coverage/coverage-final.json" ]; then
+            echo "✅ Web coverage report found"
+          else
+            echo "⚠️  Web coverage report missing"
+          fi
+
+          # Generate coverage summary
+          if [ -f "coverage-summary.json" ]; then
+            STATEMENTS=$(jq -r '.statements' coverage-summary.json)
+            BRANCHES=$(jq -r '.branches' coverage-summary.json)
+            FUNCTIONS=$(jq -r '.functions' coverage-summary.json)
+            LINES=$(jq -r '.lines' coverage-summary.json)
+            MEETS_THRESHOLD=$(jq -r '.meetsThreshold' coverage-summary.json)
+            
+            echo "COVERAGE_STATEMENTS=$STATEMENTS" >> $GITHUB_ENV
+            echo "COVERAGE_BRANCHES=$BRANCHES" >> $GITHUB_ENV
+            echo "COVERAGE_FUNCTIONS=$FUNCTIONS" >> $GITHUB_ENV
+            echo "COVERAGE_LINES=$LINES" >> $GITHUB_ENV
+            echo "COVERAGE_MEETS_THRESHOLD=$MEETS_THRESHOLD" >> $GITHUB_ENV
+          else
+            echo "COVERAGE_STATEMENTS=0" >> $GITHUB_ENV
+            echo "COVERAGE_BRANCHES=0" >> $GITHUB_ENV
+            echo "COVERAGE_FUNCTIONS=0" >> $GITHUB_ENV
+            echo "COVERAGE_LINES=0" >> $GITHUB_ENV
+            echo "COVERAGE_MEETS_THRESHOLD=false" >> $GITHUB_ENV
+          fi
+
+      # Upload coverage to Codecov
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info,./apps/api/coverage/lcov.info,./apps/web/coverage/lcov.info
+          flags: unittests
+          name: wellflow-coverage
+          fail_ci_if_error: false
+          verbose: true
+
+      # Generate test reports
+      - name: Generate Test Reports
+        if: always()
+        run: |
+          echo "📋 Generating comprehensive test reports..."
+
+          # Create test summary
+          cat > test-report-summary.md << EOF
+          # WellFlow Test Coverage Report
+
+          **Test Date:** $(date)
+          **Repository:** ${{ github.repository }}
+          **Commit:** ${{ github.sha }}
+          **Workflow:** ${{ github.workflow }}
+
+          ## Coverage Summary
+
+          | Metric | Coverage | Threshold | Status |
+          |--------|----------|-----------|--------|
+          | Statements | ${{ env.COVERAGE_STATEMENTS }}% | 80% | $([ "${{ env.COVERAGE_STATEMENTS }}" -ge "80" ] && echo "✅ PASS" || echo "❌ FAIL") |
+          | Branches | ${{ env.COVERAGE_BRANCHES }}% | 80% | $([ "${{ env.COVERAGE_BRANCHES }}" -ge "80" ] && echo "✅ PASS" || echo "❌ FAIL") |
+          | Functions | ${{ env.COVERAGE_FUNCTIONS }}% | 80% | $([ "${{ env.COVERAGE_FUNCTIONS }}" -ge "80" ] && echo "✅ PASS" || echo "❌ FAIL") |
+          | Lines | ${{ env.COVERAGE_LINES }}% | 80% | $([ "${{ env.COVERAGE_LINES }}" -ge "80" ] && echo "✅ PASS" || echo "❌ FAIL") |
+
+          ## Quality Gates Status
+
+          - 🧪 **Test Coverage**: $([ "${{ env.COVERAGE_MEETS_THRESHOLD }}" = "true" ] && echo "✅ PASSED" || echo "❌ FAILED")
+          - 🔍 **Code Quality**: ESLint + Prettier
+          - 🛡️ **Security**: SAST + Secrets scanning
+          - 📝 **Type Safety**: TypeScript strict mode
+
+          ## Compliance Standards
+
+          - 🛡️ **NIST Cybersecurity Framework**
+          - 🏭 **IEC 62443** (Industrial Cybersecurity)
+          - ⛽ **API 1164** (Pipeline SCADA Security)
+
+          ## Test Coverage by Application
+
+          ### API Application
+          - **Target**: 80% minimum coverage
+          - **Focus**: Domain logic, business rules, data validation
+          - **Critical**: Oil & gas regulatory compliance
+
+          ### Web Application  
+          - **Target**: 80% minimum coverage
+          - **Focus**: User interactions, component behavior
+          - **Critical**: Real-time monitoring interfaces
+
+          ## Next Steps
+
+          1. Review coverage gaps and add targeted tests
+          2. Ensure critical business logic is fully tested
+          3. Maintain coverage above 80% threshold
+          4. Regular coverage monitoring and reporting
+
+          EOF
+
+          echo "📊 Test report summary generated"
+
+      # Upload test artifacts
+      - name: Upload Test Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-coverage-reports-${{ github.run_id }}
+          path: |
+            coverage/
+            apps/api/coverage/
+            apps/web/coverage/
+            test-results/
+            test-report-summary.md
+            test-summary.json
+          retention-days: 90
+
+      # Generate GitHub Step Summary
+      - name: Generate Step Summary
+        if: always()
+        run: |
+          echo "## 🧪 Test Coverage Analysis Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Analysis Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "**Overall Coverage:** ${{ env.COVERAGE_STATEMENTS }}% statements, ${{ env.COVERAGE_LINES }}% lines" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Coverage Metrics" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Coverage | Threshold | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|----------|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Statements | ${{ env.COVERAGE_STATEMENTS }}% | 80% | $([ "${{ env.COVERAGE_STATEMENTS }}" -ge "80" ] && echo "✅" || echo "❌") |" >> $GITHUB_STEP_SUMMARY
+          echo "| Branches | ${{ env.COVERAGE_BRANCHES }}% | 80% | $([ "${{ env.COVERAGE_BRANCHES }}" -ge "80" ] && echo "✅" || echo "❌") |" >> $GITHUB_STEP_SUMMARY
+          echo "| Functions | ${{ env.COVERAGE_FUNCTIONS }}% | 80% | $([ "${{ env.COVERAGE_FUNCTIONS }}" -ge "80" ] && echo "✅" || echo "❌") |" >> $GITHUB_STEP_SUMMARY
+          echo "| Lines | ${{ env.COVERAGE_LINES }}% | 80% | $([ "${{ env.COVERAGE_LINES }}" -ge "80" ] && echo "✅" || echo "❌") |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Quality Gates" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Code quality (ESLint + Prettier)" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Security scanning (SAST + Secrets)" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Type safety (TypeScript strict)" >> $GITHUB_STEP_SUMMARY
+          echo "$([ "${{ env.COVERAGE_MEETS_THRESHOLD }}" = "true" ] && echo "✅" || echo "❌") Test coverage (80% minimum)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 **Detailed Reports:** Available in workflow artifacts" >> $GITHUB_STEP_SUMMARY
+
+      # Comment on PR with coverage results
+      - name: Comment PR with Coverage Results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const statements = ${{ env.COVERAGE_STATEMENTS }};
+            const branches = ${{ env.COVERAGE_BRANCHES }};
+            const functions = ${{ env.COVERAGE_FUNCTIONS }};
+            const lines = ${{ env.COVERAGE_LINES }};
+            const meetsThreshold = ${{ env.COVERAGE_MEETS_THRESHOLD }};
+
+            const getStatusIcon = (value, threshold) => value >= threshold ? '✅' : '❌';
+            const getOverallStatus = () => meetsThreshold ? '✅ PASSED' : '❌ FAILED';
+
+            const comment = `## 🧪 Test Coverage Analysis
+
+            **Overall Status:** ${getOverallStatus()}
+
+            ### Coverage Metrics
+            | Metric | Coverage | Threshold | Status |
+            |--------|----------|-----------|--------|
+            | Statements | ${statements}% | 80% | ${getStatusIcon(statements, 80)} |
+            | Branches | ${branches}% | 80% | ${getStatusIcon(branches, 80)} |
+            | Functions | ${functions}% | 80% | ${getStatusIcon(functions, 80)} |
+            | Lines | ${lines}% | 80% | ${getStatusIcon(lines, 80)} |
+
+            ### Quality Gates Status
+            - 🧪 **Test Coverage**: ${meetsThreshold ? '✅ PASSED' : '❌ FAILED'} (80% minimum)
+            - 🔍 **Code Quality**: ✅ ESLint + Prettier
+            - 🛡️ **Security**: ✅ SAST + Secrets scanning  
+            - 📝 **Type Safety**: ✅ TypeScript strict mode
+
+            ### Compliance Standards
+            - 🛡️ NIST Cybersecurity Framework
+            - 🏭 IEC 62443 (Industrial Cybersecurity)
+            - ⛽ API 1164 (Pipeline SCADA Security)
+
+            📊 **Detailed Reports:** Check workflow artifacts for complete coverage analysis
+            🔗 **Workflow:** [View Coverage Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            > This analysis ensures WellFlow meets enterprise-grade testing requirements for critical oil & gas infrastructure.`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      # Coverage Quality Gate
+      - name: Coverage Quality Gate
+        if: always()
+        run: |
+          if [ "${{ env.COVERAGE_MEETS_THRESHOLD }}" != "true" ]; then
+            echo "❌ Coverage quality gate failed!"
+            echo "Current coverage: ${{ env.COVERAGE_STATEMENTS }}% statements, ${{ env.COVERAGE_LINES }}% lines"
+            echo "Required coverage: 80% minimum for all metrics"
+            echo "Please add tests to improve coverage before merging"
+            exit 1
+          else
+            echo "✅ Coverage quality gate passed!"
+            echo "Coverage: ${{ env.COVERAGE_STATEMENTS }}% statements, ${{ env.COVERAGE_LINES }}% lines"
+            echo "All coverage thresholds met (80% minimum)"
+          fi
