@@ -122,6 +122,18 @@ regexes = [
     '''fake[_-]?(api[_-]?key|secret|token)''',
     '''mock[_-]?(api[_-]?key|secret|token)''',
     '''sample[_-]?(api[_-]?key|secret|token)''',
+    '''SENTRY_DSN=https://test@test\.ingest\.sentry\.io/test''',
+    '''JWT_SECRET=test-jwt-secret-for-testing-only.*''',
+    '''LOGROCKET_APP_ID=test/test''',
+    '''DATADOG_API_KEY=test-datadog-key''',
+    '''API_KEY=test-api-key.*''',
+    '''ENCRYPTION_KEY=test-encryption-key.*''',
+    '''SENTRY_DSN=https://xxx@xxx\.ingest\.sentry\.io/xxx''',
+    '''LOGROCKET_APP_ID=your-org/your-project-name''',
+    '''NEXT_PUBLIC_SENTRY_DSN=https://xxx@xxx\.ingest\.sentry\.io/xxx''',
+    '''NEXT_PUBLIC_LOGROCKET_APP_ID=your-org/your-project-name''',
+    '''-----BEGIN PRIVATE KEY-----\nxxx\n-----END PRIVATE KEY-----''',
+    '''test-encryption-key-32-characters.*''',
 ]
 
 # Paths to allowlist (directories to ignore)
@@ -137,31 +149,7 @@ paths = [
     '''.vercel''',
 ]
 
-# Commits to allowlist (if needed)
-commits = []
 
-# Stop words (patterns that should not trigger alerts)
-stopwords = [
-    '''example''',
-    '''test''',
-    '''demo''',
-    '''placeholder''',
-    '''sample''',
-    '''fake''',
-    '''mock''',
-    '''dummy''',
-    '''template''',
-    '''your_api_key_here''',
-    '''insert_key_here''',
-    '''replace_with_actual''',
-    '''TODO''',
-    '''FIXME''',
-    '''XXX''',
-    '''YYY''',
-    '''ZZZ''',
-    '''123456789''',
-    '''abcdefghij''',
-]
 
 # Oil & gas industry specific allowlist patterns
 [[rules]]
@@ -200,3 +188,7 @@ standards = [
 
 audit_trail = true
 retention_days = 2555  # 7 years for oil & gas compliance
+
+
+
+
