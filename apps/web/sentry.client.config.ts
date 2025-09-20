@@ -1,7 +1,15 @@
 import * as Sentry from "@sentry/nextjs";
 
-// Prevent multiple Sentry initializations
-if (typeof window !== 'undefined' && !window.__SENTRY_INITIALIZED__) {
+// Extend Window interface for our custom flags
+declare global {
+  interface Window {
+    __SENTRY_INITIALIZED__?: boolean;
+    __SENTRY_REPLAY_INITIALIZED__?: boolean;
+  }
+}
+
+// Prevent multiple Sentry initializations with more robust checking
+if (typeof window !== 'undefined' && !window.__SENTRY_INITIALIZED__ && !Sentry.getClient()) {
   window.__SENTRY_INITIALIZED__ = true;
 
   Sentry.init({
@@ -19,11 +27,15 @@ if (typeof window !== 'undefined' && !window.__SENTRY_INITIALIZED__) {
     replaysSessionSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 0.1,
 
     integrations: [
-      Sentry.replayIntegration({
-        // Additional Replay configuration goes in here, for example:
-        maskAllText: false,
-        blockAllMedia: false,
-      }),
+      // Only add replay integration if it doesn't already exist
+      ...(typeof window !== 'undefined' && !window.__SENTRY_REPLAY_INITIALIZED__
+        ? [Sentry.replayIntegration({
+            // Additional Replay configuration goes in here, for example:
+            maskAllText: false,
+            blockAllMedia: false,
+          })]
+        : []
+      ),
     ],
 
     beforeSend(event) {
@@ -47,6 +59,11 @@ if (typeof window !== 'undefined' && !window.__SENTRY_INITIALIZED__) {
       return event;
     },
   });
+
+  // Mark replay as initialized if it was included
+  if (typeof window !== 'undefined') {
+    window.__SENTRY_REPLAY_INITIALIZED__ = true;
+  }
 
   console.log("✅ Sentry client initialized");
 }
