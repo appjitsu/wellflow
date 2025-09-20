@@ -41,35 +41,42 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
       // Create users table
       await this.pool.query(`
-        CREATE TABLE IF NOT EXISTS "users" (
-          "id" serial PRIMARY KEY NOT NULL,
-          "email" varchar(255) NOT NULL,
-          "name" varchar(255) NOT NULL,
-          "created_at" timestamp DEFAULT now() NOT NULL,
-          "updated_at" timestamp DEFAULT now() NOT NULL,
-          CONSTRAINT "users_email_unique" UNIQUE("email")
+        CREATE TABLE IF NOT EXISTS users (
+          id serial PRIMARY KEY,
+          email varchar(255) NOT NULL UNIQUE,
+          name varchar(255) NOT NULL,
+          created_at timestamp DEFAULT now() NOT NULL,
+          updated_at timestamp DEFAULT now() NOT NULL
         );
       `);
 
       // Create posts table
       await this.pool.query(`
-        CREATE TABLE IF NOT EXISTS "posts" (
-          "id" serial PRIMARY KEY NOT NULL,
-          "title" varchar(255) NOT NULL,
-          "content" text,
-          "author_id" integer,
-          "published" boolean DEFAULT false NOT NULL,
-          "created_at" timestamp DEFAULT now() NOT NULL,
-          "updated_at" timestamp DEFAULT now() NOT NULL
+        CREATE TABLE IF NOT EXISTS posts (
+          id serial PRIMARY KEY,
+          title varchar(255) NOT NULL,
+          content text,
+          author_id integer,
+          published boolean DEFAULT false NOT NULL,
+          created_at timestamp DEFAULT now() NOT NULL,
+          updated_at timestamp DEFAULT now() NOT NULL
         );
       `);
 
-      // Add foreign key constraint
+      // Add foreign key constraint (check if it exists first)
       await this.pool.query(`
-        ALTER TABLE "posts"
-        ADD CONSTRAINT IF NOT EXISTS "posts_author_id_users_id_fk"
-        FOREIGN KEY ("author_id") REFERENCES "public"."users"("id")
-        ON DELETE no action ON UPDATE no action;
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.table_constraints
+            WHERE constraint_name = 'posts_author_id_users_id_fk'
+          ) THEN
+            ALTER TABLE posts
+            ADD CONSTRAINT posts_author_id_users_id_fk
+            FOREIGN KEY (author_id) REFERENCES users(id)
+            ON DELETE SET NULL ON UPDATE CASCADE;
+          END IF;
+        END $$;
       `);
 
       console.log('✅ Database tables created successfully');
