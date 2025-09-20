@@ -30,9 +30,9 @@ export default function ApiTestPage() {
   const [error, setError] = useState<string | null>(null);
   const [newUser, setNewUser] = useState({ name: "", email: "" });
 
-  // Force rebuild to embed NEXT_PUBLIC_API_URL environment variable - v3 (with turbo.json fix)
+  // Temporary fix: Use Railway API URL directly until environment variable embedding is resolved
   const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    process.env.NEXT_PUBLIC_API_URL || "https://api-wellflow-pr-1.up.railway.app";
 
   // Debug info to verify environment variable embedding
   const debugInfo = {
