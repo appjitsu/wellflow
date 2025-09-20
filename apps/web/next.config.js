@@ -4,6 +4,8 @@ import { withSentryConfig } from '@sentry/nextjs';
 const nextConfig = {
   // Configure for Railway deployment
   serverExternalPackages: [],
+  // Explicitly set experimental to empty object to prevent Sentry from adding deprecated config
+  experimental: {},
   // Ensure proper hostname binding for Railway
   async rewrites() {
     return [];
