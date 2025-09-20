@@ -49,6 +49,7 @@ export async function bootstrap() {
       'http://localhost:3000',
       'http://localhost:3001',
       'https://web-production-79cf2.up.railway.app',
+      'https://web-wellflow-pr-1.up.railway.app',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true,
