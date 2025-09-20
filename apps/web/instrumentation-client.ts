@@ -13,6 +13,27 @@ Sentry.init({
     // Note: Session Replay is NOT instantiated here to avoid multiple instances error
     // It will be lazy-loaded in the MonitoringProvider component
   ],
+
+  beforeSend(event) {
+    // Filter out sensitive data
+    if (event.request?.headers) {
+      delete event.request.headers.authorization;
+      delete event.request.headers.cookie;
+    }
+
+    // Don't send events for development 404s
+    if (process.env.NODE_ENV === "development" && event.exception) {
+      const error = event.exception.values?.[0];
+      if (
+        error?.type === "ChunkLoadError" ||
+        error?.value?.includes("Loading chunk")
+      ) {
+        return null;
+      }
+    }
+
+    return event;
+  },
 });
 
 // Export router transition hook for navigation instrumentation
