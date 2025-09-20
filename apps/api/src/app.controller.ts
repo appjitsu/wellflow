@@ -1,8 +1,10 @@
-import { Controller, Get, Post, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, HttpStatus, Inject } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AppService } from './app.service';
 import { SentryService } from './sentry/sentry.service';
 import { Public } from './presentation/decorators/public.decorator';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import * as schema from './database/schema';
 
 @ApiTags('Health')
 @Controller()
@@ -10,6 +12,7 @@ export class AppController {
   constructor(
     private readonly appService: AppService,
     private readonly sentryService: SentryService,
+    @Inject('DATABASE_CONNECTION') private db: NodePgDatabase<typeof schema>,
   ) {}
 
   @Get()
@@ -65,6 +68,70 @@ export class AppController {
         sentry: !!process.env.SENTRY_DSN,
       },
     };
+  }
+
+  @Get('health/database')
+  @Public()
+  @ApiOperation({ summary: 'Database health and table status' })
+  @ApiResponse({ status: 200, description: 'Database status and table information' })
+  async getDatabaseHealth() {
+    try {
+      // Check if tables exist
+      const tablesQuery = `
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_type = 'BASE TABLE'
+        ORDER BY table_name;
+      `;
+
+      const result = await this.db.execute(tablesQuery);
+      const tables = result.rows.map(row => row.table_name);
+
+      // Check if migration table exists
+      const migrationTableExists = tables.includes('__drizzle_migrations');
+
+      // Check if users table exists
+      const usersTableExists = tables.includes('users');
+
+      // If users table exists, get count
+      let userCount = 0;
+      if (usersTableExists) {
+        try {
+          const countResult = await this.db.execute('SELECT COUNT(*) as count FROM users');
+          userCount = parseInt(countResult.rows[0].count as string);
+        } catch (error) {
+          // Ignore count errors
+        }
+      }
+
+      return {
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        database: {
+          connected: true,
+          tables: tables,
+          migrationTableExists,
+          usersTableExists,
+          userCount,
+          totalTables: tables.length
+        }
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        timestamp: new Date().toISOString(),
+        database: {
+          connected: false,
+          error: error.message,
+          tables: [],
+          migrationTableExists: false,
+          usersTableExists: false,
+          userCount: 0,
+          totalTables: 0
+        }
+      };
+    }
   }
 
   @Post('test-error')
