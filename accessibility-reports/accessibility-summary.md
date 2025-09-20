@@ -1,14 +1,14 @@
 # WellFlow Accessibility Testing Report
 
-**Generated:** 9/20/2025, 4:31:06 PM **Repository:** wellflow **Branch:** local
+**Generated:** 9/20/2025, 4:38:03 PM **Repository:** wellflow **Branch:** local
 **Commit:** local
 
 ## Executive Summary
 
-- **Overall Accessibility Score:** 100/100
+- **Overall Accessibility Score:** 98/100
 - **WCAG 2.1 AA Compliance:** ✅ COMPLIANT
 - **Oil & Gas Industry Standards:** ✅ MEETS REQUIREMENTS
-- **Pages Tested:** 1
+- **Pages Tested:** 3
 
 ## Accessibility Testing Results
 
@@ -16,7 +16,7 @@
 | ---------- | ------- | ------ | -------------- |
 | Axe-Core   | 100/100 | ✅     | WCAG 2.1 AA    |
 | Pa11y      | 100/100 | ✅     | WCAG 2.1 AA    |
-| Lighthouse | 100/100 | ❌     | Best Practices |
+| Lighthouse | 95/100  | ❌     | Best Practices |
 
 ## WCAG 2.1 AA Compliance
 
@@ -46,7 +46,7 @@
 ### Axe-Core Analysis
 
 - **Total Violations:** 0
-- **Total Passes:** 2
+- **Total Passes:** 4
 - **Total Incomplete:** 0
 
 ### Pa11y Analysis
@@ -57,9 +57,9 @@
 
 ### Lighthouse Analysis
 
-- **Accessibility Score:** 100/100
-- **Passed Audits:** 6/12
-- **Failed Audits:** 6/12
+- **Accessibility Score:** 95/100
+- **Passed Audits:** 5/12
+- **Failed Audits:** 7/12
 
 ## Recommendations
 

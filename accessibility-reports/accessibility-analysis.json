@@ -1,20 +1,52 @@
 {
-  "timestamp": "2025-09-20T21:31:06.531Z",
+  "timestamp": "2025-09-20T21:38:03.792Z",
   "repository": "wellflow",
   "branch": "local",
   "commit": "local",
   "overall": {
-    "score": 100,
+    "score": 98,
     "wcagCompliant": true,
     "industryCompliant": true,
-    "pagesTestedCount": 1
+    "pagesTestedCount": 3
   },
   "tools": {
     "axe": {
       "tool": "axe-core",
       "version": "4.8.0",
-      "timestamp": "2025-09-20T21:30:26.517Z",
+      "timestamp": "2025-09-20T21:37:40.963Z",
       "pages": [
+        {
+          "url": "http://localhost:3000/monitoring-test",
+          "name": "monitoring-test",
+          "status": "completed",
+          "violations": [],
+          "passes": [
+            {
+              "id": "html-has-lang",
+              "impact": null,
+              "tags": ["wcag2a"]
+            }
+          ],
+          "incomplete": [],
+          "inapplicable": [],
+          "score": 100
+        },
+        {
+          "url": "http://localhost:3000/monitoring-test",
+          "name": "monitoring-test",
+          "status": "completed",
+          "violations": [],
+          "passes": [
+            {
+              "id": "html-has-lang",
+              "impact": null,
+              "tags": ["wcag2a"]
+            }
+          ],
+          "incomplete": [],
+          "inapplicable": [],
+          "score": 100
+        },
         {
           "url": "http://localhost:3000/",
           "name": "home",
@@ -39,7 +71,7 @@
       ],
       "summary": {
         "totalViolations": 0,
-        "totalPasses": 2,
+        "totalPasses": 4,
         "totalIncomplete": 0,
         "criticalIssues": 0,
         "seriousIssues": 0,
@@ -50,9 +82,23 @@
     "pa11y": {
       "tool": "pa11y",
       "version": "6.2.3",
-      "timestamp": "2025-09-20T21:30:28.081Z",
+      "timestamp": "2025-09-20T21:37:44.487Z",
       "standard": "WCAG2AA",
       "pages": [
+        {
+          "url": "http://localhost:3000/monitoring-test",
+          "name": "monitoring-test",
+          "status": "completed",
+          "issues": [],
+          "score": 100
+        },
+        {
+          "url": "http://localhost:3000/monitoring-test",
+          "name": "monitoring-test",
+          "status": "completed",
+          "issues": [],
+          "score": 100
+        },
         {
           "url": "http://localhost:3000/",
           "name": "home",
@@ -70,21 +116,21 @@
     "lighthouse": {
       "tool": "lighthouse",
       "version": "11.0.0",
-      "timestamp": "2025-09-20T21:30:50.740Z",
+      "timestamp": "2025-09-20T21:37:52.359Z",
       "category": "accessibility",
       "pages": [
         {
-          "url": "http://localhost:3000/",
-          "name": "home",
+          "url": "http://localhost:3000/monitoring-test",
+          "name": "monitoring-test",
           "status": "completed",
-          "score": 100,
+          "score": 95,
           "audits": {
             "color-contrast": {
-              "score": 1,
-              "displayValue": "Background and foreground colors have a sufficient contrast ratio"
+              "score": 0,
+              "displayValue": "Background and foreground colors do not have a sufficient contrast ratio."
             },
             "image-alt": {
-              "score": 1,
+              "score": 0,
               "displayValue": "Image elements have `[alt]` attributes"
             },
             "label": {
@@ -92,7 +138,7 @@
               "displayValue": "Form elements have associated labels"
             },
             "link-name": {
-              "score": 1,
+              "score": 0,
               "displayValue": "Links have a discernible name"
             },
             "button-name": {
@@ -104,11 +150,11 @@
               "displayValue": "`[aria-*]` attributes are valid and not misspelled"
             },
             "heading-order": {
-              "score": 0,
+              "score": 1,
               "displayValue": "Heading elements appear in a sequentially-descending order"
             },
             "landmark-one-main": {
-              "score": 0,
+              "score": 1,
               "displayValue": "Document has a main landmark."
             },
             "meta-viewport": {
@@ -131,10 +177,10 @@
         }
       ],
       "summary": {
-        "averageScore": 100,
+        "averageScore": 95,
         "totalAudits": 12,
-        "passedAudits": 6,
-        "failedAudits": 6
+        "passedAudits": 5,
+        "failedAudits": 7
       }
     }
   },

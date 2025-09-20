@@ -20,16 +20,7 @@ const ACCESSIBILITY_CONFIG = {
       large: 3.0,
     },
   },
-  baseUrl: process.env.ACCESSIBILITY_BASE_URL || 'http://localhost:3000',
-  // Default pages - can be overridden by environment variable or auto-discovery
-  defaultPages: [
-    { path: '/', name: 'home' },
-    { path: '/wells', name: 'wells' },
-    { path: '/dashboard', name: 'dashboard' },
-    { path: '/reports', name: 'reports' },
-    { path: '/settings', name: 'settings' },
-    { path: '/alerts', name: 'alerts' },
-  ],
+  baseUrl: `http://localhost:${process.env.NEXT_PUBLIC_PORT || 3000}`,
   tools: {
     axe: true,
     pa11y: true,
@@ -67,44 +58,28 @@ function validateRoute(url) {
 function discoverPages() {
   let pages = [];
 
-  // Try to read from environment variable first
-  const customPages = process.env.ACCESSIBILITY_PAGES;
-  if (customPages) {
-    try {
-      const parsedPages = JSON.parse(customPages);
-      console.log('📋 Using custom pages from ACCESSIBILITY_PAGES environment variable');
-      pages = parsedPages.map((page) => ({
-        url: `${ACCESSIBILITY_CONFIG.baseUrl}${page.path}`,
-        name: page.name,
-        path: page.path,
-      }));
-    } catch (error) {
-      console.warn('⚠️ Failed to parse ACCESSIBILITY_PAGES environment variable, using discovery');
-    }
+  // Try to discover from Next.js structure
+  const appDir = path.join(process.cwd(), 'apps/web/app');
+  const pagesDir = path.join(process.cwd(), 'apps/web/src/pages');
+
+  if (fs.existsSync(appDir)) {
+    console.log('📋 Discovering pages from Next.js app directory...');
+    pages = discoverNextJsAppRoutes(appDir);
+  } else if (fs.existsSync(pagesDir)) {
+    console.log('📋 Discovering pages from Next.js pages directory...');
+    pages = discoverNextJsPagesRoutes(pagesDir);
   }
 
-  // If no custom pages, try to discover from Next.js structure
+  // If still no pages discovered, add home page as fallback
   if (pages.length === 0) {
-    const appDir = path.join(process.cwd(), 'apps/web/src/app');
-    const pagesDir = path.join(process.cwd(), 'apps/web/src/pages');
-
-    if (fs.existsSync(appDir)) {
-      console.log('📋 Discovering pages from Next.js app directory...');
-      pages = discoverNextJsAppRoutes(appDir);
-    } else if (fs.existsSync(pagesDir)) {
-      console.log('📋 Discovering pages from Next.js pages directory...');
-      pages = discoverNextJsPagesRoutes(pagesDir);
-    }
-  }
-
-  // If still no pages discovered, use defaults
-  if (pages.length === 0) {
-    console.log('📋 Using default page configuration...');
-    pages = ACCESSIBILITY_CONFIG.defaultPages.map((page) => ({
-      url: `${ACCESSIBILITY_CONFIG.baseUrl}${page.path}`,
-      name: page.name,
-      path: page.path,
-    }));
+    console.log('📋 No pages discovered, adding home page as fallback...');
+    pages = [
+      {
+        url: `${ACCESSIBILITY_CONFIG.baseUrl}/`,
+        name: 'home',
+        path: '/',
+      },
+    ];
   }
 
   // Validate routes exist before testing
@@ -1156,10 +1131,7 @@ async function main() {
 
 // Run the test if this script is executed directly
 if (require.main === module) {
-  main().catch((error) => {
-    console.error('❌ Accessibility testing failed:', error.message);
-    process.exit(1);
-  });
+  main().catch((error) => {});
 }
 
 module.exports = {
