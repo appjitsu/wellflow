@@ -22,21 +22,13 @@ if (typeof window !== 'undefined' && !window.__SENTRY_INITIALIZED__ && !Sentry.g
     // Setting this option to true will print useful information to the console while you're setting up Sentry.
     debug: process.env.NODE_ENV === "development",
 
-    // Session Replay configuration (disabled until multiple instances error is fixed)
-    // replaysOnErrorSampleRate: 1.0,
-    // replaysSessionSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 0.1,
+    // Session Replay configuration (will be used when lazy-loaded)
+    replaysOnErrorSampleRate: 1.0,
+    replaysSessionSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 0.1,
 
     integrations: [
-      // Temporarily disable Session Replay to fix multiple instances error
-      // TODO: Re-enable with proper initialization guards after fixing the root cause
-      // ...(typeof window !== 'undefined' && !window.__SENTRY_REPLAY_INITIALIZED__
-      //   ? [Sentry.replayIntegration({
-      //       // Additional Replay configuration goes in here, for example:
-      //       maskAllText: false,
-      //       blockAllMedia: false,
-      //     })]
-      //   : []
-      // ),
+      // Note: Replay is NOT instantiated here to avoid multiple instances error
+      // Session Replay will be lazy-loaded in the monitoring provider
     ],
 
     beforeSend(event) {
