@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: timescale/timescaledb:latest-pg14
+    container_name: wellflow-postgres
+    environment:
+      POSTGRES_DB: wellflow
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - wellflow-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: wellflow-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - wellflow-network
+
+  # MailPit (Local Email Testing)
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: wellflow-mailpit
+    ports:
+      - "8025:8025"  # Web UI
+      - "1025:1025"  # SMTP
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    networks:
+      - wellflow-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  wellflow-network:
+    driver: bridge

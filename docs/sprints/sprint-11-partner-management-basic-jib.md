@@ -103,11 +103,11 @@ interface Partner {
 }
 
 enum PartnerType {
-  WORKING_INTEREST = 'working_interest',
-  ROYALTY_OWNER = 'royalty_owner',
-  OVERRIDING_ROYALTY = 'overriding_royalty',
-  NET_PROFITS = 'net_profits',
-  CARRIED_INTEREST = 'carried_interest',
+  WORKING_INTEREST = "working_interest",
+  ROYALTY_OWNER = "royalty_owner",
+  OVERRIDING_ROYALTY = "overriding_royalty",
+  NET_PROFITS = "net_profits",
+  CARRIED_INTEREST = "carried_interest",
 }
 
 interface LeasePartnership {
@@ -131,7 +131,7 @@ interface LeasePartnership {
 export class JIBService {
   async calculateJIBStatement(
     leaseId: string,
-    billingPeriod: DateRange
+    billingPeriod: DateRange,
   ): Promise<JIBStatement> {
     // Get lease partnerships
     const partnerships = await this.getLeasePartnerships(leaseId);
@@ -147,7 +147,7 @@ export class JIBService {
     const distributions = this.calculateDistributions(
       partnerships,
       revenue,
-      expenses
+      expenses,
     );
 
     return {
@@ -164,9 +164,9 @@ export class JIBService {
   private calculateDistributions(
     partnerships: LeasePartnership[],
     revenue: Revenue,
-    expenses: Expense[]
+    expenses: Expense[],
   ): PartnerDistribution[] {
-    return partnerships.map(partnership => {
+    return partnerships.map((partnership) => {
       const revenueShare = revenue.total * (partnership.percentage / 100);
       const expenseShare = partnership.costBearing
         ? this.calculateExpenseShare(expenses, partnership.percentage)
@@ -190,7 +190,7 @@ export class JIBService {
 // Partner portal access control
 interface PartnerPortalAccess {
   partnerId: string;
-  accessLevel: 'read_only' | 'limited' | 'full';
+  accessLevel: "read_only" | "limited" | "full";
   allowedLeases: string[];
   allowedDocuments: DocumentType[];
   expirationDate?: Date;
@@ -200,7 +200,7 @@ interface PartnerPortalAccess {
 export class PartnerPortalService {
   async authenticatePartner(
     email: string,
-    password: string
+    password: string,
   ): Promise<PartnerSession> {
     const partner = await this.validatePartnerCredentials(email, password);
     const access = await this.getPartnerAccess(partner.id);
@@ -365,11 +365,11 @@ export class OwnershipValidationService {
 
     // Group by interest type
     const workingInterest = partnerships
-      .filter(p => p.interestType === InterestType.WORKING_INTEREST)
+      .filter((p) => p.interestType === InterestType.WORKING_INTEREST)
       .reduce((sum, p) => sum + p.percentage, 0);
 
     const royaltyInterest = partnerships
-      .filter(p => p.interestType === InterestType.ROYALTY_INTEREST)
+      .filter((p) => p.interestType === InterestType.ROYALTY_INTEREST)
       .reduce((sum, p) => sum + p.percentage, 0);
 
     const errors: ValidationError[] = [];
@@ -377,7 +377,7 @@ export class OwnershipValidationService {
     // Working interest should total 100%
     if (Math.abs(workingInterest - 100) > 0.01) {
       errors.push({
-        type: 'working_interest_imbalance',
+        type: "working_interest_imbalance",
         message: `Working interest totals ${workingInterest}%, should be 100%`,
       });
     }
@@ -385,7 +385,7 @@ export class OwnershipValidationService {
     // Royalty interest should not exceed 25% (typical)
     if (royaltyInterest > 25) {
       errors.push({
-        type: 'high_royalty_interest',
+        type: "high_royalty_interest",
         message: `Royalty interest ${royaltyInterest}% exceeds typical maximum`,
       });
     }

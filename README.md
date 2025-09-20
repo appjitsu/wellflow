@@ -1,135 +1,213 @@
-# Turborepo starter
+# WellFlow
 
-This Turborepo starter is maintained by the Turborepo core team.
+A comprehensive oil & gas well management platform built with modern web technologies and designed for cross-platform compatibility.
 
-## Using this example
+## Architecture
 
-Run the following command:
-
-```sh
-npx create-turbo@latest
-```
-
-## What's inside?
-
-This Turborepo includes the following packages/apps:
+WellFlow is built as a monorepo using Turborepo with the following structure:
 
 ### Apps and Packages
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+- `api`: NestJS backend API with PostgreSQL and Redis
+- `web`: Next.js web application
+- `docs`: Documentation site (Next.js)
+- `@repo/ui`: Shared React component library
+- `@repo/eslint-config`: ESLint configurations
+- `@repo/typescript-config`: TypeScript configurations
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+### Technology Stack
 
-### Utilities
+- **Backend**: NestJS, PostgreSQL with TimescaleDB, Redis
+- **Frontend**: Next.js, React, TypeScript
+- **Database**: PostgreSQL with TimescaleDB extension
+- **Caching**: Redis
+- **Deployment**: Railway (all services)
+- **Monitoring**: Sentry, LogRocket
+- **Email**: Resend (production), MailPit (development)
+- **Maps**: Mapbox
+- **SMS**: Twilio
+- **Push Notifications**: Firebase
+- **File Storage**: UploadThing
 
-This Turborepo has some additional tools already setup for you:
+Each package/app is 100% [TypeScript](https://www.typescriptlang.org/) with strict type checking enabled.
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+## Quick Start
 
-### Build
+### Prerequisites
 
-To build all apps and packages, run the following command:
+- Node.js 18+
+- pnpm (recommended)
+- Docker and Docker Compose
+- Git
 
-```
-cd my-turborepo
+### Installation
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
+1. Clone the repository:
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
-```
-
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
-
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+```bash
+git clone https://github.com/your-org/wellflow.git
+cd wellflow
 ```
 
-### Develop
+2. Install dependencies:
 
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
+```bash
+pnpm install
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+3. Set up local development services:
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+```bash
+./scripts/setup-external-services.sh
 ```
 
-### Remote Caching
+4. Configure environment variables:
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+```bash
+# Copy environment templates
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env.local
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+# Edit the files with your configuration
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+5. Run database migrations:
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+```bash
+cd apps/api
+pnpm run db:migrate
 ```
 
-## Useful Links
+### Development
 
-Learn more about the power of Turborepo:
+To start all services in development mode:
 
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+```bash
+pnpm dev
+```
+
+This will start:
+
+- API server on http://localhost:3001
+- Web application on http://localhost:3000
+- Documentation on http://localhost:3002
+
+### Individual Services
+
+You can also run individual services:
+
+```bash
+# API only
+pnpm dev --filter=api
+
+# Web app only
+pnpm dev --filter=web
+
+# Documentation only
+pnpm dev --filter=docs
+```
+
+### Building
+
+To build all applications:
+
+```bash
+pnpm build
+```
+
+To build specific applications:
+
+```bash
+# Build API
+pnpm build --filter=api
+
+# Build web app
+pnpm build --filter=web
+```
+
+## External Services
+
+WellFlow integrates with several external services for cross-platform functionality:
+
+- **Sentry**: Error tracking and performance monitoring
+- **LogRocket**: Session recording and user analytics
+- **Firebase**: Push notifications, analytics, and crashlytics
+- **Mapbox**: Maps and geospatial services
+- **Twilio**: SMS notifications
+- **Resend**: Email service (production)
+- **MailPit**: Local email testing (development)
+- **UploadThing**: File upload and storage
+
+See [External Services Setup Guide](docs/external-services-setup.md) for detailed configuration instructions.
+
+## Deployment
+
+WellFlow is deployed on Railway with auto-deployment from Git:
+
+- **API**: NestJS backend with PostgreSQL and Redis
+- **Web**: Next.js frontend application
+- **Docs**: Documentation site
+- **Database**: PostgreSQL with TimescaleDB extension
+- **Cache**: Redis for caching and background jobs
+
+All services auto-deploy when changes are pushed to the main branch.
+
+## Development Tools
+
+### Local Services
+
+The project includes Docker Compose configuration for local development:
+
+```bash
+# Start all local services (PostgreSQL, Redis, MailPit)
+./scripts/setup-external-services.sh start
+
+# Stop local services
+./scripts/setup-external-services.sh stop
+
+# Restart local services
+./scripts/setup-external-services.sh restart
+```
+
+### Database Management
+
+```bash
+# Generate migration files
+cd apps/api && pnpm run db:generate
+
+# Run migrations
+cd apps/api && pnpm run db:migrate
+
+# Open Drizzle Studio (database GUI)
+cd apps/api && pnpm run db:studio
+```
+
+### Testing
+
+```bash
+# Run all tests
+pnpm test
+
+# Run tests for specific package
+pnpm test --filter=api
+pnpm test --filter=web
+```
+
+## Documentation
+
+- [External Services Setup](docs/external-services-setup.md)
+- [Sprint Documentation](docs/sprints/)
+- [Architecture Overview](docs/wellflow-technical-architecture.md)
+- [API Documentation](apps/api/README.md)
+- [Web App Documentation](apps/web/README.md)
+
+## Contributing
+
+1. Create a feature branch from `main`
+2. Make your changes
+3. Run tests and linting: `pnpm test && pnpm lint`
+4. Create a pull request
+
+## License
+
+This project is proprietary software. All rights reserved.

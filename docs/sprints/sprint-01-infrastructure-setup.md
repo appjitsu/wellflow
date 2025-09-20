@@ -4,29 +4,27 @@
 
 **Duration:** 2 weeks  
 **Story Points:** 8 points  
-**Sprint Goal:** Establish foundational infrastructure, development environment,
-and CI/CD pipeline for WellFlow MVP development.
+**Sprint Goal:** Establish foundational infrastructure and development environment
+for WellFlow MVP development.
 
 ## Sprint Objectives
 
-1. Set up cloud infrastructure on Railway and Vercel
+1. Set up cloud infrastructure on Railway
 2. Establish development environment and tooling
-3. Implement CI/CD pipeline with automated testing
-4. Create project structure and coding standards
-5. Set up monitoring and error tracking
+3. Create project structure and coding standards
+4. Set up monitoring and error tracking
 
 ## Deliverables
 
 ### 1. Cloud Infrastructure Setup
 
-- **Railway Backend Setup**
+- **Railway Full-Stack Deployment**
   - NestJS API container configuration
+  - Next.js web application deployment
+  - Documentation site deployment
   - PostgreSQL database with TimescaleDB extension
   - Redis instance for caching and background jobs
   - Environment variable management
-- **Vercel Frontend Setup**
-  - Next.js application deployment
-  - Edge functions configuration
   - Domain and SSL certificate setup
 
 ### 2. Development Environment
@@ -41,17 +39,16 @@ and CI/CD pipeline for WellFlow MVP development.
   - Database migration tools (Drizzle Kit)
   - API documentation setup (Swagger/OpenAPI)
 
-### 3. CI/CD Pipeline
+### 3. Development Quality & Testing
 
-- **GitHub Actions Workflows**
-  - Automated testing on pull requests
-  - Deployment to staging environment
-  - Production deployment pipeline
-  - Database migration automation
-- **Quality Gates**
-  - Code coverage requirements (>80%)
-  - Security scanning integration
-  - Performance testing baseline
+- **Code Quality Tools**
+  - ESLint and Prettier configurations
+  - Git hooks for code quality enforcement
+  - Pre-commit validation
+- **Testing Framework**
+  - Jest for unit tests
+  - Playwright for E2E testing
+  - Code coverage tracking
 
 ### 4. Monitoring & Observability
 
@@ -61,7 +58,7 @@ and CI/CD pipeline for WellFlow MVP development.
 - **Performance Monitoring**
   - API response time tracking
   - Database query performance monitoring
-  - Uptime monitoring setup
+  - Railway built-in monitoring and metrics
 
 ## Technical Requirements
 
@@ -70,18 +67,20 @@ and CI/CD pipeline for WellFlow MVP development.
 ```yaml
 Railway Services:
   - NestJS API (Node.js 18+)
+  - Next.js Web App (Node.js 18+)
+  - Documentation Site
   - PostgreSQL 14+ with TimescaleDB
   - Redis 7+ for caching/jobs
+  - Auto-deployment from Git
 
-Vercel Configuration:
-  - Next.js 14+ with TypeScript
-  - Edge functions enabled
-  - Custom domain configuration
-
-External Services:
-  - Sentry (error tracking)
-  - LogRocket (session recording)
-  - UploadThing (file storage setup)
+External Services (Cross-Platform Compatible):
+  - Sentry (error tracking - web & mobile)
+  - LogRocket (session recording - web & mobile)
+  - UploadThing (file storage - web & mobile)
+  - Resend (email) / MailPit (local email)
+  - Firebase (push notifications, analytics, crashlytics - web & mobile)
+  - Mapbox (mapping/GIS - web & mobile SDKs)
+  - Twilio (SMS notifications - backend service)
 ```
 
 ### Development Standards
@@ -90,16 +89,17 @@ External Services:
 - **Code Quality**: ESLint + Prettier with pre-commit hooks
 - **Testing**: Jest for unit tests, Playwright for E2E
 - **Documentation**: JSDoc for code, OpenAPI for APIs
+- **Cross-Platform**: Services selected for compatibility with both Next.js web and React Native mobile apps
 
 ## Acceptance Criteria
 
 ### Infrastructure
 
-- [ ] Railway services deployed and accessible
-- [ ] Vercel application deployed with custom domain
+- [ ] Railway services deployed and accessible (API, Web, Docs)
 - [ ] Database migrations run successfully
 - [ ] Redis connection established and tested
-- [ ] SSL certificates configured and valid
+- [ ] Custom domain configured with SSL certificates
+- [ ] Environment variables properly configured across services
 
 ### Development Environment
 
@@ -109,29 +109,29 @@ External Services:
 - [ ] API documentation generates automatically
 - [ ] Code quality checks pass on all commits
 
-### CI/CD Pipeline
+### Development Workflow
 
-- [ ] Pull request builds run automatically
-- [ ] Tests must pass before merge
-- [ ] Staging deployment happens on main branch
-- [ ] Production deployment requires manual approval
-- [ ] Database migrations run automatically
+- [ ] Railway auto-deployment configured from Git
+- [ ] Development environment runs locally with single command
+- [ ] Code quality checks integrated with Git hooks
+- [ ] Testing framework operational
+- [ ] Database migrations work in development and production
 
 ### Monitoring
 
 - [ ] Error tracking captures and reports issues
 - [ ] Performance monitoring shows response times
-- [ ] Uptime monitoring alerts on downtime
+- [ ] Railway monitoring and metrics configured
 - [ ] Log aggregation works across all services
 
 ## Team Assignments
 
 ### DevOps Engineer (Lead)
 
-- Railway and Vercel infrastructure setup
-- CI/CD pipeline implementation
+- Railway infrastructure setup and configuration
 - Monitoring and alerting configuration
-- Security scanning integration
+- Security and environment management
+- Database and Redis optimization
 
 ### Technical Lead
 
@@ -152,8 +152,8 @@ External Services:
 ### External Dependencies
 
 - Railway account and billing setup
-- Vercel account and domain configuration
-- Sentry and LogRocket account setup
+- Domain configuration and DNS setup
+- Third-party service account setup (Sentry, LogRocket, Firebase, etc.)
 - GitHub repository and team access
 
 ### Internal Dependencies
@@ -166,22 +166,23 @@ External Services:
 
 - **Railway service limitations**: Test all required features early
 - **Domain configuration delays**: Start DNS setup immediately
-- **CI/CD complexity**: Use proven GitHub Actions templates
+- **Third-party service integration**: Test cross-platform compatibility early
 
 ### Timeline Risks
 
 - **Learning curve on new tools**: Allocate extra time for Railway setup
 - **External service dependencies**: Have backup plans for each service
+- **Cross-platform service setup**: Allow time for mobile compatibility testing
 
 ## Definition of Done
 
 ### Technical Completion
 
-- [ ] All infrastructure services are deployed and operational
+- [ ] All Railway services are deployed and operational
 - [ ] Development environment documented and tested by team
-- [ ] CI/CD pipeline successfully deploys to staging
+- [ ] Auto-deployment from Git working correctly
 - [ ] Monitoring captures errors and performance metrics
-- [ ] Security scanning passes with no critical issues
+- [ ] Security configurations validated
 
 ### Documentation
 
@@ -199,8 +200,8 @@ External Services:
 
 ## Success Metrics
 
-- **Deployment Time**: < 5 minutes for staging deployment
-- **Build Time**: < 3 minutes for CI/CD pipeline
+- **Deployment Time**: Railway auto-deployment completes within 5 minutes
+- **Local Development**: Environment starts in < 2 minutes
 - **Uptime**: 99.9% availability target
 - **Error Rate**: < 0.1% of requests result in 5xx errors
 

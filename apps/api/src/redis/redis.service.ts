@@ -10,7 +10,10 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit() {
     this.client = createClient({
-      url: this.configService.get<string>('REDIS_URL', 'redis://localhost:6379'),
+      url: this.configService.get<string>(
+        'REDIS_URL',
+        'redis://localhost:6379',
+      ),
       socket: {
         connectTimeout: 5000,
       },

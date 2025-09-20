@@ -5,6 +5,7 @@ Your NestJS API has been successfully configured with Drizzle ORM, PostgreSQL, a
 ## 🎯 What's Been Added
 
 ### Dependencies
+
 - **drizzle-orm** - Type-safe SQL ORM
 - **pg** - PostgreSQL client
 - **redis** - Redis client
@@ -13,6 +14,7 @@ Your NestJS API has been successfully configured with Drizzle ORM, PostgreSQL, a
 - **@types/pg** - TypeScript definitions
 
 ### Project Structure
+
 ```
 src/
 ├── database/
@@ -32,17 +34,20 @@ src/
 ```
 
 ### Configuration Files
+
 - `drizzle.config.ts` - Drizzle ORM configuration
 - `.env.example` - Environment variables template
 - `docker-compose.yml` - PostgreSQL and Redis services
 - `scripts/dev-setup.sh` - Development setup script
 
 ### Database Schema
+
 - **users** table with email, name, timestamps
 - **posts** table with title, content, author relationship
 - Proper foreign key constraints and indexes
 
 ### API Endpoints
+
 - `GET /users` - List all users
 - `POST /users` - Create user
 - `GET /users/:id` - Get user by ID
@@ -51,6 +56,7 @@ src/
 - `DELETE /users/:id` - Delete user
 
 ### Features Implemented
+
 - ✅ Type-safe database operations with Drizzle ORM
 - ✅ Redis caching for improved performance
 - ✅ Environment-based configuration
@@ -62,6 +68,7 @@ src/
 ## 🚀 Quick Start
 
 ### Option 1: Automated Setup (Recommended)
+
 ```bash
 # Run the setup script (starts services, creates .env, runs migrations)
 pnpm run dev:setup
@@ -71,6 +78,7 @@ pnpm run start:dev
 ```
 
 ### Option 2: Manual Setup
+
 ```bash
 # 1. Start PostgreSQL and Redis
 pnpm run dev:services
@@ -88,6 +96,7 @@ pnpm run start:dev
 ## 🧪 Testing the API
 
 ### Create a User
+
 ```bash
 curl -X POST http://localhost:3001/users \
   -H "Content-Type: application/json" \
@@ -95,11 +104,13 @@ curl -X POST http://localhost:3001/users \
 ```
 
 ### Get All Users
+
 ```bash
 curl http://localhost:3001/users
 ```
 
 ### Get User by ID
+
 ```bash
 curl http://localhost:3001/users/1
 ```

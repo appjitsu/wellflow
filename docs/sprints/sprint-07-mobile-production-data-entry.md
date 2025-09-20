@@ -118,7 +118,7 @@ interface LocationData {
 const verifyWellLocation = (
   currentLocation: LocationData,
   wellLocation: LocationData,
-  toleranceMeters: number = 100
+  toleranceMeters: number = 100,
 ): boolean => {
   const distance = calculateDistance(currentLocation, wellLocation);
   return distance <= toleranceMeters;

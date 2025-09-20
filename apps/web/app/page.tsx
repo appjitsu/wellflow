@@ -70,7 +70,11 @@ export default function Home() {
           <a
             href="/api-test"
             className={styles.primary}
-            style={{ textDecoration: 'none', display: 'inline-block', marginTop: '1rem' }}
+            style={{
+              textDecoration: "none",
+              display: "inline-block",
+              marginTop: "1rem",
+            }}
           >
             🔗 Test API Connection
           </a>

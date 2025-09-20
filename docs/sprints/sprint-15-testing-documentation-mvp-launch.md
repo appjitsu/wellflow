@@ -88,15 +88,15 @@ user acceptance testing, and prepare for MVP launch with initial customers.
 
 ```typescript
 // End-to-end testing suite
-describe('WellFlow E2E Testing', () => {
-  describe('Complete Production Workflow', () => {
-    it('should complete full production data entry to compliance reporting', async () => {
+describe("WellFlow E2E Testing", () => {
+  describe("Complete Production Workflow", () => {
+    it("should complete full production data entry to compliance reporting", async () => {
       // 1. Login as pumper
-      await loginAs('pumper@testcompany.com');
+      await loginAs("pumper@testcompany.com");
 
       // 2. Enter production data on mobile
       await mobileApp.navigateToProductionEntry();
-      await mobileApp.selectWell('Smith #1');
+      await mobileApp.selectWell("Smith #1");
       await mobileApp.enterProductionData({
         oil: 45.5,
         gas: 234.2,
@@ -107,13 +107,13 @@ describe('WellFlow E2E Testing', () => {
 
       // 3. Verify data sync to backend
       await waitForSync();
-      const productionRecord = await api.getLatestProduction('smith-1');
+      const productionRecord = await api.getLatestProduction("smith-1");
       expect(productionRecord.oilVolume).toBe(45.5);
 
       // 4. Login as manager and review data
-      await loginAs('manager@testcompany.com');
+      await loginAs("manager@testcompany.com");
       await webApp.navigateToProductionDashboard();
-      await webApp.verifyProductionData('Smith #1', {
+      await webApp.verifyProductionData("Smith #1", {
         oil: 45.5,
         gas: 234.2,
         water: 12.1,
@@ -121,19 +121,19 @@ describe('WellFlow E2E Testing', () => {
 
       // 5. Generate compliance report
       await webApp.navigateToCompliance();
-      await webApp.generateFormPR('March 2024');
+      await webApp.generateFormPR("March 2024");
       await webApp.verifyFormPRData();
       await webApp.submitToRRC();
 
       // 6. Verify submission confirmation
       const submission = await api.getLatestSubmission();
-      expect(submission.status).toBe('submitted');
+      expect(submission.status).toBe("submitted");
       expect(submission.confirmationNumber).toBeDefined();
     });
   });
 
-  describe('JIB Workflow', () => {
-    it('should generate and distribute JIB statements', async () => {
+  describe("JIB Workflow", () => {
+    it("should generate and distribute JIB statements", async () => {
       // Setup test data
       await setupTestLease();
       await setupTestPartners();
@@ -141,7 +141,7 @@ describe('WellFlow E2E Testing', () => {
 
       // Generate JIB statement
       await webApp.navigateToJIB();
-      await webApp.generateJIBStatement('Smith Lease', 'March 2024');
+      await webApp.generateJIBStatement("Smith Lease", "March 2024");
 
       // Verify calculations
       const statement = await api.getLatestJIBStatement();
@@ -178,8 +178,8 @@ export class DocumentationService {
     ];
 
     return {
-      title: 'WellFlow User Manual',
-      version: '1.0.0',
+      title: "WellFlow User Manual",
+      version: "1.0.0",
       sections,
       lastUpdated: new Date(),
       formats: {
@@ -193,27 +193,27 @@ export class DocumentationService {
   async generateVideoTutorials(): Promise<VideoTutorial[]> {
     return [
       {
-        title: 'Getting Started with WellFlow',
-        duration: '5:30',
-        topics: ['Account setup', 'Initial configuration', 'Team invitations'],
-        url: 'https://tutorials.wellflow.com/getting-started',
+        title: "Getting Started with WellFlow",
+        duration: "5:30",
+        topics: ["Account setup", "Initial configuration", "Team invitations"],
+        url: "https://tutorials.wellflow.com/getting-started",
       },
       {
-        title: 'Mobile Production Data Entry',
-        duration: '8:15',
+        title: "Mobile Production Data Entry",
+        duration: "8:15",
         topics: [
-          'App installation',
-          'Data entry',
-          'Photo capture',
-          'Offline sync',
+          "App installation",
+          "Data entry",
+          "Photo capture",
+          "Offline sync",
         ],
-        url: 'https://tutorials.wellflow.com/mobile-data-entry',
+        url: "https://tutorials.wellflow.com/mobile-data-entry",
       },
       {
-        title: 'Automated Compliance Reporting',
-        duration: '12:45',
-        topics: ['Form PR generation', 'Review process', 'RRC submission'],
-        url: 'https://tutorials.wellflow.com/compliance-reporting',
+        title: "Automated Compliance Reporting",
+        duration: "12:45",
+        topics: ["Form PR generation", "Review process", "RRC submission"],
+        url: "https://tutorials.wellflow.com/compliance-reporting",
       },
     ];
   }
@@ -386,51 +386,51 @@ Target Beta Customers:
 // Beta testing scenarios
 const betaTestingScenarios = [
   {
-    name: 'Daily Operations Workflow',
-    duration: '2 weeks',
+    name: "Daily Operations Workflow",
+    duration: "2 weeks",
     activities: [
-      'Daily production data entry via mobile',
-      'Photo capture and GPS verification',
-      'Data review and approval via web',
-      'Production analytics review',
+      "Daily production data entry via mobile",
+      "Photo capture and GPS verification",
+      "Data review and approval via web",
+      "Production analytics review",
     ],
     successCriteria: [
-      '100% data entry completion',
-      '<2 minutes per well entry',
-      '95%+ data accuracy',
-      'Positive user feedback',
+      "100% data entry completion",
+      "<2 minutes per well entry",
+      "95%+ data accuracy",
+      "Positive user feedback",
     ],
   },
   {
-    name: 'Monthly Compliance Cycle',
-    duration: '1 month',
+    name: "Monthly Compliance Cycle",
+    duration: "1 month",
     activities: [
-      'Complete month of production data',
-      'Form PR generation and review',
-      'RRC submission process',
-      'Compliance calendar management',
+      "Complete month of production data",
+      "Form PR generation and review",
+      "RRC submission process",
+      "Compliance calendar management",
     ],
     successCriteria: [
-      'Successful Form PR generation',
-      '4-8 hours time savings vs manual',
-      'Accurate tax calculations',
-      'Successful RRC submission',
+      "Successful Form PR generation",
+      "4-8 hours time savings vs manual",
+      "Accurate tax calculations",
+      "Successful RRC submission",
     ],
   },
   {
-    name: 'JIB Statement Generation',
-    duration: '1 month',
+    name: "JIB Statement Generation",
+    duration: "1 month",
     activities: [
-      'Partner setup and ownership entry',
-      'Monthly JIB statement generation',
-      'Partner review and distribution',
-      'Payment processing (if applicable)',
+      "Partner setup and ownership entry",
+      "Monthly JIB statement generation",
+      "Partner review and distribution",
+      "Payment processing (if applicable)",
     ],
     successCriteria: [
-      'Accurate JIB calculations',
-      'Professional statement formatting',
-      'Successful partner distribution',
-      '80%+ time savings vs manual',
+      "Accurate JIB calculations",
+      "Professional statement formatting",
+      "Successful partner distribution",
+      "80%+ time savings vs manual",
     ],
   },
 ];

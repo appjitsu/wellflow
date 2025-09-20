@@ -93,7 +93,7 @@ export class AdvancedJIBService {
   async generateJIBStatement(
     leaseId: string,
     billingPeriod: DateRange,
-    options: JIBOptions
+    options: JIBOptions,
   ): Promise<JIBStatement> {
     // Get all required data
     const partnerships = await this.getLeasePartnerships(leaseId);
@@ -105,20 +105,20 @@ export class AdvancedJIBService {
     const revenueDistributions = await this.calculateRevenueDistributions(
       partnerships,
       sales,
-      options.revenueAllocationMethod
+      options.revenueAllocationMethod,
     );
 
     // Calculate expense allocations
     const expenseAllocations = await this.calculateExpenseAllocations(
       partnerships,
       expenses,
-      options.expenseAllocationMethod
+      options.expenseAllocationMethod,
     );
 
     // Calculate net distributions
     const netDistributions = this.calculateNetDistributions(
       revenueDistributions,
-      expenseAllocations
+      expenseAllocations,
     );
 
     return {
@@ -139,7 +139,7 @@ export class AdvancedJIBService {
   private async calculateRevenueDistributions(
     partnerships: LeasePartnership[],
     sales: SalesData[],
-    method: RevenueAllocationMethod
+    method: RevenueAllocationMethod,
   ): Promise<RevenueDistribution[]> {
     const distributions: RevenueDistribution[] = [];
 
@@ -154,7 +154,7 @@ export class AdvancedJIBService {
       // Calculate royalty burden
       const royaltyBurden = this.calculateRoyaltyBurden(
         workingInterestShare,
-        partnership.royaltyRate || 0
+        partnership.royaltyRate || 0,
       );
 
       const netRevenueInterest = workingInterestShare - royaltyBurden;
@@ -182,7 +182,7 @@ export class AdvancedJIBService {
 export class JIBStatementPDFService {
   async generateStatement(
     statement: JIBStatement,
-    template: StatementTemplate
+    template: StatementTemplate,
   ): Promise<Buffer> {
     const doc = new PDFDocument({ margin: 50 });
 
@@ -212,21 +212,21 @@ export class JIBStatementPDFService {
 
   private addRevenueSection(
     doc: PDFDocument,
-    distributions: RevenueDistribution[]
+    distributions: RevenueDistribution[],
   ): void {
-    doc.fontSize(14).text('REVENUE', 50, doc.y + 20);
+    doc.fontSize(14).text("REVENUE", 50, doc.y + 20);
     doc
       .moveTo(50, doc.y + 5)
       .lineTo(550, doc.y + 5)
       .stroke();
 
-    distributions.forEach(dist => {
-      dist.details.forEach(detail => {
+    distributions.forEach((dist) => {
+      dist.details.forEach((detail) => {
         doc
           .fontSize(10)
           .text(detail.description, 70, doc.y + 10)
           .text(this.formatCurrency(detail.amount), 450, doc.y, {
-            align: 'right',
+            align: "right",
           });
       });
     });
@@ -242,7 +242,7 @@ export class JIBStatementPDFService {
 export class PaymentProcessingService {
   async processDistributions(
     distributions: NetDistribution[],
-    paymentMethod: PaymentMethod
+    paymentMethod: PaymentMethod,
   ): Promise<PaymentResult[]> {
     const results: PaymentResult[] = [];
 
@@ -428,23 +428,23 @@ export class PaymentProcessingService {
 @Injectable()
 export class JIBValidationService {
   async validateJIBStatement(
-    statement: JIBStatement
+    statement: JIBStatement,
   ): Promise<ValidationResult> {
     const errors: ValidationError[] = [];
 
     // Validate revenue distributions sum to total revenue
     const totalRevenue = statement.sales.reduce(
       (sum, sale) => sum + sale.amount,
-      0
+      0,
     );
     const distributedRevenue = statement.revenueDistributions.reduce(
       (sum, dist) => sum + dist.grossRevenue,
-      0
+      0,
     );
 
     if (Math.abs(totalRevenue - distributedRevenue) > 0.01) {
       errors.push({
-        type: 'revenue_distribution_mismatch',
+        type: "revenue_distribution_mismatch",
         message: `Revenue distribution ${distributedRevenue} doesn't match total revenue ${totalRevenue}`,
       });
     }
@@ -452,16 +452,16 @@ export class JIBValidationService {
     // Validate expense allocations sum to total expenses
     const totalExpenses = statement.expenses.reduce(
       (sum, exp) => sum + exp.amount,
-      0
+      0,
     );
     const allocatedExpenses = statement.expenseAllocations.reduce(
       (sum, alloc) => sum + alloc.totalAllocation,
-      0
+      0,
     );
 
     if (Math.abs(totalExpenses - allocatedExpenses) > 0.01) {
       errors.push({
-        type: 'expense_allocation_mismatch',
+        type: "expense_allocation_mismatch",
         message: `Expense allocation ${allocatedExpenses} doesn't match total expenses ${totalExpenses}`,
       });
     }
@@ -469,12 +469,12 @@ export class JIBValidationService {
     // Validate working interest percentages
     const totalWI = statement.partnerships.reduce(
       (sum, p) => sum + p.percentage,
-      0
+      0,
     );
 
     if (Math.abs(totalWI - 100) > 0.01) {
       errors.push({
-        type: 'working_interest_imbalance',
+        type: "working_interest_imbalance",
         message: `Working interest totals ${totalWI}%, should be 100%`,
       });
     }

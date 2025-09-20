@@ -13,17 +13,14 @@ export class UsersService {
 
   async createUser(userData: NewUser): Promise<User> {
     const db = this.databaseService.getDb();
-    
-    const [newUser] = await db
-      .insert(users)
-      .values(userData)
-      .returning();
+
+    const [newUser] = await db.insert(users).values(userData).returning();
 
     // Cache the user in Redis for 1 hour
     await this.redisService.set(
       `user:${newUser.id}`,
       JSON.stringify(newUser),
-      3600
+      3600,
     );
 
     return newUser;
@@ -46,11 +43,7 @@ export class UsersService {
 
     if (user) {
       // Cache the user for 1 hour
-      await this.redisService.set(
-        `user:${id}`,
-        JSON.stringify(user),
-        3600
-      );
+      await this.redisService.set(`user:${id}`, JSON.stringify(user), 3600);
     }
 
     return user || null;
@@ -58,7 +51,7 @@ export class UsersService {
 
   async getUserByEmail(email: string): Promise<User | null> {
     const cacheKey = `user:email:${email}`;
-    
+
     // Try to get from cache first
     const cached = await this.redisService.get(cacheKey);
     if (cached) {
@@ -86,9 +79,12 @@ export class UsersService {
     return await db.select().from(users);
   }
 
-  async updateUser(id: number, userData: Partial<NewUser>): Promise<User | null> {
+  async updateUser(
+    id: number,
+    userData: Partial<NewUser>,
+  ): Promise<User | null> {
     const db = this.databaseService.getDb();
-    
+
     const [updatedUser] = await db
       .update(users)
       .set({ ...userData, updatedAt: new Date() })
@@ -100,16 +96,16 @@ export class UsersService {
       await this.redisService.set(
         `user:${id}`,
         JSON.stringify(updatedUser),
-        3600
+        3600,
       );
-      
+
       // Also update email cache if email was updated
       if (userData.email) {
         await this.redisService.del(`user:email:${userData.email}`);
         await this.redisService.set(
           `user:email:${updatedUser.email}`,
           JSON.stringify(updatedUser),
-          3600
+          3600,
         );
       }
     }
@@ -119,13 +115,11 @@ export class UsersService {
 
   async deleteUser(id: number): Promise<boolean> {
     const db = this.databaseService.getDb();
-    
+
     // Get user first to clear email cache
     const user = await this.getUserById(id);
-    
-    const result = await db
-      .delete(users)
-      .where(eq(users.id, id));
+
+    const result = await db.delete(users).where(eq(users.id, id));
 
     if (result.rowCount && result.rowCount > 0) {
       // Clear cache

@@ -71,7 +71,7 @@ patterns.
 export class CircuitBreakerService {
   async callWithCircuitBreaker<T>(
     serviceName: string,
-    operation: () => Promise<T>
+    operation: () => Promise<T>,
   ): Promise<T>;
 }
 ```
@@ -84,7 +84,7 @@ export class CircuitBreakerService {
 export class JIBProcessingSaga {
   async executeJIBGeneration(
     wellId: string,
-    period: string
+    period: string,
   ): Promise<JIBResult>;
 }
 ```
@@ -110,7 +110,7 @@ export class EventBusService {
   async publishEvent(event: DomainEvent): Promise<void>;
   async subscribeToEvent(
     eventType: string,
-    handler: EventHandler
+    handler: EventHandler,
   ): Promise<void>;
 }
 ```
@@ -157,7 +157,7 @@ export class AdvancedAuthService {
   async authenticateWithMFA(
     credentials: LoginCredentials,
     mfaToken?: string,
-    biometricData?: BiometricData
+    biometricData?: BiometricData,
   ): Promise<AuthenticationResult>;
 }
 ```
@@ -170,7 +170,7 @@ export class AdvancedAuthService {
 export class EncryptionService {
   async encryptSensitiveData(
     data: any,
-    dataType: DataType
+    dataType: DataType,
   ): Promise<EncryptedData>;
   async decryptSensitiveData(encryptedData: EncryptedData): Promise<any>;
 }
@@ -197,7 +197,7 @@ export class APMService {
 export class TracingService {
   async traceAsyncOperation<T>(
     operationName: string,
-    operation: (span: Span) => Promise<T>
+    operation: (span: Span) => Promise<T>,
   ): Promise<T>;
 }
 ```
@@ -210,7 +210,7 @@ export class TracingService {
 export class BusinessMetricsService {
   async trackProductionDataEntry(record: ProductionRecord): Promise<void>;
   async generateComplianceMetrics(
-    organizationId: string
+    organizationId: string,
   ): Promise<ComplianceMetrics>;
 }
 ```
