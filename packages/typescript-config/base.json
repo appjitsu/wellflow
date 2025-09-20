@@ -10,10 +10,44 @@
     "module": "NodeNext",
     "moduleDetection": "force",
     "moduleResolution": "NodeNext",
-    "noUncheckedIndexedAccess": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
+    "target": "ES2022",
+
+    // === STRICT MODE CONFIGURATION ===
+    // Enable all strict type checking options for oil & gas compliance
     "strict": true,
-    "target": "ES2022"
+
+    // Individual strict flags (enabled by "strict": true, but explicit for clarity)
+    "alwaysStrict": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+
+    // === ADDITIONAL STRICT CHECKS ===
+    // Enhanced type safety for critical oil & gas applications
+    "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": true,
+    "allowUnusedLabels": false,
+    "allowUnreachableCode": false,
+    // Note: These are disabled for gradual adoption
+    // "exactOptionalPropertyTypes": true,
+    // "noPropertyAccessFromIndexSignature": true,
+    // "noUncheckedSideEffectImports": true,
+
+    // === UNUSED CODE DETECTION ===
+    // Prevent dead code in production systems (can be disabled per package if needed)
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+
+    // === IMPORT/EXPORT STRICTNESS ===
+    // Ensure proper module usage
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true
   }
 }
