@@ -1,4 +1,4 @@
-import { Controller, Get, Post, HttpStatus, Inject } from '@nestjs/common';
+import { Controller, Get, Post, HttpStatus, Inject, Optional } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AppService } from './app.service';
 import { SentryService } from './sentry/sentry.service';
@@ -12,7 +12,7 @@ export class AppController {
   constructor(
     private readonly appService: AppService,
     private readonly sentryService: SentryService,
-    @Inject('DATABASE_CONNECTION') private db: NodePgDatabase<typeof schema>,
+    @Optional() @Inject('DATABASE_CONNECTION') private db: NodePgDatabase<typeof schema>,
   ) {}
 
   @Get()
@@ -76,6 +76,23 @@ export class AppController {
   @ApiResponse({ status: 200, description: 'Database status and table information' })
   async getDatabaseHealth() {
     try {
+      // Check if database connection is available
+      if (!this.db) {
+        return {
+          status: 'error',
+          timestamp: new Date().toISOString(),
+          database: {
+            connected: false,
+            error: 'Database connection not initialized',
+            tables: [],
+            migrationTableExists: false,
+            usersTableExists: false,
+            userCount: 0,
+            totalTables: 0
+          }
+        };
+      }
+
       // Check if tables exist
       const tablesQuery = `
         SELECT table_name
