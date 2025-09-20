@@ -1,6 +1,6 @@
 # WellFlow Accessibility Testing Report
 
-**Generated:** 9/20/2025, 4:03:13 PM **Repository:** wellflow **Branch:** local
+**Generated:** 9/20/2025, 4:13:45 PM **Repository:** wellflow **Branch:** local
 **Commit:** local
 
 ## Executive Summary
@@ -8,7 +8,7 @@
 - **Overall Accessibility Score:** 0/100
 - **WCAG 2.1 AA Compliance:** ❌ NON-COMPLIANT
 - **Oil & Gas Industry Standards:** ❌ NEEDS IMPROVEMENT
-- **Pages Tested:** 4
+- **Pages Tested:** 6
 
 ## Accessibility Testing Results
 

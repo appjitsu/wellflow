@@ -38,6 +38,8 @@
     "performance:budget": "node scripts/check-performance-budget.js",
     "performance:report": "mkdir -p performance-reports && pnpm run performance:analyze && pnpm run performance:budget",
     "accessibility:test": "node scripts/accessibility-test.js",
+    "accessibility:test:custom": "ACCESSIBILITY_PAGES='[{\"path\":\"/\",\"name\":\"home\"},{\"path\":\"/wells\",\"name\":\"wells\"},{\"path\":\"/dashboard\",\"name\":\"dashboard\"}]' node scripts/accessibility-test.js",
+    "accessibility:test:staging": "ACCESSIBILITY_BASE_URL=https://staging.wellflow.com node scripts/accessibility-test.js",
     "accessibility:axe": "axe http://localhost:3000 --rules-file .axe-rules.json --reporter json",
     "accessibility:pa11y": "pa11y http://localhost:3000 --standard WCAG2AA --reporter json",
     "accessibility:lighthouse": "lighthouse http://localhost:3000 --only-categories=accessibility --output=json",

@@ -8,7 +8,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execSync, spawn } = require('child_process');
 
 // Accessibility testing configuration
 const ACCESSIBILITY_CONFIG = {
@@ -20,11 +20,15 @@ const ACCESSIBILITY_CONFIG = {
       large: 3.0,
     },
   },
-  pages: [
-    { url: 'http://localhost:3000', name: 'home' },
-    { url: 'http://localhost:3000/wells', name: 'wells' },
-    { url: 'http://localhost:3000/dashboard', name: 'dashboard' },
-    { url: 'http://localhost:3000/reports', name: 'reports' },
+  baseUrl: process.env.ACCESSIBILITY_BASE_URL || 'http://localhost:3000',
+  // Default pages - can be overridden by environment variable or auto-discovery
+  defaultPages: [
+    { path: '/', name: 'home' },
+    { path: '/wells', name: 'wells' },
+    { path: '/dashboard', name: 'dashboard' },
+    { path: '/reports', name: 'reports' },
+    { path: '/settings', name: 'settings' },
+    { path: '/alerts', name: 'alerts' },
   ],
   tools: {
     axe: true,
@@ -42,6 +46,205 @@ function isServerRunning(url) {
     return true;
   } catch (error) {
     return false;
+  }
+}
+
+/**
+ * Discover available pages dynamically
+ */
+function discoverPages() {
+  const pages = [];
+
+  // Try to read from environment variable first
+  const customPages = process.env.ACCESSIBILITY_PAGES;
+  if (customPages) {
+    try {
+      const parsedPages = JSON.parse(customPages);
+      console.log('📋 Using custom pages from ACCESSIBILITY_PAGES environment variable');
+      return parsedPages.map((page) => ({
+        url: `${ACCESSIBILITY_CONFIG.baseUrl}${page.path}`,
+        name: page.name,
+        path: page.path,
+      }));
+    } catch (error) {
+      console.warn('⚠️ Failed to parse ACCESSIBILITY_PAGES environment variable, using defaults');
+    }
+  }
+
+  // Try to discover pages from Next.js app directory structure
+  const appDir = path.join(process.cwd(), 'apps/web/src/app');
+  const pagesDir = path.join(process.cwd(), 'apps/web/src/pages');
+
+  if (fs.existsSync(appDir)) {
+    console.log('📋 Discovering pages from Next.js app directory...');
+    pages.push(...discoverNextJsAppRoutes(appDir));
+  } else if (fs.existsSync(pagesDir)) {
+    console.log('📋 Discovering pages from Next.js pages directory...');
+    pages.push(...discoverNextJsPagesRoutes(pagesDir));
+  } else {
+    console.log('📋 Using default page configuration...');
+    // Use default pages
+    return ACCESSIBILITY_CONFIG.defaultPages.map((page) => ({
+      url: `${ACCESSIBILITY_CONFIG.baseUrl}${page.path}`,
+      name: page.name,
+      path: page.path,
+    }));
+  }
+
+  // If no pages discovered, use defaults
+  if (pages.length === 0) {
+    console.log('📋 No pages discovered, using defaults...');
+    return ACCESSIBILITY_CONFIG.defaultPages.map((page) => ({
+      url: `${ACCESSIBILITY_CONFIG.baseUrl}${page.path}`,
+      name: page.name,
+      path: page.path,
+    }));
+  }
+
+  return pages;
+}
+
+/**
+ * Discover routes from Next.js app directory (App Router)
+ */
+function discoverNextJsAppRoutes(appDir, basePath = '') {
+  const routes = [];
+
+  try {
+    const entries = fs.readdirSync(appDir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      if (entry.isDirectory() && !entry.name.startsWith('(') && !entry.name.startsWith('_')) {
+        const routePath = `${basePath}/${entry.name}`;
+        const fullPath = path.join(appDir, entry.name);
+
+        // Check if this directory has a page.tsx or page.js file
+        const hasPage =
+          fs.existsSync(path.join(fullPath, 'page.tsx')) ||
+          fs.existsSync(path.join(fullPath, 'page.js'));
+
+        if (hasPage) {
+          routes.push({
+            url: `${ACCESSIBILITY_CONFIG.baseUrl}${routePath}`,
+            name: entry.name,
+            path: routePath,
+          });
+        }
+
+        // Recursively check subdirectories
+        routes.push(...discoverNextJsAppRoutes(fullPath, routePath));
+      }
+    }
+  } catch (error) {
+    console.warn(`⚠️ Error reading app directory ${appDir}:`, error.message);
+  }
+
+  return routes;
+}
+
+/**
+ * Discover routes from Next.js pages directory (Pages Router)
+ */
+function discoverNextJsPagesRoutes(pagesDir, basePath = '') {
+  const routes = [];
+
+  try {
+    const entries = fs.readdirSync(pagesDir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      if (entry.isFile() && (entry.name.endsWith('.tsx') || entry.name.endsWith('.js'))) {
+        // Skip API routes and special files
+        if (entry.name.startsWith('_') || entry.name === 'api') continue;
+
+        const fileName = entry.name.replace(/\.(tsx|js)$/, '');
+        const routePath = fileName === 'index' ? basePath || '/' : `${basePath}/${fileName}`;
+
+        routes.push({
+          url: `${ACCESSIBILITY_CONFIG.baseUrl}${routePath}`,
+          name: fileName === 'index' ? 'home' : fileName,
+          path: routePath,
+        });
+      } else if (entry.isDirectory() && !entry.name.startsWith('_') && entry.name !== 'api') {
+        const subPath = `${basePath}/${entry.name}`;
+        routes.push(...discoverNextJsPagesRoutes(path.join(pagesDir, entry.name), subPath));
+      }
+    }
+  } catch (error) {
+    console.warn(`⚠️ Error reading pages directory ${pagesDir}:`, error.message);
+  }
+
+  return routes;
+}
+
+/**
+ * Start the development server
+ */
+async function startDevServer() {
+  console.log('🚀 Starting development server...');
+
+  try {
+    // Build the web application first
+    console.log('  Building web application...');
+    execSync('cd apps/web && pnpm run build', { stdio: 'inherit' });
+
+    // Start the server in the background
+    console.log('  Starting server...');
+    const serverProcess = spawn('pnpm', ['run', 'start'], {
+      cwd: path.join(process.cwd(), 'apps/web'),
+      detached: false,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    // Wait for server to be ready
+    console.log('  Waiting for server to be ready...');
+    let attempts = 0;
+    const maxAttempts = 60; // 60 seconds
+
+    while (attempts < maxAttempts) {
+      try {
+        if (isServerRunning('http://localhost:3000')) {
+          console.log('  ✅ Server is ready!');
+          return serverProcess;
+        }
+      } catch (error) {
+        // Ignore connection errors while waiting
+      }
+
+      // Wait 1 second before next attempt
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      attempts++;
+
+      if (attempts % 10 === 0) {
+        console.log(`  ⏳ Still waiting... (${attempts}s)`);
+      }
+    }
+
+    console.log('\n  ⚠️ Server failed to start within 60 seconds');
+    serverProcess.kill();
+    return null;
+  } catch (error) {
+    console.error('  ❌ Failed to start server:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Stop the development server
+ */
+function stopDevServer(serverProcess) {
+  if (serverProcess && !serverProcess.killed) {
+    console.log('🛑 Stopping development server...');
+    try {
+      serverProcess.kill('SIGTERM');
+      // Give it a moment to shut down gracefully
+      setTimeout(() => {
+        if (!serverProcess.killed) {
+          serverProcess.kill('SIGKILL');
+        }
+      }, 5000);
+    } catch (error) {
+      console.warn('  ⚠️ Error stopping server:', error.message);
+    }
   }
 }
 
@@ -67,7 +270,8 @@ function runAxeTests() {
     },
   };
 
-  ACCESSIBILITY_CONFIG.pages.forEach((page) => {
+  const pages = discoverPages();
+  pages.forEach((page) => {
     console.log(`  Testing: ${page.url}`);
 
     if (!isServerRunning(page.url)) {
@@ -148,7 +352,8 @@ function runPa11yTests() {
     },
   };
 
-  ACCESSIBILITY_CONFIG.pages.forEach((page) => {
+  const pages = discoverPages();
+  pages.forEach((page) => {
     console.log(`  Testing: ${page.url}`);
 
     if (!isServerRunning(page.url)) {
@@ -234,7 +439,8 @@ function runLighthouseTests() {
   };
 
   // Test main page only for Lighthouse (to keep it simple)
-  const mainPage = ACCESSIBILITY_CONFIG.pages[0];
+  const pages = discoverPages();
+  const mainPage = pages[0] || { url: ACCESSIBILITY_CONFIG.baseUrl, name: 'home' };
 
   console.log(`  Testing: ${mainPage.url}`);
 
@@ -325,7 +531,7 @@ function generateAccessibilityReport(axeResults, pa11yResults, lighthouseResults
       score: overallScore,
       wcagCompliant: overallScore >= 90,
       industryCompliant: overallScore >= 90,
-      pagesTestedCount: ACCESSIBILITY_CONFIG.pages.length,
+      pagesTestedCount: discoverPages().length,
     },
     tools: {
       axe: axeResults,
@@ -509,10 +715,28 @@ ${rec.actions.map((action) => `- ${action}`).join('\n')}
 /**
  * Main execution function
  */
-function main() {
+async function main() {
   console.log('♿ Starting WellFlow Accessibility Testing...\n');
 
+  let serverProcess = null;
+  let serverWasStarted = false;
+
   try {
+    // Check if server is already running
+    const pages = discoverPages();
+    const mainPageUrl = pages[0]?.url || ACCESSIBILITY_CONFIG.baseUrl;
+    if (!isServerRunning(mainPageUrl)) {
+      console.log('🔍 Server not running, starting development server...');
+      serverProcess = await startDevServer();
+      serverWasStarted = true;
+
+      if (!serverProcess) {
+        console.log('⚠️ Could not start server, running tests in offline mode...');
+      }
+    } else {
+      console.log('✅ Server is already running');
+    }
+
     // Run accessibility tests
     const axeResults = runAxeTests();
     const pa11yResults = runPa11yTests();
@@ -546,12 +770,20 @@ function main() {
   } catch (error) {
     console.error('❌ Accessibility testing failed:', error.message);
     process.exit(1);
+  } finally {
+    // Clean up: stop server if we started it
+    if (serverWasStarted && serverProcess) {
+      stopDevServer(serverProcess);
+    }
   }
 }
 
 // Run the test if this script is executed directly
 if (require.main === module) {
-  main();
+  main().catch((error) => {
+    console.error('❌ Accessibility testing failed:', error.message);
+    process.exit(1);
+  });
 }
 
 module.exports = {
