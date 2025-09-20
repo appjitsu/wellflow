@@ -30,9 +30,18 @@ export default function ApiTestPage() {
   const [error, setError] = useState<string | null>(null);
   const [newUser, setNewUser] = useState({ name: "", email: "" });
 
-  // Force rebuild to embed NEXT_PUBLIC_API_URL environment variable
+  // Force rebuild to embed NEXT_PUBLIC_API_URL environment variable - v2
   const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+  // Debug info to verify environment variable embedding
+  const debugInfo = {
+    nodeEnv: process.env.NODE_ENV,
+    apiUrl: process.env.NEXT_PUBLIC_API_URL,
+    fallbackUrl: "http://localhost:3001",
+    actualUrl: API_BASE_URL,
+    buildTime: new Date().toISOString()
+  };
 
   const testHealthEndpoint = useCallback(async () => {
     setLoading(true);
@@ -184,6 +193,12 @@ export default function ApiTestPage() {
           <p>{error}</p>
           <small>Make sure the API server is running on {API_BASE_URL}</small>
           <small>Environment: {process.env.NODE_ENV} | API URL: {API_BASE_URL}</small>
+        <details style={{ marginTop: "10px", fontSize: "12px" }}>
+          <summary>Debug Info</summary>
+          <pre style={{ fontSize: "10px", background: "#f5f5f5", padding: "8px", borderRadius: "4px" }}>
+            {JSON.stringify(debugInfo, null, 2)}
+          </pre>
+        </details>
         </div>
       )}
 
