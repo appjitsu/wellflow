@@ -1,15 +1,38 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, Optional } from '@nestjs/common';
 import * as Sentry from '@sentry/nestjs';
+import { LogRocketService } from '../logrocket/logrocket.service';
 
 @Injectable()
 export class SentryService {
+  constructor(
+    @Optional() @Inject(LogRocketService) private readonly logRocketService?: LogRocketService,
+  ) {}
   /**
-   * Capture an exception with Sentry
+   * Capture an exception with Sentry and LogRocket integration
    */
-  captureException(error: Error, context?: string): void {
-    if (context) {
+  async captureException(error: Error, context?: string): Promise<void> {
+    // Get LogRocket session URL if available
+    let logRocketSessionURL: string | null = null;
+    if (this.logRocketService?.isReady()) {
+      try {
+        logRocketSessionURL = await this.logRocketService.getSessionURL();
+        // Also capture in LogRocket
+        this.logRocketService.captureException(error, { context });
+      } catch (logRocketError) {
+        console.warn('Failed to get LogRocket session URL:', logRocketError);
+      }
+    }
+
+    // Capture in Sentry with LogRocket session URL
+    if (context || logRocketSessionURL) {
       Sentry.withScope((scope) => {
-        scope.setTag('context', context);
+        if (context) {
+          scope.setTag('context', context);
+        }
+        if (logRocketSessionURL) {
+          scope.setExtra('logRocketSessionURL', logRocketSessionURL);
+          scope.setTag('hasLogRocketSession', 'true');
+        }
         Sentry.captureException(error);
       });
     } else {
@@ -18,13 +41,23 @@ export class SentryService {
   }
 
   /**
-   * Capture a message with Sentry
+   * Capture a message with Sentry and LogRocket integration
    */
-  captureMessage(
+  async captureMessage(
     message: string,
     level: Sentry.SeverityLevel = 'info',
     context?: string,
-  ): void {
+  ): Promise<void> {
+    // Log to LogRocket if available
+    if (this.logRocketService?.isReady()) {
+      try {
+        this.logRocketService.log(message, level as any, { context });
+      } catch (logRocketError) {
+        console.warn('Failed to log to LogRocket:', logRocketError);
+      }
+    }
+
+    // Capture in Sentry
     if (context) {
       Sentry.withScope((scope) => {
         scope.setTag('context', context);
@@ -36,10 +69,23 @@ export class SentryService {
   }
 
   /**
-   * Add user context to Sentry
+   * Add user context to Sentry and LogRocket
    */
   setUser(user: { id: string; email?: string; username?: string }): void {
+    // Set user in Sentry
     Sentry.setUser(user);
+
+    // Identify user in LogRocket if available
+    if (this.logRocketService?.isReady()) {
+      try {
+        this.logRocketService.identify(user.id, {
+          email: user.email,
+          username: user.username,
+        });
+      } catch (logRocketError) {
+        console.warn('Failed to identify user in LogRocket:', logRocketError);
+      }
+    }
   }
 
   /**
