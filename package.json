@@ -20,7 +20,10 @@
     "sast:semgrep": "semgrep --config=.semgrep.yml --json --output=security-reports/semgrep-results.json .",
     "sast:semgrep:sarif": "semgrep --config=.semgrep.yml --sarif --output=security-reports/semgrep-results.sarif .",
     "sast:scan": "mkdir -p security-reports && pnpm run sast:semgrep && pnpm run sast:semgrep:sarif",
-    "sast:check": "pnpm run sast:scan"
+    "sast:check": "pnpm run sast:scan",
+    "secrets:gitleaks": "gitleaks detect --config=.gitleaks.toml --report-path=security-reports/gitleaks-report.json .",
+    "secrets:scan": "mkdir -p security-reports && pnpm run secrets:gitleaks",
+    "secrets:check": "pnpm run secrets:scan"
   },
   "devDependencies": {
     "husky": "^9.1.7",
