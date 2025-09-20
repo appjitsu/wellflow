@@ -8,7 +8,11 @@ import { DatabaseService } from './database.service';
     DatabaseService,
     {
       provide: 'DATABASE_CONNECTION',
-      useFactory: (databaseService: DatabaseService) => databaseService.getDb(),
+      useFactory: async (databaseService: DatabaseService) => {
+        // Wait for the database service to be initialized
+        // The onModuleInit should have been called by now
+        return databaseService.getDb();
+      },
       inject: [DatabaseService],
     },
   ],

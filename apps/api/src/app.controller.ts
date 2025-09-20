@@ -1,10 +1,9 @@
-import { Controller, Get, Post, HttpStatus, Inject, Optional } from '@nestjs/common';
+import { Controller, Get, Post, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AppService } from './app.service';
 import { SentryService } from './sentry/sentry.service';
 import { Public } from './presentation/decorators/public.decorator';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import * as schema from './database/schema';
+import { DatabaseService } from './database/database.service';
 
 @ApiTags('Health')
 @Controller()
@@ -12,7 +11,7 @@ export class AppController {
   constructor(
     private readonly appService: AppService,
     private readonly sentryService: SentryService,
-    @Optional() @Inject('DATABASE_CONNECTION') private db: NodePgDatabase<typeof schema>,
+    private readonly databaseService: DatabaseService,
   ) {}
 
   @Get()
@@ -76,8 +75,11 @@ export class AppController {
   @ApiResponse({ status: 200, description: 'Database status and table information' })
   async getDatabaseHealth() {
     try {
+      // Get database connection from service
+      const db = this.databaseService.getDb();
+
       // Check if database connection is available
-      if (!this.db) {
+      if (!db) {
         return {
           status: 'error',
           timestamp: new Date().toISOString(),
@@ -102,7 +104,7 @@ export class AppController {
         ORDER BY table_name;
       `;
 
-      const result = await this.db.execute(tablesQuery);
+      const result = await db.execute(tablesQuery);
       const tables = result.rows.map(row => row.table_name);
 
       // Check if migration table exists
@@ -115,7 +117,7 @@ export class AppController {
       let userCount = 0;
       if (usersTableExists) {
         try {
-          const countResult = await this.db.execute('SELECT COUNT(*) as count FROM users');
+          const countResult = await db.execute('SELECT COUNT(*) as count FROM users');
           userCount = parseInt(countResult.rows[0].count as string);
         } catch (error) {
           // Ignore count errors
