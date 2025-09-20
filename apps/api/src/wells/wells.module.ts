@@ -6,6 +6,7 @@ import { UpdateWellStatusHandler } from '../application/handlers/update-well-sta
 import { GetWellByIdHandler } from '../application/handlers/get-well-by-id.handler';
 import { GetWellsByOperatorHandler } from '../application/handlers/get-wells-by-operator.handler';
 import { WellRepositoryImpl } from '../infrastructure/repositories/well.repository';
+import { DatabaseModule } from '../database/database.module';
 
 const CommandHandlers = [CreateWellHandler, UpdateWellStatusHandler];
 
@@ -23,7 +24,7 @@ const Repositories = [
  * Aggregates all well-related functionality
  */
 @Module({
-  imports: [CqrsModule],
+  imports: [CqrsModule, DatabaseModule],
   controllers: [WellsController],
   providers: [...CommandHandlers, ...QueryHandlers, ...Repositories],
   exports: [...Repositories],
