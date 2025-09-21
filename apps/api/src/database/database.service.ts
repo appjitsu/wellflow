@@ -34,58 +34,11 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       throw error;
     }
 
-    // Create database tables directly (temporary solution until migration files are properly copied)
-    try {
-      console.log('🔄 Creating database tables...');
-
-      // Create users table
-      await this.pool.query(`
-        CREATE TABLE IF NOT EXISTS users (
-          id serial PRIMARY KEY,
-          email varchar(255) NOT NULL UNIQUE,
-          name varchar(255) NOT NULL,
-          created_at timestamp DEFAULT now() NOT NULL,
-          updated_at timestamp DEFAULT now() NOT NULL
-        );
-      `);
-
-      // Create posts table
-      await this.pool.query(`
-        CREATE TABLE IF NOT EXISTS posts (
-          id serial PRIMARY KEY,
-          title varchar(255) NOT NULL,
-          content text,
-          author_id integer,
-          published boolean DEFAULT false NOT NULL,
-          created_at timestamp DEFAULT now() NOT NULL,
-          updated_at timestamp DEFAULT now() NOT NULL
-        );
-      `);
-
-      // Add foreign key constraint (check if it exists first)
-      await this.pool.query(`
-        DO $$
-        BEGIN
-          IF NOT EXISTS (
-            SELECT 1 FROM information_schema.table_constraints
-            WHERE constraint_name = 'posts_author_id_users_id_fk'
-          ) THEN
-            ALTER TABLE posts
-            ADD CONSTRAINT posts_author_id_users_id_fk
-            FOREIGN KEY (author_id) REFERENCES users(id)
-            ON DELETE SET NULL ON UPDATE CASCADE;
-          END IF;
-        END $$;
-      `);
-
-      console.log('✅ Database tables created successfully');
-    } catch (error) {
-      console.error('❌ Database table creation failed:', error);
-      // Don't throw here - let the app start even if table creation fails
-      console.warn(
-        '⚠️ Application starting without tables - manual intervention may be required',
-      );
-    }
+    // Note: Database tables will be created via Drizzle migrations
+    // Run: pnpm drizzle-kit generate && pnpm drizzle-kit migrate
+    console.log(
+      '✅ Database service initialized - use migrations to create tables',
+    );
   }
 
   async onModuleDestroy() {
