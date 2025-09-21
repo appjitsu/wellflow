@@ -74,11 +74,11 @@ async function main() {
   try {
     // Check if license-checker is installed
     try {
-      // nosemgrep: javascript.lang.security.detect-child-process.detect-child-process
+      // semgrep:ignore javascript.lang.security.detect-child-process.detect-child-process
       execSync('npx license-checker --version', { stdio: 'pipe' });
     } catch (error) {
       console.log('📦 Installing license-checker...');
-      // nosemgrep: javascript.lang.security.detect-child-process.detect-child-process
+      // semgrep:ignore javascript.lang.security.detect-child-process.detect-child-process
       execSync('npm install -g license-checker', { stdio: 'inherit' });
     }
 
@@ -127,7 +127,7 @@ async function main() {
  */
 async function scanWorkspace(workspace, results) {
   try {
-    // nosemgrep: javascript.lang.security.detect-child-process.detect-child-process
+    // semgrep:ignore javascript.lang.security.detect-child-process.detect-child-process
     const licenseData = execSync(`cd ${workspace} && npx license-checker --json --production`, {
       encoding: 'utf8',
       timeout: 60000,

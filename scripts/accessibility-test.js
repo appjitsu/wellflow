@@ -33,7 +33,7 @@ const ACCESSIBILITY_CONFIG = {
  */
 function isServerRunning(url) {
   try {
-    // nosemgrep: javascript.lang.security.detect-child-process.detect-child-process
+    // semgrep:ignore javascript.lang.security.detect-child-process.detect-child-process
     execSync(`curl -f "${url}" >/dev/null 2>&1`, { timeout: 5000 });
     return true;
   } catch (error) {
@@ -46,7 +46,7 @@ function isServerRunning(url) {
  */
 function validateRoute(url) {
   try {
-    // nosemgrep: javascript.lang.security.detect-child-process.detect-child-process
+    // semgrep:ignore javascript.lang.security.detect-child-process.detect-child-process
     execSync(`curl -f -s -I "${url}" >/dev/null 2>&1`, { timeout: 5000 });
     return true;
   } catch (error) {
@@ -215,7 +215,7 @@ async function startDevServer() {
   try {
     // Build the web application first
     console.log('  Building web application...');
-    // nosemgrep: javascript.lang.security.detect-child-process.detect-child-process
+    // semgrep:ignore javascript.lang.security.detect-child-process.detect-child-process
     execSync('cd apps/web && pnpm run build', { stdio: 'inherit' });
 
     // Start the server in the background
@@ -320,7 +320,7 @@ async function runAxeTests(pages) {
 
       let axeResults;
       try {
-        // nosemgrep: javascript.lang.security.detect-child-process.detect-child-process
+        // semgrep:ignore javascript.lang.security.detect-child-process.detect-child-process
         const axeOutput = execSync(axeCommand, {
           encoding: 'utf8',
           timeout: 35000,
@@ -439,7 +439,7 @@ function calculateAxeScore(axeResults) {
 function analyzePageBasic(url) {
   try {
     // Fetch page HTML for basic analysis
-    // nosemgrep: javascript.lang.security.detect-child-process.detect-child-process
+    // semgrep:ignore javascript.lang.security.detect-child-process.detect-child-process
     const htmlContent = execSync(`curl -s "${url}"`, { encoding: 'utf8', timeout: 10000 });
 
     const violations = [];
@@ -589,7 +589,7 @@ function runPa11yTests(pages) {
 
       let pa11yResults;
       try {
-        // nosemgrep: javascript.lang.security.detect-child-process.detect-child-process
+        // semgrep:ignore javascript.lang.security.detect-child-process.detect-child-process
         const pa11yOutput = execSync(pa11yCommand, {
           encoding: 'utf8',
           timeout: 35000,
@@ -738,7 +738,7 @@ function runLighthouseTests(pages) {
     let pageResult;
     try {
       const lighthouseCommand = `npx lighthouse ${mainPage.url} --only-categories=accessibility --output=json --chrome-flags="--headless --no-sandbox" --quiet`;
-      // nosemgrep: javascript.lang.security.detect-child-process.detect-child-process
+      // semgrep:ignore javascript.lang.security.detect-child-process.detect-child-process
       const lighthouseOutput = execSync(lighthouseCommand, {
         encoding: 'utf8',
         timeout: 60000,

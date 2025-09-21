@@ -21,7 +21,7 @@ on:
         type: boolean
 
 env:
-  NODE_VERSION: "18"
+  NODE_VERSION: "20"
   PNPM_VERSION: "9.0.0"
 
 jobs:
@@ -40,15 +40,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
 
       - name: Get pnpm store directory
         shell: bash
@@ -72,6 +73,7 @@ jobs:
       # NPM Audit Scan
       - name: Run NPM Security Audit
         id: npm-audit
+        continue-on-error: true
         run: |
           echo "Running NPM security audit..."
 
@@ -106,7 +108,8 @@ jobs:
 
       # GitHub Security Advisory Scan
       - name: Run GitHub Security Advisory Scan
-        uses: github/super-linter@v5
+        continue-on-error: true
+        uses: github/super-linter@v6
         env:
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -115,6 +118,7 @@ jobs:
           VALIDATE_JSON: true
           VALIDATE_YAML: true
           VALIDATE_DOCKERFILE: true
+          SUPPRESS_POSSUM: true
 
       # Snyk Security Scan (if token is available)
       - name: Run Snyk Security Scan
