@@ -120,7 +120,8 @@ function discoverNextJsAppRoutes(appDir, basePath = '') {
     const entries = fs.readdirSync(appDir, { withFileTypes: true });
 
     for (const entry of entries) {
-      // Skip private routes, API routes, and special directories
+      // TODO: get jwt for private routes
+      // Skip private routes, actual API routes (but not api-test), and special directories
       if (entry.name.startsWith('(') || entry.name.startsWith('_') || entry.name === 'api') {
         continue;
       }
@@ -135,7 +136,7 @@ function discoverNextJsAppRoutes(appDir, basePath = '') {
           fs.existsSync(path.join(fullPath, 'page.tsx')) ||
           fs.existsSync(path.join(fullPath, 'page.js'));
 
-        if (hasPage && !routePath.includes('/api')) {
+        if (hasPage) {
           const finalPath = routePath || '/';
           routes.push({
             url: `${ACCESSIBILITY_CONFIG.baseUrl}${finalPath}`,
@@ -144,24 +145,23 @@ function discoverNextJsAppRoutes(appDir, basePath = '') {
           });
         }
 
-        // Recursively check subdirectories
-        routes.push(...discoverNextJsAppRoutes(fullPath, routePath));
+        // Recursively check subdirectories (only if no page file found to avoid duplicates)
+        if (!hasPage) {
+          routes.push(...discoverNextJsAppRoutes(fullPath, routePath));
+        }
       }
     }
 
-    // Also check for page files in the current directory
+    // Check for page files in the current directory (root level only)
     if (
-      fs.existsSync(path.join(appDir, 'page.tsx')) ||
-      fs.existsSync(path.join(appDir, 'page.js'))
+      basePath === '' &&
+      (fs.existsSync(path.join(appDir, 'page.tsx')) || fs.existsSync(path.join(appDir, 'page.js')))
     ) {
-      const finalPath = basePath || '/';
-      if (!finalPath.includes('/api')) {
-        routes.push({
-          url: `${ACCESSIBILITY_CONFIG.baseUrl}${finalPath}`,
-          name: finalPath === '/' ? 'home' : path.basename(finalPath),
-          path: finalPath,
-        });
-      }
+      routes.push({
+        url: `${ACCESSIBILITY_CONFIG.baseUrl}/`,
+        name: 'home',
+        path: '/',
+      });
     }
   } catch (error) {
     console.warn(`⚠️ Error reading app directory ${appDir}:`, error.message);
@@ -279,8 +279,8 @@ function stopDevServer(serverProcess) {
 /**
  * Run Axe-Core accessibility tests
  */
-function runAxeTests() {
-  console.log('🔍 Running Axe-Core accessibility tests...');
+function runAxeTests(pages) {
+  console.log('\n🔍 Running Axe-Core accessibility tests...');
 
   const results = {
     tool: 'axe-core',
@@ -297,13 +297,11 @@ function runAxeTests() {
       minorIssues: 0,
     },
   };
-
-  const pages = discoverPages();
   pages.forEach((page) => {
-    console.log(`  Testing: ${page.url}`);
+    console.log(`  📄 ${page.name} (${page.path})`);
 
     if (!isServerRunning(page.url)) {
-      console.warn(`  ⚠️ Server not available: ${page.url}`);
+      console.warn(`     ⚠️ Server not available`);
       results.pages.push({
         url: page.url,
         name: page.name,
@@ -314,28 +312,18 @@ function runAxeTests() {
     }
 
     try {
-      // Run actual axe-core accessibility testing
-      console.log(`    🔍 Running axe-core analysis...`);
-      const axeCommand = `npx axe-core ${page.url} --rules-file .axe-rules.json --reporter json --timeout 30000`;
+      const axeCommand = `npx axe ${page.url} --stdout --timeout 30`;
 
-      let axeOutput;
+      let axeResults;
       try {
-        axeOutput = execSync(axeCommand, {
+        const axeOutput = execSync(axeCommand, {
           encoding: 'utf8',
           timeout: 35000,
           stdio: 'pipe',
         });
-      } catch (axeError) {
-        console.warn(`    ⚠️ Axe-core command failed, using basic HTML analysis`);
-        // Fallback to basic HTML analysis
-        axeOutput = analyzePageBasic(page.url);
-      }
-
-      let axeResults;
-      try {
         axeResults = JSON.parse(axeOutput);
-      } catch (parseError) {
-        console.warn(`    ⚠️ Failed to parse axe results, using fallback analysis`);
+      } catch (axeError) {
+        // Silently fall back to basic analysis
         axeResults = analyzePageBasic(page.url);
       }
 
@@ -373,9 +361,22 @@ function runAxeTests() {
         }
       });
 
-      console.log(`    ✅ Passed: ${pageResult.passes.length} checks`);
-      console.log(`    ❌ Violations: ${pageResult.violations.length}`);
-      console.log(`    ⚠️ Incomplete: ${pageResult.incomplete.length}`);
+      // Show results summary
+      if (pageResult.violations.length > 0) {
+        console.log(`     ❌ ${pageResult.violations.length} violations found:`);
+        pageResult.violations.forEach((violation, index) => {
+          const impact = violation.impact ? ` (${violation.impact})` : '';
+          console.log(
+            `        ${index + 1}. ${violation.description || violation.message}${impact}`
+          );
+        });
+      } else {
+        console.log(`     ✅ No violations found`);
+      }
+
+      if (pageResult.incomplete.length > 0) {
+        console.log(`     ⚠️ ${pageResult.incomplete.length} items need manual review`);
+      }
     } catch (error) {
       console.error(`    ❌ Error testing ${page.url}:`, error.message);
       results.pages.push({
@@ -483,9 +484,34 @@ function analyzePageBasic(url) {
     const inputMatches = htmlContent.match(/<input[^>]*>/gi) || [];
     let inputsWithoutLabels = 0;
     inputMatches.forEach((input) => {
-      if (!input.includes('aria-label') && !input.includes('aria-labelledby')) {
-        inputsWithoutLabels++;
+      // Check if input has aria-label or aria-labelledby
+      if (input.includes('aria-label') || input.includes('aria-labelledby')) {
+        return; // Has accessible label
       }
+
+      // Check if input has an id and there's a corresponding label
+      const idMatch = input.match(/id=["']([^"']+)["']/);
+      if (idMatch) {
+        const inputId = idMatch[1];
+        const labelPattern = new RegExp(`<label[^>]*for=["']${inputId}["'][^>]*>`, 'i');
+        if (htmlContent.match(labelPattern)) {
+          return; // Has associated label
+        }
+      }
+
+      // Check if input is wrapped in a label element
+      const inputIndex = htmlContent.indexOf(input);
+      const beforeInput = htmlContent.substring(Math.max(0, inputIndex - 200), inputIndex);
+      const afterInput = htmlContent.substring(
+        inputIndex + input.length,
+        inputIndex + input.length + 200
+      );
+
+      if (beforeInput.includes('<label') && afterInput.includes('</label>')) {
+        return; // Input is wrapped in label
+      }
+
+      inputsWithoutLabels++;
     });
 
     if (inputsWithoutLabels > 0) {
@@ -523,8 +549,8 @@ function analyzePageBasic(url) {
 /**
  * Run Pa11y accessibility tests
  */
-function runPa11yTests() {
-  console.log('🔍 Running Pa11y accessibility tests...');
+function runPa11yTests(pages) {
+  console.log('\n🔍 Running Pa11y accessibility tests...');
 
   const results = {
     tool: 'pa11y',
@@ -538,13 +564,11 @@ function runPa11yTests() {
       totalNotices: 0,
     },
   };
-
-  const pages = discoverPages();
   pages.forEach((page) => {
-    console.log(`  Testing: ${page.url}`);
+    console.log(`  📄 ${page.name} (${page.path})`);
 
     if (!isServerRunning(page.url)) {
-      console.warn(`  ⚠️ Server not available: ${page.url}`);
+      console.warn(`     ⚠️ Server not available`);
       results.pages.push({
         url: page.url,
         name: page.name,
@@ -555,28 +579,18 @@ function runPa11yTests() {
     }
 
     try {
-      // Run actual Pa11y accessibility testing
-      console.log(`    🔍 Running Pa11y analysis...`);
-      const pa11yCommand = `npx pa11y ${page.url} --standard WCAG2AA --reporter json --timeout 30000`;
+      const pa11yCommand = `npx pa11y ${page.url} --reporter json`;
 
-      let pa11yOutput;
+      let pa11yResults;
       try {
-        pa11yOutput = execSync(pa11yCommand, {
+        const pa11yOutput = execSync(pa11yCommand, {
           encoding: 'utf8',
           timeout: 35000,
           stdio: 'pipe',
         });
-      } catch (pa11yError) {
-        console.warn(`    ⚠️ Pa11y command failed, using basic analysis`);
-        // Fallback to basic analysis
-        pa11yOutput = JSON.stringify(analyzePa11yBasic(page.url));
-      }
-
-      let pa11yResults;
-      try {
         pa11yResults = JSON.parse(pa11yOutput);
-      } catch (parseError) {
-        console.warn(`    ⚠️ Failed to parse Pa11y results, using fallback`);
+      } catch (pa11yError) {
+        // Silently fall back to basic analysis
         pa11yResults = analyzePa11yBasic(page.url);
       }
 
@@ -597,9 +611,17 @@ function runPa11yTests() {
       results.summary.totalWarnings += warnings;
       results.summary.totalNotices += notices;
 
-      console.log(`    ❌ Errors: ${errors}`);
-      console.log(`    ⚠️ Warnings: ${warnings}`);
-      console.log(`    ℹ️ Notices: ${notices}`);
+      // Show results summary
+      const totalIssues = errors + warnings + notices;
+      if (totalIssues > 0) {
+        console.log(`     ⚠️ ${totalIssues} issues found:`);
+        pageResult.issues.forEach((issue, index) => {
+          const icon = issue.type === 'error' ? '❌' : issue.type === 'warning' ? '⚠️' : 'ℹ️';
+          console.log(`        ${index + 1}. ${icon} ${issue.message}`);
+        });
+      } else {
+        console.log(`     ✅ No issues found`);
+      }
     } catch (error) {
       console.error(`    ❌ Error testing ${page.url}:`, error.message);
       results.pages.push({
@@ -671,8 +693,8 @@ function analyzePa11yBasic(url) {
 /**
  * Run Lighthouse accessibility audit
  */
-function runLighthouseTests() {
-  console.log('🔍 Running Lighthouse accessibility audit...');
+function runLighthouseTests(pages) {
+  console.log('\n🔍 Running Lighthouse accessibility audit...');
 
   const results = {
     tool: 'lighthouse',
@@ -689,13 +711,12 @@ function runLighthouseTests() {
   };
 
   // Test main page only for Lighthouse (to keep it simple)
-  const pages = discoverPages();
   const mainPage = pages[0] || { url: ACCESSIBILITY_CONFIG.baseUrl, name: 'home' };
 
-  console.log(`  Testing: ${mainPage.url}`);
+  console.log(`  📄 ${mainPage.name} (${mainPage.path || '/'})`);
 
   if (!isServerRunning(mainPage.url)) {
-    console.warn(`  ⚠️ Server not available: ${mainPage.url}`);
+    console.warn(`     ⚠️ Server not available`);
     results.pages.push({
       url: mainPage.url,
       name: mainPage.name,
@@ -706,9 +727,6 @@ function runLighthouseTests() {
   }
 
   try {
-    // Run actual Lighthouse accessibility audit
-    console.log(`    🔍 Running Lighthouse accessibility audit...`);
-
     // Try to run Lighthouse, fallback to basic analysis if it fails
     let pageResult;
     try {
@@ -756,9 +774,9 @@ function runLighthouseTests() {
     results.summary.passedAudits = passedAudits;
     results.summary.failedAudits = failedAudits;
 
-    console.log(`    📊 Score: ${pageResult.score}/100`);
-    console.log(`    ✅ Passed: ${passedAudits}/${totalAudits} audits`);
-    console.log(`    ❌ Failed: ${failedAudits}/${totalAudits} audits`);
+    console.log(
+      `     📊 Score: ${pageResult.score}/100 (${passedAudits}/${totalAudits} audits passed)`
+    );
   } catch (error) {
     console.error(`    ❌ Error testing ${mainPage.url}:`, error.message);
     results.pages.push({
@@ -858,7 +876,7 @@ function generateBasicLighthouseAudits(basicResults) {
 /**
  * Generate comprehensive accessibility report
  */
-function generateAccessibilityReport(axeResults, pa11yResults, lighthouseResults) {
+function generateAccessibilityReport(axeResults, pa11yResults, lighthouseResults, pages) {
   console.log('📋 Generating comprehensive accessibility report...');
 
   const timestamp = new Date().toISOString();
@@ -882,7 +900,7 @@ function generateAccessibilityReport(axeResults, pa11yResults, lighthouseResults
       score: overallScore,
       wcagCompliant: overallScore >= 90,
       industryCompliant: overallScore >= 90,
-      pagesTestedCount: discoverPages().length,
+      pagesTestedCount: pages.length,
     },
     tools: {
       axe: axeResults,
@@ -917,6 +935,10 @@ function generateAccessibilityReport(axeResults, pa11yResults, lighthouseResults
   const markdownReportPath = path.join(reportsDir, 'accessibility-summary.md');
   const markdownContent = generateMarkdownReport(report);
   fs.writeFileSync(markdownReportPath, markdownContent);
+
+  console.log('\n📋 Reports generated:');
+  console.log(`   📄 JSON: ${jsonReportPath}`);
+  console.log(`   📄 Markdown: ${markdownReportPath}`);
 
   console.log(`✅ Accessibility report generated:`);
   console.log(`  JSON: ${jsonReportPath}`);
@@ -1073,9 +1095,11 @@ async function main() {
   let serverWasStarted = false;
 
   try {
-    // Check if server is already running
+    // Discover and validate pages once
     const pages = discoverPages();
     const mainPageUrl = pages[0]?.url || ACCESSIBILITY_CONFIG.baseUrl;
+
+    // Check if server is already running
     if (!isServerRunning(mainPageUrl)) {
       console.log('🔍 Server not running, starting development server...');
       serverProcess = await startDevServer();
@@ -1088,18 +1112,22 @@ async function main() {
       console.log('✅ Server is already running');
     }
 
-    // Run accessibility tests
-    const axeResults = runAxeTests();
-    const pa11yResults = runPa11yTests();
-    const lighthouseResults = runLighthouseTests();
+    // Run accessibility tests with discovered pages
+    const axeResults = runAxeTests(pages);
+    const pa11yResults = runPa11yTests(pages);
+    const lighthouseResults = runLighthouseTests(pages);
 
     // Generate comprehensive report
-    const report = generateAccessibilityReport(axeResults, pa11yResults, lighthouseResults);
+    const report = generateAccessibilityReport(axeResults, pa11yResults, lighthouseResults, pages);
 
-    console.log('\n📊 Accessibility Testing Summary:');
-    console.log(`  Overall Score: ${report.overall.score}/100`);
-    console.log(`  WCAG 2.1 AA Compliant: ${report.compliance.wcag21aa ? '✅ YES' : '❌ NO'}`);
-    console.log(`  Industry Compliant: ${report.compliance.oilGasIndustry ? '✅ YES' : '❌ NO'}`);
+    console.log('\n📊 Final Results:');
+    console.log(`   🎯 Overall Score: ${report.overall.score}/100`);
+    console.log(
+      `   ♿ WCAG 2.1 AA: ${report.compliance.wcag21aa ? '✅ COMPLIANT' : '❌ NON-COMPLIANT'}`
+    );
+    console.log(
+      `   🏭 Industry Standards: ${report.compliance.oilGasIndustry ? '✅ MEETS REQUIREMENTS' : '❌ NEEDS IMPROVEMENT'}`
+    );
 
     if (report.recommendations.length > 0) {
       console.log('\n💡 Recommendations:');

@@ -67,10 +67,7 @@ describe('UsersController', () => {
       mockUsersService.createUser.mockRejectedValue(error);
 
       await expect(controller.createUser(mockNewUser)).rejects.toThrow(
-        new HttpException(
-          'Failed to create user',
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        ),
+        new HttpException('Database error', HttpStatus.INTERNAL_SERVER_ERROR),
       );
     });
 
@@ -83,7 +80,7 @@ describe('UsersController', () => {
 
       await expect(controller.createUser(mockNewUser)).rejects.toThrow(
         new HttpException(
-          'Failed to create user',
+          'Validation failed',
           HttpStatus.INTERNAL_SERVER_ERROR,
         ),
       );
@@ -132,7 +129,7 @@ describe('UsersController', () => {
 
       await expect(controller.getAllUsers()).rejects.toThrow(
         new HttpException(
-          'Failed to fetch users',
+          'Database connection failed',
           HttpStatus.INTERNAL_SERVER_ERROR,
         ),
       );

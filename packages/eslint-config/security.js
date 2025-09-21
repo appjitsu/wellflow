@@ -15,7 +15,6 @@ export const securityConfig = [
     plugins: {
       security: securityPlugin,
       'no-secrets': noSecretsPlugin,
-      sonarjs: sonarjsPlugin,
     },
     rules: {
       // === CRITICAL SECURITY RULES ===
@@ -55,7 +54,7 @@ export const securityConfig = [
 
       // Complexity Management
       'sonarjs/cognitive-complexity': ['error', 15],
-      'sonarjs/no-duplicate-string': ['error', 3],
+      'sonarjs/no-duplicate-string': ['error', { threshold: 3 }],
       'sonarjs/no-identical-functions': 'error',
 
       // Error Handling
@@ -129,8 +128,6 @@ export const securityConfig = [
       'no-console': 'warn', // Allow console in development, warn in production
       'no-debugger': 'error',
       'no-alert': 'error',
-      'no-confirm': 'error',
-      'no-prompt': 'error',
     },
   },
   {

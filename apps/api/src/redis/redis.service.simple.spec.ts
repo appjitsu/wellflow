@@ -2,7 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from './redis.service';
 
-describe('RedisService (Simple)', () => {
+/* eslint-disable security/detect-object-injection */
+describe('RedisService - Simple Coverage', () => {
   let service: RedisService;
   let configService: ConfigService;
 
@@ -147,8 +148,12 @@ describe('RedisService (Simple)', () => {
       ];
 
       requiredMethods.forEach((method) => {
-        expect(service[method]).toBeDefined();
-        expect(typeof service[method]).toBe('function');
+        expect(
+          (service as unknown as Record<string, unknown>)[method],
+        ).toBeDefined();
+        expect(
+          typeof (service as unknown as Record<string, unknown>)[method],
+        ).toBe('function');
       });
     });
 
@@ -156,8 +161,12 @@ describe('RedisService (Simple)', () => {
       const lifecycleMethods = ['onModuleInit', 'onModuleDestroy'];
 
       lifecycleMethods.forEach((method) => {
-        expect(service[method]).toBeDefined();
-        expect(typeof service[method]).toBe('function');
+        expect(
+          (service as unknown as Record<string, unknown>)[method],
+        ).toBeDefined();
+        expect(
+          typeof (service as unknown as Record<string, unknown>)[method],
+        ).toBe('function');
       });
     });
 

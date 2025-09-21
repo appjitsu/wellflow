@@ -134,7 +134,7 @@
   "monitoring": {
     "tools": {
       "lighthouse_ci": {
-        "enabled": false,
+        "enabled": true,
         "description": "Lighthouse CI for automated performance testing",
         "configuration": "lighthouse.config.js"
       },

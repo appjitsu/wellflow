@@ -71,7 +71,9 @@ describe('UpdateWellStatusHandler', () => {
     );
 
     it('should update well status successfully', async () => {
-      wellRepository.findById.mockResolvedValue(mockWell as any);
+      wellRepository.findById.mockResolvedValue(
+        mockWell as unknown as jest.Mocked<Well>,
+      );
       wellRepository.save.mockResolvedValue(undefined);
 
       await handler.execute(validCommand);
@@ -113,7 +115,9 @@ describe('UpdateWellStatusHandler', () => {
     });
 
     it('should handle repository save errors', async () => {
-      wellRepository.findById.mockResolvedValue(mockWell as any);
+      wellRepository.findById.mockResolvedValue(
+        mockWell as unknown as jest.Mocked<Well>,
+      );
       wellRepository.save.mockRejectedValue(new Error('Database save failed'));
 
       await expect(handler.execute(validCommand)).rejects.toThrow(
@@ -125,7 +129,9 @@ describe('UpdateWellStatusHandler', () => {
     });
 
     it('should handle domain validation errors', async () => {
-      wellRepository.findById.mockResolvedValue(mockWell as any);
+      wellRepository.findById.mockResolvedValue(
+        mockWell as unknown as jest.Mocked<Well>,
+      );
       mockWell.updateStatus.mockImplementation(() => {
         throw new Error('Invalid status transition');
       });
@@ -149,7 +155,9 @@ describe('UpdateWellStatusHandler', () => {
       ];
 
       mockWell.getDomainEvents.mockReturnValue(mockEvents);
-      wellRepository.findById.mockResolvedValue(mockWell as any);
+      wellRepository.findById.mockResolvedValue(
+        mockWell as unknown as jest.Mocked<Well>,
+      );
       wellRepository.save.mockResolvedValue(undefined);
 
       await handler.execute(validCommand);
@@ -167,7 +175,9 @@ describe('UpdateWellStatusHandler', () => {
         'user-789',
       );
 
-      wellRepository.findById.mockResolvedValue(mockWell as any);
+      wellRepository.findById.mockResolvedValue(
+        mockWell as unknown as jest.Mocked<Well>,
+      );
       wellRepository.save.mockResolvedValue(undefined);
 
       await handler.execute(commandWithoutReason);
@@ -189,7 +199,9 @@ describe('UpdateWellStatusHandler', () => {
         WellStatus.PLUGGED,
       ];
 
-      wellRepository.findById.mockResolvedValue(mockWell as any);
+      wellRepository.findById.mockResolvedValue(
+        mockWell as unknown as jest.Mocked<Well>,
+      );
       wellRepository.save.mockResolvedValue(undefined);
 
       for (const status of statuses) {
@@ -211,7 +223,9 @@ describe('UpdateWellStatusHandler', () => {
     it('should handle different well IDs', async () => {
       const wellIds = ['well-001', 'well-002', 'well-003'];
 
-      wellRepository.findById.mockResolvedValue(mockWell as any);
+      wellRepository.findById.mockResolvedValue(
+        mockWell as unknown as jest.Mocked<Well>,
+      );
       wellRepository.save.mockResolvedValue(undefined);
 
       for (const wellId of wellIds) {
@@ -232,7 +246,9 @@ describe('UpdateWellStatusHandler', () => {
     it('should handle different user IDs', async () => {
       const userIds = ['user-001', 'user-002', 'user-003'];
 
-      wellRepository.findById.mockResolvedValue(mockWell as any);
+      wellRepository.findById.mockResolvedValue(
+        mockWell as unknown as jest.Mocked<Well>,
+      );
       wellRepository.save.mockResolvedValue(undefined);
 
       for (const userId of userIds) {
@@ -261,7 +277,9 @@ describe('UpdateWellStatusHandler', () => {
         'EMERGENCY: Equipment failure detected - immediate shutdown required',
       );
 
-      wellRepository.findById.mockResolvedValue(mockWell as any);
+      wellRepository.findById.mockResolvedValue(
+        mockWell as unknown as jest.Mocked<Well>,
+      );
       wellRepository.save.mockResolvedValue(undefined);
 
       await handler.execute(emergencyCommand);
@@ -281,7 +299,9 @@ describe('UpdateWellStatusHandler', () => {
         'Regulatory compliance - well abandonment required per state regulations',
       );
 
-      wellRepository.findById.mockResolvedValue(mockWell as any);
+      wellRepository.findById.mockResolvedValue(
+        mockWell as unknown as jest.Mocked<Well>,
+      );
       wellRepository.save.mockResolvedValue(undefined);
 
       await handler.execute(regulatoryCommand);
@@ -301,7 +321,9 @@ describe('UpdateWellStatusHandler', () => {
         'A'.repeat(1000), // Very long reason
       );
 
-      wellRepository.findById.mockResolvedValue(mockWell as any);
+      wellRepository.findById.mockResolvedValue(
+        mockWell as unknown as jest.Mocked<Well>,
+      );
       wellRepository.save.mockResolvedValue(undefined);
 
       await handler.execute(longReasonCommand);
@@ -321,7 +343,9 @@ describe('UpdateWellStatusHandler', () => {
         'Status change due to: weather conditions (high winds > 50mph) & equipment issues!',
       );
 
-      wellRepository.findById.mockResolvedValue(mockWell as any);
+      wellRepository.findById.mockResolvedValue(
+        mockWell as unknown as jest.Mocked<Well>,
+      );
       wellRepository.save.mockResolvedValue(undefined);
 
       await handler.execute(specialCharCommand);
@@ -335,7 +359,9 @@ describe('UpdateWellStatusHandler', () => {
 
     it('should not publish events if no domain events exist', async () => {
       mockWell.getDomainEvents.mockReturnValue([]);
-      wellRepository.findById.mockResolvedValue(mockWell as any);
+      wellRepository.findById.mockResolvedValue(
+        mockWell as unknown as jest.Mocked<Well>,
+      );
       wellRepository.save.mockResolvedValue(undefined);
 
       await handler.execute(validCommand);
@@ -345,7 +371,9 @@ describe('UpdateWellStatusHandler', () => {
     });
 
     it('should preserve ConflictException from domain layer', async () => {
-      wellRepository.findById.mockResolvedValue(mockWell as any);
+      wellRepository.findById.mockResolvedValue(
+        mockWell as unknown as jest.Mocked<Well>,
+      );
       mockWell.updateStatus.mockImplementation(() => {
         throw new NotFoundException('Well not found in domain');
       });

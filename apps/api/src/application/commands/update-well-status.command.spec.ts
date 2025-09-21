@@ -203,7 +203,7 @@ describe('UpdateWellStatusCommand', () => {
       );
 
       expect(command.reason).toBe(longReason);
-      expect(command.reason!.length).toBeGreaterThan(100);
+      expect(command.reason?.length).toBeGreaterThan(100);
     });
 
     it('should handle special characters in properties', () => {

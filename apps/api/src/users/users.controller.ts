@@ -10,34 +10,40 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { UsersService } from './users.service';
-import { NewUser } from '../database/schema';
+import type { NewUser } from '../database/schema';
+import { RATE_LIMIT_TIERS } from '../common/throttler';
+
+const ERROR_MESSAGES = {
+  USER_NOT_FOUND: 'User not found',
+} as const;
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
+  @Throttle({ [RATE_LIMIT_TIERS.STRICT]: { limit: 30, ttl: 60000 } })
   async createUser(@Body() userData: NewUser) {
     try {
       return await this.usersService.createUser(userData);
     } catch (error) {
-      throw new HttpException(
-        'Failed to create user',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      const message =
+        error instanceof Error ? error.message : 'Failed to create user';
+      throw new HttpException(message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   @Get()
+  @Throttle({ [RATE_LIMIT_TIERS.DEFAULT]: { limit: 60, ttl: 60000 } })
   async getAllUsers() {
     try {
       return await this.usersService.getAllUsers();
     } catch (error) {
-      throw new HttpException(
-        'Failed to fetch users',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      const message =
+        error instanceof Error ? error.message : 'Failed to fetch users';
+      throw new HttpException(message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -46,7 +52,10 @@ export class UsersController {
     try {
       const user = await this.usersService.getUserById(id);
       if (!user) {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        throw new HttpException(
+          ERROR_MESSAGES.USER_NOT_FOUND,
+          HttpStatus.NOT_FOUND,
+        );
       }
       return user;
     } catch (error) {
@@ -65,7 +74,10 @@ export class UsersController {
     try {
       const user = await this.usersService.getUserByEmail(email);
       if (!user) {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        throw new HttpException(
+          ERROR_MESSAGES.USER_NOT_FOUND,
+          HttpStatus.NOT_FOUND,
+        );
       }
       return user;
     } catch (error) {
@@ -87,7 +99,10 @@ export class UsersController {
     try {
       const user = await this.usersService.updateUser(id, userData);
       if (!user) {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        throw new HttpException(
+          ERROR_MESSAGES.USER_NOT_FOUND,
+          HttpStatus.NOT_FOUND,
+        );
       }
       return user;
     } catch (error) {
@@ -106,7 +121,10 @@ export class UsersController {
     try {
       const deleted = await this.usersService.deleteUser(id);
       if (!deleted) {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        throw new HttpException(
+          ERROR_MESSAGES.USER_NOT_FOUND,
+          HttpStatus.NOT_FOUND,
+        );
       }
       return { message: 'User deleted successfully' };
     } catch (error) {

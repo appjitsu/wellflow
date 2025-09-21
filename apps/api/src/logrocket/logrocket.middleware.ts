@@ -12,14 +12,16 @@ export class LogRocketMiddleware implements NestMiddleware {
     }
 
     const startTime = Date.now();
-    const { method, url, headers, body } = req;
+    const { method, url } = req;
+    const headers = req.headers as unknown;
+    const body = req.body as unknown;
 
     // Track API request start
     this.logRocketService.track('API Request Started', {
       method,
       url,
-      userAgent: headers['user-agent'],
-      contentType: headers['content-type'],
+      userAgent: (headers as Record<string, string>)['user-agent'],
+      contentType: (headers as Record<string, string>)['content-type'],
       hasBody: !!body && Object.keys(body).length > 0,
     });
 
@@ -40,7 +42,7 @@ export class LogRocketMiddleware implements NestMiddleware {
           statusCode,
           duration,
           success: statusCode < 400,
-          userAgent: headers['user-agent'],
+          userAgent: (headers as Record<string, string>)['user-agent'],
         });
 
         // Add response tags

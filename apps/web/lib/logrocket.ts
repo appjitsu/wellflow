@@ -27,7 +27,7 @@ export const initLogRocket = () => {
   const appId = process.env.NEXT_PUBLIC_LOGROCKET_APP_ID;
 
   if (!appId) {
-    console.warn('LogRocket App ID not configured');
+    // LogRocket App ID not configured - initialization skipped
     return;
   }
 
@@ -85,10 +85,9 @@ export const initLogRocket = () => {
 
     // Skip LogRocket React integration for React 19+ compatibility
     // LogRocket core features (session recording, error tracking, network monitoring) work without React integration
-    console.log('📝 LogRocket React integration disabled for React 19+ compatibility');
-    console.log(
-      '✅ LogRocket core features enabled: session recording, error tracking, network monitoring'
-    );
+
+    // LogRocket React integration disabled for React 19+ compatibility
+    // LogRocket core features enabled: session recording, error tracking, network monitoring
 
     // Set up LogRocket-Sentry integration
     LogRocket.getSessionURL((sessionURL) => {
@@ -96,9 +95,10 @@ export const initLogRocket = () => {
     });
 
     isInitialized = true;
-    console.log('✅ LogRocket initialized with Sentry integration');
-  } catch (error) {
-    console.error('❌ Failed to initialize LogRocket:', error);
+
+    // LogRocket initialized with Sentry integration
+  } catch {
+    // Failed to initialize LogRocket - error handled silently
   }
 };
 
@@ -124,14 +124,15 @@ export const identifyUser = (
     if (userInfo) {
       Object.entries(userInfo).forEach(([key, value]) => {
         if (key !== 'name' && key !== 'email' && value !== undefined) {
+          // eslint-disable-next-line security/detect-object-injection
           identifyData[key] = value as string | number | boolean;
         }
       });
     }
 
     LogRocket.identify(userId, identifyData);
-  } catch (error) {
-    console.error('Failed to identify user in LogRocket:', error);
+  } catch {
+    // Failed to identify user in LogRocket - error handled silently
   }
 };
 
@@ -142,8 +143,8 @@ export const captureException = (error: Error, extra?: Record<string, unknown>) 
 
   try {
     LogRocket.captureException(error, extra);
-  } catch (e) {
-    console.error('Failed to capture exception in LogRocket:', e);
+  } catch {
+    // Failed to capture exception in LogRocket - error handled silently
   }
 };
 
@@ -155,8 +156,8 @@ export const addTag = (key: string, value: string) => {
   try {
     // LogRocket doesn't have addTag method, use getSessionURL with tags instead
     LogRocket.track(key, { value });
-  } catch (error) {
-    console.error('Failed to add tag in LogRocket:', error);
+  } catch {
+    // Failed to add tag in LogRocket - error handled silently
   }
 };
 

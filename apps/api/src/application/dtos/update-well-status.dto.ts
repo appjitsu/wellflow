@@ -9,7 +9,7 @@ import { WellStatus } from '../../domain/enums/well-status.enum';
 export class UpdateWellStatusDto {
   @ApiProperty({ enum: WellStatus, description: 'New well status' })
   @IsEnum(WellStatus)
-  status: WellStatus;
+  status!: WellStatus;
 
   @ApiProperty({ description: 'Reason for status change', required: false })
   @IsOptional()

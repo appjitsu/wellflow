@@ -27,12 +27,7 @@ describe('UsersService', () => {
   const mockSelect = jest.fn();
   const mockUpdate = jest.fn();
   const mockDelete = jest.fn();
-  const mockValues = jest.fn();
-  const mockReturning = jest.fn();
-  const mockFrom = jest.fn();
   const mockWhere = jest.fn();
-  const mockLimit = jest.fn();
-  const mockSet = jest.fn();
 
   const mockDatabaseService = {
     getDb: jest.fn(() => ({
@@ -550,7 +545,7 @@ describe('UsersService', () => {
 
   describe('Edge cases and error handling', () => {
     it('should handle empty string email in getUserByEmail', async () => {
-      const result = await service.getUserByEmail('');
+      await service.getUserByEmail('');
 
       expect(mockRedisService.get).toHaveBeenCalledWith('user:email:');
     });

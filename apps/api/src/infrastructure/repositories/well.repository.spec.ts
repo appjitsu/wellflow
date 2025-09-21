@@ -8,7 +8,18 @@ import { WellStatus, WellType } from '../../domain/enums/well-status.enum';
 
 describe('WellRepositoryImpl', () => {
   let repository: WellRepositoryImpl;
-  let mockDb: any;
+  let mockDb: {
+    insert: jest.Mock;
+    select: jest.Mock;
+    from: jest.Mock;
+    where: jest.Mock;
+    limit: jest.Mock;
+    offset: jest.Mock;
+    update: jest.Mock;
+    set: jest.Mock;
+    values: jest.Mock;
+    delete: jest.Mock;
+  };
 
   const mockWellData = {
     id: 'well-123',
@@ -253,14 +264,18 @@ describe('WellRepositoryImpl', () => {
   });
 
   describe('findWithPagination', () => {
-    it.skip('should return paginated wells without filters', async () => {
+    it('should return paginated wells without filters', async () => {
       const mockWells = [mockWellData];
       const mockCount = [{ count: 1 }];
 
       // Mock the wells query chain: select().from().offset().limit()
       mockDb.limit.mockResolvedValueOnce(mockWells);
-      // Mock the count query chain: select().from()
-      mockDb.from.mockResolvedValueOnce(mockCount);
+
+      // Create a separate mock for the count query
+      const countMock = {
+        from: jest.fn().mockResolvedValueOnce(mockCount),
+      };
+      mockDb.select.mockReturnValueOnce(mockDb).mockReturnValueOnce(countMock);
 
       const result = await repository.findWithPagination(0, 10);
 
@@ -269,14 +284,20 @@ describe('WellRepositoryImpl', () => {
       expect(result.wells[0]).toBeInstanceOf(Well);
     });
 
-    it.skip('should return paginated wells with filters', async () => {
+    it('should return paginated wells with filters', async () => {
       const mockWells = [mockWellData];
       const mockCount = [{ count: 1 }];
 
       // Mock the wells query chain: select().from().where().offset().limit()
       mockDb.limit.mockResolvedValueOnce(mockWells);
-      // Mock the count query chain: select().from().where()
-      mockDb.where.mockResolvedValueOnce(mockCount);
+
+      // Create a separate mock for the count query
+      const countMock = {
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockResolvedValueOnce(mockCount),
+        }),
+      };
+      mockDb.select.mockReturnValueOnce(mockDb).mockReturnValueOnce(countMock);
 
       const filters = {
         operatorId: 'operator-123',
@@ -290,14 +311,20 @@ describe('WellRepositoryImpl', () => {
       expect(result.total).toBe(1);
     });
 
-    it.skip('should handle single filter condition', async () => {
+    it('should handle single filter condition', async () => {
       const mockWells = [mockWellData];
       const mockCount = [{ count: 1 }];
 
       // Mock the wells query chain: select().from().where().offset().limit()
       mockDb.limit.mockResolvedValueOnce(mockWells);
-      // Mock the count query chain: select().from().where()
-      mockDb.where.mockResolvedValueOnce(mockCount);
+
+      // Create a separate mock for the count query
+      const countMock = {
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockResolvedValueOnce(mockCount),
+        }),
+      };
+      mockDb.select.mockReturnValueOnce(mockDb).mockReturnValueOnce(countMock);
 
       const filters = { operatorId: 'operator-123' };
       const result = await repository.findWithPagination(0, 10, filters);
@@ -361,7 +388,7 @@ describe('WellRepositoryImpl', () => {
       expect(result?.getStatus()).toBe(mockWellData.status);
     });
 
-    it.skip('should handle location mapping correctly', async () => {
+    it('should handle location mapping correctly', async () => {
       mockDb.limit.mockResolvedValueOnce([mockWellData]);
 
       const result = await repository.findById('well-123');

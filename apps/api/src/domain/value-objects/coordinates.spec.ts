@@ -85,7 +85,7 @@ describe('Coordinates', () => {
 
     it('should return false when comparing with null', () => {
       const coords = new Coordinates(40.7128, -74.006);
-      expect(coords.equals(null as any)).toBe(false);
+      expect(coords.equals(null as unknown as Coordinates)).toBe(false);
     });
   });
 

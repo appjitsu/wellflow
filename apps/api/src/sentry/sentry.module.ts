@@ -52,4 +52,7 @@ import { SentryService } from './sentry.service';
   ],
   exports: [SentryService],
 })
-export class SentryModule {}
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+export class SentryModule {
+  // This module configures Sentry for error tracking and performance monitoring
+}

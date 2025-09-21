@@ -74,7 +74,7 @@ export class WellsController {
   })
   async createWell(
     @Body() createWellDto: CreateWellDto,
-    @Request() req: any,
+    @Request() req: { user?: { id?: string } },
   ): Promise<{ id: string; message: string }> {
     const command = new CreateWellCommand(
       createWellDto.apiNumber,
@@ -88,7 +88,9 @@ export class WellsController {
       req.user?.id,
     );
 
-    const wellId = await this.commandBus.execute(command);
+    const wellId = await this.commandBus.execute<CreateWellCommand, string>(
+      command,
+    );
 
     return {
       id: wellId,
@@ -175,7 +177,13 @@ export class WellsController {
       wellType,
     });
 
-    const result = await this.queryBus.execute(query);
+    const result = await this.queryBus.execute<
+      GetWellsByOperatorQuery,
+      {
+        wells: WellDto[];
+        total: number;
+      }
+    >(query);
 
     return {
       wells: result.wells,
@@ -215,7 +223,7 @@ export class WellsController {
   async updateWellStatus(
     @Param('id') id: string,
     @Body() updateStatusDto: UpdateWellStatusDto,
-    @Request() req: any,
+    @Request() req: { user?: { id?: string } },
   ): Promise<{ message: string }> {
     const command = new UpdateWellStatusCommand(
       id,

@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler, EventBus } from '@nestjs/cqrs';
 import { Inject, NotFoundException, BadRequestException } from '@nestjs/common';
 import { UpdateWellStatusCommand } from '../commands/update-well-status.command';
-import { WellRepository } from '../../domain/repositories/well.repository.interface';
+import type { WellRepository } from '../../domain/repositories/well.repository.interface';
 
 /**
  * Update Well Status Command Handler
@@ -42,7 +42,7 @@ export class UpdateWellStatusHandler
         throw error;
       }
       throw new BadRequestException(
-        `Failed to update well status: ${error.message}`,
+        `Failed to update well status: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }

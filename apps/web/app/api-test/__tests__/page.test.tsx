@@ -35,31 +35,33 @@ describe('ApiTestPage', () => {
   });
 
   it('should display loading state when testing health endpoint', async () => {
-    mockFetch.mockImplementation(
-      () =>
-        new Promise((resolve) =>
-          setTimeout(
-            () =>
-              resolve({
-                ok: true,
-                json: () =>
-                  Promise.resolve({
-                    status: 'ok',
-                    timestamp: '2024-01-01T00:00:00.000Z',
-                    uptime: 123.456,
-                    environment: 'test',
-                    version: '1.0.0',
-                    services: {
-                      database: 'connected',
-                      redis: 'connected',
-                      sentry: true,
-                    },
-                  }),
-              } as Response),
-            100
-          )
-        )
-    );
+    const mockHealthResponse = {
+      status: 'ok',
+      timestamp: '2024-01-01T00:00:00.000Z',
+      uptime: 123.456,
+      environment: 'test',
+      version: '1.0.0',
+      services: {
+        database: 'connected',
+        redis: 'connected',
+        sentry: true,
+      },
+    };
+
+    const createMockResponse = () =>
+      ({
+        ok: true,
+        json: () => Promise.resolve(mockHealthResponse),
+      }) as Response;
+
+    const createDelayedResponse = () => {
+      return new Promise<Response>((resolve) => {
+        // eslint-disable-next-line sonarjs/no-nested-functions
+        setTimeout(() => resolve(createMockResponse()), 100);
+      });
+    };
+
+    mockFetch.mockImplementation(createDelayedResponse);
 
     render(<ApiTestPage />);
 
@@ -332,8 +334,8 @@ describe('ApiTestPage', () => {
     });
 
     // Fill in the form
-    const nameInput = screen.getByPlaceholderText('Name');
-    const emailInput = screen.getByPlaceholderText('Email');
+    const nameInput = screen.getByPlaceholderText('Enter full name');
+    const emailInput = screen.getByPlaceholderText('Enter email address');
 
     await act(async () => {
       fireEvent.change(nameInput, { target: { value: 'Bob Wilson' } });
@@ -436,8 +438,8 @@ describe('ApiTestPage', () => {
     });
 
     // Fill in the form
-    const nameInput = screen.getByPlaceholderText('Name');
-    const emailInput = screen.getByPlaceholderText('Email');
+    const nameInput = screen.getByPlaceholderText('Enter full name');
+    const emailInput = screen.getByPlaceholderText('Enter email address');
 
     await act(async () => {
       fireEvent.change(nameInput, { target: { value: 'Test User' } });

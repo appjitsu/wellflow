@@ -30,4 +30,7 @@ const Repositories = [
   providers: [...CommandHandlers, ...QueryHandlers, ...Repositories],
   exports: [...Repositories],
 })
-export class WellsModule {}
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+export class WellsModule {
+  // This module handles well management functionality for oil & gas operations
+}

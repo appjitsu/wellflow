@@ -39,7 +39,7 @@ describe('SentryService', () => {
     it('should capture exception without context', () => {
       const error = new Error('Test error');
 
-      service.captureException(error);
+      void service.captureException(error);
 
       expect(mockSentry.captureException).toHaveBeenCalledWith(error);
       expect(mockSentry.withScope).not.toHaveBeenCalled();
@@ -52,11 +52,13 @@ describe('SentryService', () => {
         setTag: jest.fn(),
       };
 
-      mockSentry.withScope.mockImplementation((callback: any) => {
-        callback(mockScope);
-      });
+      mockSentry.withScope.mockImplementation(
+        (callback: (scope: any) => void) => {
+          callback(mockScope);
+        },
+      );
 
-      service.captureException(error, context);
+      void service.captureException(error, context);
 
       expect(mockSentry.withScope).toHaveBeenCalled();
       expect(mockScope.setTag).toHaveBeenCalledWith('context', context);
@@ -70,11 +72,13 @@ describe('SentryService', () => {
         setTag: jest.fn(),
       };
 
-      mockSentry.withScope.mockImplementation((callback: any) => {
-        callback(mockScope);
-      });
+      mockSentry.withScope.mockImplementation(
+        (callback: (scope: any) => void) => {
+          callback(mockScope);
+        },
+      );
 
-      service.captureException(wellError, context);
+      void service.captureException(wellError, context);
 
       expect(mockSentry.withScope).toHaveBeenCalled();
       expect(mockScope.setTag).toHaveBeenCalledWith('context', context);
@@ -109,9 +113,11 @@ describe('SentryService', () => {
         setTag: jest.fn(),
       };
 
-      mockSentry.withScope.mockImplementation((callback: any) => {
-        callback(mockScope);
-      });
+      mockSentry.withScope.mockImplementation(
+        (callback: (scope: any) => void) => {
+          callback(mockScope);
+        },
+      );
 
       service.captureMessage(message, level, context);
 
@@ -218,7 +224,7 @@ describe('SentryService', () => {
     });
 
     it('should handle multiple tags', () => {
-      const tags = [
+      const tags: [string, string][] = [
         ['component', 'api'],
         ['feature', 'wells'],
         ['version', '1.0.0'],
@@ -232,7 +238,7 @@ describe('SentryService', () => {
     });
 
     it('should handle regulatory compliance tags', () => {
-      const complianceTags = [
+      const complianceTags: [string, string][] = [
         ['regulation', 'EPA'],
         ['permit', 'EPA-123456'],
         ['inspector', 'inspector-789'],
@@ -281,7 +287,7 @@ describe('SentryService', () => {
 
       operations.forEach(([name, op]) => {
         const callback = () => ({ status: 'success' });
-        service.startSpan(name, op, callback);
+        service.startSpan(name!, op!, callback);
         expect(mockSentry.startSpan).toHaveBeenCalledWith(
           { name, op },
           callback,
@@ -421,7 +427,7 @@ describe('SentryService', () => {
       });
 
       // Capture exception
-      service.captureException(error, context);
+      void service.captureException(error, context);
 
       expect(mockSentry.setUser).toHaveBeenCalledWith(user);
       expect(mockSentry.setTag).toHaveBeenCalledWith('component', 'production');

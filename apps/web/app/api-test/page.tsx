@@ -138,20 +138,32 @@ export default function ApiTestPage() {
 
         <div className={styles.createUser}>
           <h3>Create New User</h3>
-          <input
-            type='text'
-            placeholder='Name'
-            value={newUser.name}
-            onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-            className={styles.input}
-          />
-          <input
-            type='email'
-            placeholder='Email'
-            value={newUser.email}
-            onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-            className={styles.input}
-          />
+          <div className={styles.inputGroup}>
+            <label htmlFor='user-name' className={styles.label}>
+              Name
+            </label>
+            <input
+              id='user-name'
+              type='text'
+              placeholder='Enter full name'
+              value={newUser.name}
+              onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+              className={styles.input}
+            />
+          </div>
+          <div className={styles.inputGroup}>
+            <label htmlFor='user-email' className={styles.label}>
+              Email
+            </label>
+            <input
+              id='user-email'
+              type='email'
+              placeholder='Enter email address'
+              value={newUser.email}
+              onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+              className={styles.input}
+            />
+          </div>
           <button onClick={createUser} disabled={loading} className={styles.button}>
             {loading ? 'Creating...' : 'Create User'}
           </button>

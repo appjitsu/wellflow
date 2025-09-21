@@ -60,7 +60,8 @@ describe('CreateWellDto', () => {
     });
 
     it('should fail validation with invalid well type', async () => {
-      dto.wellType = 'invalid' as any;
+      // Use type assertion to test invalid values
+      (dto as unknown as { wellType: string }).wellType = 'invalid';
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
       const wellTypeError = errors.find(

@@ -1,5 +1,4 @@
 import { wells } from './well.schema';
-import { pgTable } from 'drizzle-orm/pg-core';
 
 describe('Well Schema', () => {
   describe('Schema Definition', () => {

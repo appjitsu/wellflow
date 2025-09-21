@@ -16,6 +16,10 @@ export class UsersService {
 
     const [newUser] = await db.insert(users).values(userData).returning();
 
+    if (!newUser) {
+      throw new Error('Failed to create user');
+    }
+
     // Cache the user in Redis for 1 hour
     await this.redisService.set(
       `user:${newUser.id}`,
@@ -30,7 +34,7 @@ export class UsersService {
     // Try to get from cache first
     const cached = await this.redisService.get(`user:${id}`);
     if (cached) {
-      return JSON.parse(cached);
+      return JSON.parse(cached) as User;
     }
 
     // If not in cache, get from database
@@ -55,7 +59,7 @@ export class UsersService {
     // Try to get from cache first
     const cached = await this.redisService.get(cacheKey);
     if (cached) {
-      return JSON.parse(cached);
+      return JSON.parse(cached) as User;
     }
 
     // If not in cache, get from database
@@ -87,7 +91,7 @@ export class UsersService {
 
     const [updatedUser] = await db
       .update(users)
-      .set({ ...userData, updatedAt: new Date() })
+      .set({ ...userData })
       .where(eq(users.id, id))
       .returning();
 

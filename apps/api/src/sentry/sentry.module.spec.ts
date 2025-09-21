@@ -14,7 +14,6 @@ jest.mock('@sentry/nestjs', () => ({
 
 describe('SentryModule', () => {
   let module: TestingModule;
-  let configService: ConfigService;
   let sentryService: SentryService;
 
   const mockConfigService = {
@@ -47,7 +46,6 @@ describe('SentryModule', () => {
       .useValue(mockConfigService)
       .compile();
 
-    configService = module.get<ConfigService>(ConfigService);
     sentryService = module.get<SentryService>(SentryService);
   });
 
@@ -128,15 +126,14 @@ describe('SentryModule', () => {
         get: jest
           .fn()
           .mockImplementation((key: string, defaultValue?: string) => {
-            switch (key) {
-              case 'SENTRY_DSN':
-                return undefined;
-              case 'SENTRY_ENVIRONMENT':
-                return 'development';
-              case 'SENTRY_RELEASE':
-                return '1.0.0';
-              default:
-                return defaultValue;
+            if (key === 'SENTRY_DSN') {
+              return undefined;
+            } else if (key === 'SENTRY_ENVIRONMENT') {
+              return 'development';
+            } else if (key === 'SENTRY_RELEASE') {
+              return '1.0.0';
+            } else {
+              return defaultValue;
             }
           }),
       };
@@ -159,15 +156,14 @@ describe('SentryModule', () => {
       // Setup mock config values for production
       mockConfigService.get.mockImplementation(
         (key: string, defaultValue?: string) => {
-          switch (key) {
-            case 'SENTRY_DSN':
-              return 'https://prod@sentry.io/123456';
-            case 'SENTRY_ENVIRONMENT':
-              return 'production';
-            case 'SENTRY_RELEASE':
-              return '2.0.0';
-            default:
-              return defaultValue;
+          if (key === 'SENTRY_DSN') {
+            return 'https://prod@sentry.io/123456';
+          } else if (key === 'SENTRY_ENVIRONMENT') {
+            return 'production';
+          } else if (key === 'SENTRY_RELEASE') {
+            return '2.0.0';
+          } else {
+            return defaultValue;
           }
         },
       );
@@ -202,11 +198,10 @@ describe('SentryModule', () => {
       // Setup mock config values with defaults
       mockConfigService.get.mockImplementation(
         (key: string, defaultValue?: string) => {
-          switch (key) {
-            case 'SENTRY_DSN':
-              return 'https://default@sentry.io/123456';
-            default:
-              return defaultValue;
+          if (key === 'SENTRY_DSN') {
+            return 'https://default@sentry.io/123456';
+          } else {
+            return defaultValue;
           }
         },
       );
@@ -243,11 +238,10 @@ describe('SentryModule', () => {
       // Setup mock config values
       mockConfigService.get.mockImplementation(
         (key: string, defaultValue?: string) => {
-          switch (key) {
-            case 'SENTRY_DSN':
-              return 'https://test@sentry.io/123456';
-            default:
-              return defaultValue;
+          if (key === 'SENTRY_DSN') {
+            return 'https://test@sentry.io/123456';
+          } else {
+            return defaultValue;
           }
         },
       );
@@ -291,11 +285,10 @@ describe('SentryModule', () => {
       // Setup mock config values
       mockConfigService.get.mockImplementation(
         (key: string, defaultValue?: string) => {
-          switch (key) {
-            case 'SENTRY_DSN':
-              return 'https://test@sentry.io/123456';
-            default:
-              return defaultValue;
+          if (key === 'SENTRY_DSN') {
+            return 'https://test@sentry.io/123456';
+          } else {
+            return defaultValue;
           }
         },
       );
@@ -338,11 +331,10 @@ describe('SentryModule', () => {
       // Setup mock config values
       mockConfigService.get.mockImplementation(
         (key: string, defaultValue?: string) => {
-          switch (key) {
-            case 'SENTRY_DSN':
-              return 'https://test@sentry.io/123456';
-            default:
-              return defaultValue;
+          if (key === 'SENTRY_DSN') {
+            return 'https://test@sentry.io/123456';
+          } else {
+            return defaultValue;
           }
         },
       );

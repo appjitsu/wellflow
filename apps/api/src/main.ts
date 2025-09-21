@@ -2,11 +2,27 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { AppConfigService } from './config/app.config';
 import { SentryExceptionFilter } from './common/filters/sentry-exception.filter';
 import { SentryService } from './sentry/sentry.service';
+import {
+  getHttpsOptions,
+  getPort,
+  getBaseUrl,
+  getProtocol,
+} from './config/https.config';
 
 export async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // Get HTTPS configuration for production
+  const httpsOptions = getHttpsOptions();
+
+  // Create NestJS application with HTTPS if configured
+  const app = httpsOptions
+    ? await NestFactory.create(AppModule, { httpsOptions })
+    : await NestFactory.create(AppModule);
+
+  // Get configuration service for environment variables
+  const configService = app.get(AppConfigService);
 
   // Get Sentry service for exception filter
   const sentryService = app.get(SentryService);
@@ -31,7 +47,7 @@ export async function bootstrap() {
     .addBearerAuth()
     .addTag('Wells', 'Well management operations')
     .addTag('Health', 'Health check endpoints')
-    .addServer(process.env.API_URL || 'http://localhost:3001', 'Development')
+    .addServer(configService.apiUrl || getBaseUrl(), 'API Server')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -43,11 +59,13 @@ export async function bootstrap() {
     },
   });
 
-  // Enable CORS for web app
+  // Enable CORS for web app with HTTPS support
   app.enableCors({
     origin: [
       'http://localhost:3000',
+      'https://localhost:3000',
       'http://localhost:3001',
+      'https://localhost:3001',
       'https://web-production-79cf2.up.railway.app',
       'https://web-wellflow-pr-1.up.railway.app',
     ],
@@ -55,13 +73,23 @@ export async function bootstrap() {
     credentials: true,
   });
 
-  const port = process.env.PORT ?? 3001;
+  const port = getPort();
+  const protocol = getProtocol();
+  const baseUrl = getBaseUrl();
+
   await app.listen(port);
 
-  console.log(`🚀 API server running on port ${port}`);
-  console.log(
-    `📚 API documentation available at http://localhost:${port}/api/docs`,
-  );
+  console.log(`🚀 API server running on ${baseUrl}`);
+  console.log(`📚 API documentation available at ${baseUrl}/api/docs`);
+
+  if (protocol === 'https') {
+    console.log('🔒 HTTPS enabled - secure connection established');
+    console.log(
+      '✅ Oil & Gas critical infrastructure security compliance active',
+    );
+  } else {
+    console.log('⚠️ Running in HTTP mode - configure HTTPS for production');
+  }
 }
 
 void bootstrap();

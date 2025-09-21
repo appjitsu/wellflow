@@ -12,14 +12,14 @@ export const Can = createContextualCan(AbilityContext.Consumer as React.Consumer
 
 interface AbilitiesProviderProps {
   children: ReactNode;
-  user: User;
+  user?: User;
 }
 
 /**
  * Abilities Provider
  * Provides CASL abilities context to the entire app
  */
-export function AbilitiesProvider({ children, user }: AbilitiesProviderProps) {
+export function AbilitiesProvider({ children, user }: Readonly<AbilitiesProviderProps>) {
   const ability = user ? createAbilityForUser(user) : createAbilityForGuest();
 
   return <AbilityContext.Provider value={ability}>{children}</AbilityContext.Provider>;

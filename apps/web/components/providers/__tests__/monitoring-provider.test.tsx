@@ -36,7 +36,7 @@ describe('MonitoringProvider', () => {
     jest.clearAllMocks();
 
     // Ensure window is defined
-    (global as any).window = {};
+    (global as typeof globalThis).window = {} as Window & typeof globalThis;
 
     render(
       <MonitoringProvider>
@@ -124,7 +124,7 @@ describe('MonitoringProvider', () => {
     jest.clearAllMocks();
 
     // Ensure window is defined
-    (global as any).window = {};
+    (global as typeof globalThis).window = {} as Window & typeof globalThis;
 
     const { rerender } = render(
       <MonitoringProvider>
@@ -152,7 +152,7 @@ describe('MonitoringProvider', () => {
     });
 
     // Ensure window is defined
-    (global as any).window = {};
+    (global as typeof globalThis).window = {} as Window & typeof globalThis;
 
     // Should not throw an error and should still render children
     expect(() => {

@@ -151,8 +151,8 @@ describe('WellStatusChangedEvent', () => {
         const event = new WellStatusChangedEvent(
           'well-test',
           '42-000-00000',
-          from,
-          to,
+          from!,
+          to!,
           'test-user',
         );
 
@@ -175,7 +175,7 @@ describe('WellStatusChangedEvent', () => {
 
       expect(event.metadata).toBe(metadata);
       expect(event.metadata?.key).toBe('value');
-      expect(event.metadata?.nested.prop).toBe('test');
+      expect((event.metadata?.nested as any)?.prop).toBe('test');
     });
   });
 

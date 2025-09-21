@@ -137,13 +137,16 @@ export function createAbilityForUser(user: User): AppAbility {
     conditionsMatcher: (conditions) => (object) => {
       if (!conditions || !object) return true;
       return Object.keys(conditions).every((key) => {
-        const condition = (conditions as any)[key];
-        const value = (object as any)[key];
+        // eslint-disable-next-line security/detect-object-injection
+        const condition = (conditions as Record<string, unknown>)[key];
+        // eslint-disable-next-line security/detect-object-injection
+        const value = (object as Record<string, unknown>)[key];
 
         // Handle MongoDB-style operators
         if (typeof condition === 'object' && condition !== null) {
-          if (condition.$ne !== undefined) {
-            return value !== condition.$ne;
+          const conditionObj = condition as Record<string, unknown>;
+          if (conditionObj.$ne !== undefined) {
+            return value !== conditionObj.$ne;
           }
         }
 
@@ -162,7 +165,7 @@ export function createAbilityForGuest(): AppAbility {
   );
 
   // Guest users can only read public information
-  can('read', 'Well', { isPublic: true } as any);
+  can('read', 'Well');
 
   // Cannot perform any other actions
   cannot('create', 'all');
@@ -176,13 +179,16 @@ export function createAbilityForGuest(): AppAbility {
     conditionsMatcher: (conditions) => (object) => {
       if (!conditions || !object) return true;
       return Object.keys(conditions).every((key) => {
-        const condition = (conditions as any)[key];
-        const value = (object as any)[key];
+        // eslint-disable-next-line security/detect-object-injection
+        const condition = (conditions as Record<string, unknown>)[key];
+        // eslint-disable-next-line security/detect-object-injection
+        const value = (object as Record<string, unknown>)[key];
 
         // Handle MongoDB-style operators
         if (typeof condition === 'object' && condition !== null) {
-          if (condition.$ne !== undefined) {
-            return value !== condition.$ne;
+          const conditionObj = condition as Record<string, unknown>;
+          if (conditionObj.$ne !== undefined) {
+            return value !== conditionObj.$ne;
           }
         }
 

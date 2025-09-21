@@ -1,3 +1,5 @@
+/* eslint-env jest, node */
+/* global jest, beforeEach, global, process */
 import '@testing-library/jest-dom';
 
 // Mock Next.js router

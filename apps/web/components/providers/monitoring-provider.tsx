@@ -7,7 +7,7 @@ interface MonitoringProviderProps {
   children: React.ReactNode;
 }
 
-export function MonitoringProvider({ children }: MonitoringProviderProps) {
+export function MonitoringProvider({ children }: Readonly<MonitoringProviderProps>) {
   useEffect(() => {
     // Initialize LogRocket on client side
     if (typeof window !== 'undefined') {
@@ -28,13 +28,14 @@ export function MonitoringProvider({ children }: MonitoringProviderProps) {
                 blockAllMedia: false,
               })
             );
-            console.log('✅ Sentry Session Replay lazy-loaded successfully');
-          } catch (error) {
-            console.warn('⚠️ Sentry Session Replay lazy-loading failed:', error);
+
+            // Sentry Session Replay lazy-loaded successfully
+          } catch {
+            // Sentry Session Replay lazy-loading failed - error handled silently
           }
         })
-        .catch((error) => {
-          console.warn('⚠️ Failed to import Sentry for Session Replay:', error);
+        .catch(() => {
+          // Failed to import Sentry for Session Replay - error handled silently
         });
     }
   }, []);

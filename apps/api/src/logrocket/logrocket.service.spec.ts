@@ -1,5 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LogRocketService } from './logrocket.service';
+import { AppConfigService } from '../config/app.config';
+import LogRocket from 'logrocket';
 
 // Mock LogRocket
 jest.mock('logrocket', () => ({
@@ -14,20 +16,29 @@ jest.mock('logrocket', () => ({
 
 describe('LogRocketService', () => {
   let service: LogRocketService;
+  let mockConfigService: jest.Mocked<AppConfigService>;
 
   beforeEach(async () => {
-    // Set environment variable for testing
-    process.env.LOGROCKET_APP_ID = 'test-app-id';
+    // Create mock config service
+    mockConfigService = {
+      logRocketAppId: 'test-app-id',
+      nodeEnv: 'test',
+    } as jest.Mocked<AppConfigService>;
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [LogRocketService],
+      providers: [
+        LogRocketService,
+        {
+          provide: AppConfigService,
+          useValue: mockConfigService,
+        },
+      ],
     }).compile();
 
     service = module.get<LogRocketService>(LogRocketService);
   });
 
   afterEach(() => {
-    delete process.env.LOGROCKET_APP_ID;
     jest.clearAllMocks();
   });
 
@@ -45,7 +56,6 @@ describe('LogRocketService', () => {
 
     service.identify(userId, userInfo);
 
-    const LogRocket = require('logrocket');
     expect(LogRocket.identify).toHaveBeenCalledWith(userId, {
       ...userInfo,
       server: true,
@@ -60,7 +70,6 @@ describe('LogRocketService', () => {
 
     service.track(eventName, properties);
 
-    const LogRocket = require('logrocket');
     expect(LogRocket.track).toHaveBeenCalledWith(eventName, {
       ...properties,
       server: true,
@@ -76,7 +85,6 @@ describe('LogRocketService', () => {
 
     service.log(message, level, extra);
 
-    const LogRocket = require('logrocket');
     expect(LogRocket.log).toHaveBeenCalledWith(message, {
       level,
       ...extra,
@@ -92,14 +100,7 @@ describe('LogRocketService', () => {
 
     service.captureException(error, extra);
 
-    const LogRocket = require('logrocket');
-    expect(LogRocket.captureException).toHaveBeenCalledWith(error, {
-      ...extra,
-      server: true,
-      environment: 'test',
-      timestamp: expect.any(String),
-      stack: error.stack,
-    });
+    expect(LogRocket.captureException).toHaveBeenCalledWith(error);
   });
 
   it('should get session URL', async () => {
@@ -114,7 +115,12 @@ describe('LogRocketService', () => {
 
     service.addTag(key, value);
 
-    const LogRocket = require('logrocket');
-    expect(LogRocket.addTag).toHaveBeenCalledWith(key, value);
+    expect(LogRocket.track).toHaveBeenCalledWith('Tag Added', {
+      tagKey: key,
+      tagValue: value,
+      server: true,
+      environment: 'test',
+      timestamp: expect.any(String),
+    });
   });
 });

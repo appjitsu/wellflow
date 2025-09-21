@@ -22,6 +22,7 @@ export async function POST() {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error calling API test-error endpoint:', error);
     return NextResponse.json(
       { error: 'Failed to call API endpoint', details: error },

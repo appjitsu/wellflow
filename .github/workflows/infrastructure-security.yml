@@ -1,0 +1,410 @@
+name: Infrastructure Security Scanning
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run infrastructure security scans daily at 3 AM UTC
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: "9.0.0"
+
+jobs:
+  infrastructure-security:
+    name: Infrastructure Security Assessment
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create security reports directory
+        run: mkdir -p security-reports
+
+      - name: Run Custom Infrastructure Security Scan
+        run: |
+          echo "🏗️ Running WellFlow infrastructure security assessment..."
+          node scripts/infrastructure-security-scan.js
+        continue-on-error: true
+
+      - name: Install Checkov
+        run: |
+          echo "📦 Installing Checkov for comprehensive infrastructure scanning..."
+          pip3 install checkov
+          checkov --version
+
+      - name: Run Checkov Security Scan
+        run: |
+          echo "🔍 Running Checkov infrastructure security scan..."
+
+          # Run Checkov with comprehensive framework coverage
+          checkov -d . \
+            --framework dockerfile,kubernetes,terraform,github_actions,docker_compose \
+            --output json \
+            --output-file security-reports/checkov-results.json \
+            --quiet || true
+            
+          # Generate human-readable report
+          checkov -d . \
+            --framework dockerfile,kubernetes,terraform,github_actions,docker_compose \
+            --output cli \
+            > security-reports/checkov-report.txt || true
+            
+          echo "📊 Checkov scan completed"
+        continue-on-error: true
+
+      - name: Install Trivy
+        run: |
+          echo "🛡️ Installing Trivy for container and infrastructure security..."
+          sudo apt-get update
+          sudo apt-get install wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy
+          trivy --version
+
+      - name: Run Trivy Infrastructure Scan
+        run: |
+          echo "🔍 Running Trivy infrastructure security scan..."
+
+          # Scan for misconfigurations
+          trivy config . \
+            --format json \
+            --output security-reports/trivy-config-results.json || true
+            
+          # Scan for secrets
+          trivy fs . \
+            --scanners secret \
+            --format json \
+            --output security-reports/trivy-secrets-results.json || true
+            
+          # Generate summary report
+          trivy config . --format table > security-reports/trivy-config-report.txt || true
+          trivy fs . --scanners secret --format table > security-reports/trivy-secrets-report.txt || true
+
+          echo "📊 Trivy scans completed"
+        continue-on-error: true
+
+      - name: Install Hadolint (Docker Linter)
+        run: |
+          echo "🐳 Installing Hadolint for Docker security analysis..."
+          wget -O hadolint https://github.com/hadolint/hadolint/releases/latest/download/hadolint-Linux-x86_64
+          chmod +x hadolint
+          sudo mv hadolint /usr/local/bin/
+          hadolint --version
+
+      - name: Run Hadolint Docker Security Scan
+        run: |
+          echo "🔍 Running Hadolint Docker security analysis..."
+
+          # Find all Dockerfiles
+          find . -name "Dockerfile*" -type f > dockerfiles.txt || true
+
+          if [ -s dockerfiles.txt ]; then
+            echo "📁 Found Docker files:"
+            cat dockerfiles.txt
+            
+            # Scan each Dockerfile
+            while IFS= read -r dockerfile; do
+              echo "🔍 Scanning $dockerfile..."
+              hadolint "$dockerfile" --format json >> security-reports/hadolint-results.json || true
+              hadolint "$dockerfile" --format tty >> security-reports/hadolint-report.txt || true
+            done < dockerfiles.txt
+            
+            echo "📊 Hadolint Docker security scan completed"
+          else
+            echo "ℹ️ No Dockerfiles found to scan"
+          fi
+        continue-on-error: true
+
+      - name: Install Terrascan
+        run: |
+          echo "🏗️ Installing Terrascan for Terraform security..."
+          curl -L "$(curl -s https://api.github.com/repos/tenable/terrascan/releases/latest | grep -o -E "https://.+?_Linux_x86_64.tar.gz")" > terrascan.tar.gz
+          tar -xf terrascan.tar.gz terrascan && rm terrascan.tar.gz
+          sudo mv terrascan /usr/local/bin/
+          terrascan version
+
+      - name: Run Terrascan Security Scan
+        run: |
+          echo "🔍 Running Terrascan infrastructure security scan..."
+
+          # Scan for Terraform files
+          if find . -name "*.tf" -type f | head -1 | grep -q .; then
+            echo "📁 Found Terraform files, running Terrascan..."
+            
+            terrascan scan \
+              --iac-type terraform \
+              --output json \
+              --output-file security-reports/terrascan-results.json || true
+              
+            terrascan scan \
+              --iac-type terraform \
+              --output human \
+              > security-reports/terrascan-report.txt || true
+              
+            echo "📊 Terrascan completed"
+          else
+            echo "ℹ️ No Terraform files found to scan"
+          fi
+        continue-on-error: true
+
+      - name: Analyze Infrastructure Security Results
+        run: |
+          echo "📊 Analyzing infrastructure security results..."
+
+          # Initialize counters
+          CRITICAL_COUNT=0
+          HIGH_COUNT=0
+          MEDIUM_COUNT=0
+          TOTAL_ISSUES=0
+
+          # Analyze custom scan results
+          if [ -f security-reports/infrastructure-security-report.json ]; then
+            CUSTOM_CRITICAL=$(cat security-reports/infrastructure-security-report.json | jq -r '.summary.critical // 0')
+            CUSTOM_HIGH=$(cat security-reports/infrastructure-security-report.json | jq -r '.summary.high // 0')
+            CUSTOM_MEDIUM=$(cat security-reports/infrastructure-security-report.json | jq -r '.summary.medium // 0')
+            
+            echo "🔍 Custom Scanner - Critical: $CUSTOM_CRITICAL, High: $CUSTOM_HIGH, Medium: $CUSTOM_MEDIUM"
+            
+            CRITICAL_COUNT=$((CRITICAL_COUNT + CUSTOM_CRITICAL))
+            HIGH_COUNT=$((HIGH_COUNT + CUSTOM_HIGH))
+            MEDIUM_COUNT=$((MEDIUM_COUNT + CUSTOM_MEDIUM))
+          fi
+
+          # Analyze Checkov results
+          if [ -f security-reports/checkov-results.json ]; then
+            CHECKOV_FAILED=$(cat security-reports/checkov-results.json | jq -r '.results.failed_checks | length' 2>/dev/null || echo "0")
+            echo "🔍 Checkov - Failed checks: $CHECKOV_FAILED"
+            
+            # Estimate severity distribution (Checkov doesn't provide severity levels)
+            CHECKOV_CRITICAL=$((CHECKOV_FAILED / 10))  # Assume 10% are critical
+            CHECKOV_HIGH=$((CHECKOV_FAILED / 5))       # Assume 20% are high
+            
+            CRITICAL_COUNT=$((CRITICAL_COUNT + CHECKOV_CRITICAL))
+            HIGH_COUNT=$((HIGH_COUNT + CHECKOV_HIGH))
+          fi
+
+          # Analyze Trivy results
+          if [ -f security-reports/trivy-config-results.json ]; then
+            TRIVY_CRITICAL=$(cat security-reports/trivy-config-results.json | jq -r '[.Results[]?.Misconfigurations[]? | select(.Severity == "CRITICAL")] | length' 2>/dev/null || echo "0")
+            TRIVY_HIGH=$(cat security-reports/trivy-config-results.json | jq -r '[.Results[]?.Misconfigurations[]? | select(.Severity == "HIGH")] | length' 2>/dev/null || echo "0")
+            
+            echo "🛡️ Trivy - Critical: $TRIVY_CRITICAL, High: $TRIVY_HIGH"
+            
+            CRITICAL_COUNT=$((CRITICAL_COUNT + TRIVY_CRITICAL))
+            HIGH_COUNT=$((HIGH_COUNT + TRIVY_HIGH))
+          fi
+
+          TOTAL_ISSUES=$((CRITICAL_COUNT + HIGH_COUNT + MEDIUM_COUNT))
+
+          echo "TOTAL_CRITICAL=$CRITICAL_COUNT" >> $GITHUB_ENV
+          echo "TOTAL_HIGH=$HIGH_COUNT" >> $GITHUB_ENV
+          echo "TOTAL_MEDIUM=$MEDIUM_COUNT" >> $GITHUB_ENV
+          echo "TOTAL_ISSUES=$TOTAL_ISSUES" >> $GITHUB_ENV
+
+          # Generate comprehensive summary
+          cat > security-reports/infrastructure-security-summary.md << EOF
+          # WellFlow Infrastructure Security Assessment Summary
+
+          **Scan Date:** $(date)
+          **Repository:** ${{ github.repository }}
+          **Branch:** ${{ github.ref_name }}
+
+          ## Vulnerability Summary
+
+          | Severity | Count | Status |
+          |----------|-------|--------|
+          | 🚨 Critical | $CRITICAL_COUNT | $([ $CRITICAL_COUNT -eq 0 ] && echo "✅ GOOD" || echo "❌ ACTION REQUIRED") |
+          | 🔴 High | $HIGH_COUNT | $([ $HIGH_COUNT -eq 0 ] && echo "✅ GOOD" || echo "⚠️ REVIEW REQUIRED") |
+          | 🟡 Medium | $MEDIUM_COUNT | $([ $MEDIUM_COUNT -eq 0 ] && echo "✅ GOOD" || echo "ℹ️ MONITOR") |
+          | **Total** | **$TOTAL_ISSUES** | $([ $TOTAL_ISSUES -eq 0 ] && echo "✅ CLEAN" || echo "⚠️ ISSUES FOUND") |
+
+          ## Industry Compliance
+
+          - **NIST Cybersecurity Framework**: $([ $CRITICAL_COUNT -eq 0 ] && [ $HIGH_COUNT -eq 0 ] && echo "✅ COMPLIANT" || echo "❌ NON-COMPLIANT")
+          - **IEC 62443 (Industrial Cybersecurity)**: $([ $CRITICAL_COUNT -eq 0 ] && echo "✅ COMPLIANT" || echo "❌ NON-COMPLIANT")
+          - **CIS Benchmarks**: $([ $CRITICAL_COUNT -eq 0 ] && [ $HIGH_COUNT -le 2 ] && echo "✅ COMPLIANT" || echo "❌ NON-COMPLIANT")
+          - **OWASP Infrastructure Security**: $([ $CRITICAL_COUNT -eq 0 ] && [ $HIGH_COUNT -eq 0 ] && echo "✅ COMPLIANT" || echo "❌ NON-COMPLIANT")
+
+          ## Security Tools Used
+
+          - ✅ Custom Infrastructure Security Scanner
+          - ✅ Checkov (Infrastructure as Code)
+          - ✅ Trivy (Container & Infrastructure Security)
+          - ✅ Hadolint (Docker Security)
+          - ✅ Terrascan (Terraform Security)
+
+          ## Next Steps
+
+          $([ $CRITICAL_COUNT -gt 0 ] && echo "🚨 **IMMEDIATE ACTION REQUIRED**: Critical infrastructure vulnerabilities detected." || echo "")
+          $([ $HIGH_COUNT -gt 0 ] && echo "🔴 **HIGH PRIORITY**: Review and remediate high-severity infrastructure issues." || echo "")
+          $([ $TOTAL_ISSUES -eq 0 ] && echo "✅ **INFRASTRUCTURE SECURE**: No critical or high-severity vulnerabilities detected." || echo "")
+
+          ---
+          *Infrastructure security assessment powered by WellFlow Quality Gates*
+          *Compliant with oil & gas industry security standards*
+          EOF
+
+      - name: Upload Infrastructure Security Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: infrastructure-security-reports-${{ github.run_id }}
+          path: |
+            security-reports/
+          retention-days: 90
+
+      - name: Comment PR with Infrastructure Security Results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            try {
+              let comment = '## 🏗️ Infrastructure Security Assessment Results\n\n';
+              
+              const criticalCount = parseInt(process.env.TOTAL_CRITICAL || '0');
+              const highCount = parseInt(process.env.TOTAL_HIGH || '0');
+              const mediumCount = parseInt(process.env.TOTAL_MEDIUM || '0');
+              const totalIssues = parseInt(process.env.TOTAL_ISSUES || '0');
+              
+              // Overall status
+              if (criticalCount > 0) {
+                comment += '🚨 **CRITICAL INFRASTRUCTURE VULNERABILITIES** - Deployment blocked!\n\n';
+              } else if (highCount > 0) {
+                comment += '⚠️ **HIGH SEVERITY INFRASTRUCTURE ISSUES** - Review required\n\n';
+              } else {
+                comment += '✅ **INFRASTRUCTURE SECURITY PASSED** - No critical or high-severity issues\n\n';
+              }
+              
+              // Vulnerability summary
+              comment += '### Infrastructure Security Summary\n\n';
+              comment += '| Severity | Count | Status |\n';
+              comment += '|----------|-------|--------|\n';
+              comment += `| 🚨 Critical | ${criticalCount} | ${criticalCount === 0 ? '✅ GOOD' : '❌ ACTION REQUIRED'} |\n`;
+              comment += `| 🔴 High | ${highCount} | ${highCount === 0 ? '✅ GOOD' : '⚠️ REVIEW REQUIRED'} |\n`;
+              comment += `| 🟡 Medium | ${mediumCount} | ${mediumCount === 0 ? '✅ GOOD' : 'ℹ️ MONITOR'} |\n`;
+              comment += `| **Total** | **${totalIssues}** | ${totalIssues === 0 ? '✅ CLEAN' : '⚠️ ISSUES FOUND'} |\n\n`;
+              
+              // Industry compliance
+              comment += '### Industry Compliance\n\n';
+              comment += `- **NIST Cybersecurity Framework**: ${criticalCount === 0 && highCount === 0 ? '✅ COMPLIANT' : '❌ NON-COMPLIANT'}\n`;
+              comment += `- **IEC 62443 (Industrial Cybersecurity)**: ${criticalCount === 0 ? '✅ COMPLIANT' : '❌ NON-COMPLIANT'}\n`;
+              comment += `- **CIS Benchmarks**: ${criticalCount === 0 && highCount <= 2 ? '✅ COMPLIANT' : '❌ NON-COMPLIANT'}\n`;
+              comment += `- **OWASP Infrastructure Security**: ${criticalCount === 0 && highCount === 0 ? '✅ COMPLIANT' : '❌ NON-COMPLIANT'}\n\n`;
+              
+              // Security tools used
+              comment += '### Security Tools Used\n\n';
+              comment += '- ✅ Custom Infrastructure Security Scanner\n';
+              comment += '- ✅ Checkov (Infrastructure as Code Security)\n';
+              comment += '- ✅ Trivy (Container & Infrastructure Security)\n';
+              comment += '- ✅ Hadolint (Docker Security Best Practices)\n';
+              comment += '- ✅ Terrascan (Terraform Security)\n\n';
+              
+              // Recommendations
+              if (criticalCount > 0) {
+                comment += '### 🚨 Critical Action Required\n\n';
+                comment += '**STOP**: Critical infrastructure vulnerabilities detected. This PR cannot be merged until resolved.\n\n';
+              } else if (highCount > 0) {
+                comment += '### ⚠️ High Priority Review Required\n\n';
+                comment += 'High-severity infrastructure issues detected. Please review before merging.\n\n';
+              } else {
+                comment += '### ✅ Infrastructure Security Cleared\n\n';
+                comment += 'No critical or high-severity infrastructure vulnerabilities detected.\n\n';
+              }
+              
+              comment += '📊 **Detailed Reports**: Available in workflow artifacts\n';
+              comment += `🔗 **Security Analysis**: [View Full Report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n\n`;
+              comment += '> This assessment ensures WellFlow infrastructure meets security standards for critical oil & gas operations.';
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            } catch (error) {
+              console.error('Failed to post infrastructure security comment:', error);
+            }
+
+      - name: Infrastructure Security Gate Check
+        run: |
+          echo "🏗️ Evaluating infrastructure security gate..."
+
+          CRITICAL_COUNT=${TOTAL_CRITICAL:-0}
+          HIGH_COUNT=${TOTAL_HIGH:-0}
+          TOTAL_ISSUES=${TOTAL_ISSUES:-0}
+
+          echo "Critical vulnerabilities: $CRITICAL_COUNT"
+          echo "High severity vulnerabilities: $HIGH_COUNT"
+          echo "Total issues: $TOTAL_ISSUES"
+
+          if [ $CRITICAL_COUNT -gt 0 ]; then
+            echo "❌ INFRASTRUCTURE SECURITY GATE FAILED: Critical vulnerabilities detected!"
+            echo "🚨 Deployment blocked due to critical infrastructure security issues"
+            echo "📋 Review security reports and fix all critical vulnerabilities"
+            exit 1
+          elif [ $HIGH_COUNT -gt 5 ]; then
+            echo "❌ INFRASTRUCTURE SECURITY GATE FAILED: Too many high-severity vulnerabilities"
+            echo "🔍 More than 5 high-severity issues detected - requires immediate attention"
+            exit 1
+          elif [ $HIGH_COUNT -gt 0 ]; then
+            echo "⚠️ INFRASTRUCTURE SECURITY GATE WARNING: High severity vulnerabilities detected"
+            echo "🔍 Review required but deployment may proceed with approval"
+            echo "📋 Address high-severity issues in next development cycle"
+          else
+            echo "✅ INFRASTRUCTURE SECURITY GATE PASSED: No critical or high-severity vulnerabilities"
+            echo "🛡️ Infrastructure meets security requirements for critical oil & gas systems"
+            echo "🏭 Compliant with industry security standards"
+          fi
+
+      - name: Generate Step Summary
+        if: always()
+        run: |
+          echo "## 🏗️ Infrastructure Security Assessment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Assessment Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "**Repository:** ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Vulnerability Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Severity | Count | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🚨 Critical | ${TOTAL_CRITICAL:-0} | $([ ${TOTAL_CRITICAL:-0} -eq 0 ] && echo "✅" || echo "❌") |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔴 High | ${TOTAL_HIGH:-0} | $([ ${TOTAL_HIGH:-0} -eq 0 ] && echo "✅" || echo "⚠️") |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🟡 Medium | ${TOTAL_MEDIUM:-0} | $([ ${TOTAL_MEDIUM:-0} -eq 0 ] && echo "✅" || echo "ℹ️") |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Industry Compliance" >> $GITHUB_STEP_SUMMARY
+          echo "🏭 NIST Cybersecurity Framework" >> $GITHUB_STEP_SUMMARY
+          echo "🔧 IEC 62443 (Industrial Cybersecurity)" >> $GITHUB_STEP_SUMMARY
+          echo "📋 CIS Benchmarks" >> $GITHUB_STEP_SUMMARY
+          echo "🛡️ OWASP Infrastructure Security" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 **Detailed Reports:** Available in workflow artifacts" >> $GITHUB_STEP_SUMMARY

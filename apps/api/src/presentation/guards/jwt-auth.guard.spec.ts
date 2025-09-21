@@ -9,10 +9,13 @@ describe('JwtAuthGuard', () => {
 
   const mockReflector = {
     getAllAndOverride: jest.fn(),
+    get: jest.fn(),
+    getAll: jest.fn(),
+    getAllAndMerge: jest.fn(),
   };
 
   beforeEach(() => {
-    reflector = mockReflector as any;
+    reflector = mockReflector as jest.Mocked<Reflector>;
     guard = new JwtAuthGuard(reflector);
 
     mockExecutionContext = {
@@ -24,7 +27,7 @@ describe('JwtAuthGuard', () => {
       getArgByIndex: jest.fn(),
       switchToRpc: jest.fn(),
       switchToWs: jest.fn(),
-    } as any;
+    } as jest.Mocked<ExecutionContext>;
 
     jest.clearAllMocks();
   });
@@ -103,28 +106,33 @@ describe('JwtAuthGuard', () => {
         roles: ['OPERATOR'],
       };
 
-      const result = guard.handleRequest(null, mockUser, null);
+      const result = guard.handleRequest(
+        null,
+        mockUser,
+        null,
+        mockExecutionContext,
+      );
 
       expect(result).toEqual(mockUser);
     });
 
     it('should throw UnauthorizedException when user is null', () => {
       expect(() => {
-        guard.handleRequest(null, null, null);
+        guard.handleRequest(null, null, null, mockExecutionContext);
       }).toThrow(UnauthorizedException);
 
       expect(() => {
-        guard.handleRequest(null, null, null);
+        guard.handleRequest(null, null, null, mockExecutionContext);
       }).toThrow('Invalid or expired token');
     });
 
     it('should throw UnauthorizedException when user is undefined', () => {
       expect(() => {
-        guard.handleRequest(null, undefined, null);
+        guard.handleRequest(null, undefined, null, mockExecutionContext);
       }).toThrow(UnauthorizedException);
 
       expect(() => {
-        guard.handleRequest(null, undefined, null);
+        guard.handleRequest(null, undefined, null, mockExecutionContext);
       }).toThrow('Invalid or expired token');
     });
 
@@ -132,7 +140,7 @@ describe('JwtAuthGuard', () => {
       const originalError = new Error('JWT malformed');
 
       expect(() => {
-        guard.handleRequest(originalError, null, null);
+        guard.handleRequest(originalError, null, null, mockExecutionContext);
       }).toThrow(originalError);
     });
 
@@ -141,14 +149,24 @@ describe('JwtAuthGuard', () => {
       const mockUser = { id: 'user-123' };
 
       expect(() => {
-        guard.handleRequest(originalError, mockUser, null);
+        guard.handleRequest(
+          originalError,
+          mockUser,
+          null,
+          mockExecutionContext,
+        );
       }).toThrow(originalError);
     });
 
     it('should handle empty user object', () => {
       const emptyUser = {};
 
-      const result = guard.handleRequest(null, emptyUser, null);
+      const result = guard.handleRequest(
+        null,
+        emptyUser,
+        null,
+        mockExecutionContext,
+      );
 
       expect(result).toEqual(emptyUser);
     });
@@ -156,7 +174,12 @@ describe('JwtAuthGuard', () => {
     it('should handle user with minimal properties', () => {
       const minimalUser = { id: 'user-123' };
 
-      const result = guard.handleRequest(null, minimalUser, null);
+      const result = guard.handleRequest(
+        null,
+        minimalUser,
+        null,
+        mockExecutionContext,
+      );
 
       expect(result).toEqual(minimalUser);
     });
@@ -171,7 +194,12 @@ describe('JwtAuthGuard', () => {
         company: 'Texas Oil & Gas Co.',
       };
 
-      const result = guard.handleRequest(null, oilGasUser, null);
+      const result = guard.handleRequest(
+        null,
+        oilGasUser,
+        null,
+        mockExecutionContext,
+      );
 
       expect(result).toEqual(oilGasUser);
     });
@@ -233,7 +261,12 @@ describe('JwtAuthGuard', () => {
         company: 'Texas Oil Company',
       };
 
-      const result = guard.handleRequest(null, operatorUser, null);
+      const result = guard.handleRequest(
+        null,
+        operatorUser,
+        null,
+        mockExecutionContext,
+      );
 
       expect(result).toEqual(operatorUser);
       expect(result.roles).toContain('OPERATOR');
@@ -249,7 +282,12 @@ describe('JwtAuthGuard', () => {
         jurisdiction: 'Texas',
       };
 
-      const result = guard.handleRequest(null, regulatorUser, null);
+      const result = guard.handleRequest(
+        null,
+        regulatorUser,
+        null,
+        mockExecutionContext,
+      );
 
       expect(result).toEqual(regulatorUser);
       expect(result.roles).toContain('REGULATOR');
@@ -265,7 +303,12 @@ describe('JwtAuthGuard', () => {
         systemAccess: true,
       };
 
-      const result = guard.handleRequest(null, adminUser, null);
+      const result = guard.handleRequest(
+        null,
+        adminUser,
+        null,
+        mockExecutionContext,
+      );
 
       expect(result).toEqual(adminUser);
       expect(result.roles).toContain('ADMIN');
@@ -278,7 +321,7 @@ describe('JwtAuthGuard', () => {
       const jwtError = new Error('JsonWebTokenError: invalid signature');
 
       expect(() => {
-        guard.handleRequest(jwtError, null, null);
+        guard.handleRequest(jwtError, null, null, mockExecutionContext);
       }).toThrow(jwtError);
     });
 
@@ -286,7 +329,7 @@ describe('JwtAuthGuard', () => {
       const expiredError = new Error('TokenExpiredError: jwt expired');
 
       expect(() => {
-        guard.handleRequest(expiredError, null, null);
+        guard.handleRequest(expiredError, null, null, mockExecutionContext);
       }).toThrow(expiredError);
     });
 
@@ -294,7 +337,7 @@ describe('JwtAuthGuard', () => {
       const malformedError = new Error('JsonWebTokenError: jwt malformed');
 
       expect(() => {
-        guard.handleRequest(malformedError, null, null);
+        guard.handleRequest(malformedError, null, null, mockExecutionContext);
       }).toThrow(malformedError);
     });
   });
@@ -308,7 +351,8 @@ describe('JwtAuthGuard', () => {
       mockExecutionContext.getClass = jest.fn().mockReturnValue(mockClass);
       mockReflector.getAllAndOverride.mockReturnValue(true);
 
-      guard.canActivate(mockExecutionContext);
+      const result = guard.canActivate(mockExecutionContext);
+      expect(result).toBe(true);
 
       expect(mockReflector.getAllAndOverride).toHaveBeenCalledWith('isPublic', [
         mockHandler,

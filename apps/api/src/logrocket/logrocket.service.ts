@@ -1,11 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import * as LogRocket from 'logrocket';
+import { AppConfigService } from '../config/app.config';
+
+const LOGROCKET_NOT_INITIALIZED_MESSAGE = 'LogRocket: Service not initialized';
 
 @Injectable()
 export class LogRocketService {
   private isInitialized = false;
 
-  constructor() {
+  constructor(private readonly configService: AppConfigService) {
     this.initialize();
   }
 
@@ -13,7 +16,7 @@ export class LogRocketService {
    * Initialize LogRocket with configuration
    */
   private initialize(): void {
-    const appId = process.env.LOGROCKET_APP_ID;
+    const appId = this.configService.logRocketAppId;
 
     if (!appId) {
       console.warn(
@@ -56,9 +59,9 @@ export class LogRocketService {
   /**
    * Identify a user session
    */
-  identify(userId: string, userInfo?: Record<string, any>): void {
+  identify(userId: string, userInfo?: Record<string, unknown>): void {
     if (!this.isInitialized) {
-      console.warn('LogRocket: Service not initialized');
+      console.warn(LOGROCKET_NOT_INITIALIZED_MESSAGE);
       return;
     }
 
@@ -67,7 +70,7 @@ export class LogRocketService {
         ...userInfo,
         // Add server-side context
         server: true,
-        environment: process.env.NODE_ENV || 'development',
+        environment: this.configService.nodeEnv,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
@@ -78,9 +81,9 @@ export class LogRocketService {
   /**
    * Track a custom event
    */
-  track(eventName: string, properties?: Record<string, any>): void {
+  track(eventName: string, properties?: Record<string, unknown>): void {
     if (!this.isInitialized) {
-      console.warn('LogRocket: Service not initialized');
+      console.warn(LOGROCKET_NOT_INITIALIZED_MESSAGE);
       return;
     }
 
@@ -89,7 +92,7 @@ export class LogRocketService {
         ...properties,
         // Add server-side context
         server: true,
-        environment: process.env.NODE_ENV || 'development',
+        environment: this.configService.nodeEnv,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
@@ -103,10 +106,10 @@ export class LogRocketService {
   log(
     message: string,
     level: 'info' | 'warn' | 'error' = 'info',
-    extra?: Record<string, any>,
+    extra?: Record<string, unknown>,
   ): void {
     if (!this.isInitialized) {
-      console.warn('LogRocket: Service not initialized');
+      console.warn(LOGROCKET_NOT_INITIALIZED_MESSAGE);
       return;
     }
 
@@ -116,7 +119,7 @@ export class LogRocketService {
         ...extra,
         // Add server-side context
         server: true,
-        environment: process.env.NODE_ENV || 'development',
+        environment: this.configService.nodeEnv,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
@@ -127,9 +130,9 @@ export class LogRocketService {
   /**
    * Capture an exception
    */
-  captureException(error: Error, extra?: Record<string, any>): void {
+  captureException(error: Error, _extra?: Record<string, unknown>): void {
     if (!this.isInitialized) {
-      console.warn('LogRocket: Service not initialized');
+      console.warn(LOGROCKET_NOT_INITIALIZED_MESSAGE);
       return;
     }
 
@@ -146,7 +149,7 @@ export class LogRocketService {
    */
   getSessionURL(): Promise<string | null> {
     if (!this.isInitialized) {
-      console.warn('LogRocket: Service not initialized');
+      console.warn(LOGROCKET_NOT_INITIALIZED_MESSAGE);
       return Promise.resolve(null);
     }
 
@@ -167,7 +170,7 @@ export class LogRocketService {
    */
   addTag(key: string, value: string): void {
     if (!this.isInitialized) {
-      console.warn('LogRocket: Service not initialized');
+      console.warn(LOGROCKET_NOT_INITIALIZED_MESSAGE);
       return;
     }
 
@@ -177,7 +180,7 @@ export class LogRocketService {
         tagKey: key,
         tagValue: value,
         server: true,
-        environment: process.env.NODE_ENV || 'development',
+        environment: this.configService.nodeEnv,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {

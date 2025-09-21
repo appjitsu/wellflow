@@ -29,15 +29,10 @@ export const config = [
       // Turbo rules
       'turbo/no-undeclared-env-vars': 'error',
 
-      // TypeScript strict rules for oil & gas compliance
+      // TypeScript basic rules (non-type-aware)
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': 'error',
-      '@typescript-eslint/prefer-nullish-coalescing': 'error',
-      '@typescript-eslint/prefer-optional-chain': 'error',
       '@typescript-eslint/no-non-null-assertion': 'error',
-      '@typescript-eslint/no-floating-promises': 'error',
-      '@typescript-eslint/await-thenable': 'error',
-      '@typescript-eslint/no-misused-promises': 'error',
 
       // Import/Export security
       'import/no-dynamic-require': 'error',
@@ -70,5 +65,33 @@ export const config = [
   },
   {
     ignores: ['dist/**', 'node_modules/**', '.next/**', 'coverage/**'],
+  },
+];
+
+/**
+ * Type-aware TypeScript ESLint configuration that requires parserOptions.
+ * Use this for projects with proper TypeScript configuration.
+ *
+ * @type {import("eslint").Linter.Config[]}
+ */
+export const typeAwareConfig = [
+  ...config,
+  {
+    files: ['**/*.ts', '**/*.tsx'],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        project: true,
+        tsconfigRootDir: process.cwd(),
+      },
+    },
+    rules: {
+      // TypeScript type-aware rules for oil & gas compliance
+      '@typescript-eslint/prefer-nullish-coalescing': 'error',
+      '@typescript-eslint/prefer-optional-chain': 'error',
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/await-thenable': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+    },
   },
 ];

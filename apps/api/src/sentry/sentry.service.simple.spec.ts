@@ -208,8 +208,8 @@ describe('SentryService (Simple)', () => {
       ];
 
       requiredMethods.forEach((method) => {
-        expect(service[method]).toBeDefined();
-        expect(typeof service[method]).toBe('function');
+        expect(service[method as keyof SentryService]).toBeDefined();
+        expect(typeof service[method as keyof SentryService]).toBe('function');
       });
     });
 

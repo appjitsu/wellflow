@@ -8,31 +8,31 @@ import { WellStatus, WellType } from '../../domain/enums/well-status.enum';
  */
 export class WellDto {
   @ApiProperty({ description: 'Well unique identifier' })
-  id: string;
+  id!: string;
 
   @ApiProperty({
     description: 'API Number (formatted)',
     example: '42-123-12345',
   })
-  apiNumber: string;
+  apiNumber!: string;
 
   @ApiProperty({ description: 'Well name' })
-  name: string;
+  name!: string;
 
   @ApiProperty({ description: 'Operator ID' })
-  operatorId: string;
+  operatorId!: string;
 
   @ApiProperty({ description: 'Lease ID', required: false })
   leaseId?: string;
 
   @ApiProperty({ enum: WellType, description: 'Type of well' })
-  wellType: WellType;
+  wellType!: WellType;
 
   @ApiProperty({ enum: WellStatus, description: 'Current well status' })
-  status: WellStatus;
+  status!: WellStatus;
 
   @ApiProperty({ description: 'Well location' })
-  location: {
+  location!: {
     coordinates: {
       latitude: number;
       longitude: number;
@@ -53,13 +53,13 @@ export class WellDto {
   totalDepth?: number;
 
   @ApiProperty({ description: 'Creation timestamp' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty({ description: 'Last update timestamp' })
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @ApiProperty({ description: 'Version for optimistic locking' })
-  version: number;
+  version!: number;
 
   static fromEntity(well: Well): WellDto {
     return {
@@ -70,7 +70,7 @@ export class WellDto {
       leaseId: well.getLeaseId(),
       wellType: well.getWellType(),
       status: well.getStatus(),
-      location: well.getLocation().toObject(),
+      location: well.getLocation()?.toObject() || null,
       spudDate: well.getSpudDate(),
       completionDate: well.getCompletionDate(),
       totalDepth: well.getTotalDepth(),

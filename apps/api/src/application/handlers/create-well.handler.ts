@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler, EventBus } from '@nestjs/cqrs';
 import { Inject, ConflictException, BadRequestException } from '@nestjs/common';
 import { CreateWellCommand } from '../commands/create-well.command';
-import { WellRepository } from '../../domain/repositories/well.repository.interface';
+import type { WellRepository } from '../../domain/repositories/well.repository.interface';
 import { Well } from '../../domain/entities/well.entity';
 import { ApiNumber } from '../../domain/value-objects/api-number';
 import { Location } from '../../domain/value-objects/location';
@@ -74,7 +74,9 @@ export class CreateWellHandler implements ICommandHandler<CreateWellCommand> {
       if (error instanceof ConflictException) {
         throw error;
       }
-      throw new BadRequestException(`Failed to create well: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to create well: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 }

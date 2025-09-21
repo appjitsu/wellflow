@@ -1,10 +1,17 @@
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import {
+  ConfigModule as NestConfigModule,
+  ConfigService,
+} from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
+import { OperatorsController } from './presentation/controllers/operators.controller';
+import { SecurityHeadersMiddleware } from './common/middleware/security-headers.middleware';
 import { AppService } from './app.service';
+import { ConfigModule } from './config/config.module';
 import { DatabaseModule } from './database/database.module';
 import { RedisModule } from './redis/redis.module';
 import { UsersModule } from './users/users.module';
@@ -17,12 +24,22 @@ import { MonitoringModule } from './monitoring/monitoring.module';
 // import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
 import { AbilitiesGuard } from './authorization/abilities.guard';
 import { AuditLogInterceptor } from './presentation/interceptors/audit-log.interceptor';
+import {
+  createThrottlerConfig,
+  WellFlowThrottlerGuard,
+} from './common/throttler';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
+    NestConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
+    }),
+    ConfigModule,
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: createThrottlerConfig,
+      inject: [ConfigService],
     }),
     CqrsModule.forRoot(),
     EventEmitterModule.forRoot(),
@@ -35,10 +52,15 @@ import { AuditLogInterceptor } from './presentation/interceptors/audit-log.inter
     AuthorizationModule,
     MonitoringModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, OperatorsController],
   providers: [
     AppService,
-    // TODO: Re-enable JWT authentication after implementing JWT strategy
+    // Rate limiting guard - applied globally for security
+    {
+      provide: APP_GUARD,
+      useClass: WellFlowThrottlerGuard,
+    },
+    // NOTE: JWT authentication will be re-enabled after implementing JWT strategy
     // {
     //   provide: APP_GUARD,
     //   useClass: JwtAuthGuard,
@@ -55,6 +77,10 @@ import { AuditLogInterceptor } from './presentation/interceptors/audit-log.inter
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(LogRocketMiddleware).forRoutes('*'); // Apply to all routes
+    // Apply security headers to all routes (first for security)
+    consumer.apply(SecurityHeadersMiddleware).forRoutes('*');
+
+    // Apply LogRocket middleware to all routes
+    consumer.apply(LogRocketMiddleware).forRoutes('*');
   }
 }

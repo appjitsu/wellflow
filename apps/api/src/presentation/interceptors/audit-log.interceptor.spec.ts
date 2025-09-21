@@ -1,31 +1,41 @@
 import { ExecutionContext, CallHandler } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Observable, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { AuditLogInterceptor } from './audit-log.interceptor';
 import { AuditLogOptions } from '../decorators/audit-log.decorator';
+import { TestUser } from '../../test-utils/user-mock.helper';
 
 describe('AuditLogInterceptor', () => {
   let interceptor: AuditLogInterceptor;
   let reflector: Reflector;
   let mockExecutionContext: ExecutionContext;
   let mockCallHandler: CallHandler;
-  let mockRequest: any;
-  let mockResponse: any;
+  let mockRequest: {
+    user?: { id?: string; email?: string; roles?: string[] } | null;
+    ip?: string;
+    method?: string;
+    url?: string;
+    get?: jest.Mock;
+  };
+  let mockResponse: { statusCode?: number };
 
   const mockReflector = {
     getAllAndOverride: jest.fn(),
+    get: jest.fn(),
+    getAll: jest.fn(),
+    getAllAndMerge: jest.fn(),
   };
 
   beforeEach(() => {
-    reflector = mockReflector as any;
+    reflector = mockReflector as jest.Mocked<Reflector>;
     interceptor = new AuditLogInterceptor(reflector);
 
     mockRequest = {
       user: null,
-      ip: '192.168.1.100',
+      ip: '127.0.0.1',
       method: 'GET',
       url: '/api/wells',
-      get: jest.fn(),
+      get: jest.fn().mockReturnValue(''),
     };
 
     mockResponse = {
@@ -44,11 +54,11 @@ describe('AuditLogInterceptor', () => {
       getArgByIndex: jest.fn(),
       switchToRpc: jest.fn(),
       switchToWs: jest.fn(),
-    } as any;
+    } as jest.Mocked<ExecutionContext>;
 
     mockCallHandler = {
       handle: jest.fn(),
-    } as any;
+    } as jest.Mocked<CallHandler>;
 
     jest.clearAllMocks();
     jest.spyOn(console, 'log').mockImplementation(() => {});
@@ -104,7 +114,7 @@ describe('AuditLogInterceptor', () => {
         id: 'user-123',
         email: 'operator@example.com',
       };
-      mockRequest.get.mockReturnValue('Mozilla/5.0 Test Browser');
+      mockRequest.get?.mockReturnValue('Mozilla/5.0 Test Browser');
       (mockCallHandler.handle as jest.Mock).mockReturnValue(
         of('success response'),
       );
@@ -146,10 +156,10 @@ describe('AuditLogInterceptor', () => {
         id: 'user-456',
         email: 'admin@example.com',
       };
-      mockRequest.get.mockReturnValue('Mozilla/5.0 Test Browser');
+      mockRequest.get?.mockReturnValue('Mozilla/5.0 Test Browser');
 
       const error = new Error('Well not found');
-      (error as any).status = 404;
+      (error as unknown as { status: number }).status = 404;
       (mockCallHandler.handle as jest.Mock).mockReturnValue(
         throwError(() => error),
       );
@@ -285,7 +295,7 @@ describe('AuditLogInterceptor', () => {
         email: 'operator@texasoil.com',
         roles: ['OPERATOR'],
         operatorId: 'TX-OP-456',
-      };
+      } as TestUser;
       mockRequest.method = 'POST';
       mockRequest.url = '/api/wells';
       (mockCallHandler.handle as jest.Mock).mockReturnValue(
@@ -327,7 +337,7 @@ describe('AuditLogInterceptor', () => {
         email: 'inspector@rrc.texas.gov',
         roles: ['REGULATOR'],
         agency: 'Texas Railroad Commission',
-      };
+      } as TestUser;
       mockRequest.method = 'GET';
       mockRequest.url = '/api/wells/well-123/inspection';
       (mockCallHandler.handle as jest.Mock).mockReturnValue(
@@ -440,10 +450,10 @@ describe('AuditLogInterceptor', () => {
         id: 'user-123',
         email: 'test@example.com',
       };
-      mockRequest.ip = '10.0.0.1';
+      mockRequest.ip = '127.0.0.1';
       mockRequest.method = 'POST';
       mockRequest.url = '/api/test';
-      mockRequest.get.mockReturnValue('Test-Agent/1.0');
+      mockRequest.get?.mockReturnValue('Test-Agent/1.0');
       mockResponse.statusCode = 201;
       (mockCallHandler.handle as jest.Mock).mockReturnValue(
         of('test response'),
@@ -468,7 +478,7 @@ describe('AuditLogInterceptor', () => {
             description: 'Test description',
             userId: 'user-123',
             userEmail: 'test@example.com',
-            ipAddress: '10.0.0.1',
+            ipAddress: '127.0.0.1',
             userAgent: 'Test-Agent/1.0',
             method: 'POST',
             url: '/api/test',
@@ -491,7 +501,7 @@ describe('AuditLogInterceptor', () => {
       mockReflector.getAllAndOverride.mockReturnValue(auditOptions);
       mockRequest.user = { id: 'user-456' };
       const error = new Error('Test error');
-      (error as any).status = 400;
+      (error as unknown as { status: number }).status = 400;
       (mockCallHandler.handle as jest.Mock).mockReturnValue(
         throwError(() => error),
       );

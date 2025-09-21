@@ -1,19 +1,23 @@
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { RolesGuard } from './roles.guard';
+import { TestUser, createMockUser } from '../../test-utils/user-mock.helper';
 
 describe('RolesGuard', () => {
   let guard: RolesGuard;
   let reflector: Reflector;
   let mockExecutionContext: ExecutionContext;
-  let mockRequest: any;
+  let mockRequest: { user?: TestUser | null };
 
   const mockReflector = {
     getAllAndOverride: jest.fn(),
+    get: jest.fn(),
+    getAll: jest.fn(),
+    getAllAndMerge: jest.fn(),
   };
 
   beforeEach(() => {
-    reflector = mockReflector as any;
+    reflector = mockReflector as jest.Mocked<Reflector>;
     guard = new RolesGuard(reflector);
 
     mockRequest = {
@@ -31,7 +35,7 @@ describe('RolesGuard', () => {
       getArgByIndex: jest.fn(),
       switchToRpc: jest.fn(),
       switchToWs: jest.fn(),
-    } as any;
+    } as jest.Mocked<ExecutionContext>;
 
     jest.clearAllMocks();
   });
@@ -93,10 +97,10 @@ describe('RolesGuard', () => {
 
     it('should allow access when user has required role', () => {
       mockReflector.getAllAndOverride.mockReturnValue(['OPERATOR']);
-      mockRequest.user = {
+      mockRequest.user = createMockUser({
         id: 'user-123',
         roles: ['OPERATOR'],
-      };
+      });
 
       const result = guard.canActivate(mockExecutionContext);
 
@@ -109,10 +113,10 @@ describe('RolesGuard', () => {
         'OPERATOR',
         'VIEWER',
       ]);
-      mockRequest.user = {
+      mockRequest.user = createMockUser({
         id: 'user-123',
         roles: ['OPERATOR'],
-      };
+      });
 
       const result = guard.canActivate(mockExecutionContext);
 
@@ -121,10 +125,10 @@ describe('RolesGuard', () => {
 
     it('should allow access when user has multiple roles including required one', () => {
       mockReflector.getAllAndOverride.mockReturnValue(['OPERATOR']);
-      mockRequest.user = {
+      mockRequest.user = createMockUser({
         id: 'user-123',
         roles: ['VIEWER', 'OPERATOR', 'FIELD_SUPERVISOR'],
-      };
+      });
 
       const result = guard.canActivate(mockExecutionContext);
 
@@ -133,10 +137,10 @@ describe('RolesGuard', () => {
 
     it('should throw ForbiddenException when user lacks required role', () => {
       mockReflector.getAllAndOverride.mockReturnValue(['ADMIN']);
-      mockRequest.user = {
+      mockRequest.user = createMockUser({
         id: 'user-123',
         roles: ['VIEWER'],
-      };
+      });
 
       expect(() => {
         guard.canActivate(mockExecutionContext);
@@ -149,10 +153,10 @@ describe('RolesGuard', () => {
 
     it('should throw ForbiddenException with multiple required roles in message', () => {
       mockReflector.getAllAndOverride.mockReturnValue(['ADMIN', 'OPERATOR']);
-      mockRequest.user = {
+      mockRequest.user = createMockUser({
         id: 'user-123',
         roles: ['VIEWER'],
-      };
+      });
 
       expect(() => {
         guard.canActivate(mockExecutionContext);
@@ -165,10 +169,10 @@ describe('RolesGuard', () => {
 
     it('should handle user with no roles property', () => {
       mockReflector.getAllAndOverride.mockReturnValue(['OPERATOR']);
-      mockRequest.user = {
+      mockRequest.user = createMockUser({
         id: 'user-123',
-        // no roles property
-      };
+        roles: undefined, // no roles property
+      });
 
       expect(() => {
         guard.canActivate(mockExecutionContext);
@@ -183,8 +187,8 @@ describe('RolesGuard', () => {
       mockReflector.getAllAndOverride.mockReturnValue(['OPERATOR']);
       mockRequest.user = {
         id: 'user-123',
-        roles: null,
-      };
+        roles: undefined, // TypeScript doesn't allow null for string[] | undefined
+      } as TestUser;
 
       expect(() => {
         guard.canActivate(mockExecutionContext);
@@ -193,10 +197,10 @@ describe('RolesGuard', () => {
 
     it('should handle user with empty roles array', () => {
       mockReflector.getAllAndOverride.mockReturnValue(['OPERATOR']);
-      mockRequest.user = {
+      mockRequest.user = createMockUser({
         id: 'user-123',
         roles: [],
-      };
+      });
 
       expect(() => {
         guard.canActivate(mockExecutionContext);
@@ -251,7 +255,7 @@ describe('RolesGuard', () => {
       mockRequest.user = {
         id: 'audit-123',
         roles: ['AUDITOR'],
-        certifications: ['CPA', 'Environmental Auditor'],
+        // certifications: ['CPA', 'Environmental Auditor'], // Not part of TestUser interface
       };
 
       const result = guard.canActivate(mockExecutionContext);
@@ -268,7 +272,7 @@ describe('RolesGuard', () => {
       mockRequest.user = {
         id: 'viewer-123',
         roles: ['VIEWER'],
-        department: 'Reporting',
+        // department: 'Reporting', // Not part of TestUser interface
       };
 
       const result = guard.canActivate(mockExecutionContext);
@@ -316,7 +320,7 @@ describe('RolesGuard', () => {
       mockRequest.user = {
         id: 'supervisor-123',
         roles: ['FIELD_SUPERVISOR', 'SAFETY_OFFICER'],
-        location: 'Permian Basin',
+        // location: 'Permian Basin', // Not part of TestUser interface
       };
 
       const result = guard.canActivate(mockExecutionContext);
@@ -347,10 +351,10 @@ describe('RolesGuard', () => {
   describe('edge cases', () => {
     it('should handle case-sensitive role matching', () => {
       mockReflector.getAllAndOverride.mockReturnValue(['OPERATOR']);
-      mockRequest.user = {
+      mockRequest.user = createMockUser({
         id: 'user-123',
         roles: ['operator'], // lowercase
-      };
+      });
 
       expect(() => {
         guard.canActivate(mockExecutionContext);
@@ -359,10 +363,10 @@ describe('RolesGuard', () => {
 
     it('should handle special characters in role names', () => {
       mockReflector.getAllAndOverride.mockReturnValue(['FIELD_SUPERVISOR']);
-      mockRequest.user = {
+      mockRequest.user = createMockUser({
         id: 'user-123',
         roles: ['FIELD_SUPERVISOR'],
-      };
+      });
 
       const result = guard.canActivate(mockExecutionContext);
 
@@ -371,10 +375,10 @@ describe('RolesGuard', () => {
 
     it('should handle numeric role names', () => {
       mockReflector.getAllAndOverride.mockReturnValue(['LEVEL_1', 'LEVEL_2']);
-      mockRequest.user = {
+      mockRequest.user = createMockUser({
         id: 'user-123',
         roles: ['LEVEL_1'],
-      };
+      });
 
       const result = guard.canActivate(mockExecutionContext);
 
@@ -383,10 +387,10 @@ describe('RolesGuard', () => {
 
     it('should handle empty string roles', () => {
       mockReflector.getAllAndOverride.mockReturnValue(['']);
-      mockRequest.user = {
+      mockRequest.user = createMockUser({
         id: 'user-123',
         roles: [''],
-      };
+      });
 
       const result = guard.canActivate(mockExecutionContext);
 
@@ -421,10 +425,10 @@ describe('RolesGuard', () => {
 
       mockExecutionContext.switchToHttp = mockSwitchToHttp;
       mockReflector.getAllAndOverride.mockReturnValue(['OPERATOR']);
-      mockRequest.user = {
+      mockRequest.user = createMockUser({
         id: 'user-123',
         roles: ['OPERATOR'],
-      };
+      });
 
       guard.canActivate(mockExecutionContext);
 
@@ -456,7 +460,7 @@ describe('RolesGuard', () => {
         email: 'inspector@rrc.texas.gov',
         roles: ['REGULATOR'],
         agency: 'Texas Railroad Commission',
-        badgeNumber: 'RRC-12345',
+        // badgeNumber: 'RRC-12345', // Not part of TestUser interface
       };
 
       const result = guard.canActivate(mockExecutionContext);
@@ -470,7 +474,7 @@ describe('RolesGuard', () => {
         id: 'viewer-123',
         email: 'viewer@company.com',
         roles: ['VIEWER'],
-        department: 'Reporting',
+        // department: 'Reporting', // Not part of TestUser interface
       };
 
       expect(() => {

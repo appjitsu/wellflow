@@ -7,14 +7,20 @@ describe('SentryExceptionFilter', () => {
   let filter: SentryExceptionFilter;
   let sentryService: jest.Mocked<SentryService>;
   let mockArgumentsHost: jest.Mocked<ArgumentsHost>;
-  let mockResponse: any;
-  let mockRequest: any;
+  let mockResponse: {
+    status: jest.Mock;
+    json: jest.Mock;
+  };
+  let mockRequest: {
+    url: string;
+    method: string;
+  };
 
   beforeEach(async () => {
     // Mock SentryService
     const mockSentryService = {
       setExtra: jest.fn(),
-      captureException: jest.fn(),
+      captureException: jest.fn().mockResolvedValue(undefined),
       captureMessage: jest.fn(),
     };
 
@@ -23,15 +29,12 @@ describe('SentryExceptionFilter', () => {
       method: 'GET',
       url: '/api/test',
       headers: {
-        authorization: 'Bearer token',
-        cookie: 'session=123',
-        'x-api-key': 'secret',
         'user-agent': 'test-agent',
       },
       body: { test: 'data' },
       query: { page: '1' },
       params: { id: '123' },
-    };
+    } as any;
 
     mockResponse = {
       status: jest.fn().mockReturnThis(),
@@ -46,7 +49,12 @@ describe('SentryExceptionFilter', () => {
 
     mockArgumentsHost = {
       switchToHttp: jest.fn().mockReturnValue(mockHttpContext),
-    } as any;
+      getArgs: jest.fn(),
+      getArgByIndex: jest.fn(),
+      switchToRpc: jest.fn(),
+      switchToWs: jest.fn(),
+      getType: jest.fn(),
+    } as jest.Mocked<ArgumentsHost>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -214,7 +222,10 @@ describe('SentryExceptionFilter', () => {
     });
 
     it('should handle null exception response object', () => {
-      const exception = new HttpException(null as any, HttpStatus.BAD_REQUEST);
+      const exception = new HttpException(
+        null as unknown as string,
+        HttpStatus.BAD_REQUEST,
+      );
 
       filter.catch(exception, mockArgumentsHost);
 
@@ -260,7 +271,7 @@ describe('SentryExceptionFilter', () => {
         'content-type': 'application/json',
       };
 
-      // Access private method through any cast
+      // Access private method through type assertion
       const sanitized = (filter as any).sanitizeHeaders(headers);
 
       expect(sanitized).toEqual({

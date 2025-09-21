@@ -107,7 +107,7 @@ graph TB
 
 **Infrastructure & Services:**
 
-- **Frontend Hosting**: Vercel (Next.js with edge functions)
+- **Frontend Hosting**: Railway (Next.js static deployment)
 - **Backend Hosting**: Railway (NestJS API containers)
 - **Database**: Railway PostgreSQL with TimescaleDB extension
 - **Cache/Jobs**: Railway Redis for BullMQ background processing

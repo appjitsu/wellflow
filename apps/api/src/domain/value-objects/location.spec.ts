@@ -31,13 +31,13 @@ describe('Location', () => {
     });
 
     it('should throw error for null coordinates', () => {
-      expect(() => new Location(null as any)).toThrow(
+      expect(() => new Location(null as unknown as Coordinates)).toThrow(
         'Coordinates are required',
       );
     });
 
     it('should throw error for undefined coordinates', () => {
-      expect(() => new Location(undefined as any)).toThrow(
+      expect(() => new Location(undefined as unknown as Coordinates)).toThrow(
         'Coordinates are required',
       );
     });
@@ -120,7 +120,7 @@ describe('Location', () => {
 
     it('should return false when comparing with null', () => {
       const location = new Location(validCoordinates);
-      expect(location.equals(null as any)).toBe(false);
+      expect(location.equals(null as unknown as Location)).toBe(false);
     });
   });
 

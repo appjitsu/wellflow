@@ -71,7 +71,7 @@ export class MonitoringController {
     const sentryLevel = level === 'warn' ? 'warning' : level;
     this.sentryService.captureMessage(
       `API Log: ${message}`,
-      sentryLevel as any,
+      sentryLevel as 'debug' | 'info' | 'warning' | 'error' | 'fatal',
       'TEST_LOG',
     );
 
@@ -85,7 +85,9 @@ export class MonitoringController {
   @Post('test-track')
   @ApiOperation({ summary: 'Test event tracking (LogRocket)' })
   @ApiResponse({ status: 200, description: 'Event tracked' })
-  testTrack(@Body() body: { event: string; properties?: Record<string, any> }) {
+  testTrack(
+    @Body() body: { event: string; properties?: Record<string, unknown> },
+  ) {
     const { event, properties = {} } = body;
 
     // Track event in LogRocket

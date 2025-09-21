@@ -26,6 +26,16 @@ export const config = [
     },
   },
   {
+    files: ['**/*.ts', '**/*.tsx'],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        project: true,
+        tsconfigRootDir: process.cwd(),
+      },
+    },
+  },
+  {
     plugins: {
       'react-hooks': pluginReactHooks,
     },

@@ -77,16 +77,17 @@ describe('CreateWellHandler', () => {
       expect(result).toMatch(
         /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
       ); // UUID v4 format
-      expect(wellRepository.findByApiNumber).toHaveBeenCalledWith(
+      expect(mockWellRepository.findByApiNumber).toHaveBeenCalledWith(
         expect.any(ApiNumber),
       );
-      expect(wellRepository.save).toHaveBeenCalledWith(expect.any(Well));
+      expect(mockWellRepository.save).toHaveBeenCalledWith(expect.any(Well));
       // Note: Events are only published if the well has domain events, which depends on the Well entity implementation
     });
 
     it('should throw ConflictException if well with API number already exists', async () => {
-      const existingWell = { id: 'existing-id' };
-      wellRepository.findByApiNumber.mockResolvedValue(existingWell as any);
+      // Create a minimal Well mock with proper typing
+      const existingWell = {} as Well;
+      wellRepository.findByApiNumber.mockResolvedValue(existingWell);
 
       await expect(handler.execute(validCommand)).rejects.toThrow(
         ConflictException,
@@ -94,8 +95,8 @@ describe('CreateWellHandler', () => {
       await expect(handler.execute(validCommand)).rejects.toThrow(
         'Well with API number 42-123-45678 already exists',
       );
-      expect(wellRepository.save).not.toHaveBeenCalled();
-      expect(eventBus.publish).not.toHaveBeenCalled();
+      expect(mockWellRepository.save).not.toHaveBeenCalled();
+      expect(mockEventBus.publish).not.toHaveBeenCalled();
     });
 
     it('should handle repository save errors', async () => {
@@ -146,10 +147,10 @@ describe('CreateWellHandler', () => {
       expect(result).toMatch(
         /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
       );
-      expect(wellRepository.findByApiNumber).toHaveBeenCalledWith(
+      expect(mockWellRepository.findByApiNumber).toHaveBeenCalledWith(
         expect.any(ApiNumber),
       );
-      expect(wellRepository.save).toHaveBeenCalledWith(expect.any(Well));
+      expect(mockWellRepository.save).toHaveBeenCalledWith(expect.any(Well));
     });
 
     it('should generate unique ID for each well', async () => {
@@ -234,11 +235,13 @@ describe('CreateWellHandler', () => {
       await handler.execute(validCommand);
 
       expect(eventBus.publish).toHaveBeenCalledTimes(2);
-      expect(eventBus.publish).toHaveBeenCalledWith({
+      // Use the mock calls directly instead of the unbound method
+      const calls = (eventBus.publish as jest.Mock).mock.calls;
+      expect(calls[0][0]).toEqual({
         type: 'WellCreated',
         wellId: 'test-id',
       });
-      expect(eventBus.publish).toHaveBeenCalledWith({
+      expect(calls[1][0]).toEqual({
         type: 'WellStatusChanged',
         wellId: 'test-id',
       });
@@ -332,7 +335,7 @@ describe('CreateWellHandler', () => {
 
       expect(typeof oilResult).toBe('string');
       expect(typeof gasResult).toBe('string');
-      expect(wellRepository.save).toHaveBeenCalledTimes(2);
+      expect((wellRepository.save as jest.Mock).mock.calls.length).toBe(2);
     });
 
     it('should handle location with only coordinates', async () => {
@@ -350,7 +353,9 @@ describe('CreateWellHandler', () => {
       const result = await handler.execute(minimalLocationCommand);
 
       expect(typeof result).toBe('string');
-      expect(wellRepository.save).toHaveBeenCalledWith(expect.any(Well));
+      // Use a safe approach to check if save was called with a Well instance
+      const saveCall = (wellRepository.save as jest.Mock).mock.calls[0][0];
+      expect(saveCall).toBeInstanceOf(Well);
     });
 
     it('should handle location with full address', async () => {
@@ -375,7 +380,9 @@ describe('CreateWellHandler', () => {
       const result = await handler.execute(fullLocationCommand);
 
       expect(typeof result).toBe('string');
-      expect(wellRepository.save).toHaveBeenCalledWith(expect.any(Well));
+      // Use a safe approach to check if save was called with a Well instance
+      const saveCall = (wellRepository.save as jest.Mock).mock.calls[0][0];
+      expect(saveCall).toBeInstanceOf(Well);
     });
   });
 });

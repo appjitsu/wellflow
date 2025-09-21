@@ -23,8 +23,8 @@ jest.mock('drizzle-orm/node-postgres', () => ({
 
 describe('DatabaseService', () => {
   let service: DatabaseService;
-  let configService: ConfigService;
-  let mockPool: any;
+  let _configService: ConfigService;
+  let mockPool: { query: jest.Mock; end: jest.Mock };
 
   const mockConfigService = {
     get: jest.fn(),
@@ -40,7 +40,9 @@ describe('DatabaseService', () => {
       end: jest.fn(),
     };
 
-    (Pool as jest.MockedClass<typeof Pool>).mockImplementation(() => mockPool);
+    (Pool as jest.MockedClass<typeof Pool>).mockImplementation(
+      () => mockPool as any,
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -53,7 +55,7 @@ describe('DatabaseService', () => {
     }).compile();
 
     service = module.get<DatabaseService>(DatabaseService);
-    configService = module.get<ConfigService>(ConfigService);
+    _configService = module.get<ConfigService>(ConfigService);
   });
 
   afterEach(() => {
@@ -81,7 +83,7 @@ describe('DatabaseService', () => {
         host: 'localhost',
         port: 5432,
         user: 'postgres',
-        password: 'password',
+        password: 'password', // eslint-disable-line sonarjs/no-hardcoded-passwords
         database: 'wellflow',
         max: 20,
         idleTimeoutMillis: 30000,
@@ -107,7 +109,7 @@ describe('DatabaseService', () => {
         host: 'custom-host',
         port: 3306,
         user: 'custom-user',
-        password: 'custom-pass',
+        password: 'custom-pass', // eslint-disable-line sonarjs/no-hardcoded-passwords
         database: 'custom-db',
         max: 20,
         idleTimeoutMillis: 30000,
@@ -132,7 +134,7 @@ describe('DatabaseService', () => {
     it('should use default values when config is missing', async () => {
       // Mock config service to return default values
       mockConfigService.get.mockImplementation(
-        (key: string, defaultValue?: any) => defaultValue,
+        (key: string, defaultValue?: unknown) => defaultValue,
       );
 
       mockPool.query.mockResolvedValue({ rows: [{ '?column?': 1 }] });
@@ -143,7 +145,7 @@ describe('DatabaseService', () => {
         host: 'localhost',
         port: 5432,
         user: 'postgres',
-        password: 'password',
+        password: undefined,
         database: 'wellflow',
         max: 20,
         idleTimeoutMillis: 30000,

@@ -8,7 +8,7 @@ import { DatabaseService } from './database.service';
     DatabaseService,
     {
       provide: 'DATABASE_CONNECTION',
-      useFactory: async (databaseService: DatabaseService) => {
+      useFactory: (databaseService: DatabaseService) => {
         // Wait for the database service to be initialized
         // The onModuleInit should have been called by now
         return databaseService.getDb();
@@ -18,4 +18,5 @@ import { DatabaseService } from './database.service';
   ],
   exports: [DatabaseService, 'DATABASE_CONNECTION'],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class DatabaseModule {}

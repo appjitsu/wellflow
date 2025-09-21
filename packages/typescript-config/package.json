@@ -5,5 +5,16 @@
   "license": "MIT",
   "publishConfig": {
     "access": "public"
+  },
+  "scripts": {
+    "test": "echo 'No tests configured for @repo/typescript-config package'",
+    "test:watch": "echo 'No tests configured for @repo/typescript-config package'",
+    "test:coverage": "echo 'No tests configured for @repo/typescript-config package'",
+    "test:coverage:watch": "echo 'No tests configured for @repo/typescript-config package'",
+    "test:ci": "echo 'No tests configured for @repo/typescript-config package'",
+    "security:audit": "echo 'No security audit needed for @repo/typescript-config package'",
+    "security:check": "echo 'No security check needed for @repo/typescript-config package'",
+    "security:test": "echo 'No security tests needed for @repo/typescript-config package'",
+    "accessibility:test": "echo 'No accessibility tests needed for @repo/typescript-config package'"
   }
 }

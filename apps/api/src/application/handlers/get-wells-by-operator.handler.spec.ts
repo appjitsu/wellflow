@@ -2,9 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { GetWellsByOperatorHandler } from './get-wells-by-operator.handler';
 import { GetWellsByOperatorQuery } from '../queries/get-wells-by-operator.query';
 import { WellRepository } from '../../domain/repositories/well.repository.interface';
-import { WellDto } from '../dtos/well.dto';
+import { Well } from '../../domain/entities/well.entity';
 import { WellStatus } from '../../domain/enums/well-status.enum';
 import { WellType } from '../../domain/enums/well-status.enum';
+import { createMockWellArray } from '../../test-utils/well-mock.helper';
 
 describe('GetWellsByOperatorHandler', () => {
   let handler: GetWellsByOperatorHandler;
@@ -86,14 +87,8 @@ describe('GetWellsByOperatorHandler', () => {
     const validQuery = new GetWellsByOperatorQuery('operator-123', 1, 10);
 
     it('should return paginated wells for operator', async () => {
-      const mockWells = [
-        createMockWell('well-1', '42-123-00001', 'Well 1'),
-        createMockWell('well-2', '42-123-00002', 'Well 2'),
-        createMockWell('well-3', '42-123-00003', 'Well 3'),
-      ];
-
       wellRepository.findWithPagination.mockResolvedValue({
-        wells: mockWells as any,
+        wells: createMockWellArray(3, { operatorId: 'operator-123' }),
         total: 3,
       });
 
@@ -119,14 +114,14 @@ describe('GetWellsByOperatorHandler', () => {
       });
 
       expect(result.wells).toHaveLength(3);
-      expect(result.wells[0].id).toBe('well-1');
-      expect(result.wells[1].id).toBe('well-2');
-      expect(result.wells[2].id).toBe('well-3');
+      expect(result.wells[0]?.id).toBe('well-1');
+      expect(result.wells[1]?.id).toBe('well-2');
+      expect(result.wells[2]?.id).toBe('well-3');
     });
 
     it('should handle empty results', async () => {
       wellRepository.findWithPagination.mockResolvedValue({
-        wells: [] as any,
+        wells: [] as jest.Mocked<Well>[],
         total: 0,
       });
 
@@ -141,7 +136,7 @@ describe('GetWellsByOperatorHandler', () => {
     it('should calculate correct offset for different pages', async () => {
       const mockWells = [createMockWell('well-1', '42-123-00001', 'Well 1')];
       wellRepository.findWithPagination.mockResolvedValue({
-        wells: mockWells as any,
+        wells: mockWells as unknown as jest.Mocked<Well>[],
         total: 1,
       });
 
@@ -176,7 +171,7 @@ describe('GetWellsByOperatorHandler', () => {
     it('should handle different page sizes', async () => {
       const mockWells = [createMockWell('well-1', '42-123-00001', 'Well 1')];
       wellRepository.findWithPagination.mockResolvedValue({
-        wells: mockWells as any,
+        wells: mockWells as unknown as jest.Mocked<Well>[],
         total: 1,
       });
 
@@ -218,7 +213,7 @@ describe('GetWellsByOperatorHandler', () => {
         ),
       ];
       wellRepository.findWithPagination.mockResolvedValue({
-        wells: mockWells as any,
+        wells: mockWells as unknown as jest.Mocked<Well>[],
         total: 1,
       });
 
@@ -238,7 +233,7 @@ describe('GetWellsByOperatorHandler', () => {
       });
 
       expect(result.wells).toHaveLength(1);
-      expect(result.wells[0].status).toBe(WellStatus.PRODUCING);
+      expect(result.wells[0]!.status).toBe(WellStatus.PRODUCING);
     });
 
     it('should handle well type filter', async () => {
@@ -252,7 +247,7 @@ describe('GetWellsByOperatorHandler', () => {
         ),
       ];
       wellRepository.findWithPagination.mockResolvedValue({
-        wells: mockWells as any,
+        wells: mockWells as unknown as jest.Mocked<Well>[],
         total: 1,
       });
 
@@ -272,7 +267,7 @@ describe('GetWellsByOperatorHandler', () => {
       });
 
       expect(result.wells).toHaveLength(1);
-      expect(result.wells[0].wellType).toBe(WellType.GAS);
+      expect(result.wells[0]!.wellType).toBe(WellType.GAS);
     });
 
     it('should handle both status and well type filters', async () => {
@@ -286,7 +281,7 @@ describe('GetWellsByOperatorHandler', () => {
         ),
       ];
       wellRepository.findWithPagination.mockResolvedValue({
-        wells: mockWells as any,
+        wells: mockWells as unknown as jest.Mocked<Well>[],
         total: 1,
       });
 
@@ -309,8 +304,8 @@ describe('GetWellsByOperatorHandler', () => {
       });
 
       expect(result.wells).toHaveLength(1);
-      expect(result.wells[0].status).toBe(WellStatus.DRILLING);
-      expect(result.wells[0].wellType).toBe(WellType.GAS);
+      expect(result.wells[0]!.status).toBe(WellStatus.DRILLING);
+      expect(result.wells[0]!.wellType).toBe(WellType.GAS);
     });
 
     it('should handle different operator IDs', async () => {
@@ -318,7 +313,7 @@ describe('GetWellsByOperatorHandler', () => {
       const mockWells = [createMockWell('well-1', '42-123-00001', 'Well 1')];
 
       wellRepository.findWithPagination.mockResolvedValue({
-        wells: mockWells as any,
+        wells: mockWells as unknown as jest.Mocked<Well>[],
         total: 1,
       });
 
@@ -348,7 +343,7 @@ describe('GetWellsByOperatorHandler', () => {
       );
 
       wellRepository.findWithPagination.mockResolvedValue({
-        wells: mockWells as any,
+        wells: mockWells as unknown as jest.Mocked<Well>[],
         total: 1000, // Large total
       });
 
@@ -415,7 +410,7 @@ describe('GetWellsByOperatorHandler', () => {
           createMockWell('well-1', '42-123-00001', 'Well 1', status),
         ];
         wellRepository.findWithPagination.mockResolvedValue({
-          wells: mockWells as any,
+          wells: mockWells as unknown as jest.Mocked<Well>[],
           total: 1,
         });
 
@@ -424,7 +419,7 @@ describe('GetWellsByOperatorHandler', () => {
         });
         const result = await handler.execute(query);
 
-        expect(result.wells[0].status).toBe(status);
+        expect(result.wells[0]!.status).toBe(status);
       }
     });
 
@@ -442,7 +437,7 @@ describe('GetWellsByOperatorHandler', () => {
           ),
         ];
         wellRepository.findWithPagination.mockResolvedValue({
-          wells: mockWells as any,
+          wells: mockWells as unknown as jest.Mocked<Well>[],
           total: 1,
         });
 
@@ -451,14 +446,14 @@ describe('GetWellsByOperatorHandler', () => {
         });
         const result = await handler.execute(query);
 
-        expect(result.wells[0].wellType).toBe(wellType);
+        expect(result.wells[0]!.wellType).toBe(wellType);
       }
     });
 
     it('should handle edge case pagination values', async () => {
       const mockWells = [createMockWell('well-1', '42-123-00001', 'Well 1')];
       wellRepository.findWithPagination.mockResolvedValue({
-        wells: mockWells as any,
+        wells: mockWells as unknown as jest.Mocked<Well>[],
         total: 1,
       });
 
@@ -484,7 +479,7 @@ describe('GetWellsByOperatorHandler', () => {
     it('should handle concurrent queries for different operators', async () => {
       const mockWells = [createMockWell('well-1', '42-123-00001', 'Well 1')];
       wellRepository.findWithPagination.mockResolvedValue({
-        wells: mockWells as any,
+        wells: mockWells as unknown as jest.Mocked<Well>[],
         total: 1,
       });
 
@@ -533,19 +528,19 @@ describe('GetWellsByOperatorHandler', () => {
       ];
 
       wellRepository.findWithPagination.mockResolvedValue({
-        wells: mockWells as any,
+        wells: mockWells as unknown as jest.Mocked<Well>[],
         total: 3,
       });
 
       const result = await handler.execute(validQuery);
 
       expect(result.wells).toHaveLength(3);
-      expect(result.wells[0].wellType).toBe(WellType.OIL);
-      expect(result.wells[0].status).toBe(WellStatus.PRODUCING);
-      expect(result.wells[1].wellType).toBe(WellType.GAS);
-      expect(result.wells[1].status).toBe(WellStatus.DRILLING);
-      expect(result.wells[2].wellType).toBe(WellType.OIL);
-      expect(result.wells[2].status).toBe(WellStatus.COMPLETED);
+      expect(result.wells[0]!.wellType).toBe(WellType.OIL);
+      expect(result.wells[0]!.status).toBe(WellStatus.PRODUCING);
+      expect(result.wells[1]!.wellType).toBe(WellType.GAS);
+      expect(result.wells[1]!.status).toBe(WellStatus.DRILLING);
+      expect(result.wells[2]!.wellType).toBe(WellType.OIL);
+      expect(result.wells[2]!.status).toBe(WellStatus.COMPLETED);
     });
   });
 });

@@ -12,13 +12,13 @@ describe('ApiNumber', () => {
     });
 
     it('should throw error for null API number', () => {
-      expect(() => new ApiNumber(null as any)).toThrow(
+      expect(() => new ApiNumber(null as unknown as string)).toThrow(
         'API Number cannot be empty',
       );
     });
 
     it('should throw error for undefined API number', () => {
-      expect(() => new ApiNumber(undefined as any)).toThrow(
+      expect(() => new ApiNumber(undefined as unknown as string)).toThrow(
         'API Number cannot be empty',
       );
     });
@@ -57,7 +57,7 @@ describe('ApiNumber', () => {
 
     it('should return false when comparing with null', () => {
       const apiNumber = new ApiNumber('4212345678');
-      expect(apiNumber.equals(null as any)).toBe(false);
+      expect(apiNumber.equals(null as unknown as ApiNumber)).toBe(false);
     });
   });
 

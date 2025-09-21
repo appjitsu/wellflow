@@ -103,18 +103,48 @@ describe('Strategic Coverage Boost Tests', () => {
 
   describe('Redis Service Coverage', () => {
     it('should have all cache methods', () => {
-      const cacheMethods = [
-        'set',
-        'get',
-        'del',
-        'exists',
-        'expire',
-        'getClient',
-      ];
-      cacheMethods.forEach((method) => {
-        expect(redisService[method]).toBeDefined();
-        expect(typeof redisService[method]).toBe('function');
-      });
+      // Check each method individually to avoid object injection
+      expect(
+        (redisService as unknown as Record<string, unknown>).set,
+      ).toBeDefined();
+      expect(
+        typeof (redisService as unknown as Record<string, unknown>).set,
+      ).toBe('function');
+
+      expect(
+        (redisService as unknown as Record<string, unknown>).get,
+      ).toBeDefined();
+      expect(
+        typeof (redisService as unknown as Record<string, unknown>).get,
+      ).toBe('function');
+
+      expect(
+        (redisService as unknown as Record<string, unknown>).del,
+      ).toBeDefined();
+      expect(
+        typeof (redisService as unknown as Record<string, unknown>).del,
+      ).toBe('function');
+
+      expect(
+        (redisService as unknown as Record<string, unknown>).exists,
+      ).toBeDefined();
+      expect(
+        typeof (redisService as unknown as Record<string, unknown>).exists,
+      ).toBe('function');
+
+      expect(
+        (redisService as unknown as Record<string, unknown>).expire,
+      ).toBeDefined();
+      expect(
+        typeof (redisService as unknown as Record<string, unknown>).expire,
+      ).toBe('function');
+
+      expect(
+        (redisService as unknown as Record<string, unknown>).getClient,
+      ).toBeDefined();
+      expect(
+        typeof (redisService as unknown as Record<string, unknown>).getClient,
+      ).toBe('function');
     });
 
     it('should have lifecycle methods', () => {
@@ -157,18 +187,24 @@ describe('Strategic Coverage Boost Tests', () => {
 
   describe('Sentry Service Coverage', () => {
     it('should have all error tracking methods', () => {
-      const sentryMethods = [
-        'captureException',
-        'captureMessage',
-        'setUser',
-        'setTag',
-        'setExtra',
-        'startSpan',
-      ];
-      sentryMethods.forEach((method) => {
-        expect(sentryService[method]).toBeDefined();
-        expect(typeof sentryService[method]).toBe('function');
-      });
+      // Check each method individually using proper typing
+      expect(sentryService.captureException).toBeDefined();
+      expect(typeof sentryService.captureException).toBe('function');
+
+      expect(sentryService.captureMessage).toBeDefined();
+      expect(typeof sentryService.captureMessage).toBe('function');
+
+      expect(sentryService.setUser).toBeDefined();
+      expect(typeof sentryService.setUser).toBe('function');
+
+      expect(sentryService.setTag).toBeDefined();
+      expect(typeof sentryService.setTag).toBe('function');
+
+      expect(sentryService.setExtra).toBeDefined();
+      expect(typeof sentryService.setExtra).toBe('function');
+
+      expect(sentryService.startSpan).toBeDefined();
+      expect(typeof sentryService.startSpan).toBe('function');
     });
 
     it('should handle error capture', () => {
@@ -199,7 +235,7 @@ describe('Strategic Coverage Boost Tests', () => {
     });
 
     it('should handle tags and context', () => {
-      const tags = [
+      const tags: [string, string][] = [
         ['component', 'api'],
         ['feature', 'wells'],
         ['environment', 'production'],
@@ -212,7 +248,7 @@ describe('Strategic Coverage Boost Tests', () => {
     });
 
     it('should handle extra context', () => {
-      const extras = [
+      const extras: [string, string][] = [
         ['requestId', 'req-123'],
         ['operatorId', 'op-456'],
         ['wellId', 'well-789'],
@@ -225,7 +261,7 @@ describe('Strategic Coverage Boost Tests', () => {
     });
 
     it('should handle performance monitoring', () => {
-      const spans = [
+      const spans: Array<[string, string, () => unknown]> = [
         ['database.query', 'db', () => 'query result'],
         ['api.request', 'http', () => ({ status: 200 })],
         ['cache.get', 'cache', () => 'cached value'],
@@ -233,13 +269,7 @@ describe('Strategic Coverage Boost Tests', () => {
       ];
 
       spans.forEach(([name, op, callback]) => {
-        expect(() =>
-          sentryService.startSpan(
-            name as string,
-            op as string,
-            callback as () => any,
-          ),
-        ).not.toThrow();
+        expect(() => sentryService.startSpan(name, op, callback)).not.toThrow();
       });
     });
   });
@@ -289,7 +319,7 @@ describe('Strategic Coverage Boost Tests', () => {
     });
 
     it('should handle production monitoring', () => {
-      const productionSpans = [
+      const productionSpans: Array<[string, string, () => unknown]> = [
         [
           'production.daily',
           'monitoring',
@@ -308,18 +338,12 @@ describe('Strategic Coverage Boost Tests', () => {
       ];
 
       productionSpans.forEach(([name, op, callback]) => {
-        expect(() =>
-          sentryService.startSpan(
-            name as string,
-            op as string,
-            callback as () => any,
-          ),
-        ).not.toThrow();
+        expect(() => sentryService.startSpan(name, op, callback)).not.toThrow();
       });
     });
 
     it('should support regulatory compliance tracking', () => {
-      const complianceTags = [
+      const complianceTags: [string, string][] = [
         ['regulation', 'EPA'],
         ['permit', 'DRILLING-2024-001'],
         ['inspection', 'PASSED'],
@@ -432,8 +456,8 @@ describe('Strategic Coverage Boost Tests', () => {
 
     it('should handle authentication failures', () => {
       const authConfigs = [
-        'postgresql://invalid:credentials@localhost:5432/db',
-        'redis://invalid:auth@localhost:6379',
+        'postgresql://invalid:password@localhost:5432/db',
+        'redis://invalid:password@localhost:6379',
       ];
 
       authConfigs.forEach((config) => {

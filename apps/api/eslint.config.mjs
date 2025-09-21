@@ -90,16 +90,29 @@ export default tseslint.config(
     },
   },
   {
-    // Relax rules for test files
+    // Relax rules for test files - suppress unimportant test-specific warnings
     files: ['**/*.spec.ts', '**/*.test.ts', '**/test/**/*'],
     rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn',
-      '@typescript-eslint/no-unsafe-assignment': 'warn',
-      '@typescript-eslint/no-unsafe-call': 'warn',
-      '@typescript-eslint/no-unsafe-member-access': 'warn',
-      'sonarjs/no-duplicate-string': 'off',
-      'no-process-env': 'off',
+      // TypeScript any-related rules - common in test mocks, suppress to reduce noise
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+
+      // Jest/testing patterns - suppress common test-specific warnings
+      '@typescript-eslint/unbound-method': 'off', // Jest mocking patterns
+      '@typescript-eslint/no-non-null-assertion': 'off', // Acceptable in test assertions
+      '@typescript-eslint/no-extraneous-class': 'off', // Test mock classes
+
+      // SonarJS rules - relax for test complexity
+      'sonarjs/no-duplicate-string': 'off', // Test strings often duplicate
+      'sonarjs/no-nested-functions': 'off', // Test structure complexity
+      'sonarjs/cognitive-complexity': 'off', // Test complexity is acceptable
+
+      // Environment rules
+      'no-process-env': 'off', // Tests may need env vars
     },
   },
 );

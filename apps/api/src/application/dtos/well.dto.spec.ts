@@ -152,15 +152,14 @@ describe('WellDto', () => {
       jest.spyOn(mockWell, 'getLeaseId').mockReturnValue('lease-789');
       jest.spyOn(mockWell, 'getWellType').mockReturnValue(WellType.OIL);
       jest.spyOn(mockWell, 'getStatus').mockReturnValue(WellStatus.DRILLING);
-      jest.spyOn(mockWell, 'getLocation').mockReturnValue({
-        toObject: () => ({
-          coordinates: { latitude: 32.7767, longitude: -96.797 },
-          address: '123 Main St',
-          county: 'Dallas',
-          state: 'TX',
-          country: 'USA',
-        }),
-      } as any);
+      // Create a proper Location mock with correct typing
+      const mockLocation = new Location(new Coordinates(32.7767, -96.797), {
+        address: '123 Main St',
+        county: 'Dallas',
+        state: 'TX',
+        country: 'USA',
+      });
+      jest.spyOn(mockWell, 'getLocation').mockReturnValue(mockLocation);
       jest
         .spyOn(mockWell, 'getSpudDate')
         .mockReturnValue(new Date('2024-01-15'));
@@ -205,12 +204,11 @@ describe('WellDto', () => {
       jest.spyOn(mockWell, 'getLeaseId').mockReturnValue(undefined);
       jest.spyOn(mockWell, 'getWellType').mockReturnValue(WellType.GAS);
       jest.spyOn(mockWell, 'getStatus').mockReturnValue(WellStatus.PLANNED);
-      jest.spyOn(mockWell, 'getLocation').mockReturnValue({
-        toObject: () => ({
-          coordinates: { latitude: 29.7604, longitude: -95.3698 },
-          country: 'USA',
-        }),
-      } as any);
+      // Create a proper Location mock with correct typing
+      const mockLocationMinimal = new Location(
+        new Coordinates(29.7604, -95.3698),
+      );
+      jest.spyOn(mockWell, 'getLocation').mockReturnValue(mockLocationMinimal);
       jest.spyOn(mockWell, 'getSpudDate').mockReturnValue(undefined);
       jest.spyOn(mockWell, 'getCompletionDate').mockReturnValue(undefined);
       jest.spyOn(mockWell, 'getTotalDepth').mockReturnValue(undefined);
@@ -235,7 +233,15 @@ describe('WellDto', () => {
   describe('serialization', () => {
     it('should serialize to JSON correctly', () => {
       const json = JSON.stringify(wellDto);
-      const parsed = JSON.parse(json);
+      const parsed = JSON.parse(json) as {
+        id: string;
+        apiNumber: string;
+        name: string;
+        wellType: string;
+        status: string;
+        location: { coordinates: { latitude: number; longitude: number } };
+        version: number;
+      };
 
       expect(parsed.id).toBe('well-123');
       expect(parsed.apiNumber).toBe('42-123-45678');
@@ -248,7 +254,12 @@ describe('WellDto', () => {
 
     it('should handle date serialization', () => {
       const json = JSON.stringify(wellDto);
-      const parsed = JSON.parse(json);
+      const parsed = JSON.parse(json) as {
+        spudDate: string;
+        completionDate: string;
+        createdAt: string;
+        updatedAt: string;
+      };
 
       expect(parsed.spudDate).toBe('2024-01-15T00:00:00.000Z');
       expect(parsed.completionDate).toBe('2024-02-15T00:00:00.000Z');
