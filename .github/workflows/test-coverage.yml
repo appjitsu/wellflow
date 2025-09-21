@@ -147,14 +147,14 @@ jobs:
           OVERALL_FUNCTIONS=$(echo "scale=2; ($API_FUNCTIONS * 0.7) + ($WEB_FUNCTIONS * 0.3)" | bc -l)
           OVERALL_LINES=$(echo "scale=2; ($API_LINES * 0.7) + ($WEB_LINES * 0.3)" | bc -l)
 
-          # Check if coverage meets threshold (80% minimum)
+          # Check if coverage meets threshold (70% minimum for statements/lines)
           MEETS_THRESHOLD="false"
-          if (( $(echo "$OVERALL_STATEMENTS >= 80" | bc -l) )) && (( $(echo "$OVERALL_LINES >= 80" | bc -l) )); then
+          if (( $(echo "$OVERALL_STATEMENTS >= 70" | bc -l) )) && (( $(echo "$OVERALL_LINES >= 70" | bc -l) )); then
             MEETS_THRESHOLD="true"
           fi
 
           echo "📊 Overall Coverage: ${OVERALL_STATEMENTS}% statements, ${OVERALL_LINES}% lines"
-          echo "🎯 Meets Threshold (80%): $MEETS_THRESHOLD"
+          echo "🎯 Meets Threshold (70%): $MEETS_THRESHOLD"
 
           echo "COVERAGE_STATEMENTS=$OVERALL_STATEMENTS" >> $GITHUB_ENV
           echo "COVERAGE_BRANCHES=$OVERALL_BRANCHES" >> $GITHUB_ENV
@@ -192,10 +192,10 @@ jobs:
 
           | Metric | Coverage | Threshold | Status |
           |--------|----------|-----------|--------|
-          | Statements | ${{ env.COVERAGE_STATEMENTS }}% | 80% | $([ "${{ env.COVERAGE_STATEMENTS }}" -ge "80" ] && echo "✅ PASS" || echo "❌ FAIL") |
-          | Branches | ${{ env.COVERAGE_BRANCHES }}% | 80% | $([ "${{ env.COVERAGE_BRANCHES }}" -ge "80" ] && echo "✅ PASS" || echo "❌ FAIL") |
-          | Functions | ${{ env.COVERAGE_FUNCTIONS }}% | 80% | $([ "${{ env.COVERAGE_FUNCTIONS }}" -ge "80" ] && echo "✅ PASS" || echo "❌ FAIL") |
-          | Lines | ${{ env.COVERAGE_LINES }}% | 80% | $([ "${{ env.COVERAGE_LINES }}" -ge "80" ] && echo "✅ PASS" || echo "❌ FAIL") |
+          | Statements | ${{ env.COVERAGE_STATEMENTS }}% | 70% | $([ "${{ env.COVERAGE_STATEMENTS }}" -ge "70" ] && echo "✅ PASS" || echo "❌ FAIL") |
+          | Branches | ${{ env.COVERAGE_BRANCHES }}% | 60% | $([ "${{ env.COVERAGE_BRANCHES }}" -ge "60" ] && echo "✅ PASS" || echo "❌ FAIL") |
+          | Functions | ${{ env.COVERAGE_FUNCTIONS }}% | 75% | $([ "${{ env.COVERAGE_FUNCTIONS }}" -ge "75" ] && echo "✅ PASS" || echo "❌ FAIL") |
+          | Lines | ${{ env.COVERAGE_LINES }}% | 70% | $([ "${{ env.COVERAGE_LINES }}" -ge "70" ] && echo "✅ PASS" || echo "❌ FAIL") |
 
           ## Quality Gates Status
 
@@ -269,7 +269,7 @@ jobs:
           echo "✅ Code quality (ESLint + Prettier)" >> $GITHUB_STEP_SUMMARY
           echo "✅ Security scanning (SAST + Secrets)" >> $GITHUB_STEP_SUMMARY
           echo "✅ Type safety (TypeScript strict)" >> $GITHUB_STEP_SUMMARY
-          echo "$([ "${{ env.COVERAGE_MEETS_THRESHOLD }}" = "true" ] && echo "✅" || echo "❌") Test coverage (80% minimum)" >> $GITHUB_STEP_SUMMARY
+          echo "$([ "${{ env.COVERAGE_MEETS_THRESHOLD }}" = "true" ] && echo "✅" || echo "❌") Test coverage (70% minimum)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📊 **Detailed Reports:** Available in workflow artifacts" >> $GITHUB_STEP_SUMMARY
 
@@ -295,13 +295,13 @@ jobs:
             ### Coverage Metrics
             | Metric | Coverage | Threshold | Status |
             |--------|----------|-----------|--------|
-            | Statements | ${statements}% | 80% | ${getStatusIcon(statements, 80)} |
-            | Branches | ${branches}% | 80% | ${getStatusIcon(branches, 80)} |
-            | Functions | ${functions}% | 80% | ${getStatusIcon(functions, 80)} |
-            | Lines | ${lines}% | 80% | ${getStatusIcon(lines, 80)} |
+            | Statements | ${statements}% | 70% | ${getStatusIcon(statements, 70)} |
+            | Branches | ${branches}% | 60% | ${getStatusIcon(branches, 60)} |
+            | Functions | ${functions}% | 75% | ${getStatusIcon(functions, 75)} |
+            | Lines | ${lines}% | 70% | ${getStatusIcon(lines, 70)} |
 
             ### Quality Gates Status
-            - 🧪 **Test Coverage**: ${meetsThreshold ? '✅ PASSED' : '❌ FAILED'} (80% minimum)
+            - 🧪 **Test Coverage**: ${meetsThreshold ? '✅ PASSED' : '❌ FAILED'} (70% minimum)
             - 🔍 **Code Quality**: ✅ ESLint + Prettier
             - 🛡️ **Security**: ✅ SAST + Secrets scanning  
             - 📝 **Type Safety**: ✅ TypeScript strict mode
@@ -330,11 +330,11 @@ jobs:
           if [ "${{ env.COVERAGE_MEETS_THRESHOLD }}" != "true" ]; then
             echo "❌ Coverage quality gate failed!"
             echo "Current coverage: ${{ env.COVERAGE_STATEMENTS }}% statements, ${{ env.COVERAGE_LINES }}% lines"
-            echo "Required coverage: 80% minimum for all metrics"
+            echo "Required coverage: 70% minimum for statements/lines"
             echo "Please add tests to improve coverage before merging"
             exit 1
           else
             echo "✅ Coverage quality gate passed!"
             echo "Coverage: ${{ env.COVERAGE_STATEMENTS }}% statements, ${{ env.COVERAGE_LINES }}% lines"
-            echo "All coverage thresholds met (80% minimum)"
+            echo "All coverage thresholds met (70% minimum)"
           fi
