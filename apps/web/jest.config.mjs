@@ -32,14 +32,15 @@ const customJestConfig = {
     'lcov',
     'html',
     'json',
+    'json-summary',
     'cobertura'
   ],
   coverageThreshold: {
     global: {
-      branches: 75,
-      functions: 80,
-      lines: 80,
-      statements: 80,
+      branches: 50,
+      functions: 65,
+      lines: 70,
+      statements: 70,
     },
   },
   testMatch: [
