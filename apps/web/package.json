@@ -23,7 +23,8 @@
     "accessibility:comprehensive": "pnpm run accessibility:test && pnpm run accessibility:axe && pnpm run accessibility:pa11y",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch --passWithNoTests",
-    "test:cov": "jest --coverage --passWithNoTests"
+    "test:cov": "jest --coverage --passWithNoTests",
+    "test:coverage": "jest --coverage --passWithNoTests"
   },
   "dependencies": {
     "@casl/ability": "^6.7.3",
