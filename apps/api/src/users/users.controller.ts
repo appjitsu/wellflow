@@ -6,7 +6,6 @@ import {
   Delete,
   Body,
   Param,
-  ParseIntPipe,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
@@ -48,7 +47,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  async getUserById(@Param('id', ParseIntPipe) id: number) {
+  async getUserById(@Param('id') id: string) {
     try {
       const user = await this.usersService.getUserById(id);
       if (!user) {
@@ -93,7 +92,7 @@ export class UsersController {
 
   @Put(':id')
   async updateUser(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() userData: Partial<NewUser>,
   ) {
     try {
@@ -117,7 +116,7 @@ export class UsersController {
   }
 
   @Delete(':id')
-  async deleteUser(@Param('id', ParseIntPipe) id: number) {
+  async deleteUser(@Param('id') id: string) {
     try {
       const deleted = await this.usersService.deleteUser(id);
       if (!deleted) {

@@ -43,6 +43,10 @@ async function seed() {
       })
       .returning();
 
+    if (!organization) {
+      throw new Error('Failed to create organization');
+    }
+
     console.log('✅ Created organization:', organization.name);
 
     // Create sample users
@@ -79,6 +83,10 @@ async function seed() {
       ])
       .returning();
 
+    if (!users || users.length === 0) {
+      throw new Error('Failed to create users');
+    }
+
     console.log('✅ Created users:', users.length);
 
     // Create sample lease
@@ -107,6 +115,10 @@ async function seed() {
         status: 'active',
       })
       .returning();
+
+    if (!lease) {
+      throw new Error('Failed to create lease');
+    }
 
     console.log('✅ Created lease:', lease.leaseName);
 
@@ -171,6 +183,10 @@ async function seed() {
       ])
       .returning();
 
+    if (!wells || wells.length === 0) {
+      throw new Error('Failed to create wells');
+    }
+
     console.log('✅ Created wells:', wells.length);
 
     // Create sample production records for the last 7 days
@@ -185,8 +201,8 @@ async function seed() {
       for (const well of wells) {
         productionRecords.push({
           wellId: well.id,
-          createdByUserId: users[2].id, // Pumper user
-          productionDate: dateString,
+          createdByUserId: users[2]!.id, // Pumper user
+          productionDate: dateString as string, // Ensure it's typed as string
           oilVolume: (Math.random() * 50 + 25).toFixed(2), // 25-75 barrels
           gasVolume: (Math.random() * 500 + 250).toFixed(2), // 250-750 MCF
           waterVolume: (Math.random() * 20 + 5).toFixed(2), // 5-25 barrels
@@ -231,6 +247,10 @@ async function seed() {
         isActive: true,
       })
       .returning();
+
+    if (!partner) {
+      throw new Error('Failed to create partner');
+    }
 
     console.log('✅ Created partner:', partner.partnerName);
 
