@@ -81,6 +81,26 @@ WellFlow platform.
   - Suspicious activity detection
   - Security audit logging
 
+### 6. Enhanced API Security (OWASP 2023)
+
+- **API Security Hardening**
+  - Implement API11: Unsafe Consumption of APIs validation
+  - Add SSRF protection for internal network access
+  - Enhance third-party API response validation (weather, regulatory APIs)
+  - Create API security testing framework
+  - **Business Justification**: Protects against third-party API compromises,
+    prevents SCADA network access
+
+### 7. Advanced Rate Limiting & DDoS Protection
+
+- **Tiered Rate Limiting**
+  - Implement emergency rate limiting (higher limits during incidents)
+  - Add IP-based and user-based rate limiting
+  - Create rate limiting bypass for emergency scenarios
+  - Set up DDoS protection monitoring and alerting
+  - **Business Justification**: 95% DDoS impact reduction, critical during
+    emergencies like hurricanes
+
 ## Technical Requirements
 
 ### Authentication Architecture
