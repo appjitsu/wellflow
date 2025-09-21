@@ -14,7 +14,6 @@ jest.mock('@sentry/nestjs', () => ({
 
 describe('SentryModule', () => {
   let module: TestingModule;
-  let configService: ConfigService;
   let sentryService: SentryService;
 
   const mockConfigService = {
@@ -25,18 +24,20 @@ describe('SentryModule', () => {
     jest.clearAllMocks();
 
     // Setup default mock config values
-    mockConfigService.get.mockImplementation((key: string, defaultValue?: string) => {
-      switch (key) {
-        case 'SENTRY_DSN':
-          return undefined; // Default to no DSN
-        case 'SENTRY_ENVIRONMENT':
-          return defaultValue || 'development';
-        case 'SENTRY_RELEASE':
-          return defaultValue || '1.0.0';
-        default:
-          return defaultValue;
-      }
-    });
+    mockConfigService.get.mockImplementation(
+      (key: string, defaultValue?: string) => {
+        switch (key) {
+          case 'SENTRY_DSN':
+            return undefined; // Default to no DSN
+          case 'SENTRY_ENVIRONMENT':
+            return defaultValue || 'development';
+          case 'SENTRY_RELEASE':
+            return defaultValue || '1.0.0';
+          default:
+            return defaultValue;
+        }
+      },
+    );
 
     module = await Test.createTestingModule({
       imports: [SentryModule],
@@ -45,7 +46,6 @@ describe('SentryModule', () => {
       .useValue(mockConfigService)
       .compile();
 
-    configService = module.get<ConfigService>(ConfigService);
     sentryService = module.get<SentryService>(SentryService);
   });
 
@@ -76,18 +76,20 @@ describe('SentryModule', () => {
   describe('SENTRY_INIT Provider', () => {
     it('should initialize Sentry when DSN is provided', async () => {
       // Setup mock config values
-      mockConfigService.get.mockImplementation((key: string, defaultValue?: string) => {
-        switch (key) {
-          case 'SENTRY_DSN':
-            return 'https://test@sentry.io/123456';
-          case 'SENTRY_ENVIRONMENT':
-            return 'test';
-          case 'SENTRY_RELEASE':
-            return '1.0.0-test';
-          default:
-            return defaultValue;
-        }
-      });
+      mockConfigService.get.mockImplementation(
+        (key: string, defaultValue?: string) => {
+          switch (key) {
+            case 'SENTRY_DSN':
+              return 'https://test@sentry.io/123456';
+            case 'SENTRY_ENVIRONMENT':
+              return 'test';
+            case 'SENTRY_RELEASE':
+              return '1.0.0-test';
+            default:
+              return defaultValue;
+          }
+        },
+      );
 
       // Create a new module to trigger the factory
       const testModule = await Test.createTestingModule({
@@ -121,18 +123,19 @@ describe('SentryModule', () => {
 
       // Setup mock config values without DSN
       const noDsnMockConfigService = {
-        get: jest.fn().mockImplementation((key: string, defaultValue?: string) => {
-          switch (key) {
-            case 'SENTRY_DSN':
+        get: jest
+          .fn()
+          .mockImplementation((key: string, defaultValue?: string) => {
+            if (key === 'SENTRY_DSN') {
               return undefined;
-            case 'SENTRY_ENVIRONMENT':
+            } else if (key === 'SENTRY_ENVIRONMENT') {
               return 'development';
-            case 'SENTRY_RELEASE':
+            } else if (key === 'SENTRY_RELEASE') {
               return '1.0.0';
-            default:
+            } else {
               return defaultValue;
-          }
-        }),
+            }
+          }),
       };
 
       // Create a new module to trigger the factory
@@ -151,18 +154,19 @@ describe('SentryModule', () => {
 
     it('should use production sample rates in production environment', async () => {
       // Setup mock config values for production
-      mockConfigService.get.mockImplementation((key: string, defaultValue?: string) => {
-        switch (key) {
-          case 'SENTRY_DSN':
+      mockConfigService.get.mockImplementation(
+        (key: string, defaultValue?: string) => {
+          if (key === 'SENTRY_DSN') {
             return 'https://prod@sentry.io/123456';
-          case 'SENTRY_ENVIRONMENT':
+          } else if (key === 'SENTRY_ENVIRONMENT') {
             return 'production';
-          case 'SENTRY_RELEASE':
+          } else if (key === 'SENTRY_RELEASE') {
             return '2.0.0';
-          default:
+          } else {
             return defaultValue;
-        }
-      });
+          }
+        },
+      );
 
       // Create a new module to trigger the factory
       const testModule = await Test.createTestingModule({
@@ -192,14 +196,15 @@ describe('SentryModule', () => {
 
     it('should use default values when config values are not provided', async () => {
       // Setup mock config values with defaults
-      mockConfigService.get.mockImplementation((key: string, defaultValue?: string) => {
-        switch (key) {
-          case 'SENTRY_DSN':
+      mockConfigService.get.mockImplementation(
+        (key: string, defaultValue?: string) => {
+          if (key === 'SENTRY_DSN') {
             return 'https://default@sentry.io/123456';
-          default:
+          } else {
             return defaultValue;
-        }
-      });
+          }
+        },
+      );
 
       // Create a new module to trigger the factory
       const testModule = await Test.createTestingModule({
@@ -231,14 +236,15 @@ describe('SentryModule', () => {
   describe('beforeSend Filter', () => {
     it('should filter out sensitive headers', async () => {
       // Setup mock config values
-      mockConfigService.get.mockImplementation((key: string, defaultValue?: string) => {
-        switch (key) {
-          case 'SENTRY_DSN':
+      mockConfigService.get.mockImplementation(
+        (key: string, defaultValue?: string) => {
+          if (key === 'SENTRY_DSN') {
             return 'https://test@sentry.io/123456';
-          default:
+          } else {
             return defaultValue;
-        }
-      });
+          }
+        },
+      );
 
       // Create a new module to trigger the factory
       const testModule = await Test.createTestingModule({
@@ -277,14 +283,15 @@ describe('SentryModule', () => {
 
     it('should return event unchanged when no request headers', async () => {
       // Setup mock config values
-      mockConfigService.get.mockImplementation((key: string, defaultValue?: string) => {
-        switch (key) {
-          case 'SENTRY_DSN':
+      mockConfigService.get.mockImplementation(
+        (key: string, defaultValue?: string) => {
+          if (key === 'SENTRY_DSN') {
             return 'https://test@sentry.io/123456';
-          default:
+          } else {
             return defaultValue;
-        }
-      });
+          }
+        },
+      );
 
       // Create a new module to trigger the factory
       const testModule = await Test.createTestingModule({
@@ -322,14 +329,15 @@ describe('SentryModule', () => {
   describe('Integration Configuration', () => {
     it('should configure all required integrations', async () => {
       // Setup mock config values
-      mockConfigService.get.mockImplementation((key: string, defaultValue?: string) => {
-        switch (key) {
-          case 'SENTRY_DSN':
+      mockConfigService.get.mockImplementation(
+        (key: string, defaultValue?: string) => {
+          if (key === 'SENTRY_DSN') {
             return 'https://test@sentry.io/123456';
-          default:
+          } else {
             return defaultValue;
-        }
-      });
+          }
+        },
+      );
 
       // Create a new module to trigger the factory
       const testModule = await Test.createTestingModule({

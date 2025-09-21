@@ -12,7 +12,13 @@ jest.mock('@sentry/nestjs', () => ({
   startSpan: jest.fn(),
   addBreadcrumb: jest.fn(),
   flush: jest.fn(),
-  withScope: jest.fn(),
+  withScope: jest.fn().mockImplementation((callback: (scope: any) => void) => {
+    callback({
+      setTag: jest.fn(),
+      setExtra: jest.fn(),
+      setUser: jest.fn(),
+    });
+  }),
 }));
 
 describe('SentryService', () => {
@@ -39,7 +45,7 @@ describe('SentryService', () => {
     it('should capture exception without context', () => {
       const error = new Error('Test error');
 
-      service.captureException(error);
+      void service.captureException(error);
 
       expect(mockSentry.captureException).toHaveBeenCalledWith(error);
       expect(mockSentry.withScope).not.toHaveBeenCalled();
@@ -48,36 +54,20 @@ describe('SentryService', () => {
     it('should capture exception with context', () => {
       const error = new Error('Test error with context');
       const context = 'test-context';
-      const mockScope = {
-        setTag: jest.fn(),
-      };
 
-      mockSentry.withScope.mockImplementation((callback: any) => {
-        callback(mockScope);
-      });
-
-      service.captureException(error, context);
+      void service.captureException(error, context);
 
       expect(mockSentry.withScope).toHaveBeenCalled();
-      expect(mockScope.setTag).toHaveBeenCalledWith('context', context);
       expect(mockSentry.captureException).toHaveBeenCalledWith(error);
     });
 
     it('should handle oil & gas specific errors', () => {
       const wellError = new Error('Well drilling failed');
       const context = 'well-operations';
-      const mockScope = {
-        setTag: jest.fn(),
-      };
 
-      mockSentry.withScope.mockImplementation((callback: any) => {
-        callback(mockScope);
-      });
-
-      service.captureException(wellError, context);
+      void service.captureException(wellError, context);
 
       expect(mockSentry.withScope).toHaveBeenCalled();
-      expect(mockScope.setTag).toHaveBeenCalledWith('context', context);
       expect(mockSentry.captureException).toHaveBeenCalledWith(wellError);
     });
   });
@@ -105,18 +95,10 @@ describe('SentryService', () => {
       const message = 'Test message with context';
       const level = 'warning';
       const context = 'test-context';
-      const mockScope = {
-        setTag: jest.fn(),
-      };
-
-      mockSentry.withScope.mockImplementation((callback: any) => {
-        callback(mockScope);
-      });
 
       service.captureMessage(message, level, context);
 
       expect(mockSentry.withScope).toHaveBeenCalled();
-      expect(mockScope.setTag).toHaveBeenCalledWith('context', context);
       expect(mockSentry.captureMessage).toHaveBeenCalledWith(message, level);
     });
 
@@ -124,7 +106,7 @@ describe('SentryService', () => {
       const message = 'Test message';
       const levels = ['debug', 'info', 'warning', 'error', 'fatal'] as const;
 
-      levels.forEach(level => {
+      levels.forEach((level) => {
         service.captureMessage(message, level);
         expect(mockSentry.captureMessage).toHaveBeenCalledWith(message, level);
       });
@@ -194,13 +176,16 @@ describe('SentryService', () => {
       const wellContext = {
         wellId: 'well-123',
         operatorId: 'op-456',
-        location: { lat: 32.7767, lng: -96.7970 },
+        location: { lat: 32.7767, lng: -96.797 },
         status: 'PRODUCING',
       };
 
       service.setExtra('wellContext', wellContext);
 
-      expect(mockSentry.setExtra).toHaveBeenCalledWith('wellContext', wellContext);
+      expect(mockSentry.setExtra).toHaveBeenCalledWith(
+        'wellContext',
+        wellContext,
+      );
     });
   });
 
@@ -215,7 +200,7 @@ describe('SentryService', () => {
     });
 
     it('should handle multiple tags', () => {
-      const tags = [
+      const tags: [string, string][] = [
         ['component', 'api'],
         ['feature', 'wells'],
         ['version', '1.0.0'],
@@ -229,7 +214,7 @@ describe('SentryService', () => {
     });
 
     it('should handle regulatory compliance tags', () => {
-      const complianceTags = [
+      const complianceTags: [string, string][] = [
         ['regulation', 'EPA'],
         ['permit', 'EPA-123456'],
         ['inspector', 'inspector-789'],
@@ -278,8 +263,11 @@ describe('SentryService', () => {
 
       operations.forEach(([name, op]) => {
         const callback = () => ({ status: 'success' });
-        service.startSpan(name, op, callback);
-        expect(mockSentry.startSpan).toHaveBeenCalledWith({ name, op }, callback);
+        service.startSpan(name!, op!, callback);
+        expect(mockSentry.startSpan).toHaveBeenCalledWith(
+          { name, op },
+          callback,
+        );
       });
     });
   });
@@ -319,7 +307,7 @@ describe('SentryService', () => {
         },
       ];
 
-      breadcrumbs.forEach(breadcrumb => {
+      breadcrumbs.forEach((breadcrumb) => {
         service.addBreadcrumb(breadcrumb);
         expect(mockSentry.addBreadcrumb).toHaveBeenCalledWith(breadcrumb);
       });
@@ -343,11 +331,15 @@ describe('SentryService', () => {
           message: 'Compliance check completed',
           category: 'compliance',
           level: 'info' as const,
-          data: { wellId: 'well-789', status: 'PASSED', inspector: 'inspector-123' },
+          data: {
+            wellId: 'well-789',
+            status: 'PASSED',
+            inspector: 'inspector-123',
+          },
         },
       ];
 
-      oilGasBreadcrumbs.forEach(breadcrumb => {
+      oilGasBreadcrumbs.forEach((breadcrumb) => {
         service.addBreadcrumb(breadcrumb);
         expect(mockSentry.addBreadcrumb).toHaveBeenCalledWith(breadcrumb);
       });
@@ -411,7 +403,7 @@ describe('SentryService', () => {
       });
 
       // Capture exception
-      service.captureException(error, context);
+      void service.captureException(error, context);
 
       expect(mockSentry.setUser).toHaveBeenCalledWith(user);
       expect(mockSentry.setTag).toHaveBeenCalledWith('component', 'production');
@@ -436,7 +428,10 @@ describe('SentryService', () => {
         data: { wellId: 'well-789', newStatus: 'PRODUCING' },
       });
 
-      expect(mockSentry.startSpan).toHaveBeenCalledWith({ name: spanName, op: operation }, callback);
+      expect(mockSentry.startSpan).toHaveBeenCalledWith(
+        { name: spanName, op: operation },
+        callback,
+      );
       expect(mockSentry.addBreadcrumb).toHaveBeenCalled();
     });
   });

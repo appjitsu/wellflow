@@ -1,7 +1,7 @@
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { GetWellsByOperatorQuery } from '../queries/get-wells-by-operator.query';
-import { WellRepository } from '../../domain/repositories/well.repository.interface';
+import type { WellRepository } from '../../domain/repositories/well.repository.interface';
 import { WellDto } from '../dtos/well.dto';
 
 /**

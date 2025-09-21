@@ -1,0 +1,183 @@
+{
+  "timestamp": "2025-09-20T22:01:36.358Z",
+  "repository": "wellflow",
+  "branch": "local",
+  "commit": "local",
+  "overall": {
+    "score": 99,
+    "wcagCompliant": true,
+    "industryCompliant": true,
+    "pagesTestedCount": 3
+  },
+  "tools": {
+    "axe": {
+      "tool": "axe-core",
+      "version": "4.8.0",
+      "timestamp": "2025-09-20T22:01:16.278Z",
+      "pages": [
+        {
+          "url": "http://localhost:3000/api-test",
+          "name": "api-test",
+          "status": "completed",
+          "violations": [],
+          "passes": [],
+          "incomplete": [],
+          "inapplicable": [],
+          "score": 100
+        },
+        {
+          "url": "http://localhost:3000/monitoring-test",
+          "name": "monitoring-test",
+          "status": "completed",
+          "violations": [],
+          "passes": [],
+          "incomplete": [],
+          "inapplicable": [],
+          "score": 100
+        },
+        {
+          "url": "http://localhost:3000/",
+          "name": "home",
+          "status": "completed",
+          "violations": [],
+          "passes": [],
+          "incomplete": [],
+          "inapplicable": [],
+          "score": 100
+        }
+      ],
+      "summary": {
+        "totalViolations": 0,
+        "totalPasses": 0,
+        "totalIncomplete": 0,
+        "criticalIssues": 0,
+        "seriousIssues": 0,
+        "moderateIssues": 0,
+        "minorIssues": 0
+      }
+    },
+    "pa11y": {
+      "tool": "pa11y",
+      "version": "6.2.3",
+      "timestamp": "2025-09-20T22:01:20.289Z",
+      "standard": "WCAG2AA",
+      "pages": [
+        {
+          "url": "http://localhost:3000/api-test",
+          "name": "api-test",
+          "status": "completed",
+          "issues": [],
+          "score": 100
+        },
+        {
+          "url": "http://localhost:3000/monitoring-test",
+          "name": "monitoring-test",
+          "status": "completed",
+          "issues": [],
+          "score": 100
+        },
+        {
+          "url": "http://localhost:3000/",
+          "name": "home",
+          "status": "completed",
+          "issues": [],
+          "score": 100
+        }
+      ],
+      "summary": {
+        "totalErrors": 0,
+        "totalWarnings": 0,
+        "totalNotices": 0
+      }
+    },
+    "lighthouse": {
+      "tool": "lighthouse",
+      "version": "11.0.0",
+      "timestamp": "2025-09-20T22:01:25.725Z",
+      "category": "accessibility",
+      "pages": [
+        {
+          "url": "http://localhost:3000/api-test",
+          "name": "api-test",
+          "status": "completed",
+          "score": 96,
+          "audits": {
+            "color-contrast": {
+              "score": 0,
+              "displayValue": "Background and foreground colors do not have a sufficient contrast ratio."
+            },
+            "image-alt": {
+              "score": 0,
+              "displayValue": "Image elements have `[alt]` attributes"
+            },
+            "label": {
+              "score": 1,
+              "displayValue": "Form elements have associated labels"
+            },
+            "link-name": {
+              "score": 0,
+              "displayValue": "Links have a discernible name"
+            },
+            "button-name": {
+              "score": 1,
+              "displayValue": "Buttons have an accessible name"
+            },
+            "aria-valid-attr": {
+              "score": 1,
+              "displayValue": "`[aria-*]` attributes are valid and not misspelled"
+            },
+            "heading-order": {
+              "score": 1,
+              "displayValue": "Heading elements appear in a sequentially-descending order"
+            },
+            "landmark-one-main": {
+              "score": 1,
+              "displayValue": "Document has a main landmark."
+            },
+            "meta-viewport": {
+              "score": 1,
+              "displayValue": "`[user-scalable=\"no\"]` is not used in the `<meta name=\"viewport\">` element and the `[maximum-scale]` attribute is not less than 5."
+            },
+            "focus-traps": {
+              "score": 0,
+              "displayValue": "User focus is not accidentally trapped in a region"
+            },
+            "tabindex": {
+              "score": 0,
+              "displayValue": "No element has a `[tabindex]` value greater than 0"
+            },
+            "duplicate-id-aria": {
+              "score": 0,
+              "displayValue": "ARIA IDs are unique"
+            }
+          }
+        }
+      ],
+      "summary": {
+        "averageScore": 96,
+        "totalAudits": 12,
+        "passedAudits": 6,
+        "failedAudits": 6
+      }
+    }
+  },
+  "compliance": {
+    "wcag21aa": true,
+    "section508": true,
+    "ada": true,
+    "oilGasIndustry": true
+  },
+  "recommendations": [
+    {
+      "category": "Oil & Gas Industry Requirements",
+      "priority": "medium",
+      "actions": [
+        "Test accessibility with field devices and tablets",
+        "Verify high contrast mode for outdoor conditions",
+        "Ensure touch targets are ≥44px for field operations",
+        "Test keyboard navigation with industrial keyboards",
+        "Validate emergency alert accessibility"
+      ]
+    }
+  ]
+}

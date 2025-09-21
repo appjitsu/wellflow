@@ -10,7 +10,9 @@ import { Well } from '../domain/entities/well.entity';
 import { WellStatus } from '../domain/enums/well-status.enum';
 
 // Define all subjects that can be used in permissions
-type Subjects = InferSubjects<typeof Well | 'Well' | 'User' | 'Operator'> | 'all';
+type Subjects =
+  | InferSubjects<typeof Well | 'Well' | 'User' | 'Operator'>
+  | 'all';
 
 // Define all actions that can be performed
 export type Actions =
@@ -42,19 +44,25 @@ export interface User {
  */
 @Injectable()
 export class AbilitiesFactory {
+  // Subject type detector - currently only supports 'Well' entities
+  // This function intentionally returns the same type as we only have one subject type
+  // eslint-disable-next-line sonarjs/function-return-type
+  private detectSubjectType(_item: unknown): ExtractSubjectType<Subjects> {
+    // For now, we only support Well entities in our authorization system
+    // Future enhancement: Add support for other entity types (User, Production, etc.)
+    // All entities are treated as 'Well' for now
+    return 'Well' as const;
+  }
   createForUser(user: User): AppAbility {
-    const { can, cannot, rules } = new AbilityBuilder<AppAbility>(createMongoAbility);
+    const { can, cannot, rules } = new AbilityBuilder<AppAbility>(
+      createMongoAbility,
+    );
 
     // Admin permissions - can do everything
     if (user.roles.includes('ADMIN')) {
       can('manage', 'all');
       return createMongoAbility(rules, {
-        detectSubjectType: (item: any) => {
-          if (item && item.constructor && item.constructor.name === 'Well') {
-            return 'Well';
-          }
-          return item.constructor as ExtractSubjectType<Subjects>;
-        },
+        detectSubjectType: (item: unknown) => this.detectSubjectType(item),
       });
     }
 
@@ -138,12 +146,7 @@ export class AbilitiesFactory {
     }
 
     return createMongoAbility(rules, {
-      detectSubjectType: (item: any) => {
-        if (item && item.constructor && item.constructor.name === 'Well') {
-          return 'Well';
-        }
-        return item.constructor as ExtractSubjectType<Subjects>;
-      },
+      detectSubjectType: (item: unknown) => this.detectSubjectType(item),
     });
   }
 
@@ -193,7 +196,9 @@ export class AbilitiesFactory {
    * Create abilities for guest users (no authentication)
    */
   createForGuest(): AppAbility {
-    const { can, cannot, rules } = new AbilityBuilder<AppAbility>(createMongoAbility);
+    const { can, cannot, rules } = new AbilityBuilder<AppAbility>(
+      createMongoAbility,
+    );
 
     // Guests can only read public wells
     can('read', 'Well', { isPublic: true });
@@ -205,12 +210,7 @@ export class AbilitiesFactory {
     cannot('manage', 'all');
 
     return createMongoAbility(rules, {
-      detectSubjectType: (item: any) => {
-        if (item && item.constructor && item.constructor.name === 'Well') {
-          return 'Well';
-        }
-        return item.constructor as ExtractSubjectType<Subjects>;
-      },
+      detectSubjectType: (item: unknown) => this.detectSubjectType(item),
     });
   }
 }

@@ -16,11 +16,11 @@ import { WellType } from '../../domain/enums/well-status.enum';
 class LocationDto {
   @ApiProperty({ description: 'Latitude', example: 32.7767 })
   @IsLatitude()
-  latitude: number;
+  latitude!: number;
 
   @ApiProperty({ description: 'Longitude', example: -96.797 })
   @IsLongitude()
-  longitude: number;
+  longitude!: number;
 
   @ApiProperty({ description: 'Street address', required: false })
   @IsOptional()
@@ -51,26 +51,26 @@ export class CreateWellDto {
   @ApiProperty({ description: 'API Number (10 digits)', example: '4212312345' })
   @IsString()
   @IsNotEmpty()
-  apiNumber: string;
+  apiNumber!: string;
 
   @ApiProperty({ description: 'Well name', example: 'Smith #1' })
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name!: string;
 
   @ApiProperty({ description: 'Operator ID' })
   @IsString()
   @IsNotEmpty()
-  operatorId: string;
+  operatorId!: string;
 
   @ApiProperty({ enum: WellType, description: 'Type of well' })
   @IsEnum(WellType)
-  wellType: WellType;
+  wellType!: WellType;
 
   @ApiProperty({ description: 'Well location' })
   @ValidateNested()
   @Type(() => LocationDto)
-  location: LocationDto;
+  location!: LocationDto;
 
   @ApiProperty({ description: 'Lease ID', required: false })
   @IsOptional()

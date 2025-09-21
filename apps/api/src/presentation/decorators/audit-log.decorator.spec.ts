@@ -42,7 +42,9 @@ describe('AuditLog Decorator', () => {
       expect(metadata).toEqual(options);
       expect(metadata.action).toBe('UPDATE_WELL_STATUS');
       expect(metadata.resource).toBe('well');
-      expect(metadata.description).toBe('Update well status for compliance tracking');
+      expect(metadata.description).toBe(
+        'Update well status for compliance tracking',
+      );
     });
 
     it('should set metadata with action and resource only', () => {
@@ -77,7 +79,10 @@ describe('AuditLog Decorator', () => {
         getWell() {}
       }
 
-      const metadata = reflector.get('auditLog', TestController.prototype.getWell);
+      const metadata = reflector.get(
+        'auditLog',
+        TestController.prototype.getWell,
+      );
       expect(metadata).toEqual(options);
     });
 
@@ -101,8 +106,14 @@ describe('AuditLog Decorator', () => {
         updateWell() {}
       }
 
-      const createMetadata = reflector.get('auditLog', TestController.prototype.createWell);
-      const updateMetadata = reflector.get('auditLog', TestController.prototype.updateWell);
+      const createMetadata = reflector.get(
+        'auditLog',
+        TestController.prototype.createWell,
+      );
+      const updateMetadata = reflector.get(
+        'auditLog',
+        TestController.prototype.updateWell,
+      );
 
       expect(createMetadata).toEqual(createOptions);
       expect(updateMetadata).toEqual(updateOptions);
@@ -140,7 +151,10 @@ describe('AuditLog Decorator', () => {
         recordInspection() {}
       }
 
-      const metadata = reflector.get('auditLog', TestController.prototype.recordInspection);
+      const metadata = reflector.get(
+        'auditLog',
+        TestController.prototype.recordInspection,
+      );
       expect(metadata.action).toBe('ENVIRONMENTAL_INSPECTION');
       expect(metadata.description).toContain('environmental inspection');
     });
@@ -159,7 +173,10 @@ describe('AuditLog Decorator', () => {
         recordProduction() {}
       }
 
-      const metadata = reflector.get('auditLog', TestController.prototype.recordProduction);
+      const metadata = reflector.get(
+        'auditLog',
+        TestController.prototype.recordProduction,
+      );
       expect(metadata.action).toBe('RECORD_PRODUCTION');
       expect(metadata.resource).toBe('production_data');
     });
@@ -176,7 +193,10 @@ describe('AuditLog Decorator', () => {
         issuePermit() {}
       }
 
-      const metadata = reflector.get('auditLog', TestController.prototype.issuePermit);
+      const metadata = reflector.get(
+        'auditLog',
+        TestController.prototype.issuePermit,
+      );
       expect(metadata.action).toBe('ISSUE_PERMIT');
       expect(metadata.resource).toBe('permit');
     });
@@ -228,7 +248,7 @@ describe('AuditLog Decorator', () => {
       // Test that the metadata key is exactly 'auditLog'
       const metadata = reflector.get('auditLog', TestController);
       expect(metadata).toBeDefined();
-      
+
       // Test that other keys don't return the metadata
       const wrongMetadata = reflector.get('audit_log', TestController);
       expect(wrongMetadata).toBeUndefined();

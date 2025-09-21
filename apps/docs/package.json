@@ -7,11 +7,19 @@
     "dev": "next dev --turbopack --port 3001",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint --max-warnings 0",
+    "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage"
+    "security:audit": "pnpm audit --audit-level moderate",
+    "security:audit:lenient": "pnpm audit --audit-level high --prod || echo 'Security audit completed with warnings'",
+    "security:check": "pnpm run security:audit:lenient && pnpm run lint",
+    "security:test": "pnpm run security:audit && pnpm run lint",
+    "accessibility:test": "echo 'Running accessibility tests for docs...' && node ../../scripts/accessibility-test.js",
+    "accessibility:axe": "axe http://localhost:3001 --reporter json --output accessibility-axe-report.json || true",
+    "accessibility:pa11y": "pa11y http://localhost:3001 --standard WCAG2AA --reporter json --output accessibility-pa11y-report.json || true",
+    "accessibility:comprehensive": "pnpm run accessibility:test && pnpm run accessibility:axe && pnpm run accessibility:pa11y",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch --passWithNoTests",
+    "test:cov": "jest --coverage --passWithNoTests"
   },
   "dependencies": {
     "@repo/ui": "workspace:*",

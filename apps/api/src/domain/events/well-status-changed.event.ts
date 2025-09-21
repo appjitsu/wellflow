@@ -14,7 +14,7 @@ export class WellStatusChangedEvent {
     public readonly previousStatus: WellStatus,
     public readonly newStatus: WellStatus,
     public readonly updatedBy: string,
-    public readonly metadata?: Record<string, any>,
+    public readonly metadata?: Record<string, unknown>,
   ) {
     this.occurredAt = new Date();
   }

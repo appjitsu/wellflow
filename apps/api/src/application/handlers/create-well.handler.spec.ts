@@ -60,11 +60,11 @@ describe('CreateWellHandler', () => {
       WellType.OIL,
       {
         latitude: 40.7128,
-        longitude: -74.0060,
+        longitude: -74.006,
       },
       'lease-123',
       new Date('2024-01-01'),
-      5000
+      5000,
     );
 
     it('should create well successfully', async () => {
@@ -74,35 +74,56 @@ describe('CreateWellHandler', () => {
       const result = await handler.execute(validCommand);
 
       expect(typeof result).toBe('string');
-      expect(result).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i); // UUID v4 format
-      expect(wellRepository.findByApiNumber).toHaveBeenCalledWith(expect.any(ApiNumber));
-      expect(wellRepository.save).toHaveBeenCalledWith(expect.any(Well));
+      expect(result).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+      ); // UUID v4 format
+      expect(mockWellRepository.findByApiNumber).toHaveBeenCalledWith(
+        expect.any(ApiNumber),
+      );
+      expect(mockWellRepository.save).toHaveBeenCalledWith(expect.any(Well));
       // Note: Events are only published if the well has domain events, which depends on the Well entity implementation
     });
 
     it('should throw ConflictException if well with API number already exists', async () => {
-      const existingWell = { id: 'existing-id' };
-      wellRepository.findByApiNumber.mockResolvedValue(existingWell as any);
+      // Create a minimal Well mock with proper typing
+      const existingWell = {} as Well;
+      wellRepository.findByApiNumber.mockResolvedValue(existingWell);
 
-      await expect(handler.execute(validCommand)).rejects.toThrow(ConflictException);
-      await expect(handler.execute(validCommand)).rejects.toThrow('Well with API number 42-123-45678 already exists');
-      expect(wellRepository.save).not.toHaveBeenCalled();
-      expect(eventBus.publish).not.toHaveBeenCalled();
+      await expect(handler.execute(validCommand)).rejects.toThrow(
+        ConflictException,
+      );
+      await expect(handler.execute(validCommand)).rejects.toThrow(
+        'Well with API number 42-123-45678 already exists',
+      );
+      expect(mockWellRepository.save).not.toHaveBeenCalled();
+      expect(mockEventBus.publish).not.toHaveBeenCalled();
     });
 
     it('should handle repository save errors', async () => {
       wellRepository.findByApiNumber.mockResolvedValue(null);
-      wellRepository.save.mockRejectedValue(new Error('Database connection failed'));
+      wellRepository.save.mockRejectedValue(
+        new Error('Database connection failed'),
+      );
 
-      await expect(handler.execute(validCommand)).rejects.toThrow(BadRequestException);
-      await expect(handler.execute(validCommand)).rejects.toThrow('Failed to create well: Database connection failed');
+      await expect(handler.execute(validCommand)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(handler.execute(validCommand)).rejects.toThrow(
+        'Failed to create well: Database connection failed',
+      );
     });
 
     it('should handle findByApiNumber errors', async () => {
-      wellRepository.findByApiNumber.mockRejectedValue(new Error('Database query failed'));
+      wellRepository.findByApiNumber.mockRejectedValue(
+        new Error('Database query failed'),
+      );
 
-      await expect(handler.execute(validCommand)).rejects.toThrow(BadRequestException);
-      await expect(handler.execute(validCommand)).rejects.toThrow('Failed to create well: Database query failed');
+      await expect(handler.execute(validCommand)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(handler.execute(validCommand)).rejects.toThrow(
+        'Failed to create well: Database query failed',
+      );
     });
 
     it('should create well with minimal required fields', async () => {
@@ -113,8 +134,8 @@ describe('CreateWellHandler', () => {
         WellType.GAS,
         {
           latitude: 40.7128,
-          longitude: -74.0060,
-        }
+          longitude: -74.006,
+        },
       );
 
       wellRepository.findByApiNumber.mockResolvedValue(null);
@@ -123,9 +144,13 @@ describe('CreateWellHandler', () => {
       const result = await handler.execute(minimalCommand);
 
       expect(typeof result).toBe('string');
-      expect(result).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
-      expect(wellRepository.findByApiNumber).toHaveBeenCalledWith(expect.any(ApiNumber));
-      expect(wellRepository.save).toHaveBeenCalledWith(expect.any(Well));
+      expect(result).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+      );
+      expect(mockWellRepository.findByApiNumber).toHaveBeenCalledWith(
+        expect.any(ApiNumber),
+      );
+      expect(mockWellRepository.save).toHaveBeenCalledWith(expect.any(Well));
     });
 
     it('should generate unique ID for each well', async () => {
@@ -137,7 +162,7 @@ describe('CreateWellHandler', () => {
         'Well 1',
         'operator-123',
         WellType.OIL,
-        { latitude: 40.7128, longitude: -74.0060 }
+        { latitude: 40.7128, longitude: -74.006 },
       );
 
       const command2 = new CreateWellCommand(
@@ -145,7 +170,7 @@ describe('CreateWellHandler', () => {
         'Well 2',
         'operator-123',
         WellType.OIL,
-        { latitude: 40.7128, longitude: -74.0060 }
+        { latitude: 40.7128, longitude: -74.006 },
       );
 
       const result1 = await handler.execute(command1);
@@ -164,7 +189,7 @@ describe('CreateWellHandler', () => {
         WellType.OIL,
         {
           latitude: 32.7767,
-          longitude: -96.7970,
+          longitude: -96.797,
           address: '123 Main St',
           county: 'Dallas',
           state: 'TX',
@@ -172,7 +197,7 @@ describe('CreateWellHandler', () => {
         },
         'lease-456',
         new Date('2024-03-15'),
-        8500
+        8500,
       );
 
       wellRepository.findByApiNumber.mockResolvedValue(null);
@@ -181,18 +206,20 @@ describe('CreateWellHandler', () => {
       const result = await handler.execute(fullCommand);
 
       expect(typeof result).toBe('string');
-      expect(wellRepository.save).toHaveBeenCalledWith(expect.objectContaining({
-        name: 'Full Well',
-        operatorId: 'operator-456',
-        wellType: WellType.OIL,
-      }));
+      expect(wellRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Full Well',
+          operatorId: 'operator-456',
+          wellType: WellType.OIL,
+        }),
+      );
     });
 
     it('should publish domain events after saving well', async () => {
       const mockWell = {
         getDomainEvents: jest.fn().mockReturnValue([
           { type: 'WellCreated', wellId: 'test-id' },
-          { type: 'WellStatusChanged', wellId: 'test-id' }
+          { type: 'WellStatusChanged', wellId: 'test-id' },
         ]),
         clearDomainEvents: jest.fn(),
       };
@@ -208,8 +235,16 @@ describe('CreateWellHandler', () => {
       await handler.execute(validCommand);
 
       expect(eventBus.publish).toHaveBeenCalledTimes(2);
-      expect(eventBus.publish).toHaveBeenCalledWith({ type: 'WellCreated', wellId: 'test-id' });
-      expect(eventBus.publish).toHaveBeenCalledWith({ type: 'WellStatusChanged', wellId: 'test-id' });
+      // Use the mock calls directly instead of the unbound method
+      const calls = (eventBus.publish as jest.Mock).mock.calls;
+      expect(calls[0][0]).toEqual({
+        type: 'WellCreated',
+        wellId: 'test-id',
+      });
+      expect(calls[1][0]).toEqual({
+        type: 'WellStatusChanged',
+        wellId: 'test-id',
+      });
       expect(mockWell.clearDomainEvents).toHaveBeenCalled();
     });
 
@@ -219,10 +254,12 @@ describe('CreateWellHandler', () => {
         'Test Well',
         'operator-123',
         WellType.OIL,
-        { latitude: 40.7128, longitude: -74.0060 }
+        { latitude: 40.7128, longitude: -74.006 },
       );
 
-      await expect(handler.execute(invalidCommand)).rejects.toThrow(BadRequestException);
+      await expect(handler.execute(invalidCommand)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should handle invalid coordinates', async () => {
@@ -231,10 +268,12 @@ describe('CreateWellHandler', () => {
         'Test Well',
         'operator-123',
         WellType.OIL,
-        { latitude: 200, longitude: -74.0060 } // Invalid latitude
+        { latitude: 200, longitude: -74.006 }, // Invalid latitude
       );
 
-      await expect(handler.execute(invalidCommand)).rejects.toThrow(BadRequestException);
+      await expect(handler.execute(invalidCommand)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should handle empty well name', async () => {
@@ -243,7 +282,7 @@ describe('CreateWellHandler', () => {
         '',
         'operator-123',
         WellType.OIL,
-        { latitude: 40.7128, longitude: -74.0060 }
+        { latitude: 40.7128, longitude: -74.006 },
       );
 
       wellRepository.findByApiNumber.mockResolvedValue(null);
@@ -260,7 +299,7 @@ describe('CreateWellHandler', () => {
         'Test Well',
         '',
         WellType.OIL,
-        { latitude: 40.7128, longitude: -74.0060 }
+        { latitude: 40.7128, longitude: -74.006 },
       );
 
       wellRepository.findByApiNumber.mockResolvedValue(null);
@@ -277,7 +316,7 @@ describe('CreateWellHandler', () => {
         'Oil Well',
         'operator-123',
         WellType.OIL,
-        { latitude: 40.7128, longitude: -74.0060 }
+        { latitude: 40.7128, longitude: -74.006 },
       );
 
       const gasCommand = new CreateWellCommand(
@@ -285,7 +324,7 @@ describe('CreateWellHandler', () => {
         'Gas Well',
         'operator-123',
         WellType.GAS,
-        { latitude: 40.7128, longitude: -74.0060 }
+        { latitude: 40.7128, longitude: -74.006 },
       );
 
       wellRepository.findByApiNumber.mockResolvedValue(null);
@@ -296,7 +335,7 @@ describe('CreateWellHandler', () => {
 
       expect(typeof oilResult).toBe('string');
       expect(typeof gasResult).toBe('string');
-      expect(wellRepository.save).toHaveBeenCalledTimes(2);
+      expect((wellRepository.save as jest.Mock).mock.calls.length).toBe(2);
     });
 
     it('should handle location with only coordinates', async () => {
@@ -305,7 +344,7 @@ describe('CreateWellHandler', () => {
         'Minimal Location Well',
         'operator-123',
         WellType.OIL,
-        { latitude: 29.7604, longitude: -95.3698 }
+        { latitude: 29.7604, longitude: -95.3698 },
       );
 
       wellRepository.findByApiNumber.mockResolvedValue(null);
@@ -314,7 +353,9 @@ describe('CreateWellHandler', () => {
       const result = await handler.execute(minimalLocationCommand);
 
       expect(typeof result).toBe('string');
-      expect(wellRepository.save).toHaveBeenCalledWith(expect.any(Well));
+      // Use a safe approach to check if save was called with a Well instance
+      const saveCall = (wellRepository.save as jest.Mock).mock.calls[0][0];
+      expect(saveCall).toBeInstanceOf(Well);
     });
 
     it('should handle location with full address', async () => {
@@ -330,7 +371,7 @@ describe('CreateWellHandler', () => {
           county: 'Harris',
           state: 'TX',
           country: 'USA',
-        }
+        },
       );
 
       wellRepository.findByApiNumber.mockResolvedValue(null);
@@ -339,7 +380,9 @@ describe('CreateWellHandler', () => {
       const result = await handler.execute(fullLocationCommand);
 
       expect(typeof result).toBe('string');
-      expect(wellRepository.save).toHaveBeenCalledWith(expect.any(Well));
+      // Use a safe approach to check if save was called with a Well instance
+      const saveCall = (wellRepository.save as jest.Mock).mock.calls[0][0];
+      expect(saveCall).toBeInstanceOf(Well);
     });
   });
 });

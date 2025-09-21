@@ -11,7 +11,12 @@ describe('GetWellsByOperatorQuery', () => {
         wellType: 'oil',
       };
 
-      const query = new GetWellsByOperatorQuery(operatorId, page, limit, filters);
+      const query = new GetWellsByOperatorQuery(
+        operatorId,
+        page,
+        limit,
+        filters,
+      );
 
       expect(query.operatorId).toBe(operatorId);
       expect(query.page).toBe(page);
@@ -62,7 +67,7 @@ describe('GetWellsByOperatorQuery', () => {
         'operator@company.com',
       ];
 
-      operatorIds.forEach(operatorId => {
+      operatorIds.forEach((operatorId) => {
         const query = new GetWellsByOperatorQuery(operatorId);
         expect(query.operatorId).toBe(operatorId);
       });
@@ -72,7 +77,7 @@ describe('GetWellsByOperatorQuery', () => {
       const operatorId = 'operator-123';
       const pages = [1, 2, 5, 10, 100, 1000];
 
-      pages.forEach(page => {
+      pages.forEach((page) => {
         const query = new GetWellsByOperatorQuery(operatorId, page);
         expect(query.page).toBe(page);
       });
@@ -82,7 +87,7 @@ describe('GetWellsByOperatorQuery', () => {
       const operatorId = 'operator-123';
       const limits = [1, 5, 10, 25, 50, 100, 500];
 
-      limits.forEach(limit => {
+      limits.forEach((limit) => {
         const query = new GetWellsByOperatorQuery(operatorId, 1, limit);
         expect(query.limit).toBe(limit);
       });
@@ -100,7 +105,7 @@ describe('GetWellsByOperatorQuery', () => {
         {},
       ];
 
-      filterCombinations.forEach(filters => {
+      filterCombinations.forEach((filters) => {
         const query = new GetWellsByOperatorQuery(operatorId, 1, 10, filters);
         expect(query.filters).toEqual(filters);
       });
@@ -109,12 +114,9 @@ describe('GetWellsByOperatorQuery', () => {
 
   describe('properties', () => {
     it('should have readonly properties', () => {
-      const query = new GetWellsByOperatorQuery(
-        'operator-123',
-        2,
-        20,
-        { status: 'producing' },
-      );
+      const query = new GetWellsByOperatorQuery('operator-123', 2, 20, {
+        status: 'producing',
+      });
 
       expect(query.operatorId).toBeDefined();
       expect(query.page).toBeDefined();
@@ -128,7 +130,12 @@ describe('GetWellsByOperatorQuery', () => {
       const limit = 25;
       const filters = { status: 'drilling', wellType: 'oil' };
 
-      const query = new GetWellsByOperatorQuery(operatorId, page, limit, filters);
+      const query = new GetWellsByOperatorQuery(
+        operatorId,
+        page,
+        limit,
+        filters,
+      );
 
       // Multiple accesses should return same values
       expect(query.operatorId).toBe(operatorId);
@@ -212,13 +219,10 @@ describe('GetWellsByOperatorQuery', () => {
         'abandoned',
       ];
 
-      statuses.forEach(status => {
-        const query = new GetWellsByOperatorQuery(
-          'operator-123',
-          1,
-          10,
-          { status },
-        );
+      statuses.forEach((status) => {
+        const query = new GetWellsByOperatorQuery('operator-123', 1, 10, {
+          status,
+        });
         expect(query.filters?.status).toBe(status);
       });
     });
@@ -233,13 +237,10 @@ describe('GetWellsByOperatorQuery', () => {
         'geothermal',
       ];
 
-      wellTypes.forEach(wellType => {
-        const query = new GetWellsByOperatorQuery(
-          'operator-123',
-          1,
-          10,
-          { wellType },
-        );
+      wellTypes.forEach((wellType) => {
+        const query = new GetWellsByOperatorQuery('operator-123', 1, 10, {
+          wellType,
+        });
         expect(query.filters?.wellType).toBe(wellType);
       });
     });
@@ -302,7 +303,12 @@ describe('GetWellsByOperatorQuery', () => {
       const limit = 15;
       const filters = { status: 'producing', wellType: 'oil' };
 
-      const query = new GetWellsByOperatorQuery(operatorId, page, limit, filters);
+      const query = new GetWellsByOperatorQuery(
+        operatorId,
+        page,
+        limit,
+        filters,
+      );
 
       const operatorId1 = query.operatorId;
       const operatorId2 = query.operatorId;
@@ -330,12 +336,9 @@ describe('GetWellsByOperatorQuery', () => {
 
   describe('type checking', () => {
     it('should have correct types for all properties', () => {
-      const query = new GetWellsByOperatorQuery(
-        'operator-123',
-        2,
-        20,
-        { status: 'producing' },
-      );
+      const query = new GetWellsByOperatorQuery('operator-123', 2, 20, {
+        status: 'producing',
+      });
 
       expect(typeof query.operatorId).toBe('string');
       expect(typeof query.page).toBe('number');
@@ -345,7 +348,7 @@ describe('GetWellsByOperatorQuery', () => {
 
     it('should implement IQuery interface', () => {
       const query = new GetWellsByOperatorQuery('operator-123');
-      
+
       expect(query).toBeInstanceOf(GetWellsByOperatorQuery);
       expect(query).toHaveProperty('operatorId');
       expect(query).toHaveProperty('page');

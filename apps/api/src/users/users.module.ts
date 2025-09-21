@@ -10,4 +10,7 @@ import { RedisModule } from '../redis/redis.module';
   providers: [UsersService],
   exports: [UsersService],
 })
-export class UsersModule {}
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+export class UsersModule {
+  // This module handles user management functionality
+}

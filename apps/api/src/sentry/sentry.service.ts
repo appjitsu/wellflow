@@ -5,7 +5,9 @@ import { LogRocketService } from '../logrocket/logrocket.service';
 @Injectable()
 export class SentryService {
   constructor(
-    @Optional() @Inject(LogRocketService) private readonly logRocketService?: LogRocketService,
+    @Optional()
+    @Inject(LogRocketService)
+    private readonly logRocketService?: LogRocketService,
   ) {}
   /**
    * Capture an exception with Sentry and LogRocket integration
@@ -43,15 +45,16 @@ export class SentryService {
   /**
    * Capture a message with Sentry and LogRocket integration
    */
-  async captureMessage(
+  captureMessage(
     message: string,
     level: Sentry.SeverityLevel = 'info',
     context?: string,
-  ): Promise<void> {
+  ): void {
     // Log to LogRocket if available
     if (this.logRocketService?.isReady()) {
       try {
-        this.logRocketService.log(message, level as any, { context });
+        const logRocketLevel = this.mapSentryLevelToLogRocket(level);
+        this.logRocketService.log(message, logRocketLevel, { context });
       } catch (logRocketError) {
         console.warn('Failed to log to LogRocket:', logRocketError);
       }
@@ -91,7 +94,7 @@ export class SentryService {
   /**
    * Add extra context to Sentry
    */
-  setExtra(key: string, value: any): void {
+  setExtra(key: string, value: unknown): void {
     Sentry.setExtra(key, value);
   }
 
@@ -121,5 +124,23 @@ export class SentryService {
    */
   async flush(timeout = 2000): Promise<boolean> {
     return Sentry.flush(timeout);
+  }
+
+  /**
+   * Map Sentry severity level to LogRocket level
+   */
+  private mapSentryLevelToLogRocket(
+    level: Sentry.SeverityLevel,
+  ): 'info' | 'warn' | 'error' {
+    switch (level) {
+      case 'fatal':
+        return 'error';
+      case 'warning':
+        return 'warn';
+      case 'debug':
+        return 'info';
+      default:
+        return 'info';
+    }
   }
 }

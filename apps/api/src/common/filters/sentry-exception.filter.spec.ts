@@ -7,14 +7,20 @@ describe('SentryExceptionFilter', () => {
   let filter: SentryExceptionFilter;
   let sentryService: jest.Mocked<SentryService>;
   let mockArgumentsHost: jest.Mocked<ArgumentsHost>;
-  let mockResponse: any;
-  let mockRequest: any;
+  let mockResponse: {
+    status: jest.Mock;
+    json: jest.Mock;
+  };
+  let mockRequest: {
+    url: string;
+    method: string;
+  };
 
   beforeEach(async () => {
     // Mock SentryService
     const mockSentryService = {
       setExtra: jest.fn(),
-      captureException: jest.fn(),
+      captureException: jest.fn().mockResolvedValue(undefined),
       captureMessage: jest.fn(),
     };
 
@@ -23,15 +29,12 @@ describe('SentryExceptionFilter', () => {
       method: 'GET',
       url: '/api/test',
       headers: {
-        'authorization': 'Bearer token',
-        'cookie': 'session=123',
-        'x-api-key': 'secret',
         'user-agent': 'test-agent',
       },
       body: { test: 'data' },
       query: { page: '1' },
       params: { id: '123' },
-    };
+    } as any;
 
     mockResponse = {
       status: jest.fn().mockReturnThis(),
@@ -46,7 +49,12 @@ describe('SentryExceptionFilter', () => {
 
     mockArgumentsHost = {
       switchToHttp: jest.fn().mockReturnValue(mockHttpContext),
-    } as any;
+      getArgs: jest.fn(),
+      getArgByIndex: jest.fn(),
+      switchToRpc: jest.fn(),
+      switchToWs: jest.fn(),
+      getType: jest.fn(),
+    } as jest.Mocked<ArgumentsHost>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -68,7 +76,10 @@ describe('SentryExceptionFilter', () => {
 
   describe('catch', () => {
     it('should handle HttpException with string response', () => {
-      const exception = new HttpException('Bad Request', HttpStatus.BAD_REQUEST);
+      const exception = new HttpException(
+        'Bad Request',
+        HttpStatus.BAD_REQUEST,
+      );
 
       filter.catch(exception, mockArgumentsHost);
 
@@ -93,7 +104,10 @@ describe('SentryExceptionFilter', () => {
         error: 'Bad Request',
         statusCode: 400,
       };
-      const exception = new HttpException(exceptionResponse, HttpStatus.BAD_REQUEST);
+      const exception = new HttpException(
+        exceptionResponse,
+        HttpStatus.BAD_REQUEST,
+      );
 
       filter.catch(exception, mockArgumentsHost);
 
@@ -109,7 +123,10 @@ describe('SentryExceptionFilter', () => {
     });
 
     it('should handle 401 Unauthorized and send to Sentry', () => {
-      const exception = new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      const exception = new HttpException(
+        'Unauthorized',
+        HttpStatus.UNAUTHORIZED,
+      );
 
       filter.catch(exception, mockArgumentsHost);
 
@@ -130,7 +147,10 @@ describe('SentryExceptionFilter', () => {
         message: 'Unauthorized',
         error: 'Internal Server Error', // Default error when string response
       });
-      expect(sentryService.captureException).toHaveBeenCalledWith(exception, 'HTTP_EXCEPTION');
+      expect(sentryService.captureException).toHaveBeenCalledWith(
+        exception,
+        'HTTP_EXCEPTION',
+      );
     });
 
     it('should handle 403 Forbidden and send to Sentry', () => {
@@ -139,16 +159,25 @@ describe('SentryExceptionFilter', () => {
       filter.catch(exception, mockArgumentsHost);
 
       expect(mockResponse.status).toHaveBeenCalledWith(403);
-      expect(sentryService.captureException).toHaveBeenCalledWith(exception, 'HTTP_EXCEPTION');
+      expect(sentryService.captureException).toHaveBeenCalledWith(
+        exception,
+        'HTTP_EXCEPTION',
+      );
     });
 
     it('should handle 500 Internal Server Error and send to Sentry', () => {
-      const exception = new HttpException('Internal Server Error', HttpStatus.INTERNAL_SERVER_ERROR);
+      const exception = new HttpException(
+        'Internal Server Error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
 
       filter.catch(exception, mockArgumentsHost);
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
-      expect(sentryService.captureException).toHaveBeenCalledWith(exception, 'HTTP_EXCEPTION');
+      expect(sentryService.captureException).toHaveBeenCalledWith(
+        exception,
+        'HTTP_EXCEPTION',
+      );
     });
 
     it('should handle generic Error instances', () => {
@@ -165,7 +194,10 @@ describe('SentryExceptionFilter', () => {
         error: 'Error',
         message: 'Something went wrong',
       });
-      expect(sentryService.captureException).toHaveBeenCalledWith(exception, 'HTTP_EXCEPTION');
+      expect(sentryService.captureException).toHaveBeenCalledWith(
+        exception,
+        'HTTP_EXCEPTION',
+      );
     });
 
     it('should handle unknown exceptions', () => {
@@ -190,7 +222,10 @@ describe('SentryExceptionFilter', () => {
     });
 
     it('should handle null exception response object', () => {
-      const exception = new HttpException(null as any, HttpStatus.BAD_REQUEST);
+      const exception = new HttpException(
+        null as unknown as string,
+        HttpStatus.BAD_REQUEST,
+      );
 
       filter.catch(exception, mockArgumentsHost);
 
@@ -207,7 +242,10 @@ describe('SentryExceptionFilter', () => {
 
     it('should handle exception response object without message or error fields', () => {
       const exceptionResponse = { statusCode: 400, data: 'some data' };
-      const exception = new HttpException(exceptionResponse, HttpStatus.BAD_REQUEST);
+      const exception = new HttpException(
+        exceptionResponse,
+        HttpStatus.BAD_REQUEST,
+      );
 
       filter.catch(exception, mockArgumentsHost);
 
@@ -225,15 +263,15 @@ describe('SentryExceptionFilter', () => {
   describe('sanitizeHeaders', () => {
     it('should remove sensitive headers', () => {
       const headers = {
-        'authorization': 'Bearer token',
-        'cookie': 'session=123',
+        authorization: 'Bearer token',
+        cookie: 'session=123',
         'x-api-key': 'secret',
         'x-auth-token': 'auth-token',
         'user-agent': 'test-agent',
         'content-type': 'application/json',
       };
 
-      // Access private method through any cast
+      // Access private method through type assertion
       const sanitized = (filter as any).sanitizeHeaders(headers);
 
       expect(sanitized).toEqual({
@@ -260,7 +298,7 @@ describe('SentryExceptionFilter', () => {
       const headers = {
         'user-agent': 'test-agent',
         'content-type': 'application/json',
-        'accept': 'application/json',
+        accept: 'application/json',
       };
 
       const sanitized = (filter as any).sanitizeHeaders(headers);
@@ -279,8 +317,12 @@ describe('SentryExceptionFilter', () => {
       const responseCall = mockResponse.json.mock.calls[0][0];
       const timestamp = responseCall.timestamp;
 
-      expect(timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
-      expect(new Date(timestamp).getTime()).toBeGreaterThanOrEqual(new Date(beforeTime).getTime());
+      expect(timestamp).toMatch(
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+      );
+      expect(new Date(timestamp).getTime()).toBeGreaterThanOrEqual(
+        new Date(beforeTime).getTime(),
+      );
     });
 
     it('should handle request without optional properties', () => {
@@ -298,7 +340,10 @@ describe('SentryExceptionFilter', () => {
 
       mockArgumentsHost.switchToHttp.mockReturnValue(mockHttpContext);
 
-      const exception = new HttpException('Test', HttpStatus.INTERNAL_SERVER_ERROR);
+      const exception = new HttpException(
+        'Test',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
 
       filter.catch(exception, mockArgumentsHost);
 

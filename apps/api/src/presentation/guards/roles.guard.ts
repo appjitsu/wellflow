@@ -5,6 +5,17 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { Request } from 'express';
+
+interface UserWithRoles {
+  id: string;
+  email: string;
+  roles?: string[];
+}
+
+interface RequestWithUser extends Request {
+  user: UserWithRoles;
+}
 
 /**
  * Roles Guard
@@ -24,7 +35,7 @@ export class RolesGuard implements CanActivate {
       return true; // No roles required
     }
 
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<RequestWithUser>();
     const user = request.user;
 
     if (!user) {

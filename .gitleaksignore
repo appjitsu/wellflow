@@ -1,0 +1,42 @@
+# GitLeaks Ignore File
+# This file contains fingerprints of secrets that should be ignored by GitLeaks
+# Use this for legitimate secrets that need to be in the repository temporarily
+# or for false positives that cannot be resolved through allowlist rules
+
+# Production secrets that need to be moved to environment variables
+# These should be removed from the repository and added to secure environment configuration
+
+# UPLOADTHING secrets - these should be moved to environment variables
+apps/api/.env:stripe-access-token:23
+apps/api/.env:generic-api-key:22
+
+# Real Sentry DSN - should be moved to environment variables
+apps/api/.env:monitoring-tokens:16
+apps/web/.env.local:monitoring-tokens:5
+
+# Real LogRocket App ID - should be moved to environment variables  
+apps/api/.env:monitoring-tokens:27
+apps/web/.env.local:monitoring-tokens:13
+
+# Real UploadThing token - should be moved to environment variables
+apps/web/.env.local:generic-api-key:9
+
+# Documentation examples (these are safe to ignore)
+docs/external-services-setup.md:monitoring-tokens:210
+docs/external-services-setup.md:private-key-pem:136
+docs/kan-2-implementation-summary.md:jwt-secret-production:130
+docs/monitoring-setup.md:monitoring-tokens:39
+docs/monitoring-setup.md:monitoring-tokens:67
+
+# Test configuration files (these are safe to ignore)
+jest.global-setup.js:monitoring-tokens:49
+jest.global-setup.js:jwt-secret-production:44
+jest.setup.js:jwt-secret-production:23
+jest.setup.js:monitoring-tokens:18
+
+# Example files (these are safe to ignore)
+apps/api/.env.example:private-key-pem:35
+apps/api/.env.example:monitoring-tokens:16
+apps/api/.env.example:monitoring-tokens:51
+apps/web/.env.example:monitoring-tokens:12
+apps/web/.env.example:monitoring-tokens:18

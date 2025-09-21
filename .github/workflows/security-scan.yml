@@ -1,0 +1,247 @@
+name: Security Vulnerability Scanning
+
+on:
+  # Run on every push to main and pull requests
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+  # Run daily security scans
+  schedule:
+    - cron: "0 6 * * *" # Daily at 6 AM UTC
+
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      fix_vulnerabilities:
+        description: "Attempt to fix vulnerabilities automatically"
+        required: false
+        default: "false"
+        type: boolean
+
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: "9.0.0"
+
+jobs:
+  security-audit:
+    name: Security Audit & Vulnerability Scanning
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      security-events: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create security reports directory
+        run: mkdir -p security-reports
+
+      # NPM Audit Scan
+      - name: Run NPM Security Audit
+        id: npm-audit
+        continue-on-error: true
+        run: |
+          echo "Running NPM security audit..."
+
+          # Generate JSON report
+          pnpm audit --json > security-reports/npm-audit.json 2>/dev/null || true
+
+          # Generate human-readable report
+          pnpm audit > security-reports/npm-audit.txt 2>/dev/null || true
+
+          # Check for moderate or higher vulnerabilities
+          if pnpm audit --audit-level moderate; then
+            echo "npm_audit_status=passed" >> $GITHUB_OUTPUT
+            echo "✅ NPM audit passed - no moderate or higher vulnerabilities found"
+          else
+            echo "npm_audit_status=failed" >> $GITHUB_OUTPUT
+            echo "⚠️ NPM audit found moderate or higher vulnerabilities"
+          fi
+
+      # License Compliance Check
+      - name: Check License Compliance
+        run: |
+          echo "Checking license compliance..."
+          pnpm licenses list --json > security-reports/licenses.json 2>/dev/null || true
+          echo "✅ License compliance check completed"
+
+      # Outdated Dependencies Check
+      - name: Check Outdated Dependencies
+        run: |
+          echo "Checking for outdated dependencies..."
+          pnpm outdated --format json > security-reports/outdated.json 2>/dev/null || true
+          echo "✅ Outdated dependencies check completed"
+
+      # GitHub Security Advisory Scan
+      - name: Run GitHub Security Advisory Scan
+        continue-on-error: true
+        uses: github/super-linter@v6
+        env:
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_JAVASCRIPT_ES: false
+          VALIDATE_TYPESCRIPT_ES: false
+          VALIDATE_JSON: true
+          VALIDATE_YAML: true
+          VALIDATE_DOCKERFILE: true
+          SUPPRESS_POSSUM: true
+
+      # Snyk Security Scan (if token is available)
+      - name: Run Snyk Security Scan
+        if: env.SNYK_TOKEN != ''
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          # Install Snyk CLI
+          npm install -g snyk
+
+          # Authenticate with Snyk
+          snyk auth $SNYK_TOKEN
+
+          # Run Snyk test
+          echo "Running Snyk security scan..."
+          snyk test --json > security-reports/snyk.json 2>/dev/null || true
+
+          # Check for high or critical vulnerabilities
+          if snyk test --severity-threshold=high; then
+            echo "✅ Snyk scan passed"
+          else
+            echo "⚠️ Snyk found high or critical vulnerabilities"
+          fi
+
+      # Fix vulnerabilities if requested
+      - name: Fix Vulnerabilities
+        if: github.event.inputs.fix_vulnerabilities == 'true' || github.event_name == 'schedule'
+        run: |
+          echo "Attempting to fix vulnerabilities..."
+          pnpm audit --fix || true
+
+          # Check if any files were modified
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "vulnerability_fixes_applied=true" >> $GITHUB_OUTPUT
+          else
+            echo "vulnerability_fixes_applied=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Generate Security Summary
+      - name: Generate Security Summary
+        run: |
+          echo "Generating security summary..."
+
+          cat > security-reports/security-summary.md << 'EOF'
+          # WellFlow Security Scan Report
+
+          **Scan Date:** $(date)
+          **Workflow:** ${{ github.workflow }}
+          **Run ID:** ${{ github.run_id }}
+          **Commit:** ${{ github.sha }}
+
+          ## Summary
+
+          This report contains automated security vulnerability scanning results for the WellFlow oil & gas production monitoring platform.
+
+          ## NPM Audit Results
+
+          Status: ${{ steps.npm-audit.outputs.npm_audit_status }}
+
+          See `npm-audit.json` and `npm-audit.txt` for detailed results.
+
+          ## Compliance
+
+          This scan supports compliance with:
+          - NIST Cybersecurity Framework
+          - IEC 62443 (Industrial Cybersecurity)
+          - API 1164 (Pipeline SCADA Security)
+
+          ## Files Generated
+
+          - `npm-audit.json` - NPM audit results (JSON)
+          - `npm-audit.txt` - NPM audit results (human-readable)
+          - `licenses.json` - License compliance report
+          - `outdated.json` - Outdated dependencies report
+          - `snyk.json` - Snyk security scan results (if available)
+
+          EOF
+
+          echo "✅ Security summary generated"
+
+      # Upload Security Reports as Artifacts
+      - name: Upload Security Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports-${{ github.run_id }}
+          path: security-reports/
+          retention-days: 90
+
+      # Comment on PR with security results
+      - name: Comment PR with Security Results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            let comment = '## 🔒 Security Scan Results\n\n';
+
+            // Add NPM audit status
+            const npmAuditStatus = '${{ steps.npm-audit.outputs.npm_audit_status }}';
+            if (npmAuditStatus === 'passed') {
+              comment += '✅ **NPM Audit**: No moderate or higher vulnerabilities found\n';
+            } else {
+              comment += '⚠️ **NPM Audit**: Moderate or higher vulnerabilities detected\n';
+            }
+
+            comment += '\n📊 **Security Reports**: Available in workflow artifacts\n';
+            comment += '\n🔗 **Workflow Run**: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      # Fail job if critical vulnerabilities found
+      - name: Check Security Gate
+        run: |
+          if [[ "${{ steps.npm-audit.outputs.npm_audit_status }}" == "failed" ]]; then
+            echo "❌ Security gate failed: Critical vulnerabilities detected"
+            echo "Please review and fix security vulnerabilities before merging"
+            exit 1
+          else
+            echo "✅ Security gate passed"
+          fi

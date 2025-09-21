@@ -56,7 +56,11 @@ describe('MonitoringTestPage', () => {
   it('should show initial empty state message', () => {
     render(<MonitoringTestPage />);
 
-    expect(screen.getByText('No test results yet. Click the buttons above to test monitoring integrations.')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'No test results yet. Click the buttons above to test monitoring integrations.'
+      )
+    ).toBeInTheDocument();
   });
 
   it('should test Sentry error capture', async () => {
@@ -88,7 +92,9 @@ describe('MonitoringTestPage', () => {
       fireEvent.click(screen.getByText('Test LogRocket Exception'));
     });
 
-    expect(captureException).toHaveBeenCalledWith(expect.any(Error), { context: 'monitoring-test' });
+    expect(captureException).toHaveBeenCalledWith(expect.any(Error), {
+      context: 'monitoring-test',
+    });
     expect(screen.getByText(/LogRocket exception captured/)).toBeInTheDocument();
   });
 
@@ -136,7 +142,9 @@ describe('MonitoringTestPage', () => {
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith('/api/test-sentry', { method: 'POST' });
-      expect(screen.getByText(/API Sentry test: Sentry test completed successfully/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/API Sentry test: Sentry test completed successfully/)
+      ).toBeInTheDocument();
     });
   });
 
@@ -171,7 +179,11 @@ describe('MonitoringTestPage', () => {
     });
 
     expect(screen.queryByText(/Sentry error captured/)).not.toBeInTheDocument();
-    expect(screen.getByText('No test results yet. Click the buttons above to test monitoring integrations.')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'No test results yet. Click the buttons above to test monitoring integrations.'
+      )
+    ).toBeInTheDocument();
   });
 
   it('should display multiple test results with timestamps', async () => {

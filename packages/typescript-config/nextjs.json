@@ -7,6 +7,15 @@
     "moduleResolution": "Bundler",
     "allowJs": true,
     "jsx": "preserve",
-    "noEmit": true
+    "noEmit": true,
+
+    // === NEXT.JS SPECIFIC STRICT SETTINGS ===
+    // Enhanced type safety for Next.js applications
+    "checkJs": true,
+    "incremental": true,
+
+    // === JSX STRICT SETTINGS ===
+    // Ensure type safety in React components
+    "jsxImportSource": "react"
   }
 }

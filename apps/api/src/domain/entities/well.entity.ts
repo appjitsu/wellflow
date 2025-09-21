@@ -1,7 +1,32 @@
+import { IEvent } from '@nestjs/cqrs';
 import { ApiNumber } from '../value-objects/api-number';
 import { Location } from '../value-objects/location';
+import { Coordinates } from '../value-objects/coordinates';
 import { WellStatus, WellType } from '../enums/well-status.enum';
 import { WellStatusChangedEvent } from '../events/well-status-changed.event';
+
+interface WellPersistenceData {
+  id: string;
+  apiNumber: string;
+  name: string;
+  operatorId: string;
+  wellType: WellType;
+  location: {
+    coordinates: unknown;
+    address?: string;
+    county?: string;
+    state?: string;
+    country?: string;
+  };
+  status: WellStatus;
+  spudDate?: Date;
+  completionDate?: Date;
+  totalDepth?: number;
+  leaseId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  version: number;
+}
 
 /**
  * Well Entity - Aggregate Root
@@ -24,7 +49,7 @@ export class Well {
   private version: number;
 
   // Domain events
-  private domainEvents: any[] = [];
+  private domainEvents: IEvent[] = [];
 
   constructor(
     id: string,
@@ -180,7 +205,7 @@ export class Well {
   }
 
   // Domain event management
-  getDomainEvents(): any[] {
+  getDomainEvents(): IEvent[] {
     return [...this.domainEvents];
   }
 
@@ -188,7 +213,7 @@ export class Well {
     this.domainEvents = [];
   }
 
-  private addDomainEvent(event: any): void {
+  private addDomainEvent(event: IEvent): void {
     this.domainEvents.push(event);
   }
 
@@ -218,18 +243,29 @@ export class Well {
       [WellStatus.UNKNOWN]: Object.values(WellStatus), // Can transition to any status
     };
 
+    // eslint-disable-next-line security/detect-object-injection
     return validTransitions[from]?.includes(to) || false;
   }
 
   // Factory method for reconstruction from persistence
-  static fromPersistence(data: any): Well {
+  static fromPersistence(data: WellPersistenceData): Well {
+    // Convert coordinates from plain object to Coordinates instance
+    const coordinatesData = data.location.coordinates as {
+      latitude: number;
+      longitude: number;
+    };
+    const coordinates = new Coordinates(
+      coordinatesData.latitude,
+      coordinatesData.longitude,
+    );
+
     const well = new Well(
       data.id,
       new ApiNumber(data.apiNumber),
       data.name,
       data.operatorId,
       data.wellType,
-      new Location(data.location.coordinates, {
+      new Location(coordinates, {
         address: data.location.address,
         county: data.location.county,
         state: data.location.state,

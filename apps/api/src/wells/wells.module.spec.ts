@@ -45,8 +45,7 @@ describe('WellsModule', () => {
     it('should be exportable', () => {
       // Test that the module can be imported/exported
       expect(() => {
-        const moduleRef = WellsModule;
-        return moduleRef;
+        return WellsModule;
       }).not.toThrow();
     });
   });
@@ -132,8 +131,7 @@ describe('WellsModule', () => {
   describe('Module Testing', () => {
     it('should be testable', () => {
       expect(() => {
-        const testInstance = new WellsModule();
-        return testInstance;
+        return new WellsModule();
       }).not.toThrow();
     });
 
@@ -148,7 +146,7 @@ describe('WellsModule', () => {
       const start = Date.now();
       const instance = new WellsModule();
       const end = Date.now();
-      
+
       expect(instance).toBeDefined();
       expect(end - start).toBeLessThan(100); // Should take less than 100ms
     });

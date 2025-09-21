@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { AbilitiesFactory, Actions, User } from './abilities.factory';
+import { AbilitiesFactory, User } from './abilities.factory';
 import { CHECK_ABILITIES_KEY, RequiredRule } from './abilities.decorator';
 
 /**
@@ -19,7 +19,7 @@ export class AbilitiesGuard implements CanActivate {
     private abilitiesFactory: AbilitiesFactory,
   ) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  canActivate(context: ExecutionContext): boolean {
     const rules =
       this.reflector.get<RequiredRule[]>(
         CHECK_ABILITIES_KEY,
@@ -30,8 +30,8 @@ export class AbilitiesGuard implements CanActivate {
       return true; // No abilities required
     }
 
-    const request = context.switchToHttp().getRequest();
-    const user: User = request.user;
+    const request = context.switchToHttp().getRequest<{ user?: User }>();
+    const user: User | undefined = request.user;
 
     if (!user) {
       throw new ForbiddenException('User not authenticated');

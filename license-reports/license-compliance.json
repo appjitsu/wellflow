@@ -1,0 +1,280 @@
+{
+  "compliant": [
+    {
+      "name": "@casl/ability@6.7.3",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/web/node_modules/@casl/ability",
+      "repository": "https://github.com/stalniy/casl",
+      "workspace": "apps/web"
+    },
+    {
+      "name": "@casl/react@5.0.0",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/web/node_modules/@casl/react",
+      "repository": "https://github.com/stalniy/casl",
+      "workspace": "apps/web"
+    },
+    {
+      "name": "@repo/ui@0.0.0",
+      "license": "UNLICENSED",
+      "path": "/Users/jason/projects/wellflow/apps/web/node_modules/@repo/ui",
+      "workspace": "apps/web"
+    },
+    {
+      "name": "@sentry/nextjs@10.12.0",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/web/node_modules/@sentry/nextjs",
+      "repository": "https://github.com/getsentry/sentry-javascript",
+      "workspace": "apps/web"
+    },
+    {
+      "name": "logrocket@10.1.0",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/web/node_modules/logrocket",
+      "workspace": "apps/web"
+    },
+    {
+      "name": "next@15.5.0",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/web/node_modules/next",
+      "repository": "https://github.com/vercel/next.js",
+      "workspace": "apps/web"
+    },
+    {
+      "name": "react-dom@19.1.0",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/web/node_modules/react-dom",
+      "repository": "https://github.com/facebook/react",
+      "workspace": "apps/web"
+    },
+    {
+      "name": "react@19.1.0",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/web/node_modules/react",
+      "repository": "https://github.com/facebook/react",
+      "workspace": "apps/web"
+    },
+    {
+      "name": "web@0.1.2",
+      "license": "UNLICENSED",
+      "path": "/Users/jason/projects/wellflow/apps/web",
+      "workspace": "apps/web"
+    },
+    {
+      "name": "@casl/ability@6.7.3",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/@casl/ability",
+      "repository": "https://github.com/stalniy/casl",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "@nestjs/common@11.1.6",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/@nestjs/common",
+      "repository": "https://github.com/nestjs/nest",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "@nestjs/config@4.0.2",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/@nestjs/config",
+      "repository": "https://github.com/nestjs/config",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "@nestjs/core@11.1.6",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/@nestjs/core",
+      "repository": "https://github.com/nestjs/nest",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "@nestjs/cqrs@11.0.3",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/@nestjs/cqrs",
+      "repository": "https://github.com/nestjs/cqrs",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "@nestjs/event-emitter@3.0.1",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/@nestjs/event-emitter",
+      "repository": "https://github.com/nestjs/event-emitter",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "@nestjs/jwt@11.0.0",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/@nestjs/jwt",
+      "repository": "https://github.com/nestjs/jwt",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "@nestjs/passport@11.0.5",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/@nestjs/passport",
+      "repository": "https://github.com/nestjs/passport",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "@nestjs/platform-express@11.1.6",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/@nestjs/platform-express",
+      "repository": "https://github.com/nestjs/nest",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "@nestjs/swagger@11.2.0",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/@nestjs/swagger",
+      "repository": "https://github.com/nestjs/swagger",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "@sentry/nestjs@10.12.0",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/@sentry/nestjs",
+      "repository": "https://github.com/getsentry/sentry-javascript",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "@sentry/node@10.12.0",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/@sentry/node",
+      "repository": "https://github.com/getsentry/sentry-javascript",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "api@0.0.2",
+      "license": "UNLICENSED",
+      "path": "/Users/jason/projects/wellflow/apps/api",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "class-transformer@0.5.1",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/class-transformer",
+      "repository": "https://github.com/typestack/class-transformer",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "class-validator@0.14.2",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/class-validator",
+      "repository": "https://github.com/typestack/class-validator",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "drizzle-orm@0.44.5",
+      "license": "Apache-2.0",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/drizzle-orm",
+      "repository": "https://github.com/drizzle-team/drizzle-orm",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "logrocket@10.1.0",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/logrocket",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "passport-jwt@4.0.1",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/passport-jwt",
+      "repository": "https://github.com/mikenicholson/passport-jwt",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "passport@0.7.0",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/passport",
+      "repository": "https://github.com/jaredhanson/passport",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "pg@8.16.3",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/pg",
+      "repository": "https://github.com/brianc/node-postgres",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "redis@5.8.2",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/redis",
+      "repository": "https://github.com/redis/node-redis",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "reflect-metadata@0.2.2",
+      "license": "Apache-2.0",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/reflect-metadata",
+      "repository": "https://github.com/rbuckton/reflect-metadata",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "rxjs@7.8.2",
+      "license": "Apache-2.0",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/rxjs",
+      "repository": "https://github.com/reactivex/rxjs",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "swagger-ui-express@5.0.1",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/swagger-ui-express",
+      "repository": "https://github.com/scottie1984/swagger-ui-express",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "uuid@13.0.0",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/uuid",
+      "repository": "https://github.com/uuidjs/uuid",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "@repo/ui@0.0.0",
+      "license": "UNLICENSED",
+      "path": "/Users/jason/projects/wellflow/apps/docs/node_modules/@repo/ui",
+      "workspace": "apps/docs"
+    },
+    {
+      "name": "docs@0.1.0",
+      "license": "UNLICENSED",
+      "path": "/Users/jason/projects/wellflow/apps/docs",
+      "workspace": "apps/docs"
+    },
+    {
+      "name": "next@15.5.0",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/docs/node_modules/next",
+      "repository": "https://github.com/vercel/next.js",
+      "workspace": "apps/docs"
+    },
+    {
+      "name": "react-dom@19.1.0",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/docs/node_modules/react-dom",
+      "repository": "https://github.com/facebook/react",
+      "workspace": "apps/docs"
+    },
+    {
+      "name": "react@19.1.0",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/docs/node_modules/react",
+      "repository": "https://github.com/facebook/react",
+      "workspace": "apps/docs"
+    }
+  ],
+  "violations": [],
+  "reviewRequired": [],
+  "unknown": [],
+  "summary": {
+    "totalPackages": 39,
+    "compliantPackages": 39,
+    "violationPackages": 0,
+    "reviewPackages": 0,
+    "unknownPackages": 0
+  }
+}

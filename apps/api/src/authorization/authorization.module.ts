@@ -10,4 +10,5 @@ import { AbilitiesGuard } from './abilities.guard';
   providers: [AbilitiesFactory, AbilitiesGuard],
   exports: [AbilitiesFactory, AbilitiesGuard],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class AuthorizationModule {}

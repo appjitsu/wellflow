@@ -1,0 +1,128 @@
+{
+  "name": "WellFlow Security Configuration",
+  "description": "Security scanning configuration for oil & gas production monitoring platform",
+  "version": "1.0.0",
+
+  "auditConfig": {
+    "levels": {
+      "critical": {
+        "action": "fail",
+        "maxAge": 0,
+        "description": "Critical vulnerabilities must be fixed immediately"
+      },
+      "high": {
+        "action": "warn",
+        "maxAge": 7,
+        "description": "High vulnerabilities must be fixed within 7 days"
+      },
+      "moderate": {
+        "action": "warn",
+        "maxAge": 30,
+        "description": "Moderate vulnerabilities must be fixed within 30 days"
+      },
+      "low": {
+        "action": "info",
+        "maxAge": 90,
+        "description": "Low vulnerabilities should be fixed within 90 days"
+      }
+    },
+
+    "excludePackages": [
+      "// Add packages to exclude from security scanning if needed",
+      "// Example: development-only packages with known issues"
+    ],
+
+    "allowedLicenses": ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC", "CC0-1.0", "Unlicense"],
+
+    "blockedLicenses": [
+      "GPL-2.0",
+      "GPL-3.0",
+      "AGPL-1.0",
+      "AGPL-3.0",
+      "LGPL-2.0",
+      "LGPL-2.1",
+      "LGPL-3.0",
+      "CPAL-1.0",
+      "EPL-1.0",
+      "EPL-2.0"
+    ]
+  },
+
+  "scanningTools": {
+    "npmAudit": {
+      "enabled": true,
+      "command": "pnpm audit",
+      "reportFormat": "json",
+      "failOnLevel": "moderate"
+    },
+
+    "snyk": {
+      "enabled": false,
+      "command": "snyk test",
+      "reportFormat": "json",
+      "failOnLevel": "high",
+      "note": "Requires Snyk CLI installation and authentication"
+    },
+
+    "dependencyCheck": {
+      "enabled": false,
+      "command": "dependency-check",
+      "reportFormat": "json",
+      "note": "OWASP Dependency Check - requires Java"
+    }
+  },
+
+  "reporting": {
+    "outputDir": "./security-reports",
+    "formats": ["json", "html", "csv"],
+    "includeDevDependencies": false,
+    "includePeerDependencies": true,
+    "generateSummary": true
+  },
+
+  "compliance": {
+    "industry": "oil-and-gas",
+    "standards": [
+      "NIST Cybersecurity Framework",
+      "IEC 62443 (Industrial Cybersecurity)",
+      "API 1164 (Pipeline SCADA Security)"
+    ],
+    "auditTrail": {
+      "enabled": true,
+      "retentionDays": 2555,
+      "includeRemediation": true
+    }
+  },
+
+  "notifications": {
+    "critical": {
+      "channels": ["email", "slack", "sentry"],
+      "immediate": true
+    },
+    "high": {
+      "channels": ["email", "slack"],
+      "immediate": false,
+      "schedule": "daily"
+    },
+    "moderate": {
+      "channels": ["email"],
+      "schedule": "weekly"
+    }
+  },
+
+  "automation": {
+    "autoFix": {
+      "enabled": true,
+      "levels": ["low", "moderate"],
+      "requireApproval": true,
+      "createPR": true
+    },
+
+    "scheduling": {
+      "dailyScan": true,
+      "weeklyScan": true,
+      "monthlyScan": true,
+      "onDependencyUpdate": true
+    }
+  }
+}

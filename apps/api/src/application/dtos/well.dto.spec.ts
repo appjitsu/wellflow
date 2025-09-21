@@ -12,15 +12,12 @@ describe('WellDto', () => {
   beforeEach(() => {
     // Create a mock Well entity
     const apiNumber = new ApiNumber('4212345678');
-    const location = new Location(
-      new Coordinates(32.7767, -96.7970),
-      {
-        address: '123 Main St',
-        county: 'Dallas',
-        state: 'TX',
-        country: 'USA',
-      }
-    );
+    const location = new Location(new Coordinates(32.7767, -96.797), {
+      address: '123 Main St',
+      county: 'Dallas',
+      state: 'TX',
+      country: 'USA',
+    });
 
     mockWell = new Well(
       'well-123',
@@ -33,7 +30,7 @@ describe('WellDto', () => {
         leaseId: 'lease-789',
         spudDate: new Date('2024-01-15'),
         totalDepth: 8500,
-      }
+      },
     );
 
     // Create WellDto manually for testing
@@ -48,7 +45,7 @@ describe('WellDto', () => {
     wellDto.location = {
       coordinates: {
         latitude: 32.7767,
-        longitude: -96.7970,
+        longitude: -96.797,
       },
       address: '123 Main St',
       county: 'Dallas',
@@ -120,7 +117,7 @@ describe('WellDto', () => {
     it('should have correct location structure', () => {
       expect(wellDto.location.coordinates).toBeDefined();
       expect(wellDto.location.coordinates.latitude).toBe(32.7767);
-      expect(wellDto.location.coordinates.longitude).toBe(-96.7970);
+      expect(wellDto.location.coordinates.longitude).toBe(-96.797);
       expect(wellDto.location.address).toBe('123 Main St');
       expect(wellDto.location.county).toBe('Dallas');
       expect(wellDto.location.state).toBe('TX');
@@ -147,26 +144,35 @@ describe('WellDto', () => {
     it('should create WellDto from Well entity', () => {
       // Mock the Well entity methods
       jest.spyOn(mockWell, 'getId').mockReturnValue('well-123');
-      jest.spyOn(mockWell, 'getApiNumber').mockReturnValue(new ApiNumber('4212345678'));
+      jest
+        .spyOn(mockWell, 'getApiNumber')
+        .mockReturnValue(new ApiNumber('4212345678'));
       jest.spyOn(mockWell, 'getName').mockReturnValue('Test Well #1');
       jest.spyOn(mockWell, 'getOperatorId').mockReturnValue('operator-456');
       jest.spyOn(mockWell, 'getLeaseId').mockReturnValue('lease-789');
       jest.spyOn(mockWell, 'getWellType').mockReturnValue(WellType.OIL);
       jest.spyOn(mockWell, 'getStatus').mockReturnValue(WellStatus.DRILLING);
-      jest.spyOn(mockWell, 'getLocation').mockReturnValue({
-        toObject: () => ({
-          coordinates: { latitude: 32.7767, longitude: -96.7970 },
-          address: '123 Main St',
-          county: 'Dallas',
-          state: 'TX',
-          country: 'USA',
-        }),
-      } as any);
-      jest.spyOn(mockWell, 'getSpudDate').mockReturnValue(new Date('2024-01-15'));
-      jest.spyOn(mockWell, 'getCompletionDate').mockReturnValue(new Date('2024-02-15'));
+      // Create a proper Location mock with correct typing
+      const mockLocation = new Location(new Coordinates(32.7767, -96.797), {
+        address: '123 Main St',
+        county: 'Dallas',
+        state: 'TX',
+        country: 'USA',
+      });
+      jest.spyOn(mockWell, 'getLocation').mockReturnValue(mockLocation);
+      jest
+        .spyOn(mockWell, 'getSpudDate')
+        .mockReturnValue(new Date('2024-01-15'));
+      jest
+        .spyOn(mockWell, 'getCompletionDate')
+        .mockReturnValue(new Date('2024-02-15'));
       jest.spyOn(mockWell, 'getTotalDepth').mockReturnValue(8500);
-      jest.spyOn(mockWell, 'getCreatedAt').mockReturnValue(new Date('2024-01-01'));
-      jest.spyOn(mockWell, 'getUpdatedAt').mockReturnValue(new Date('2024-01-16'));
+      jest
+        .spyOn(mockWell, 'getCreatedAt')
+        .mockReturnValue(new Date('2024-01-01'));
+      jest
+        .spyOn(mockWell, 'getUpdatedAt')
+        .mockReturnValue(new Date('2024-01-16'));
       jest.spyOn(mockWell, 'getVersion').mockReturnValue(1);
 
       const dto = WellDto.fromEntity(mockWell);
@@ -179,7 +185,7 @@ describe('WellDto', () => {
       expect(dto.wellType).toBe(WellType.OIL);
       expect(dto.status).toBe(WellStatus.DRILLING);
       expect(dto.location.coordinates.latitude).toBe(32.7767);
-      expect(dto.location.coordinates.longitude).toBe(-96.7970);
+      expect(dto.location.coordinates.longitude).toBe(-96.797);
       expect(dto.spudDate).toEqual(new Date('2024-01-15'));
       expect(dto.completionDate).toEqual(new Date('2024-02-15'));
       expect(dto.totalDepth).toBe(8500);
@@ -190,23 +196,28 @@ describe('WellDto', () => {
 
     it('should handle entity with null optional fields', () => {
       jest.spyOn(mockWell, 'getId').mockReturnValue('well-minimal');
-      jest.spyOn(mockWell, 'getApiNumber').mockReturnValue(new ApiNumber('4212345679'));
+      jest
+        .spyOn(mockWell, 'getApiNumber')
+        .mockReturnValue(new ApiNumber('4212345679'));
       jest.spyOn(mockWell, 'getName').mockReturnValue('Minimal Well');
       jest.spyOn(mockWell, 'getOperatorId').mockReturnValue('operator-123');
       jest.spyOn(mockWell, 'getLeaseId').mockReturnValue(undefined);
       jest.spyOn(mockWell, 'getWellType').mockReturnValue(WellType.GAS);
       jest.spyOn(mockWell, 'getStatus').mockReturnValue(WellStatus.PLANNED);
-      jest.spyOn(mockWell, 'getLocation').mockReturnValue({
-        toObject: () => ({
-          coordinates: { latitude: 29.7604, longitude: -95.3698 },
-          country: 'USA',
-        }),
-      } as any);
+      // Create a proper Location mock with correct typing
+      const mockLocationMinimal = new Location(
+        new Coordinates(29.7604, -95.3698),
+      );
+      jest.spyOn(mockWell, 'getLocation').mockReturnValue(mockLocationMinimal);
       jest.spyOn(mockWell, 'getSpudDate').mockReturnValue(undefined);
       jest.spyOn(mockWell, 'getCompletionDate').mockReturnValue(undefined);
       jest.spyOn(mockWell, 'getTotalDepth').mockReturnValue(undefined);
-      jest.spyOn(mockWell, 'getCreatedAt').mockReturnValue(new Date('2024-01-01'));
-      jest.spyOn(mockWell, 'getUpdatedAt').mockReturnValue(new Date('2024-01-01'));
+      jest
+        .spyOn(mockWell, 'getCreatedAt')
+        .mockReturnValue(new Date('2024-01-01'));
+      jest
+        .spyOn(mockWell, 'getUpdatedAt')
+        .mockReturnValue(new Date('2024-01-01'));
       jest.spyOn(mockWell, 'getVersion').mockReturnValue(1);
 
       const dto = WellDto.fromEntity(mockWell);
@@ -222,7 +233,15 @@ describe('WellDto', () => {
   describe('serialization', () => {
     it('should serialize to JSON correctly', () => {
       const json = JSON.stringify(wellDto);
-      const parsed = JSON.parse(json);
+      const parsed = JSON.parse(json) as {
+        id: string;
+        apiNumber: string;
+        name: string;
+        wellType: string;
+        status: string;
+        location: { coordinates: { latitude: number; longitude: number } };
+        version: number;
+      };
 
       expect(parsed.id).toBe('well-123');
       expect(parsed.apiNumber).toBe('42-123-45678');
@@ -235,7 +254,12 @@ describe('WellDto', () => {
 
     it('should handle date serialization', () => {
       const json = JSON.stringify(wellDto);
-      const parsed = JSON.parse(json);
+      const parsed = JSON.parse(json) as {
+        spudDate: string;
+        completionDate: string;
+        createdAt: string;
+        updatedAt: string;
+      };
 
       expect(parsed.spudDate).toBe('2024-01-15T00:00:00.000Z');
       expect(parsed.completionDate).toBe('2024-02-15T00:00:00.000Z');
@@ -288,7 +312,9 @@ describe('WellDto', () => {
 
       // Multiple accesses should return same values
       expect(wellDto.id).toBe(wellDto.id);
-      expect(wellDto.location.coordinates.latitude).toBe(wellDto.location.coordinates.latitude);
+      expect(wellDto.location.coordinates.latitude).toBe(
+        wellDto.location.coordinates.latitude,
+      );
     });
   });
 });

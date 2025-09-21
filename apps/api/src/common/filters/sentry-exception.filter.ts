@@ -26,17 +26,16 @@ export class SentryExceptionFilter implements ExceptionFilter {
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
-      const exceptionResponse = exception.getResponse();
+      const exceptionResponse = exception.getResponse() as
+        | string
+        | Record<string, unknown>;
 
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
-      } else if (
-        typeof exceptionResponse === 'object' &&
-        exceptionResponse !== null
-      ) {
-        const responseObj = exceptionResponse as any;
-        message = responseObj.message || message;
-        error = responseObj.error || error;
+      } else if (exceptionResponse && typeof exceptionResponse === 'object') {
+        const responseObj = exceptionResponse;
+        message = (responseObj.message as string) || message;
+        error = (responseObj.error as string) || error;
       }
     } else if (exception instanceof Error) {
       message = exception.message;
@@ -50,14 +49,18 @@ export class SentryExceptionFilter implements ExceptionFilter {
     );
 
     // Send to Sentry for non-4xx errors or specific 4xx errors we want to track
-    if (status >= 500 || status === 401 || status === 403) {
+    if (
+      status >= HttpStatus.INTERNAL_SERVER_ERROR ||
+      status === HttpStatus.UNAUTHORIZED ||
+      status === HttpStatus.FORBIDDEN
+    ) {
       this.sentryService.setExtra('request', {
         method: request.method,
         url: request.url,
         headers: this.sanitizeHeaders(request.headers),
-        body: request.body,
-        query: request.query,
-        params: request.params,
+        body: request.body as unknown,
+        query: request.query as unknown,
+        params: request.params as unknown,
       });
 
       this.sentryService.setExtra('response', {
@@ -67,8 +70,13 @@ export class SentryExceptionFilter implements ExceptionFilter {
       });
 
       if (exception instanceof Error) {
-        this.sentryService.captureException(exception, 'HTTP_EXCEPTION');
+        this.sentryService
+          .captureException(exception, 'HTTP_EXCEPTION')
+          .catch(() => {
+            // Sentry capture errors are logged internally, no additional handling needed
+          });
       } else {
+        // captureMessage is synchronous, no need for promise handling
         this.sentryService.captureMessage(
           `HTTP Exception: ${message}`,
           'error',
@@ -88,7 +96,9 @@ export class SentryExceptionFilter implements ExceptionFilter {
     });
   }
 
-  private sanitizeHeaders(headers: any): any {
+  private sanitizeHeaders(
+    headers: Record<string, unknown>,
+  ): Record<string, unknown> {
     const sanitized = { ...headers };
 
     // Remove sensitive headers

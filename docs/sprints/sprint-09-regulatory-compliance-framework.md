@@ -106,19 +106,19 @@ interface ComplianceReport {
 }
 
 enum ComplianceReportType {
-  FORM_PR = "form_pr",
-  SEVERANCE_TAX = "severance_tax",
-  ROYALTY_REPORT = "royalty_report",
-  ENVIRONMENTAL = "environmental",
+  FORM_PR = 'form_pr',
+  SEVERANCE_TAX = 'severance_tax',
+  ROYALTY_REPORT = 'royalty_report',
+  ENVIRONMENTAL = 'environmental',
 }
 
 enum ComplianceStatus {
-  DRAFT = "draft",
-  READY = "ready",
-  SUBMITTED = "submitted",
-  APPROVED = "approved",
-  REJECTED = "rejected",
-  OVERDUE = "overdue",
+  DRAFT = 'draft',
+  READY = 'ready',
+  SUBMITTED = 'submitted',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+  OVERDUE = 'overdue',
 }
 ```
 
@@ -144,7 +144,7 @@ interface FormField {
   id: string;
   name: string;
   label: string;
-  type: "text" | "number" | "date" | "select" | "calculated";
+  type: 'text' | 'number' | 'date' | 'select' | 'calculated';
   required: boolean;
   validation?: FieldValidation;
   dataSource?: string; // Maps to production data field
@@ -159,7 +159,7 @@ interface FormField {
 export class ComplianceDeadlineService {
   calculateDeadlines(
     organizationId: string,
-    year: number,
+    year: number
   ): Promise<ComplianceDeadline[]> {
     const deadlines: ComplianceDeadline[] = [];
 
@@ -168,7 +168,7 @@ export class ComplianceDeadlineService {
       const dueDate = this.getLastWorkingDay(year, month);
       deadlines.push({
         reportType: ComplianceReportType.FORM_PR,
-        stateJurisdiction: "TX",
+        stateJurisdiction: 'TX',
         reportingPeriod: this.getMonthRange(year, month - 1),
         dueDate,
         alertDates: this.calculateAlertDates(dueDate),

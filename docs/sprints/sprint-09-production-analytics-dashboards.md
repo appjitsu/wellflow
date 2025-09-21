@@ -94,12 +94,12 @@ export class ProductionAnalyticsService {
   async calculateDeclineCurve(
     wellId: string,
     startDate: Date,
-    endDate: Date,
+    endDate: Date
   ): Promise<DeclineCurveResult> {
     const productionData = await this.getProductionData(
       wellId,
       startDate,
-      endDate,
+      endDate
     );
 
     // Calculate decline parameters
@@ -110,12 +110,12 @@ export class ProductionAnalyticsService {
     const forecast = this.generateForecast(
       initialRate,
       declineRate,
-      "exponential",
+      'exponential'
     );
 
     return {
       wellId,
-      declineType: "exponential",
+      declineType: 'exponential',
       initialRate,
       declineRate,
       forecast,
@@ -192,12 +192,12 @@ export class DeclineCurveCalculator {
     qi: number,
     D: number,
     declineType: DeclineType,
-    economicLimit: number,
+    economicLimit: number
   ): number {
     switch (declineType) {
-      case "exponential":
+      case 'exponential':
         return (qi - economicLimit) / D;
-      case "harmonic":
+      case 'harmonic':
         return (qi * Math.log(qi / economicLimit)) / D;
       default:
         throw new Error(`Unsupported decline type: ${declineType}`);

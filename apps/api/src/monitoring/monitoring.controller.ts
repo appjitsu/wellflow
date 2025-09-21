@@ -1,4 +1,11 @@
-import { Controller, Get, Post, Body, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SentryService } from '../sentry/sentry.service';
 import { LogRocketService } from '../logrocket/logrocket.service';
@@ -35,7 +42,7 @@ export class MonitoringController {
   @ApiResponse({ status: 500, description: 'Test error thrown' })
   testError(@Body() body?: { message?: string }) {
     const errorMessage = body?.message || 'Test API error for monitoring';
-    
+
     // Log to LogRocket before throwing error
     this.logRocketService.log('About to throw test error', 'warn', {
       requestedMessage: body?.message,
@@ -49,9 +56,11 @@ export class MonitoringController {
   @Post('test-log')
   @ApiOperation({ summary: 'Test logging (LogRocket)' })
   @ApiResponse({ status: 200, description: 'Log message sent' })
-  testLog(@Body() body: { message: string; level?: 'info' | 'warn' | 'error' }) {
+  testLog(
+    @Body() body: { message: string; level?: 'info' | 'warn' | 'error' },
+  ) {
     const { message, level = 'info' } = body;
-    
+
     // Log to LogRocket
     this.logRocketService.log(message, level, {
       endpoint: '/monitoring/test-log',
@@ -60,7 +69,11 @@ export class MonitoringController {
 
     // Also capture in Sentry as a message
     const sentryLevel = level === 'warn' ? 'warning' : level;
-    this.sentryService.captureMessage(`API Log: ${message}`, sentryLevel as any, 'TEST_LOG');
+    this.sentryService.captureMessage(
+      `API Log: ${message}`,
+      sentryLevel as 'debug' | 'info' | 'warning' | 'error' | 'fatal',
+      'TEST_LOG',
+    );
 
     return {
       success: true,
@@ -72,9 +85,11 @@ export class MonitoringController {
   @Post('test-track')
   @ApiOperation({ summary: 'Test event tracking (LogRocket)' })
   @ApiResponse({ status: 200, description: 'Event tracked' })
-  testTrack(@Body() body: { event: string; properties?: Record<string, any> }) {
+  testTrack(
+    @Body() body: { event: string; properties?: Record<string, unknown> },
+  ) {
     const { event, properties = {} } = body;
-    
+
     // Track event in LogRocket
     this.logRocketService.track(event, {
       ...properties,
@@ -92,9 +107,11 @@ export class MonitoringController {
   @Post('identify-user')
   @ApiOperation({ summary: 'Test user identification (LogRocket + Sentry)' })
   @ApiResponse({ status: 200, description: 'User identified' })
-  identifyUser(@Body() body: { userId: string; email?: string; username?: string }) {
+  identifyUser(
+    @Body() body: { userId: string; email?: string; username?: string },
+  ) {
     const { userId, email, username } = body;
-    
+
     // Set user context in both services
     this.sentryService.setUser({ id: userId, email, username });
 
@@ -118,7 +135,7 @@ export class MonitoringController {
     }
 
     const sessionURL = await this.logRocketService.getSessionURL();
-    
+
     return {
       success: true,
       message: 'LogRocket session URL retrieved',

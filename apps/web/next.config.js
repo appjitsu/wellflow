@@ -15,10 +15,13 @@ const nextConfig = {
 // Sentry configuration
 const sentryWebpackPluginOptions = {
   // Additional config options for the Sentry webpack plugin
+  // eslint-disable-next-line no-undef
   org: process.env.SENTRY_ORG,
+  // eslint-disable-next-line no-undef
   project: process.env.SENTRY_PROJECT_WEB,
 
   // Only print logs for uploading source maps in CI
+  // eslint-disable-next-line no-undef
   silent: !process.env.CI,
 
   // For all available options, see:
@@ -34,7 +37,7 @@ const sentryWebpackPluginOptions = {
   // This can increase your server load as well as your hosting bill.
   // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
   // side errors will fail.
-  tunnelRoute: "/monitoring",
+  tunnelRoute: '/monitoring',
 
   // Hides source maps from generated client bundles
   hideSourceMaps: true,

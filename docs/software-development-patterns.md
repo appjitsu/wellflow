@@ -1,12 +1,16 @@
 # WellFlow Software Development Patterns
 
-This document outlines the comprehensive software development patterns implemented in WellFlow, specifically designed for the oil & gas industry's complex requirements.
+This document outlines the comprehensive software development patterns
+implemented in WellFlow, specifically designed for the oil & gas industry's
+complex requirements.
 
 ## 🏗️ Architectural Patterns
 
 ### 1. Clean Architecture / Hexagonal Architecture
 
-**Why Needed**: Oil & gas applications must integrate with multiple external systems (regulatory APIs, equipment sensors, third-party services) while maintaining independence from frameworks and external dependencies.
+**Why Needed**: Oil & gas applications must integrate with multiple external
+systems (regulatory APIs, equipment sensors, third-party services) while
+maintaining independence from frameworks and external dependencies.
 
 **Implementation**:
 
@@ -34,7 +38,7 @@ export class Well {
 
   public updateStatus(newStatus: WellStatus): void {
     if (!this.canTransitionTo(newStatus)) {
-      throw new Error("Invalid status transition");
+      throw new Error('Invalid status transition');
     }
     // Business logic here
   }
@@ -53,7 +57,8 @@ export class UpdateWellStatusHandler {
 
 ### 2. Domain-Driven Design (DDD)
 
-**Why Needed**: Oil & gas has complex business domains with specific terminology, regulations, and workflows that must be accurately modeled.
+**Why Needed**: Oil & gas has complex business domains with specific
+terminology, regulations, and workflows that must be accurately modeled.
 
 **Key Components**:
 
@@ -79,7 +84,7 @@ export class Well extends AggregateRoot {
       this.id,
       this.status,
       newStatus,
-      updatedBy,
+      updatedBy
     );
     this.apply(event);
     this.status = newStatus;
@@ -90,7 +95,7 @@ export class Well extends AggregateRoot {
 export class ApiNumber {
   constructor(private readonly value: string) {
     if (!this.isValid(value)) {
-      throw new Error("Invalid API number format");
+      throw new Error('Invalid API number format');
     }
   }
 
@@ -102,7 +107,8 @@ export class ApiNumber {
 
 ### 3. Event-Driven Architecture
 
-**Why Needed**: Real-time monitoring, regulatory notifications, and system integrations require asynchronous event processing.
+**Why Needed**: Real-time monitoring, regulatory notifications, and system
+integrations require asynchronous event processing.
 
 **Benefits**:
 
@@ -120,7 +126,7 @@ export class WellStatusChangedEvent {
     public readonly wellId: string,
     public readonly previousStatus: WellStatus,
     public readonly newStatus: WellStatus,
-    public readonly updatedBy: string,
+    public readonly updatedBy: string
   ) {}
 }
 
@@ -141,7 +147,8 @@ export class WellStatusChangedHandler {
 
 ### 4. CQRS (Command Query Responsibility Segregation)
 
-**Why Needed**: Separates read and write operations for better performance, scalability, and different data models for queries vs commands.
+**Why Needed**: Separates read and write operations for better performance,
+scalability, and different data models for queries vs commands.
 
 **Benefits**:
 
@@ -173,7 +180,8 @@ export class GetWellsByOperatorHandler {
 
 ### 5. Strategy Pattern
 
-**Why Needed**: Different calculation methods and regulatory rules vary by state and operation type.
+**Why Needed**: Different calculation methods and regulatory rules vary by state
+and operation type.
 
 **Benefits**:
 
@@ -219,7 +227,8 @@ export class ProductionService {
 
 ### 6. Observer/Pub-Sub Pattern
 
-**Why Needed**: Real-time notifications, audit logging, and system integrations require event broadcasting.
+**Why Needed**: Real-time notifications, audit logging, and system integrations
+require event broadcasting.
 
 **Benefits**:
 
@@ -246,7 +255,7 @@ export class WellService {
 @EventsHandler(WellStatusChangedEvent)
 export class AuditLogger {
   handle(event: WellStatusChangedEvent): void {
-    this.auditService.log("WELL_STATUS_CHANGED", event);
+    this.auditService.log('WELL_STATUS_CHANGED', event);
   }
 }
 
@@ -262,7 +271,8 @@ export class NotificationService {
 
 ### 7. Circuit Breaker Pattern
 
-**Why Needed**: External API failures (regulatory systems, equipment APIs) shouldn't crash the entire system.
+**Why Needed**: External API failures (regulatory systems, equipment APIs)
+shouldn't crash the entire system.
 
 **Benefits**:
 
@@ -282,7 +292,7 @@ export class RegulatoryApiService {
       timeout: 5000,
       errorThresholdPercentage: 50,
       resetTimeout: 30000,
-    },
+    }
   );
 
   async submitReport(report: ProductionReport): Promise<void> {
@@ -291,7 +301,7 @@ export class RegulatoryApiService {
     } catch (error) {
       // Fallback: Queue for later submission
       await this.queueService.addToRetryQueue(report);
-      throw new ServiceUnavailableException("Regulatory API unavailable");
+      throw new ServiceUnavailableException('Regulatory API unavailable');
     }
   }
 }
@@ -299,7 +309,8 @@ export class RegulatoryApiService {
 
 ### 8. Retry Pattern with Exponential Backoff
 
-**Why Needed**: Network failures and temporary service outages are common in industrial environments.
+**Why Needed**: Network failures and temporary service outages are common in
+industrial environments.
 
 **Benefits**:
 
@@ -323,7 +334,7 @@ export class EquipmentApiService {
         factor: 2,
         minTimeout: 1000,
         maxTimeout: 10000,
-      },
+      }
     );
   }
 }
@@ -333,7 +344,8 @@ export class EquipmentApiService {
 
 ### 9. Repository Pattern
 
-**Why Needed**: Abstracts data access logic and provides a consistent interface for different data sources.
+**Why Needed**: Abstracts data access logic and provides a consistent interface
+for different data sources.
 
 **Benefits**:
 
@@ -366,7 +378,8 @@ export class WellRepositoryImpl implements WellRepository {
 
 ### 10. Unit of Work Pattern
 
-**Why Needed**: Ensures transactional consistency across multiple aggregates and operations.
+**Why Needed**: Ensures transactional consistency across multiple aggregates and
+operations.
 
 **Benefits**:
 
@@ -382,7 +395,7 @@ export class WellRepositoryImpl implements WellRepository {
 export class WellManagementService {
   async transferWellOwnership(
     wellId: string,
-    newOperatorId: string,
+    newOperatorId: string
   ): Promise<void> {
     await this.unitOfWork.transaction(async (uow) => {
       const well = await uow.wells.findById(wellId);
@@ -406,7 +419,8 @@ export class WellManagementService {
 
 ### 11. Role-Based Access Control (RBAC) with CASL
 
-**Why Needed**: Fine-grained permissions for multi-tenant operations and regulatory compliance.
+**Why Needed**: Fine-grained permissions for multi-tenant operations and
+regulatory compliance.
 
 **Benefits**:
 
@@ -446,7 +460,8 @@ async updateWellStatus(@Param('id') id: string, @Body() dto: UpdateWellStatusDto
 
 ### 12. Audit Trail Pattern
 
-**Why Needed**: Regulatory compliance requires detailed logging of all operations and changes.
+**Why Needed**: Regulatory compliance requires detailed logging of all
+operations and changes.
 
 **Benefits**:
 
@@ -473,7 +488,7 @@ export class AuditLogInterceptor implements NestInterceptor {
           timestamp: new Date(),
           ipAddress: request.ip,
         });
-      }),
+      })
     );
   }
 }
@@ -483,7 +498,8 @@ export class AuditLogInterceptor implements NestInterceptor {
 
 ### 13. Cache-Aside Pattern
 
-**Why Needed**: Well data and production metrics are frequently accessed but change infrequently.
+**Why Needed**: Well data and production metrics are frequently accessed but
+change infrequently.
 
 **Benefits**:
 
@@ -518,7 +534,8 @@ export class WellService {
 
 ### 14. Lazy Loading Pattern
 
-**Why Needed**: Large datasets and complex relationships should be loaded on-demand.
+**Why Needed**: Large datasets and complex relationships should be loaded
+on-demand.
 
 **Benefits**:
 
@@ -536,7 +553,7 @@ export class Well {
   async getProductionData(): Promise<ProductionData[]> {
     if (!this._productionData) {
       this._productionData = await this.productionRepository.findByWell(
-        this.id,
+        this.id
       );
     }
     return this._productionData;
@@ -548,7 +565,8 @@ export class Well {
 
 ### 15. Adapter Pattern
 
-**Why Needed**: Different implementations for web and mobile platforms while maintaining consistent interfaces.
+**Why Needed**: Different implementations for web and mobile platforms while
+maintaining consistent interfaces.
 
 **Benefits**:
 
@@ -575,7 +593,7 @@ export class WebLocationAdapter implements LocationService {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
           }),
-        reject,
+        reject
       );
     });
   }
@@ -597,7 +615,8 @@ export class MobileLocationAdapter implements LocationService {
 
 ### 16. State Machine Pattern
 
-**Why Needed**: Well lifecycle has specific state transitions with business rules and regulatory requirements.
+**Why Needed**: Well lifecycle has specific state transitions with business
+rules and regulatory requirements.
 
 **Benefits**:
 
@@ -696,19 +715,19 @@ export class WellStateMachine {
 
 ```typescript
 // Domain Entity Testing
-describe("Well", () => {
-  it("should not allow invalid status transitions", () => {
+describe('Well', () => {
+  it('should not allow invalid status transitions', () => {
     const well = Well.create({ status: WellStatus.PLUGGED });
 
     expect(() => {
       well.updateStatus(WellStatus.DRILLING);
-    }).toThrow("Invalid status transition");
+    }).toThrow('Invalid status transition');
   });
 });
 
 // Command Handler Testing
-describe("CreateWellHandler", () => {
-  it("should create well and publish event", async () => {
+describe('CreateWellHandler', () => {
+  it('should create well and publish event', async () => {
     const mockRepository = createMock<WellRepository>();
     const mockEventBus = createMock<EventBus>();
 
@@ -718,7 +737,7 @@ describe("CreateWellHandler", () => {
 
     expect(mockRepository.save).toHaveBeenCalled();
     expect(mockEventBus.publish).toHaveBeenCalledWith(
-      expect.any(WellCreatedEvent),
+      expect.any(WellCreatedEvent)
     );
   });
 });
@@ -728,22 +747,22 @@ describe("CreateWellHandler", () => {
 
 ```typescript
 // API Integration Testing
-describe("WellsController", () => {
-  it("should require proper permissions", async () => {
+describe('WellsController', () => {
+  it('should require proper permissions', async () => {
     const response = await request(app)
-      .post("/wells")
-      .set("Authorization", "Bearer invalid-token")
+      .post('/wells')
+      .set('Authorization', 'Bearer invalid-token')
       .send(createWellDto);
 
     expect(response.status).toBe(403);
   });
 
-  it("should create well with valid permissions", async () => {
+  it('should create well with valid permissions', async () => {
     const operatorToken = await getOperatorToken();
 
     const response = await request(app)
-      .post("/wells")
-      .set("Authorization", `Bearer ${operatorToken}`)
+      .post('/wells')
+      .set('Authorization', `Bearer ${operatorToken}`)
       .send(createWellDto);
 
     expect(response.status).toBe(201);
@@ -761,9 +780,9 @@ describe("WellsController", () => {
 @Injectable()
 export class MetricsService {
   private circuitBreakerMetrics = new prometheus.Counter({
-    name: "circuit_breaker_trips_total",
-    help: "Total number of circuit breaker trips",
-    labelNames: ["service", "endpoint"],
+    name: 'circuit_breaker_trips_total',
+    help: 'Total number of circuit breaker trips',
+    labelNames: ['service', 'endpoint'],
   });
 
   recordCircuitBreakerTrip(service: string, endpoint: string): void {
@@ -775,9 +794,9 @@ export class MetricsService {
 @Injectable()
 export class CQRSMetrics {
   private commandDuration = new prometheus.Histogram({
-    name: "command_duration_seconds",
-    help: "Command execution duration",
-    labelNames: ["command_type"],
+    name: 'command_duration_seconds',
+    help: 'Command execution duration',
+    labelNames: ['command_type'],
   });
 
   recordCommandExecution(commandType: string, duration: number): void {
@@ -832,4 +851,6 @@ These patterns provide WellFlow with:
 - 📋 CQRS read model optimization
 - 📋 Real-time notifications
 
-This comprehensive pattern implementation ensures WellFlow meets the complex requirements of the oil & gas industry while maintaining code quality and developer productivity.
+This comprehensive pattern implementation ensures WellFlow meets the complex
+requirements of the oil & gas industry while maintaining code quality and
+developer productivity.

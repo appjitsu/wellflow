@@ -1,7 +1,7 @@
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { Inject, NotFoundException } from '@nestjs/common';
 import { GetWellByIdQuery } from '../queries/get-well-by-id.query';
-import { WellRepository } from '../../domain/repositories/well.repository.interface';
+import type { WellRepository } from '../../domain/repositories/well.repository.interface';
 import { WellDto } from '../dtos/well.dto';
 
 /**

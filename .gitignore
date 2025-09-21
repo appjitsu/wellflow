@@ -36,3 +36,10 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# Security reports (contain sensitive vulnerability information)
+security-reports/
+*.security-report.*
+security-audit-report.json
+license-report.json
+outdated-report.json

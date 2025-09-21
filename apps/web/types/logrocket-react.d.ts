@@ -1,7 +1,3 @@
-declare module "logrocket-react" {
-  import LogRocket from "logrocket";
-
-  export default function setupLogRocketReact(
-    LogRocket: typeof LogRocket,
-  ): void;
+declare module 'logrocket-react' {
+  export default function setupLogRocketReact(LogRocket: unknown): void;
 }

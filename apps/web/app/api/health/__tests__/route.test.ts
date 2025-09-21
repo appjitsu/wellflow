@@ -83,10 +83,10 @@ describe('/api/health', () => {
     await Promise.all(promises);
 
     expect(NextResponse.json).toHaveBeenCalledTimes(3);
-    
+
     // All calls should have the same structure
     const calls = (NextResponse.json as jest.Mock).mock.calls;
-    calls.forEach(call => {
+    calls.forEach((call) => {
       expect(call[0]).toEqual({
         status: 'ok',
         timestamp: '2024-01-01T00:00:00.000Z',

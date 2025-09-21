@@ -7,7 +7,7 @@ import { WellStatusChangedEvent } from '../events/well-status-changed.event';
 
 describe('Well', () => {
   const validApiNumber = new ApiNumber('42-123-45678');
-  const validCoordinates = new Coordinates(40.7128, -74.0060);
+  const validCoordinates = new Coordinates(40.7128, -74.006);
   const validLocation = new Location(validCoordinates, {
     address: '123 Main St',
     county: 'Test County',
@@ -399,7 +399,7 @@ describe('Well', () => {
         operatorId: 'operator-456',
         wellType: WellType.GAS,
         location: {
-          coordinates: { latitude: 32.7767, longitude: -96.7970 },
+          coordinates: { latitude: 32.7767, longitude: -96.797 },
           address: '456 Oak St',
           county: 'Dallas County',
           state: 'TX',
@@ -447,7 +447,9 @@ describe('Well', () => {
       );
 
       // Valid transitions from PLANNED
-      expect(() => plannedWell.updateStatus(WellStatus.PERMITTED, 'user')).not.toThrow();
+      expect(() =>
+        plannedWell.updateStatus(WellStatus.PERMITTED, 'user'),
+      ).not.toThrow();
 
       const plannedWell2 = new Well(
         'test-id-2',
@@ -458,7 +460,9 @@ describe('Well', () => {
         validLocation,
         { status: WellStatus.PLANNED },
       );
-      expect(() => plannedWell2.updateStatus(WellStatus.DRILLING, 'user')).not.toThrow();
+      expect(() =>
+        plannedWell2.updateStatus(WellStatus.DRILLING, 'user'),
+      ).not.toThrow();
 
       // Test PERMITTED transitions
       const permittedWell = new Well(
@@ -470,7 +474,9 @@ describe('Well', () => {
         validLocation,
         { status: WellStatus.PERMITTED },
       );
-      expect(() => permittedWell.updateStatus(WellStatus.DRILLING, 'user')).not.toThrow();
+      expect(() =>
+        permittedWell.updateStatus(WellStatus.DRILLING, 'user'),
+      ).not.toThrow();
 
       // Test terminal state (PLUGGED)
       const pluggedWell = new Well(
@@ -482,7 +488,9 @@ describe('Well', () => {
         validLocation,
         { status: WellStatus.PLUGGED },
       );
-      expect(() => pluggedWell.updateStatus(WellStatus.PRODUCING, 'user')).toThrow();
+      expect(() =>
+        pluggedWell.updateStatus(WellStatus.PRODUCING, 'user'),
+      ).toThrow();
     });
   });
 });

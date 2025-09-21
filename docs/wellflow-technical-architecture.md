@@ -107,7 +107,7 @@ graph TB
 
 **Infrastructure & Services:**
 
-- **Frontend Hosting**: Vercel (Next.js with edge functions)
+- **Frontend Hosting**: Railway (Next.js static deployment)
 - **Backend Hosting**: Railway (NestJS API containers)
 - **Database**: Railway PostgreSQL with TimescaleDB extension
 - **Cache/Jobs**: Railway Redis for BullMQ background processing
@@ -440,12 +440,12 @@ export class CaslAbilityFactory {
       Ability<[Action, Subjects]>
     >(Ability as AbilityClass<AppAbility>);
 
-    if (user.role === "owner") {
-      can(Action.Manage, "all");
-    } else if (user.role === "manager") {
+    if (user.role === 'owner') {
+      can(Action.Manage, 'all');
+    } else if (user.role === 'manager') {
       can(Action.Read, Well, { organizationId: user.organizationId });
       can(Action.Update, Production, { organizationId: user.organizationId });
-    } else if (user.role === "pumper") {
+    } else if (user.role === 'pumper') {
       can(Action.Create, Production, { organizationId: user.organizationId });
       can(Action.Read, Well, { organizationId: user.organizationId });
     }
@@ -613,7 +613,7 @@ abstract class ComplianceFormGenerator {
   // Common functionality available to all implementations
   protected validateProductionData(data: ProductionData[]): boolean {
     return data.every(
-      (record) => record.oilVolume >= 0 && record.gasVolume >= 0,
+      (record) => record.oilVolume >= 0 && record.gasVolume >= 0
     );
   }
 }
@@ -623,7 +623,7 @@ abstract class ComplianceFormGenerator {
 export class TexasFormPRGenerator extends ComplianceFormGenerator {
   async generateForm(data: ProductionData[]): Promise<TexasFormPR> {
     if (!this.validateProductionData(data)) {
-      throw new Error("Invalid production data");
+      throw new Error('Invalid production data');
     }
     // Texas-specific form generation logic
     return new TexasFormPR(data);
@@ -634,7 +634,7 @@ export class TexasFormPRGenerator extends ComplianceFormGenerator {
 export class OklahomaFormGenerator extends ComplianceFormGenerator {
   async generateForm(data: ProductionData[]): Promise<OklahomaForm> {
     if (!this.validateProductionData(data)) {
-      throw new Error("Invalid production data");
+      throw new Error('Invalid production data');
     }
     // Oklahoma-specific form generation logic
     return new OklahomaForm(data);
@@ -654,7 +654,7 @@ interface PaymentProcessor {
 export class StripePaymentProcessor implements PaymentProcessor {
   async processPayment(
     amount: number,
-    method: PaymentMethod,
+    method: PaymentMethod
   ): Promise<PaymentResult> {
     // Stripe implementation
   }
@@ -664,7 +664,7 @@ export class StripePaymentProcessor implements PaymentProcessor {
 export class PayPalPaymentProcessor implements PaymentProcessor {
   async processPayment(
     amount: number,
-    method: PaymentMethod,
+    method: PaymentMethod
   ): Promise<PaymentResult> {
     // PayPal implementation
   }
@@ -678,7 +678,7 @@ export class BillingService {
   async processJIBPayment(jibStatement: JIBStatement) {
     return this.paymentProcessor.processPayment(
       jibStatement.amount,
-      jibStatement.paymentMethod,
+      jibStatement.paymentMethod
     );
   }
 }
@@ -693,7 +693,7 @@ interface ProductionDataReader {
   getProductionByDateRange(
     wellId: string,
     start: Date,
-    end: Date,
+    end: Date
   ): Promise<ProductionRecord[]>;
 }
 
@@ -701,7 +701,7 @@ interface ProductionDataWriter {
   createProductionRecord(data: CreateProductionDto): Promise<ProductionRecord>;
   updateProductionRecord(
     id: string,
-    data: UpdateProductionDto,
+    data: UpdateProductionDto
   ): Promise<ProductionRecord>;
 }
 
@@ -759,13 +759,13 @@ export class TwilioSMSProvider implements SMSProvider {
 export class NotificationService {
   constructor(
     private emailProvider: EmailProvider,
-    private smsProvider: SMSProvider,
+    private smsProvider: SMSProvider
   ) {}
 
   async sendComplianceAlert(user: User, deadline: ComplianceDeadline) {
-    await this.emailProvider.sendEmail(user.email, "Compliance Alert", "...");
+    await this.emailProvider.sendEmail(user.email, 'Compliance Alert', '...');
     if (deadline.isUrgent && user.phoneNumber) {
-      await this.smsProvider.sendSMS(user.phoneNumber, "Urgent: ...");
+      await this.smsProvider.sendSMS(user.phoneNumber, 'Urgent: ...');
     }
   }
 }
@@ -784,7 +784,7 @@ export class CircuitBreakerService {
   async callWithCircuitBreaker<T>(
     serviceName: string,
     operation: () => Promise<T>,
-    options: CircuitBreakerOptions = {},
+    options: CircuitBreakerOptions = {}
   ): Promise<T> {
     let breaker = this.breakers.get(serviceName);
 
@@ -809,9 +809,9 @@ export class TexasRRCService {
 
   async submitFormPR(formData: FormPRData): Promise<SubmissionResult> {
     return this.circuitBreaker.callWithCircuitBreaker(
-      "texas-rrc-api",
-      () => this.httpClient.post("/api/form-pr", formData).toPromise(),
-      { timeout: 45000, errorThreshold: 30 },
+      'texas-rrc-api',
+      () => this.httpClient.post('/api/form-pr', formData).toPromise(),
+      { timeout: 45000, errorThreshold: 30 }
     );
   }
 }
@@ -825,37 +825,37 @@ export class TexasRRCService {
 export class JIBProcessingSaga {
   async executeJIBGeneration(
     wellId: string,
-    period: string,
+    period: string
   ): Promise<JIBResult> {
     const saga = new SagaOrchestrator();
 
     try {
       // Step 1: Calculate production data
       const productionData = await saga.execute(
-        "calculate-production",
+        'calculate-production',
         () => this.productionService.calculateMonthlyProduction(wellId, period),
-        () => this.productionService.rollbackCalculation(wellId, period),
+        () => this.productionService.rollbackCalculation(wellId, period)
       );
 
       // Step 2: Calculate expenses
       const expenses = await saga.execute(
-        "calculate-expenses",
+        'calculate-expenses',
         () => this.expenseService.calculateMonthlyExpenses(wellId, period),
-        () => this.expenseService.rollbackExpenses(wellId, period),
+        () => this.expenseService.rollbackExpenses(wellId, period)
       );
 
       // Step 3: Generate JIB statements
       const jibStatements = await saga.execute(
-        "generate-statements",
+        'generate-statements',
         () => this.jibService.generateStatements(productionData, expenses),
-        () => this.jibService.rollbackStatements(wellId, period),
+        () => this.jibService.rollbackStatements(wellId, period)
       );
 
       // Step 4: Send notifications
       await saga.execute(
-        "send-notifications",
+        'send-notifications',
         () => this.notificationService.sendJIBNotifications(jibStatements),
-        () => this.notificationService.rollbackNotifications(jibStatements),
+        () => this.notificationService.rollbackNotifications(jibStatements)
       );
 
       return { success: true, statements: jibStatements };
@@ -881,7 +881,7 @@ interface Specification<T> {
 class ProductionVolumeSpecification implements Specification<ProductionRecord> {
   constructor(
     private minVolume: number,
-    private maxVolume: number,
+    private maxVolume: number
   ) {}
 
   isSatisfiedBy(record: ProductionRecord): boolean {
@@ -931,7 +931,7 @@ interface ProductionRepository {
   findByDateRange(
     wellId: string,
     start: Date,
-    end: Date,
+    end: Date
   ): Promise<ProductionRecord[]>;
   create(data: CreateProductionDto): Promise<ProductionRecord>;
   update(id: string, data: UpdateProductionDto): Promise<ProductionRecord>;
@@ -988,7 +988,7 @@ export class GenerateFormPRCommand implements ComplianceCommand {
   constructor(
     private productionRepo: ProductionRepository,
     private complianceRepo: ComplianceRepository,
-    private pdfService: PDFService,
+    private pdfService: PDFService
   ) {}
 
   async execute(): Promise<void> {
@@ -1023,11 +1023,11 @@ export class ComplianceFormFactory {
   constructor(
     private texasGenerator: TexasFormPRGenerator,
     private oklahomaGenerator: OklahomaFormGenerator,
-    private northDakotaGenerator: NorthDakotaFormGenerator,
+    private northDakotaGenerator: NorthDakotaFormGenerator
   ) {
-    this.generators.set("TX", this.texasGenerator);
-    this.generators.set("OK", this.oklahomaGenerator);
-    this.generators.set("ND", this.northDakotaGenerator);
+    this.generators.set('TX', this.texasGenerator);
+    this.generators.set('OK', this.oklahomaGenerator);
+    this.generators.set('ND', this.northDakotaGenerator);
   }
 
   getGenerator(state: string): ComplianceFormGenerator {
@@ -1060,14 +1060,14 @@ export class ProductionRecordCreatedEvent {
   constructor(
     public readonly productionRecord: ProductionRecord,
     public readonly wellId: string,
-    public readonly organizationId: string,
+    public readonly organizationId: string
   ) {}
 }
 
 // ✅ Event handlers
 @Injectable()
 export class ComplianceEventHandler {
-  @OnEvent("production.created")
+  @OnEvent('production.created')
   async handleProductionCreated(event: ProductionRecordCreatedEvent) {
     // Check if compliance deadline is approaching
     await this.checkComplianceDeadlines(event.organizationId);
@@ -1076,7 +1076,7 @@ export class ComplianceEventHandler {
 
 @Injectable()
 export class AnalyticsEventHandler {
-  @OnEvent("production.created")
+  @OnEvent('production.created')
   async handleProductionCreated(event: ProductionRecordCreatedEvent) {
     // Update production analytics
     await this.updateProductionMetrics(event.wellId);
@@ -1093,12 +1093,8 @@ export class ProductionService {
 
     // Emit event for other services to handle
     this.eventEmitter.emit(
-      "production.created",
-      new ProductionRecordCreatedEvent(
-        record,
-        data.wellId,
-        data.organizationId,
-      ),
+      'production.created',
+      new ProductionRecordCreatedEvent(record, data.wellId, data.organizationId)
     );
 
     return record;
@@ -1114,7 +1110,7 @@ interface JIBCalculationStrategy {
   calculateDistribution(
     revenue: number,
     expenses: number,
-    partners: Partner[],
+    partners: Partner[]
   ): JIBDistribution[];
 }
 
@@ -1123,7 +1119,7 @@ export class StandardJIBStrategy implements JIBCalculationStrategy {
   calculateDistribution(
     revenue: number,
     expenses: number,
-    partners: Partner[],
+    partners: Partner[]
   ): JIBDistribution[] {
     const netRevenue = revenue - expenses;
     return partners.map((partner) => ({
@@ -1139,7 +1135,7 @@ export class WorkingInterestJIBStrategy implements JIBCalculationStrategy {
   calculateDistribution(
     revenue: number,
     expenses: number,
-    partners: Partner[],
+    partners: Partner[]
   ): JIBDistribution[] {
     // More complex calculation for working interest partners
     const workingInterestPartners = partners.filter((p) => p.isWorkingInterest);
@@ -1155,7 +1151,7 @@ export class WorkingInterestJIBStrategy implements JIBCalculationStrategy {
 @Injectable()
 export class JIBService {
   constructor(
-    @Inject("JIB_STRATEGY") private strategy: JIBCalculationStrategy,
+    @Inject('JIB_STRATEGY') private strategy: JIBCalculationStrategy
   ) {}
 
   async calculateJIB(wellId: string, month: string): Promise<JIBStatement> {
@@ -1166,7 +1162,7 @@ export class JIBService {
     const distribution = this.strategy.calculateDistribution(
       revenue,
       expenses,
-      partners,
+      partners
     );
 
     return new JIBStatement({
@@ -1208,7 +1204,7 @@ export class JIBService {
 export class EventBusService {
   constructor(
     private bullQueue: Queue,
-    private eventEmitter: EventEmitter2,
+    private eventEmitter: EventEmitter2
   ) {}
 
   async publishEvent(event: DomainEvent): Promise<void> {
@@ -1216,15 +1212,15 @@ export class EventBusService {
     this.eventEmitter.emit(event.type, event);
 
     // Queue for async processing
-    await this.bullQueue.add("process-event", event, {
+    await this.bullQueue.add('process-event', event, {
       attempts: 3,
-      backoff: { type: "exponential", delay: 2000 },
+      backoff: { type: 'exponential', delay: 2000 },
     });
   }
 
   async subscribeToEvent(
     eventType: string,
-    handler: EventHandler,
+    handler: EventHandler
   ): Promise<void> {
     this.eventEmitter.on(eventType, handler);
   }
@@ -1232,12 +1228,12 @@ export class EventBusService {
 
 // ✅ Domain events for business operations
 export class ProductionRecordCreatedEvent implements DomainEvent {
-  readonly type = "production.record.created";
+  readonly type = 'production.record.created';
   readonly timestamp = new Date();
 
   constructor(
     public readonly productionRecord: ProductionRecord,
-    public readonly organizationId: string,
+    public readonly organizationId: string
   ) {}
 }
 ```
@@ -1251,7 +1247,7 @@ export class HealthCheckService {
   constructor(
     private db: DatabaseService,
     private redis: RedisService,
-    private externalServices: ExternalServiceHealthCheck[],
+    private externalServices: ExternalServiceHealthCheck[]
   ) {}
 
   async getHealthStatus(): Promise<HealthStatus> {
@@ -1264,9 +1260,9 @@ export class HealthCheckService {
     ]);
 
     return {
-      status: checks.every((check) => check.status === "fulfilled")
-        ? "healthy"
-        : "unhealthy",
+      status: checks.every((check) => check.status === 'fulfilled')
+        ? 'healthy'
+        : 'unhealthy',
       timestamp: new Date(),
       checks: this.formatHealthChecks(checks),
       uptime: process.uptime(),
@@ -1276,10 +1272,10 @@ export class HealthCheckService {
 
   private async checkDatabase(): Promise<HealthCheckResult> {
     try {
-      await this.db.query("SELECT 1");
-      return { name: "database", status: "healthy", responseTime: Date.now() };
+      await this.db.query('SELECT 1');
+      return { name: 'database', status: 'healthy', responseTime: Date.now() };
     } catch (error) {
-      return { name: "database", status: "unhealthy", error: error.message };
+      return { name: 'database', status: 'unhealthy', error: error.message };
     }
   }
 }
@@ -1293,7 +1289,7 @@ export class HealthCheckService {
 export class CacheService {
   constructor(
     private redis: RedisService,
-    private localCache: NodeCache,
+    private localCache: NodeCache
   ) {}
 
   async get<T>(key: string, options?: CacheOptions): Promise<T | null> {
@@ -1319,7 +1315,7 @@ export class CacheService {
     await this.redis.setex(
       key,
       options?.redisTtl || 3600,
-      JSON.stringify(value),
+      JSON.stringify(value)
     );
   }
 
@@ -1345,13 +1341,13 @@ export class APIGatewayService {
   constructor(
     private rateLimiter: RateLimiterService,
     private authService: AuthService,
-    private logger: Logger,
+    private logger: Logger
   ) {}
 
   async processRequest(
     req: Request,
     res: Response,
-    next: NextFunction,
+    next: NextFunction
   ): Promise<void> {
     try {
       // 1. Rate limiting
@@ -1359,7 +1355,7 @@ export class APIGatewayService {
 
       // 2. Authentication
       const user = await this.authService.validateToken(
-        req.headers.authorization,
+        req.headers.authorization
       );
       req.user = user;
 
@@ -1367,10 +1363,10 @@ export class APIGatewayService {
       const hasPermission = await this.authService.checkPermission(
         user,
         req.path,
-        req.method,
+        req.method
       );
       if (!hasPermission) {
-        throw new ForbiddenException("Insufficient permissions");
+        throw new ForbiddenException('Insufficient permissions');
       }
 
       // 4. Request logging
@@ -1379,7 +1375,7 @@ export class APIGatewayService {
         method: req.method,
         path: req.path,
         ip: req.ip,
-        userAgent: req.headers["user-agent"],
+        userAgent: req.headers['user-agent'],
       });
 
       next();
@@ -1404,36 +1400,36 @@ import {
   timestamp,
   boolean,
   jsonb,
-} from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+} from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
 
-export const organizations = pgTable("organizations", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: varchar("name", { length: 255 }).notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+export const organizations = pgTable('organizations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar('name', { length: 255 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
 });
 
-export const wells = pgTable("wells", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  organizationId: uuid("organization_id").references(() => organizations.id),
-  apiNumber: varchar("api_number", { length: 14 }).notNull().unique(),
-  name: varchar("name", { length: 255 }).notNull(),
-  latitude: decimal("latitude", { precision: 10, scale: 8 }),
-  longitude: decimal("longitude", { precision: 11, scale: 8 }),
-  status: varchar("status", {
-    enum: ["active", "inactive", "plugged"],
-  }).default("active"),
-  createdAt: timestamp("created_at").defaultNow(),
+export const wells = pgTable('wells', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id').references(() => organizations.id),
+  apiNumber: varchar('api_number', { length: 14 }).notNull().unique(),
+  name: varchar('name', { length: 255 }).notNull(),
+  latitude: decimal('latitude', { precision: 10, scale: 8 }),
+  longitude: decimal('longitude', { precision: 11, scale: 8 }),
+  status: varchar('status', {
+    enum: ['active', 'inactive', 'plugged'],
+  }).default('active'),
+  createdAt: timestamp('created_at').defaultNow(),
 });
 
-export const productionRecords = pgTable("production_records", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  wellId: uuid("well_id").references(() => wells.id),
-  productionDate: timestamp("production_date").notNull(),
-  oilVolume: decimal("oil_volume", { precision: 10, scale: 2 }),
-  gasVolume: decimal("gas_volume", { precision: 10, scale: 2 }),
-  waterVolume: decimal("water_volume", { precision: 10, scale: 2 }),
-  createdAt: timestamp("created_at").defaultNow(),
+export const productionRecords = pgTable('production_records', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  wellId: uuid('well_id').references(() => wells.id),
+  productionDate: timestamp('production_date').notNull(),
+  oilVolume: decimal('oil_volume', { precision: 10, scale: 2 }),
+  gasVolume: decimal('gas_volume', { precision: 10, scale: 2 }),
+  waterVolume: decimal('water_volume', { precision: 10, scale: 2 }),
+  createdAt: timestamp('created_at').defaultNow(),
 });
 
 // Relations for type-safe joins
@@ -1545,12 +1541,12 @@ export function ProductionForm({ wellId }: { wellId: string }) {
 // Production data with offline support and caching
 const useProductionData = (wellId: string) => {
   return useQuery({
-    queryKey: ["production", wellId],
+    queryKey: ['production', wellId],
     queryFn: () => fetchProductionData(wellId),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     retry: 3,
-    networkMode: "offlineFirst", // Critical for field operations
+    networkMode: 'offlineFirst', // Critical for field operations
   });
 };
 
@@ -1562,12 +1558,12 @@ const useCreateProduction = () => {
     mutationFn: createProductionRecord,
     onMutate: async (newRecord) => {
       // Optimistic update for immediate UI feedback
-      await queryClient.cancelQueries(["production", newRecord.wellId]);
+      await queryClient.cancelQueries(['production', newRecord.wellId]);
       const previousData = queryClient.getQueryData([
-        "production",
+        'production',
         newRecord.wellId,
       ]);
-      queryClient.setQueryData(["production", newRecord.wellId], (old) => [
+      queryClient.setQueryData(['production', newRecord.wellId], (old) => [
         ...old,
         newRecord,
       ]);
@@ -1576,12 +1572,12 @@ const useCreateProduction = () => {
     onError: (err, newRecord, context) => {
       // Rollback on error
       queryClient.setQueryData(
-        ["production", newRecord.wellId],
-        context.previousData,
+        ['production', newRecord.wellId],
+        context.previousData
       );
     },
     onSettled: () => {
-      queryClient.invalidateQueries(["production"]);
+      queryClient.invalidateQueries(['production']);
     },
   });
 };
@@ -1591,16 +1587,16 @@ const useCreateProduction = () => {
 
 ```typescript
 // BullMQ for automated compliance reporting
-@Processor("compliance")
+@Processor('compliance')
 export class ComplianceProcessor {
-  @Process("generate-form-pr")
+  @Process('generate-form-pr')
   async generateFormPR(job: Job<{ organizationId: string; month: string }>) {
     const { organizationId, month } = job.data;
 
     // Generate Form PR from production data
     const formData = await this.complianceService.generateFormPR(
       organizationId,
-      month,
+      month
     );
 
     // Generate PDF report
@@ -1609,7 +1605,7 @@ export class ComplianceProcessor {
     // Send notification to users
     await this.notificationService.sendComplianceReminder(
       organizationId,
-      pdfBuffer,
+      pdfBuffer
     );
 
     return { success: true, formId: formData.id };
@@ -1621,18 +1617,18 @@ export class ComplianceProcessor {
 
 ```typescript
 // lib/uploadthing.ts - Type-safe file uploads
-import { createUploadthing, type FileRouter } from "uploadthing/next";
-import { z } from "zod";
+import { createUploadthing, type FileRouter } from 'uploadthing/next';
+import { z } from 'zod';
 
 const f = createUploadthing();
 
 export const ourFileRouter = {
   // Well documents (leases, permits, etc.)
-  wellDocuments: f({ pdf: { maxFileSize: "16MB", maxFileCount: 10 } })
+  wellDocuments: f({ pdf: { maxFileSize: '16MB', maxFileCount: 10 } })
     .input(z.object({ wellId: z.string().uuid() }))
     .middleware(async ({ req, input }) => {
       const user = await getUser(req);
-      if (!user) throw new Error("Unauthorized");
+      if (!user) throw new Error('Unauthorized');
 
       // Verify user has access to this well
       const well = await db.query.wells.findFirst({
@@ -1641,7 +1637,7 @@ export const ourFileRouter = {
       });
 
       if (well?.organization.id !== user.organizationId) {
-        throw new Error("Unauthorized");
+        throw new Error('Unauthorized');
       }
 
       return { userId: user.id, wellId: input.wellId };
@@ -1658,17 +1654,17 @@ export const ourFileRouter = {
     }),
 
   // JIB statements and compliance reports
-  complianceReports: f({ pdf: { maxFileSize: "8MB", maxFileCount: 1 } })
+  complianceReports: f({ pdf: { maxFileSize: '8MB', maxFileCount: 1 } })
     .input(
       z.object({
         organizationId: z.string().uuid(),
-        reportType: z.enum(["form_pr", "jib"]),
-      }),
+        reportType: z.enum(['form_pr', 'jib']),
+      })
     )
     .middleware(async ({ req, input }) => {
       const user = await getUser(req);
       if (!user || user.organizationId !== input.organizationId) {
-        throw new Error("Unauthorized");
+        throw new Error('Unauthorized');
       }
       return { userId: user.id, organizationId: input.organizationId };
     })
@@ -1685,26 +1681,26 @@ export type OurFileRouter = typeof ourFileRouter;
 
 ```typescript
 // services/notification.service.ts - Multi-channel notifications
-import { Resend } from "resend";
-import { Twilio } from "twilio";
-import { Injectable } from "@nestjs/common";
+import { Resend } from 'resend';
+import { Twilio } from 'twilio';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class NotificationService {
   private resend = new Resend(process.env.RESEND_API_KEY);
   private twilio = new Twilio(
     process.env.TWILIO_ACCOUNT_SID,
-    process.env.TWILIO_AUTH_TOKEN,
+    process.env.TWILIO_AUTH_TOKEN
   );
 
   async sendComplianceDeadlineAlert(user: User, deadline: ComplianceDeadline) {
     const daysUntilDeadline = Math.ceil(
-      (deadline.dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+      (deadline.dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
     );
 
     // Send email notification
     await this.resend.emails.send({
-      from: "WellFlow <compliance@wellflow.app>",
+      from: 'WellFlow <compliance@wellflow.app>',
       to: [user.email],
       subject: `Compliance Deadline Alert: ${deadline.formType} Due in ${daysUntilDeadline} Days`,
       html: `
@@ -1741,7 +1737,7 @@ export class NotificationService {
     // Send to all partners
     const emailPromises = partners.map((partner) =>
       this.resend.emails.send({
-        from: "WellFlow <billing@wellflow.app>",
+        from: 'WellFlow <billing@wellflow.app>',
         to: [partner.email],
         subject: `JIB Statement Ready - ${jibStatement.period}`,
         html: `
@@ -1765,7 +1761,7 @@ export class NotificationService {
             content: jibStatement.pdfBuffer,
           },
         ],
-      }),
+      })
     );
 
     await Promise.all(emailPromises);
@@ -1990,7 +1986,7 @@ Full AWS enterprise setup with:
 
 ```typescript
 // ✅ Unit Tests - Service Layer
-describe("ProductionService", () => {
+describe('ProductionService', () => {
   let service: ProductionService;
   let mockRepository: jest.Mocked<ProductionRepository>;
 
@@ -2004,40 +2000,40 @@ describe("ProductionService", () => {
     service = new ProductionService(mockRepository);
   });
 
-  it("should create production record with valid data", async () => {
+  it('should create production record with valid data', async () => {
     const createDto = {
-      wellId: "well-123",
-      productionDate: new Date("2024-01-15"),
+      wellId: 'well-123',
+      productionDate: new Date('2024-01-15'),
       oilVolume: 100.5,
       gasVolume: 1500.0,
       waterVolume: 50.0,
     };
 
-    mockRepository.create.mockResolvedValue({ id: "prod-123", ...createDto });
+    mockRepository.create.mockResolvedValue({ id: 'prod-123', ...createDto });
 
     const result = await service.createProductionRecord(createDto);
 
-    expect(result.id).toBe("prod-123");
+    expect(result.id).toBe('prod-123');
     expect(mockRepository.create).toHaveBeenCalledWith(createDto);
   });
 
-  it("should validate production data before creation", async () => {
+  it('should validate production data before creation', async () => {
     const invalidDto = {
-      wellId: "well-123",
-      productionDate: new Date("2024-01-15"),
+      wellId: 'well-123',
+      productionDate: new Date('2024-01-15'),
       oilVolume: -10, // Invalid negative volume
       gasVolume: 1500.0,
       waterVolume: 50.0,
     };
 
     await expect(service.createProductionRecord(invalidDto)).rejects.toThrow(
-      "Oil volume cannot be negative",
+      'Oil volume cannot be negative'
     );
   });
 });
 
 // ✅ Integration Tests - Repository Layer
-describe("DrizzleProductionRepository", () => {
+describe('DrizzleProductionRepository', () => {
   let repository: DrizzleProductionRepository;
   let testDb: DrizzleDB;
 
@@ -2050,38 +2046,38 @@ describe("DrizzleProductionRepository", () => {
     await testDb.delete(productionRecords);
   });
 
-  it("should persist and retrieve production records", async () => {
+  it('should persist and retrieve production records', async () => {
     const productionData = {
-      wellId: "well-123",
-      productionDate: new Date("2024-01-15"),
+      wellId: 'well-123',
+      productionDate: new Date('2024-01-15'),
       oilVolume: 100.5,
       gasVolume: 1500.0,
       waterVolume: 50.0,
     };
 
     const created = await repository.create(productionData);
-    const retrieved = await repository.findByWellId("well-123");
+    const retrieved = await repository.findByWellId('well-123');
 
     expect(retrieved).toHaveLength(1);
-    expect(retrieved[0].oilVolume).toBe("100.5"); // Decimal precision preserved
+    expect(retrieved[0].oilVolume).toBe('100.5'); // Decimal precision preserved
   });
 });
 
 // ✅ E2E Tests - Critical Business Workflows
-describe("Compliance Form Generation E2E", () => {
-  it("should generate Texas Form PR from production data", async () => {
+describe('Compliance Form Generation E2E', () => {
+  it('should generate Texas Form PR from production data', async () => {
     // Setup test data
-    await createTestWell("well-123", "TX");
-    await createTestProductionRecords("well-123", "2024-01");
+    await createTestWell('well-123', 'TX');
+    await createTestProductionRecords('well-123', '2024-01');
 
     // Execute compliance generation
     const response = await request(app)
-      .post("/api/compliance/generate-form-pr")
-      .send({ wellId: "well-123", month: "2024-01" })
+      .post('/api/compliance/generate-form-pr')
+      .send({ wellId: 'well-123', month: '2024-01' })
       .expect(200);
 
     // Verify form generation
-    expect(response.body.formType).toBe("TX_FORM_PR");
+    expect(response.body.formType).toBe('TX_FORM_PR');
     expect(response.body.totalOilVolume).toBe(3015.5);
     expect(response.body.pdfUrl).toMatch(/^https:\/\/.*\.pdf$/);
   });
@@ -2106,7 +2102,7 @@ export class SecurityMiddleware {
   constructor(
     private rateLimiter: RateLimiterService,
     private securityScanner: SecurityScannerService,
-    private auditLogger: AuditLoggerService,
+    private auditLogger: AuditLoggerService
   ) {}
 
   async validateRequest(req: Request): Promise<SecurityValidationResult> {
@@ -2139,13 +2135,13 @@ export class SecurityMiddleware {
 
     const requestString = JSON.stringify(req.body) + req.url;
     const hasSQLInjection = sqlPatterns.some((pattern) =>
-      pattern.test(requestString),
+      pattern.test(requestString)
     );
 
     return {
       isValid: !hasSQLInjection,
-      type: "sql_injection",
-      message: hasSQLInjection ? "Potential SQL injection detected" : null,
+      type: 'sql_injection',
+      message: hasSQLInjection ? 'Potential SQL injection detected' : null,
     };
   }
 }
@@ -2161,18 +2157,18 @@ export class AdvancedAuthService {
     private jwtService: JwtService,
     private totpService: TOTPService,
     private biometricService: BiometricService,
-    private deviceTrustService: DeviceTrustService,
+    private deviceTrustService: DeviceTrustService
   ) {}
 
   async authenticateWithMFA(
     credentials: LoginCredentials,
     mfaToken?: string,
     biometricData?: BiometricData,
-    deviceFingerprint?: string,
+    deviceFingerprint?: string
   ): Promise<AuthenticationResult> {
     // Step 1: Validate primary credentials
     const user = await this.validateCredentials(credentials);
-    if (!user) throw new UnauthorizedException("Invalid credentials");
+    if (!user) throw new UnauthorizedException('Invalid credentials');
 
     // Step 2: Check device trust
     const deviceTrust =
@@ -2191,7 +2187,7 @@ export class AdvancedAuthService {
       ) {
         // TOTP authentication successful
       } else {
-        throw new UnauthorizedException("MFA verification required");
+        throw new UnauthorizedException('MFA verification required');
       }
     }
 
@@ -2202,7 +2198,7 @@ export class AdvancedAuthService {
     await this.auditLogger.logAuthentication(
       user,
       deviceFingerprint,
-      "success",
+      'success'
     );
 
     return { user, tokens, requiresDeviceVerification: !deviceTrust.isTrusted };
@@ -2218,43 +2214,43 @@ export class AdvancedAuthService {
 export class EncryptionService {
   constructor(
     private keyManagement: KeyManagementService,
-    private hsm: HardwareSecurityModule,
+    private hsm: HardwareSecurityModule
   ) {}
 
   async encryptSensitiveData(
     data: any,
-    dataType: DataType,
+    dataType: DataType
   ): Promise<EncryptedData> {
     const key = await this.keyManagement.getEncryptionKey(dataType);
     const iv = crypto.randomBytes(16);
 
-    const cipher = crypto.createCipher("aes-256-gcm", key);
+    const cipher = crypto.createCipher('aes-256-gcm', key);
     cipher.setAAD(Buffer.from(dataType));
 
-    let encrypted = cipher.update(JSON.stringify(data), "utf8", "hex");
-    encrypted += cipher.final("hex");
+    let encrypted = cipher.update(JSON.stringify(data), 'utf8', 'hex');
+    encrypted += cipher.final('hex');
 
     const authTag = cipher.getAuthTag();
 
     return {
       encryptedData: encrypted,
-      iv: iv.toString("hex"),
-      authTag: authTag.toString("hex"),
+      iv: iv.toString('hex'),
+      authTag: authTag.toString('hex'),
       keyVersion: key.version,
-      algorithm: "aes-256-gcm",
+      algorithm: 'aes-256-gcm',
     };
   }
 
   async decryptSensitiveData(encryptedData: EncryptedData): Promise<any> {
     const key = await this.keyManagement.getEncryptionKey(
-      encryptedData.keyVersion,
+      encryptedData.keyVersion
     );
 
-    const decipher = crypto.createDecipher("aes-256-gcm", key);
-    decipher.setAuthTag(Buffer.from(encryptedData.authTag, "hex"));
+    const decipher = crypto.createDecipher('aes-256-gcm', key);
+    decipher.setAuthTag(Buffer.from(encryptedData.authTag, 'hex'));
 
-    let decrypted = decipher.update(encryptedData.encryptedData, "hex", "utf8");
-    decrypted += decipher.final("utf8");
+    let decrypted = decipher.update(encryptedData.encryptedData, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
 
     return JSON.parse(decrypted);
   }
@@ -2267,19 +2263,19 @@ export class EncryptionService {
 // ✅ Input Validation & Sanitization
 export const CreateProductionSchema = z.object({
   wellId: z.string().uuid(),
-  productionDate: z.date().max(new Date(), "Future dates not allowed"),
-  oilVolume: z.number().min(0).max(10000, "Volume exceeds reasonable limits"),
-  gasVolume: z.number().min(0).max(100000, "Volume exceeds reasonable limits"),
-  waterVolume: z.number().min(0).max(10000, "Volume exceeds reasonable limits"),
+  productionDate: z.date().max(new Date(), 'Future dates not allowed'),
+  oilVolume: z.number().min(0).max(10000, 'Volume exceeds reasonable limits'),
+  gasVolume: z.number().min(0).max(100000, 'Volume exceeds reasonable limits'),
+  waterVolume: z.number().min(0).max(10000, 'Volume exceeds reasonable limits'),
 });
 
 // ✅ API Rate Limiting
-@Controller("production")
+@Controller('production')
 @UseGuards(JwtAuthGuard, RBACGuard)
 @Throttle(100, 60) // 100 requests per minute
 export class ProductionController {
   @Post()
-  @RequirePermissions("production:create")
+  @RequirePermissions('production:create')
   async createProduction(@Body() data: CreateProductionDto) {
     const validatedData = CreateProductionSchema.parse(data);
     return this.productionService.create(validatedData);
@@ -2288,21 +2284,21 @@ export class ProductionController {
 
 // ✅ Data Encryption at Rest
 export class EncryptionService {
-  private readonly algorithm = "aes-256-gcm";
-  private readonly key = Buffer.from(process.env.ENCRYPTION_KEY, "hex");
+  private readonly algorithm = 'aes-256-gcm';
+  private readonly key = Buffer.from(process.env.ENCRYPTION_KEY, 'hex');
 
   encrypt(text: string): { encrypted: string; iv: string; tag: string } {
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipher(this.algorithm, this.key);
-    cipher.setAAD(Buffer.from("wellflow-data"));
+    cipher.setAAD(Buffer.from('wellflow-data'));
 
-    let encrypted = cipher.update(text, "utf8", "hex");
-    encrypted += cipher.final("hex");
+    let encrypted = cipher.update(text, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
 
     return {
       encrypted,
-      iv: iv.toString("hex"),
-      tag: cipher.getAuthTag().toString("hex"),
+      iv: iv.toString('hex'),
+      tag: cipher.getAuthTag().toString('hex'),
     };
   }
 }
@@ -2314,7 +2310,7 @@ export class AuditLogger {
     userId: string,
     resource: string,
     action: string,
-    data?: any,
+    data?: any
   ) {
     await this.auditRepo.create({
       userId,
@@ -2322,7 +2318,7 @@ export class AuditLogger {
       action,
       timestamp: new Date(),
       ipAddress: this.request.ip,
-      userAgent: this.request.headers["user-agent"],
+      userAgent: this.request.headers['user-agent'],
       data: data ? this.encryptionService.encrypt(JSON.stringify(data)) : null,
     });
   }
@@ -2356,8 +2352,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     let status = 500;
-    let message = "Internal server error";
-    let code = "INTERNAL_ERROR";
+    let message = 'Internal server error';
+    let code = 'INTERNAL_ERROR';
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
@@ -2365,8 +2361,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       code = this.getErrorCode(exception);
     } else if (exception instanceof ZodError) {
       status = 400;
-      message = "Validation failed";
-      code = "VALIDATION_ERROR";
+      message = 'Validation failed';
+      code = 'VALIDATION_ERROR';
     }
 
     // Log error with context
@@ -2387,7 +2383,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       success: false,
       error: {
         code,
-        message: status === 500 ? "Internal server error" : message,
+        message: status === 500 ? 'Internal server error' : message,
         timestamp: new Date().toISOString(),
       },
     });
@@ -2400,21 +2396,21 @@ export class StructuredLogger {
     format: winston.format.combine(
       winston.format.timestamp(),
       winston.format.errors({ stack: true }),
-      winston.format.json(),
+      winston.format.json()
     ),
     transports: [
-      new winston.transports.File({ filename: "error.log", level: "error" }),
-      new winston.transports.File({ filename: "combined.log" }),
+      new winston.transports.File({ filename: 'error.log', level: 'error' }),
+      new winston.transports.File({ filename: 'combined.log' }),
       new winston.transports.Console({
         format: winston.format.simple(),
-        level: process.env.NODE_ENV === "development" ? "debug" : "info",
+        level: process.env.NODE_ENV === 'development' ? 'debug' : 'info',
       }),
     ],
   });
 
   logBusinessEvent(event: string, data: any, userId?: string) {
     this.logger.info({
-      type: "BUSINESS_EVENT",
+      type: 'BUSINESS_EVENT',
       event,
       data,
       userId,
@@ -2426,10 +2422,10 @@ export class StructuredLogger {
     action: string,
     wellId: string,
     userId: string,
-    result: any,
+    result: any
   ) {
     this.logger.info({
-      type: "COMPLIANCE_ACTION",
+      type: 'COMPLIANCE_ACTION',
       action,
       wellId,
       userId,
@@ -2466,11 +2462,11 @@ export interface ApiResponse<T = any> {
 }
 
 // ✅ API Versioning Strategy
-@Controller({ path: "production", version: "1" })
+@Controller({ path: 'production', version: '1' })
 export class ProductionV1Controller {
-  @Get(":wellId")
+  @Get(':wellId')
   async getProduction(
-    @Param("wellId") wellId: string,
+    @Param('wellId') wellId: string
   ): Promise<ApiResponse<ProductionRecord[]>> {
     const data = await this.productionService.getByWellId(wellId);
     return {
@@ -2482,18 +2478,18 @@ export class ProductionV1Controller {
 }
 
 // ✅ OpenAPI Documentation
-@ApiTags("Production")
+@ApiTags('Production')
 @ApiBearerAuth()
 export class ProductionController {
   @Post()
-  @ApiOperation({ summary: "Create production record" })
+  @ApiOperation({ summary: 'Create production record' })
   @ApiResponse({
     status: 201,
-    description: "Production record created successfully",
+    description: 'Production record created successfully',
   })
-  @ApiResponse({ status: 400, description: "Invalid input data" })
-  @ApiResponse({ status: 401, description: "Unauthorized" })
-  @ApiResponse({ status: 403, description: "Insufficient permissions" })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Insufficient permissions' })
   async createProduction(@Body() data: CreateProductionDto) {
     // Implementation
   }
@@ -2511,7 +2507,7 @@ export class APMService {
   constructor(
     private metricsCollector: MetricsCollector,
     private traceCollector: TraceCollector,
-    private alertManager: AlertManager,
+    private alertManager: AlertManager
   ) {}
 
   async trackBusinessMetric(metric: BusinessMetric): Promise<void> {
@@ -2532,12 +2528,12 @@ export class APMService {
 
   async startTrace(
     operationName: string,
-    context?: TraceContext,
+    context?: TraceContext
   ): Promise<Span> {
     return this.traceCollector.startSpan(operationName, {
       parentSpan: context?.parentSpan,
       tags: {
-        service: "wellflow-api",
+        service: 'wellflow-api',
         version: process.env.APP_VERSION,
         ...context?.tags,
       },
@@ -2572,22 +2568,22 @@ export class TracingService {
   async traceAsyncOperation<T>(
     operationName: string,
     operation: (span: Span) => Promise<T>,
-    parentSpan?: Span,
+    parentSpan?: Span
   ): Promise<T> {
     const span = this.tracer.startSpan(operationName, { childOf: parentSpan });
 
     try {
-      span.setTag("operation.type", "async");
-      span.setTag("service.name", "wellflow-api");
+      span.setTag('operation.type', 'async');
+      span.setTag('service.name', 'wellflow-api');
 
       const result = await operation(span);
 
-      span.setTag("operation.success", true);
+      span.setTag('operation.success', true);
       return result;
     } catch (error) {
-      span.setTag("operation.success", false);
-      span.setTag("error", true);
-      span.log({ event: "error", message: error.message });
+      span.setTag('operation.success', false);
+      span.setTag('error', true);
+      span.log({ event: 'error', message: error.message });
       throw error;
     } finally {
       span.finish();
@@ -2612,33 +2608,33 @@ export class TracingService {
 export class BusinessMetricsService {
   constructor(
     private metricsService: APMService,
-    private analyticsDB: AnalyticsDatabase,
+    private analyticsDB: AnalyticsDatabase
   ) {}
 
   async trackProductionDataEntry(record: ProductionRecord): Promise<void> {
     // Track data quality metrics
     await this.metricsService.trackBusinessMetric({
-      name: "production.data.quality_score",
+      name: 'production.data.quality_score',
       value: record.qualityScore,
       organizationId: record.organizationId,
       wellId: record.wellId,
-      operation: "data_entry",
+      operation: 'data_entry',
     });
 
     // Track data entry efficiency
     const entryTime =
       record.createdAt.getTime() - record.productionDate.getTime();
     await this.metricsService.trackBusinessMetric({
-      name: "production.data.entry_delay_hours",
+      name: 'production.data.entry_delay_hours',
       value: entryTime / (1000 * 60 * 60),
       organizationId: record.organizationId,
       wellId: record.wellId,
-      operation: "data_entry",
+      operation: 'data_entry',
     });
 
     // Store for business intelligence
     await this.analyticsDB.recordEvent({
-      eventType: "production_data_entered",
+      eventType: 'production_data_entered',
       organizationId: record.organizationId,
       wellId: record.wellId,
       metadata: {
@@ -2652,7 +2648,7 @@ export class BusinessMetricsService {
   }
 
   async generateComplianceMetrics(
-    organizationId: string,
+    organizationId: string
   ): Promise<ComplianceMetrics> {
     const metrics = await this.analyticsDB.query(
       `
@@ -2665,7 +2661,7 @@ export class BusinessMetricsService {
       WHERE organization_id = $1
         AND created_at >= NOW() - INTERVAL '30 days'
     `,
-      [organizationId],
+      [organizationId]
     );
 
     return {
@@ -2684,8 +2680,8 @@ export class BusinessMetricsService {
 
 ```typescript
 // React Native offline-first with TanStack Query
-import { focusManager, onlineManager } from "@tanstack/react-query";
-import NetInfo from "@react-native-async-storage/async-storage";
+import { focusManager, onlineManager } from '@tanstack/react-query';
+import NetInfo from '@react-native-async-storage/async-storage';
 
 // Configure offline behavior
 onlineManager.setEventListener((setOnline) => {
@@ -2696,8 +2692,8 @@ onlineManager.setEventListener((setOnline) => {
 
 // Background sync when app becomes active
 focusManager.setEventListener((handleFocus) => {
-  const subscription = AppState.addEventListener("change", (state) => {
-    handleFocus(state === "active");
+  const subscription = AppState.addEventListener('change', (state) => {
+    handleFocus(state === 'active');
   });
   return () => subscription?.remove();
 });

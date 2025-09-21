@@ -1,21 +1,38 @@
 {
+  "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
-    "module": "commonjs",
-    "declaration": true,
-    "removeComments": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "allowSyntheticDefaultImports": true,
-    "target": "ES2023",
-    "sourceMap": true,
-    "outDir": "./dist",
     "baseUrl": "./",
+    "removeComments": true,
+    "outDir": "./dist",
+
+    // === NODE.JS SPECIFIC SETTINGS ===
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "types": ["jest", "node"],
+
+    // === NESTJS SPECIFIC SETTINGS ===
+    // Support for decorators and metadata
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    // === PATH MAPPING ===
+    "paths": {
+      "@/*": ["src/*"],
+      "@/application/*": ["src/application/*"],
+      "@/domain/*": ["src/domain/*"],
+      "@/infrastructure/*": ["src/infrastructure/*"],
+      "@/presentation/*": ["src/presentation/*"]
+    },
+
+    // === PERFORMANCE OPTIMIZATIONS ===
     "incremental": true,
-    "skipLibCheck": true,
-    "strictNullChecks": true,
-    "forceConsistentCasingInFileNames": true,
-    "noImplicitAny": false,
-    "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false
-  }
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
+
+    // === SKIP LIBRARY CHECKS ===
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*", "test/**/*"],
+  "exclude": ["node_modules", "dist", "coverage"]
 }

@@ -1,0 +1,194 @@
+# WellFlow GitLeaks Configuration
+# Secrets detection for oil & gas production monitoring platform
+# Enhanced patterns for critical infrastructure security
+
+title = "WellFlow Secrets Detection Configuration"
+description = "GitLeaks configuration for detecting secrets in oil & gas production monitoring codebase"
+
+# Global configuration
+[extend]
+useDefault = true
+path = ""
+
+# Custom rules for oil & gas specific patterns
+[[rules]]
+id = "wellflow-api-key"
+description = "WellFlow API Key"
+regex = '''(?i)(wellflow[_-]?api[_-]?key|api[_-]?key)[[:space:]]*[=:][[:space:]]*['""]?([a-zA-Z0-9]{32,})['""]?'''
+tags = ["api-key", "wellflow"]
+
+[[rules]]
+id = "scada-credentials"
+description = "SCADA System Credentials"
+regex = '''(?i)(scada[_-]?(password|user|login|auth)|hmi[_-]?(password|user|login|auth))[[:space:]]*[=:][[:space:]]*['""]?([a-zA-Z0-9@#$%^&*()_+\-=\[\]{}|;:,.<>?]{8,})['""]?'''
+tags = ["scada", "industrial", "credentials"]
+
+[[rules]]
+id = "pipeline-api-key"
+description = "Pipeline System API Key"
+regex = '''(?i)(pipeline[_-]?api[_-]?key|production[_-]?api[_-]?key)[[:space:]]*[=:][[:space:]]*['""]?([a-zA-Z0-9]{24,})['""]?'''
+tags = ["pipeline", "production", "api-key"]
+
+[[rules]]
+id = "database-production-url"
+description = "Production Database URL"
+regex = '''(?i)(prod[_-]?db[_-]?url|production[_-]?database[_-]?url|db[_-]?prod[_-]?url)[[:space:]]*[=:][[:space:]]*['""]?(postgresql://|mongodb://|mysql://|redis://)[^'""\s]+['""]?'''
+tags = ["database", "production", "url"]
+
+[[rules]]
+id = "jwt-secret-production"
+description = "Production JWT Secret"
+regex = '''(?i)(jwt[_-]?secret|token[_-]?secret|auth[_-]?secret)[[:space:]]*[=:][[:space:]]*['""]?([a-zA-Z0-9@#$%^&*()_+\-=\[\]{}|;:,.<>?]{32,})['""]?'''
+tags = ["jwt", "authentication", "secret"]
+
+[[rules]]
+id = "encryption-key"
+description = "Encryption Key"
+regex = '''(?i)(encryption[_-]?key|crypto[_-]?key|cipher[_-]?key)[[:space:]]*[=:][[:space:]]*['""]?([a-zA-Z0-9+/]{32,}={0,2})['""]?'''
+tags = ["encryption", "crypto", "key"]
+
+[[rules]]
+id = "monitoring-tokens"
+description = "Monitoring Service Tokens"
+regex = '''(?i)(sentry[_-]?dsn|logrocket[_-]?(app[_-]?id|token)|datadog[_-]?(api[_-]?key|token))[[:space:]]*[=:][[:space:]]*['""]?([a-zA-Z0-9@#$%^&*()_+\-=\[\]{}|;:,.<>?/]{20,})['""]?'''
+tags = ["monitoring", "sentry", "logrocket", "datadog"]
+
+[[rules]]
+id = "cloud-provider-keys"
+description = "Cloud Provider Keys"
+regex = '''(?i)(aws[_-]?(access[_-]?key[_-]?id|secret[_-]?access[_-]?key)|azure[_-]?(client[_-]?secret|tenant[_-]?id)|gcp[_-]?(service[_-]?account[_-]?key|api[_-]?key))[[:space:]]*[=:][[:space:]]*['""]?([a-zA-Z0-9+/=]{20,})['""]?'''
+tags = ["cloud", "aws", "azure", "gcp"]
+
+[[rules]]
+id = "third-party-api-keys"
+description = "Third-party Service API Keys"
+regex = '''(?i)(stripe[_-]?(secret[_-]?key|publishable[_-]?key)|sendgrid[_-]?api[_-]?key|twilio[_-]?(auth[_-]?token|api[_-]?key))[[:space:]]*[=:][[:space:]]*['""]?([a-zA-Z0-9._-]{20,})['""]?'''
+tags = ["third-party", "stripe", "sendgrid", "twilio"]
+
+[[rules]]
+id = "private-key-pem"
+description = "Private Key (PEM format)"
+regex = '''-----BEGIN[[:space:]]+(RSA[[:space:]]+)?PRIVATE[[:space:]]+KEY-----'''
+tags = ["private-key", "pem", "crypto"]
+
+[[rules]]
+id = "ssh-private-key"
+description = "SSH Private Key"
+regex = '''-----BEGIN[[:space:]]+OPENSSH[[:space:]]+PRIVATE[[:space:]]+KEY-----'''
+tags = ["ssh", "private-key"]
+
+# File path allowlists (files to ignore)
+[allowlist]
+description = "Allowlisted files and patterns"
+files = [
+    '''\.git/.*''',
+    '''node_modules/.*''',
+    '''dist/.*''',
+    '''build/.*''',
+    '''\.next/.*''',
+    '''coverage/.*''',
+    '''.*\.test\.(ts|tsx|js|jsx)$''',
+    '''.*\.spec\.(ts|tsx|js|jsx)$''',
+    '''.*\.d\.ts$''',
+    '''.*\.min\.js$''',
+    '''.*\.map$''',
+    '''.*\.log$''',
+    '''package-lock\.json$''',
+    '''pnpm-lock\.yaml$''',
+    '''yarn\.lock$''',
+    '''\.gitleaks\.toml$''',
+    '''\.semgrep\.yml$''',
+    '''security-config\.json$''',
+    '''docs/.*\.md$''',
+    '''README\.md$''',
+    '''CHANGELOG\.md$''',
+    '''LICENSE$''',
+]
+
+# Regex patterns to allowlist
+regexes = [
+    '''example[_-]?(api[_-]?key|secret|token)''',
+    '''test[_-]?(api[_-]?key|secret|token)''',
+    '''demo[_-]?(api[_-]?key|secret|token)''',
+    '''placeholder[_-]?(api[_-]?key|secret|token)''',
+    '''your[_-]?(api[_-]?key|secret|token)''',
+    '''insert[_-]?(api[_-]?key|secret|token)''',
+    '''replace[_-]?(api[_-]?key|secret|token)''',
+    '''xxx+''',
+    '''yyy+''',
+    '''zzz+''',
+    '''123+''',
+    '''abc+''',
+    '''fake[_-]?(api[_-]?key|secret|token)''',
+    '''mock[_-]?(api[_-]?key|secret|token)''',
+    '''sample[_-]?(api[_-]?key|secret|token)''',
+    '''SENTRY_DSN=https://test@test\.ingest\.sentry\.io/test''',
+    '''JWT_SECRET=test-jwt-secret-for-testing-only.*''',
+    '''LOGROCKET_APP_ID=test/test''',
+    '''DATADOG_API_KEY=test-datadog-key''',
+    '''API_KEY=test-api-key.*''',
+    '''ENCRYPTION_KEY=test-encryption-key.*''',
+    '''SENTRY_DSN=https://xxx@xxx\.ingest\.sentry\.io/xxx''',
+    '''LOGROCKET_APP_ID=your-org/your-project-name''',
+    '''NEXT_PUBLIC_SENTRY_DSN=https://xxx@xxx\.ingest\.sentry\.io/xxx''',
+    '''NEXT_PUBLIC_LOGROCKET_APP_ID=your-org/your-project-name''',
+    '''-----BEGIN PRIVATE KEY-----\nxxx\n-----END PRIVATE KEY-----''',
+    '''test-encryption-key-32-characters.*''',
+]
+
+# Paths to allowlist (directories to ignore)
+paths = [
+    '''.git''',
+    '''node_modules''',
+    '''dist''',
+    '''build''',
+    '''.next''',
+    '''coverage''',
+    '''security-reports''',
+    '''.turbo''',
+    '''.vercel''',
+]
+
+
+
+# Oil & gas industry specific allowlist patterns
+[[rules]]
+id = "oil-gas-allowlist"
+description = "Oil & Gas Industry Allowlisted Patterns"
+regex = '''(?i)(example[_-]?well[_-]?id|test[_-]?production[_-]?data|demo[_-]?scada[_-]?config)'''
+tags = ["allowlist", "oil-gas"]
+
+# Configuration for different environments
+[env]
+production = true
+staging = true
+development = false
+test = false
+
+# Reporting configuration
+[report]
+format = "json"
+path = "gitleaks-report.json"
+verbose = true
+redact = true
+
+# Performance settings
+[performance]
+workers = 4
+timeout = "10m"
+max_target_megabytes = 1000
+
+# Compliance and audit settings
+[compliance]
+standards = [
+    "NIST Cybersecurity Framework",
+    "IEC 62443 Industrial Cybersecurity",
+    "API 1164 Pipeline SCADA Security"
+]
+
+audit_trail = true
+retention_days = 2555  # 7 years for oil & gas compliance
+
+
+
+

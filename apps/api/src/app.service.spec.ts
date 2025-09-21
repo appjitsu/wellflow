@@ -54,7 +54,10 @@ describe('AppService', () => {
 
   describe('Injectable Decorator', () => {
     it('should be decorated with @Injectable', () => {
-      const metadata = Reflect.getMetadata('__injectable__', AppService);
+      const metadata = Reflect.getMetadata(
+        '__injectable__',
+        AppService,
+      ) as boolean;
       expect(metadata).toBe(true);
     });
   });

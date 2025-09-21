@@ -1,0 +1,34 @@
+# WellFlow Security Ignore Configuration
+# This file contains security vulnerabilities that have been reviewed and accepted
+# Each entry should include:
+# - Vulnerability ID
+# - Package name and version
+# - Justification for ignoring
+# - Review date and reviewer
+# - Expiration date for re-evaluation
+
+# Format:
+# VULNERABILITY_ID:PACKAGE_NAME:VERSION:JUSTIFICATION:REVIEWER:DATE:EXPIRES
+
+# Example entries (remove when adding real entries):
+# GHSA-xxxx-xxxx-xxxx:example-package:1.0.0:Development only dependency:security-team:2024-01-15:2024-04-15
+
+# Development Dependencies
+# These are dependencies used only in development and not in production builds
+# Lower risk tolerance for development dependencies
+
+# Production Dependencies  
+# These are dependencies that ship with the production application
+# Higher scrutiny required - only ignore after thorough security review
+
+# Notes:
+# - All ignored vulnerabilities must be approved by security team
+# - Regular review of ignored vulnerabilities is required
+# - Expiration dates ensure periodic re-evaluation
+# - Document mitigation strategies where applicable
+
+# Oil & Gas Compliance Notes:
+# - Critical infrastructure applications require enhanced security review
+# - All ignored vulnerabilities must be documented in compliance reports
+# - Regular security audits must review all ignored items
+# - Emergency procedures must be in place for critical vulnerability discovery

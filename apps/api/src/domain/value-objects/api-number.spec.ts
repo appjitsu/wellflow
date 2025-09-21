@@ -12,23 +12,33 @@ describe('ApiNumber', () => {
     });
 
     it('should throw error for null API number', () => {
-      expect(() => new ApiNumber(null as any)).toThrow('API Number cannot be empty');
+      expect(() => new ApiNumber(null as unknown as string)).toThrow(
+        'API Number cannot be empty',
+      );
     });
 
     it('should throw error for undefined API number', () => {
-      expect(() => new ApiNumber(undefined as any)).toThrow('API Number cannot be empty');
+      expect(() => new ApiNumber(undefined as unknown as string)).toThrow(
+        'API Number cannot be empty',
+      );
     });
 
     it('should throw error for invalid format', () => {
-      expect(() => new ApiNumber('invalid')).toThrow('API Number must be exactly 10 digits');
+      expect(() => new ApiNumber('invalid')).toThrow(
+        'API Number must be exactly 10 digits',
+      );
     });
 
     it('should throw error for too short API number', () => {
-      expect(() => new ApiNumber('123')).toThrow('API Number must be exactly 10 digits');
+      expect(() => new ApiNumber('123')).toThrow(
+        'API Number must be exactly 10 digits',
+      );
     });
 
     it('should throw error for too long API number', () => {
-      expect(() => new ApiNumber('12345678901')).toThrow('API Number must be exactly 10 digits');
+      expect(() => new ApiNumber('12345678901')).toThrow(
+        'API Number must be exactly 10 digits',
+      );
     });
   });
 
@@ -47,7 +57,7 @@ describe('ApiNumber', () => {
 
     it('should return false when comparing with null', () => {
       const apiNumber = new ApiNumber('4212345678');
-      expect(apiNumber.equals(null as any)).toBe(false);
+      expect(apiNumber.equals(null as unknown as ApiNumber)).toBe(false);
     });
   });
 
@@ -60,26 +70,21 @@ describe('ApiNumber', () => {
 
   describe('validation', () => {
     it('should accept various valid formats and normalize them', () => {
-      const validFormats = [
-        '4212345678',
-        '42-123-45678',
-        '42 123 45678',
-      ];
+      const validFormats = ['4212345678', '42-123-45678', '42 123 45678'];
 
-      validFormats.forEach(format => {
+      validFormats.forEach((format) => {
         const apiNumber = new ApiNumber(format);
         expect(apiNumber.getValue()).toBe('42-123-45678'); // All should normalize to this format
       });
     });
 
     it('should reject formats with dots and underscores', () => {
-      const invalidFormats = [
-        '42.123.45678',
-        '42_123_45678',
-      ];
+      const invalidFormats = ['42.123.45678', '42_123_45678'];
 
-      invalidFormats.forEach(format => {
-        expect(() => new ApiNumber(format)).toThrow('API Number must be exactly 10 digits');
+      invalidFormats.forEach((format) => {
+        expect(() => new ApiNumber(format)).toThrow(
+          'API Number must be exactly 10 digits',
+        );
       });
     });
 
@@ -92,23 +97,31 @@ describe('ApiNumber', () => {
         'abcd123456',
       ];
 
-      invalidFormats.forEach(format => {
-        expect(() => new ApiNumber(format)).toThrow('API Number must be exactly 10 digits');
+      invalidFormats.forEach((format) => {
+        expect(() => new ApiNumber(format)).toThrow(
+          'API Number must be exactly 10 digits',
+        );
       });
     });
 
     it('should validate state codes', () => {
       // Valid state codes (1-56)
       const validStateCodes = ['01', '25', '42', '56'];
-      validStateCodes.forEach(stateCode => {
+      validStateCodes.forEach((stateCode) => {
         const apiNumber = new ApiNumber(`${stateCode}12345678`);
         expect(apiNumber.getStateCode()).toBe(stateCode);
       });
 
       // Invalid state codes
-      expect(() => new ApiNumber('0012345678')).toThrow('Invalid state code in API Number');
-      expect(() => new ApiNumber('5712345678')).toThrow('Invalid state code in API Number');
-      expect(() => new ApiNumber('9912345678')).toThrow('Invalid state code in API Number');
+      expect(() => new ApiNumber('0012345678')).toThrow(
+        'Invalid state code in API Number',
+      );
+      expect(() => new ApiNumber('5712345678')).toThrow(
+        'Invalid state code in API Number',
+      );
+      expect(() => new ApiNumber('9912345678')).toThrow(
+        'Invalid state code in API Number',
+      );
     });
 
     it('should handle edge cases for state code validation', () => {
@@ -117,8 +130,12 @@ describe('ApiNumber', () => {
       expect(() => new ApiNumber('5612345678')).not.toThrow(); // Maximum valid
 
       // Just outside boundaries
-      expect(() => new ApiNumber('0012345678')).toThrow('Invalid state code in API Number');
-      expect(() => new ApiNumber('5712345678')).toThrow('Invalid state code in API Number');
+      expect(() => new ApiNumber('0012345678')).toThrow(
+        'Invalid state code in API Number',
+      );
+      expect(() => new ApiNumber('5712345678')).toThrow(
+        'Invalid state code in API Number',
+      );
     });
   });
 
@@ -155,12 +172,18 @@ describe('ApiNumber', () => {
 
   describe('edge cases and error handling', () => {
     it('should handle whitespace-only input', () => {
-      expect(() => new ApiNumber('   ')).toThrow('API Number must be exactly 10 digits');
+      expect(() => new ApiNumber('   ')).toThrow(
+        'API Number must be exactly 10 digits',
+      );
     });
 
     it('should handle mixed valid and invalid characters', () => {
-      expect(() => new ApiNumber('42-123-4567a')).toThrow('API Number must be exactly 10 digits');
-      expect(() => new ApiNumber('4a-123-45678')).toThrow('API Number must be exactly 10 digits');
+      expect(() => new ApiNumber('42-123-4567a')).toThrow(
+        'API Number must be exactly 10 digits',
+      );
+      expect(() => new ApiNumber('4a-123-45678')).toThrow(
+        'API Number must be exactly 10 digits',
+      );
     });
 
     it('should handle numbers with leading zeros', () => {
@@ -176,7 +199,7 @@ describe('ApiNumber', () => {
         ' 42 123 45678 ',
       ];
 
-      complexFormats.forEach(format => {
+      complexFormats.forEach((format) => {
         const apiNumber = new ApiNumber(format);
         expect(apiNumber.getValue()).toBe('42-123-45678');
       });
@@ -212,7 +235,7 @@ describe('ApiNumber', () => {
         { code: '40', name: 'Oklahoma' },
       ];
 
-      commonStates.forEach(state => {
+      commonStates.forEach((state) => {
         const apiNumber = new ApiNumber(`${state.code}12345678`);
         expect(apiNumber.getStateCode()).toBe(state.code);
         expect(apiNumber.getValue()).toBe(`${state.code}-123-45678`);
@@ -227,7 +250,7 @@ describe('ApiNumber', () => {
         { input: '4212399999', expected: '42-123-99999' },
       ];
 
-      examples.forEach(example => {
+      examples.forEach((example) => {
         const apiNumber = new ApiNumber(example.input);
         expect(apiNumber.getValue()).toBe(example.expected);
       });

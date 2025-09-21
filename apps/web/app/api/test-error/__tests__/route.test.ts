@@ -25,8 +25,11 @@ describe('/api/test-error', () => {
   });
 
   it('should successfully proxy request to API endpoint', async () => {
-    const mockResponseData = { message: 'Test error triggered', timestamp: '2024-01-01T00:00:00.000Z' };
-    
+    const mockResponseData = {
+      message: 'Test error triggered',
+      timestamp: '2024-01-01T00:00:00.000Z',
+    };
+
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockResponseData),
@@ -71,7 +74,7 @@ describe('/api/test-error', () => {
 
   it('should handle API response errors', async () => {
     const errorText = 'Internal Server Error';
-    
+
     mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 500,
@@ -112,7 +115,7 @@ describe('/api/test-error', () => {
 
   it('should handle API response with different status codes', async () => {
     const errorText = 'Bad Request';
-    
+
     mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 400,
@@ -162,7 +165,10 @@ describe('/api/test-error', () => {
 
     await POST();
 
-    expect(consoleSpy).toHaveBeenCalledWith('Error calling API test-error endpoint:', expect.any(Error));
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Error calling API test-error endpoint:',
+      expect.any(Error)
+    );
     expect(NextResponse.json).toHaveBeenCalledWith(
       { error: 'Failed to call API endpoint', details: expect.any(Error) },
       { status: 500 }

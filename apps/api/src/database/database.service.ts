@@ -1,14 +1,13 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Pool } from 'pg';
 import * as schema from './schema';
 
 @Injectable()
 export class DatabaseService implements OnModuleInit, OnModuleDestroy {
-  private pool: Pool;
-  public db: NodePgDatabase<typeof schema>;
+  private pool!: Pool;
+  public db!: NodePgDatabase<typeof schema>;
 
   constructor(private configService: ConfigService) {}
 
@@ -17,7 +16,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       host: this.configService.get<string>('DB_HOST', 'localhost'),
       port: this.configService.get<number>('DB_PORT', 5432),
       user: this.configService.get<string>('DB_USER', 'postgres'),
-      password: this.configService.get<string>('DB_PASSWORD', 'password'),
+      password: this.configService.get<string>('DB_PASSWORD'),
       database: this.configService.get<string>('DB_NAME', 'wellflow'),
       max: 20,
       idleTimeoutMillis: 30000,
@@ -83,7 +82,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       console.error('❌ Database table creation failed:', error);
       // Don't throw here - let the app start even if table creation fails
-      console.warn('⚠️ Application starting without tables - manual intervention may be required');
+      console.warn(
+        '⚠️ Application starting without tables - manual intervention may be required',
+      );
     }
   }
 

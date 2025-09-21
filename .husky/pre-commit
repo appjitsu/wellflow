@@ -1,0 +1,28 @@
+# Run lint-staged to format staged files
+npx lint-staged
+
+# Secrets scanning with GitLeaks (protect against committing secrets)
+if command -v gitleaks >/dev/null 2>&1; then
+  echo "🔍 Scanning for secrets..."
+  if ! gitleaks protect --config=.gitleaks.toml --staged --verbose; then
+    echo "❌ Error: Potential secrets detected in staged files!"
+    echo "Please review and remove any sensitive information before committing."
+    echo "Run 'gitleaks protect --config=.gitleaks.toml --staged' for details."
+    exit 1
+  fi
+  echo "✅ No secrets detected"
+else
+  echo "⚠️  GitLeaks not installed - skipping secrets scan"
+  echo "   Install with: brew install gitleaks"
+fi
+
+# Note: Task comment detection temporarily disabled during initial setup
+# Prevent commits with task comments in production code (excluding test files and config files)
+# if git diff --cached --name-only | grep -E '\.(ts|tsx|js|jsx)$' | grep -v -E '\.(test|spec)\.(ts|tsx|js|jsx)$' | grep -v -E '(config|\.config)\.(ts|tsx|js|jsx)$' | xargs grep -l "TODO\|FIXME\|XXX" 2>/dev/null; then
+#   echo "❌ Error: Task comments (TODO/FIXME/XXX) found in production code. Please resolve before committing."
+#   echo "Files with task comments:"
+#   git diff --cached --name-only | grep -E '\.(ts|tsx|js|jsx)$' | grep -v -E '\.(test|spec)\.(ts|tsx|js|jsx)$' | grep -v -E '(config|\.config)\.(ts|tsx|js|jsx)$' | xargs grep -l "TODO\|FIXME\|XXX" 2>/dev/null
+#   exit 1
+# fi
+
+echo "✅ Pre-commit checks passed!"

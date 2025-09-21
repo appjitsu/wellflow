@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./base.json",
+  "compilerOptions": {
+    // === NODE.JS SPECIFIC SETTINGS ===
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "target": "ES2022",
+    "lib": ["ES2022"],
+
+    // === NODE.JS STRICT SETTINGS ===
+    // Enhanced type safety for Node.js/NestJS applications
+    "allowJs": false,
+    "checkJs": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    // Note: outDir and rootDir should be set in individual package tsconfig.json files
+
+    // === NESTJS SPECIFIC SETTINGS ===
+    // Support for decorators and metadata
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    // === STRICT NODE.JS CHECKS ===
+    // Additional safety for server-side applications
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+
+    // === PERFORMANCE OPTIMIZATIONS ===
+    "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo"
+  },
+
+  // === INCLUDE/EXCLUDE PATTERNS ===
+  "include": ["src/**/*", "test/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"]
+}

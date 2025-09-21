@@ -4,7 +4,7 @@ import { createClient, RedisClientType } from 'redis';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
-  private client: RedisClientType;
+  private client!: RedisClientType;
 
   constructor(private configService: ConfigService) {}
 
@@ -40,8 +40,8 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    if (this.client && this.client.isOpen) {
-      await this.client.disconnect();
+    if (this.client && this.client.isReady) {
+      await this.client.quit();
       console.log('🔌 Redis connection closed');
     }
   }

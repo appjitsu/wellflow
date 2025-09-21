@@ -1,0 +1,100 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "pages": [
+    {
+      "path": "/",
+      "name": "home",
+      "description": "Main dashboard for oil & gas production monitoring"
+    },
+    {
+      "path": "/wells",
+      "name": "wells",
+      "description": "Well management and monitoring interface"
+    },
+    {
+      "path": "/dashboard",
+      "name": "dashboard",
+      "description": "Production analytics and KPI dashboard"
+    },
+    {
+      "path": "/reports",
+      "name": "reports",
+      "description": "Regulatory and compliance reporting"
+    },
+    {
+      "path": "/alerts",
+      "name": "alerts",
+      "description": "Emergency alerts and notifications"
+    },
+    {
+      "path": "/settings",
+      "name": "settings",
+      "description": "System configuration and user preferences"
+    },
+    {
+      "path": "/wells/123",
+      "name": "well-detail",
+      "description": "Individual well monitoring and control"
+    },
+    {
+      "path": "/reports/production",
+      "name": "production-report",
+      "description": "Production volume and efficiency reports"
+    },
+    {
+      "path": "/reports/compliance",
+      "name": "compliance-report",
+      "description": "Regulatory compliance and audit reports"
+    }
+  ],
+  "wcag": {
+    "level": "AA",
+    "version": "2.1",
+    "contrastRatio": {
+      "normal": 4.5,
+      "large": 3.0
+    }
+  },
+  "tools": {
+    "axe": {
+      "enabled": true,
+      "rules": {
+        "color-contrast": true,
+        "keyboard-navigation": true,
+        "screen-reader": true,
+        "focus-management": true
+      }
+    },
+    "pa11y": {
+      "enabled": true,
+      "standard": "WCAG2AA",
+      "timeout": 30000
+    },
+    "lighthouse": {
+      "enabled": true,
+      "categories": ["accessibility"],
+      "throttling": false
+    }
+  },
+  "oilGasIndustry": {
+    "fieldOperations": {
+      "touchTargetSize": 44,
+      "highContrastMode": true,
+      "largeTextSupport": true
+    },
+    "emergencyResponse": {
+      "criticalAlerts": true,
+      "multiModalAlerts": true,
+      "fastLoading": true
+    },
+    "industrialDevices": {
+      "keyboardNavigation": true,
+      "ruggedDeviceSupport": true,
+      "voiceControl": false
+    }
+  },
+  "compliance": {
+    "standards": ["WCAG2.1-AA", "Section508", "ADA", "EN301549"],
+    "industryStandards": ["API-1164", "IEC-62443", "NIST-Cybersecurity-Framework"]
+  }
+}

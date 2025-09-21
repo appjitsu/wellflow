@@ -1,11 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { eq, and, sql, count } from 'drizzle-orm';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { WellRepository } from '../../domain/repositories/well.repository.interface';
 import { Well } from '../../domain/entities/well.entity';
 import { ApiNumber } from '../../domain/value-objects/api-number';
-import { Location } from '../../domain/value-objects/location';
-import { Coordinates } from '../../domain/value-objects/coordinates';
+import { WellStatus, WellType } from '../../domain/enums/well-status.enum';
+
 import { wells } from '../database/schemas/well.schema';
 
 /**
@@ -16,7 +16,7 @@ import { wells } from '../database/schemas/well.schema';
 export class WellRepositoryImpl implements WellRepository {
   constructor(
     @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<any>,
+    private readonly db: NodePgDatabase<Record<string, never>>,
   ) {}
 
   async save(well: Well): Promise<void> {
@@ -53,7 +53,6 @@ export class WellRepositoryImpl implements WellRepository {
       // Insert new well
       await this.db.insert(wells).values({
         ...wellData,
-        createdAt: well.getCreatedAt(),
       });
     }
   }
@@ -69,7 +68,12 @@ export class WellRepositoryImpl implements WellRepository {
       return null;
     }
 
-    return this.mapToEntity(result[0]);
+    const wellData = result[0];
+    if (!wellData) {
+      return null;
+    }
+
+    return this.mapToEntity(wellData);
   }
 
   async findByApiNumber(apiNumber: ApiNumber): Promise<Well | null> {
@@ -83,7 +87,12 @@ export class WellRepositoryImpl implements WellRepository {
       return null;
     }
 
-    return this.mapToEntity(result[0]);
+    const wellData = result[0];
+    if (!wellData) {
+      return null;
+    }
+
+    return this.mapToEntity(wellData);
   }
 
   async findByOperatorId(operatorId: string): Promise<Well[]> {
@@ -139,7 +148,7 @@ export class WellRepositoryImpl implements WellRepository {
     },
   ): Promise<{ wells: Well[]; total: number }> {
     // Build where conditions
-    const conditions: any[] = [];
+    const conditions: Array<ReturnType<typeof eq>> = [];
 
     if (filters?.operatorId) {
       conditions.push(eq(wells.operatorId, filters.operatorId));
@@ -152,12 +161,15 @@ export class WellRepositoryImpl implements WellRepository {
     }
 
     // Build where clause
-    const whereClause =
-      conditions.length === 0
-        ? undefined
-        : conditions.length === 1
-          ? conditions[0]
-          : and(...conditions);
+    let whereClause:
+      | ReturnType<typeof and>
+      | ReturnType<typeof eq>
+      | undefined = undefined;
+    if (conditions.length === 1) {
+      whereClause = conditions[0];
+    } else if (conditions.length > 1) {
+      whereClause = and(...conditions);
+    }
 
     // Execute queries
     const wellsQuery = whereClause
@@ -180,7 +192,7 @@ export class WellRepositoryImpl implements WellRepository {
 
     return {
       wells: wellsResult.map((row) => this.mapToEntity(row)),
-      total: totalResult[0].count,
+      total: totalResult[0]?.count || 0,
     };
   }
 
@@ -198,34 +210,31 @@ export class WellRepositoryImpl implements WellRepository {
     return result.length > 0;
   }
 
-  private mapToEntity(row: any): Well {
-    const locationData = row.location;
-    const coordinates = new Coordinates(
-      locationData.coordinates.latitude,
-      locationData.coordinates.longitude,
-    );
-    const location = new Location(coordinates, {
-      address: locationData.address,
-      county: locationData.county,
-      state: locationData.state,
-      country: locationData.country,
-    });
+  private mapToEntity(row: Record<string, unknown>): Well {
+    const locationData = row.location as {
+      coordinates: { latitude: number; longitude: number };
+      address?: string;
+      county?: string;
+      state?: string;
+      country?: string;
+    };
+    // Note: Location object construction is handled by Well.fromPersistence
 
     return Well.fromPersistence({
-      id: row.id,
-      apiNumber: row.apiNumber,
-      name: row.name,
-      operatorId: row.operatorId,
-      leaseId: row.leaseId,
-      wellType: row.wellType,
-      status: row.status,
+      id: row.id as string,
+      apiNumber: row.apiNumber as string,
+      name: row.name as string,
+      operatorId: row.operatorId as string,
+      leaseId: row.leaseId as string | undefined,
+      wellType: row.wellType as WellType,
+      status: row.status as WellStatus,
       location: locationData,
-      spudDate: row.spudDate,
-      completionDate: row.completionDate,
-      totalDepth: row.totalDepth,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      version: row.version,
+      spudDate: row.spudDate as Date | undefined,
+      completionDate: row.completionDate as Date | undefined,
+      totalDepth: row.totalDepth as number | undefined,
+      createdAt: row.createdAt as Date,
+      updatedAt: row.updatedAt as Date,
+      version: row.version as number,
     });
   }
 }

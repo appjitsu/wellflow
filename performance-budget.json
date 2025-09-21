@@ -1,0 +1,234 @@
+{
+  "name": "WellFlow Performance Budget Configuration",
+  "description": "Performance budgets for oil & gas production monitoring platform",
+  "version": "1.0.0",
+  "timestamp": "2024-01-20T00:00:00Z",
+
+  "budgets": {
+    "web_application": {
+      "description": "Next.js web application performance budgets",
+      "targets": {
+        "javascript": {
+          "budget_kb": 500,
+          "description": "JavaScript bundle size for interactive monitoring interfaces",
+          "rationale": "Critical for real-time oil & gas monitoring dashboards"
+        },
+        "css": {
+          "budget_kb": 100,
+          "description": "CSS bundle size for responsive layouts",
+          "rationale": "Optimized styling for field operations and mobile devices"
+        },
+        "images": {
+          "budget_kb": 200,
+          "description": "Image assets including icons and graphics",
+          "rationale": "Visual elements for oil & gas equipment and status indicators"
+        },
+        "fonts": {
+          "budget_kb": 50,
+          "description": "Web fonts for consistent typography",
+          "rationale": "Readable text for critical monitoring information"
+        },
+        "total_initial_load": {
+          "budget_kb": 600,
+          "description": "Total initial page load size",
+          "rationale": "Fast loading for emergency response and field operations"
+        }
+      },
+      "thresholds": {
+        "warning_percentage": 80,
+        "error_percentage": 100,
+        "description": "Budget utilization thresholds for alerts"
+      }
+    },
+
+    "api_application": {
+      "description": "NestJS API performance budgets",
+      "targets": {
+        "response_time_ms": {
+          "health_check": 100,
+          "wells_list": 500,
+          "well_details": 300,
+          "production_data": 800,
+          "regulatory_reports": 1000,
+          "description": "API endpoint response time targets"
+        },
+        "memory_usage_mb": {
+          "idle": 128,
+          "under_load": 512,
+          "peak": 1024,
+          "description": "Memory usage limits for API server"
+        },
+        "cpu_usage_percent": {
+          "idle": 5,
+          "under_load": 50,
+          "peak": 80,
+          "description": "CPU utilization limits for API server"
+        }
+      }
+    },
+
+    "core_web_vitals": {
+      "description": "Core Web Vitals performance targets",
+      "targets": {
+        "largest_contentful_paint_ms": {
+          "good": 2500,
+          "needs_improvement": 4000,
+          "poor": 4001,
+          "description": "Time for largest content element to load"
+        },
+        "first_input_delay_ms": {
+          "good": 100,
+          "needs_improvement": 300,
+          "poor": 301,
+          "description": "Time from first user interaction to browser response"
+        },
+        "cumulative_layout_shift": {
+          "good": 0.1,
+          "needs_improvement": 0.25,
+          "poor": 0.26,
+          "description": "Visual stability during page load"
+        },
+        "first_contentful_paint_ms": {
+          "good": 1800,
+          "needs_improvement": 3000,
+          "poor": 3001,
+          "description": "Time for first content to appear"
+        },
+        "time_to_interactive_ms": {
+          "good": 3800,
+          "needs_improvement": 7300,
+          "poor": 7301,
+          "description": "Time until page is fully interactive"
+        }
+      }
+    }
+  },
+
+  "industry_requirements": {
+    "oil_and_gas": {
+      "description": "Oil & gas industry specific performance requirements",
+      "critical_infrastructure": {
+        "max_load_time_ms": 3000,
+        "description": "Maximum acceptable load time for critical monitoring systems"
+      },
+      "field_operations": {
+        "mobile_optimization": true,
+        "low_bandwidth_support": true,
+        "offline_capability": false,
+        "description": "Requirements for remote field operations"
+      },
+      "emergency_response": {
+        "max_response_time_ms": 1000,
+        "high_availability": true,
+        "description": "Performance requirements for emergency scenarios"
+      },
+      "regulatory_compliance": {
+        "audit_trail": true,
+        "data_retention_years": 7,
+        "performance_monitoring": true,
+        "description": "Compliance requirements affecting performance"
+      }
+    }
+  },
+
+  "monitoring": {
+    "tools": {
+      "lighthouse_ci": {
+        "enabled": true,
+        "description": "Lighthouse CI for automated performance testing",
+        "configuration": "lighthouse.config.js"
+      },
+      "web_vitals": {
+        "enabled": true,
+        "description": "Real User Monitoring for Core Web Vitals",
+        "reporting_endpoint": "/api/web-vitals"
+      },
+      "bundle_analyzer": {
+        "enabled": true,
+        "description": "Webpack Bundle Analyzer for size analysis",
+        "threshold_warning_kb": 400,
+        "threshold_error_kb": 600
+      }
+    },
+
+    "alerts": {
+      "budget_exceeded": {
+        "enabled": true,
+        "channels": ["github", "slack"],
+        "description": "Alert when performance budgets are exceeded"
+      },
+      "regression_detected": {
+        "enabled": true,
+        "threshold_percent": 10,
+        "description": "Alert when performance regresses by threshold"
+      }
+    }
+  },
+
+  "optimization_strategies": {
+    "code_splitting": {
+      "enabled": true,
+      "description": "Split code into smaller chunks for faster loading"
+    },
+    "lazy_loading": {
+      "enabled": true,
+      "description": "Load components and images on demand"
+    },
+    "tree_shaking": {
+      "enabled": true,
+      "description": "Remove unused code from bundles"
+    },
+    "compression": {
+      "gzip": true,
+      "brotli": true,
+      "description": "Compress assets for faster transfer"
+    },
+    "caching": {
+      "static_assets": "1y",
+      "api_responses": "5m",
+      "description": "Cache strategies for different asset types"
+    },
+    "cdn": {
+      "enabled": true,
+      "provider": "vercel",
+      "description": "Content Delivery Network for global performance"
+    }
+  },
+
+  "testing": {
+    "performance_tests": {
+      "load_testing": {
+        "tool": "artillery",
+        "target_rps": 100,
+        "duration_minutes": 5,
+        "description": "Load testing for API endpoints"
+      },
+      "lighthouse_audits": {
+        "frequency": "daily",
+        "categories": ["performance", "accessibility", "best-practices"],
+        "description": "Automated Lighthouse performance audits"
+      }
+    }
+  },
+
+  "compliance": {
+    "standards": [
+      "NIST Cybersecurity Framework",
+      "IEC 62443 Industrial Cybersecurity",
+      "API 1164 Pipeline SCADA Security"
+    ],
+    "performance_requirements": {
+      "availability": "99.9%",
+      "response_time_sla": "< 2 seconds",
+      "throughput": "1000 requests/minute",
+      "description": "Performance SLA for critical infrastructure"
+    }
+  },
+
+  "documentation": {
+    "performance_guide": "docs/performance-optimization.md",
+    "monitoring_setup": "docs/performance-monitoring.md",
+    "troubleshooting": "docs/performance-troubleshooting.md",
+    "best_practices": "docs/performance-best-practices.md"
+  }
+}

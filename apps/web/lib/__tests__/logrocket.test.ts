@@ -1,5 +1,4 @@
 import LogRocket from 'logrocket';
-import setupLogRocketReact from 'logrocket-react';
 import { initLogRocket, identifyUser, captureException, addTag } from '../logrocket';
 
 // Mock LogRocket
@@ -26,7 +25,7 @@ describe('LogRocket Utilities', () => {
     mockConsoleError.mockClear();
 
     // Ensure window is defined for most tests
-    (global as any).window = {};
+    (global as unknown as { window: object }).window = {};
     process.env.NEXT_PUBLIC_LOGROCKET_APP_ID = 'test-app-id';
   });
 
@@ -48,13 +47,13 @@ describe('LogRocket Utilities', () => {
     });
 
     it('should handle window undefined gracefully', () => {
-      const originalWindow = (global as any).window;
-      delete (global as any).window;
+      const originalWindow = (global as typeof globalThis).window;
+      delete (global as Record<string, unknown>).window;
 
       expect(() => initLogRocket()).not.toThrow();
 
       // Restore window
-      (global as any).window = originalWindow;
+      (global as typeof globalThis).window = originalWindow;
     });
 
     it('should initialize LogRocket without errors', () => {

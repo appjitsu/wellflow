@@ -1,11 +1,13 @@
 # Railway Deployment Guide for WellFlow MVP
 
-This guide covers the complete setup of Railway backend infrastructure for the WellFlow MVP, including NestJS API, PostgreSQL with TimescaleDB, and Redis.
+This guide covers the complete setup of Railway backend infrastructure for the
+WellFlow MVP, including NestJS API, PostgreSQL with TimescaleDB, and Redis.
 
 ## Prerequisites
 
 1. **Railway Account**: Sign up at [railway.app](https://railway.app)
-2. **Railway CLI**: Install using `curl -fsSL https://railway.app/install.sh | sh`
+2. **Railway CLI**: Install using
+   `curl -fsSL https://railway.app/install.sh | sh`
 3. **Active Railway Plan**: Trial or paid plan required
 
 ## Project Structure

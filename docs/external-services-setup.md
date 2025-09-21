@@ -1,6 +1,7 @@
 # External Services Setup Guide
 
-This guide covers setting up all external services for WellFlow with cross-platform compatibility for both web and mobile applications.
+This guide covers setting up all external services for WellFlow with
+cross-platform compatibility for both web and mobile applications.
 
 ## Overview
 
@@ -245,4 +246,5 @@ After setting up all services:
 
 ---
 
-**Note**: This setup provides a solid foundation for both current web development and future React Native mobile app integration.
+**Note**: This setup provides a solid foundation for both current web
+development and future React Native mobile app integration.

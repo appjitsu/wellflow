@@ -2,6 +2,12 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "./base.json",
   "compilerOptions": {
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+
+    // === REACT LIBRARY SPECIFIC STRICT SETTINGS ===
+    // Enhanced type safety for React library components
+    "declaration": true,
+    "declarationMap": true
+    // Note: outDir and rootDir should be set in individual package tsconfig.json files
   }
 }

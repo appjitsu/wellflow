@@ -1,31 +1,41 @@
 import { ExecutionContext, CallHandler } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Observable, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { AuditLogInterceptor } from './audit-log.interceptor';
 import { AuditLogOptions } from '../decorators/audit-log.decorator';
+import { TestUser } from '../../test-utils/user-mock.helper';
 
 describe('AuditLogInterceptor', () => {
   let interceptor: AuditLogInterceptor;
   let reflector: Reflector;
   let mockExecutionContext: ExecutionContext;
   let mockCallHandler: CallHandler;
-  let mockRequest: any;
-  let mockResponse: any;
+  let mockRequest: {
+    user?: { id?: string; email?: string; roles?: string[] } | null;
+    ip?: string;
+    method?: string;
+    url?: string;
+    get?: jest.Mock;
+  };
+  let mockResponse: { statusCode?: number };
 
   const mockReflector = {
     getAllAndOverride: jest.fn(),
+    get: jest.fn(),
+    getAll: jest.fn(),
+    getAllAndMerge: jest.fn(),
   };
 
   beforeEach(() => {
-    reflector = mockReflector as any;
+    reflector = mockReflector as jest.Mocked<Reflector>;
     interceptor = new AuditLogInterceptor(reflector);
 
     mockRequest = {
       user: null,
-      ip: '192.168.1.100',
+      ip: '127.0.0.1',
       method: 'GET',
       url: '/api/wells',
-      get: jest.fn(),
+      get: jest.fn().mockReturnValue(''),
     };
 
     mockResponse = {
@@ -44,11 +54,11 @@ describe('AuditLogInterceptor', () => {
       getArgByIndex: jest.fn(),
       switchToRpc: jest.fn(),
       switchToWs: jest.fn(),
-    } as any;
+    } as jest.Mocked<ExecutionContext>;
 
     mockCallHandler = {
       handle: jest.fn(),
-    } as any;
+    } as jest.Mocked<CallHandler>;
 
     jest.clearAllMocks();
     jest.spyOn(console, 'log').mockImplementation(() => {});
@@ -65,7 +75,10 @@ describe('AuditLogInterceptor', () => {
       const mockObservable = of('test response');
       (mockCallHandler.handle as jest.Mock).mockReturnValue(mockObservable);
 
-      const result = interceptor.intercept(mockExecutionContext, mockCallHandler);
+      const result = interceptor.intercept(
+        mockExecutionContext,
+        mockCallHandler,
+      );
 
       expect(result).toBe(mockObservable);
       expect(mockReflector.getAllAndOverride).toHaveBeenCalledWith('auditLog', [
@@ -80,7 +93,10 @@ describe('AuditLogInterceptor', () => {
       const mockObservable = of('test response');
       (mockCallHandler.handle as jest.Mock).mockReturnValue(mockObservable);
 
-      const result = interceptor.intercept(mockExecutionContext, mockCallHandler);
+      const result = interceptor.intercept(
+        mockExecutionContext,
+        mockCallHandler,
+      );
 
       expect(result).toBe(mockObservable);
       expect(mockCallHandler.handle).toHaveBeenCalled();
@@ -98,25 +114,30 @@ describe('AuditLogInterceptor', () => {
         id: 'user-123',
         email: 'operator@example.com',
       };
-      mockRequest.get.mockReturnValue('Mozilla/5.0 Test Browser');
-      (mockCallHandler.handle as jest.Mock).mockReturnValue(of('success response'));
+      mockRequest.get?.mockReturnValue('Mozilla/5.0 Test Browser');
+      (mockCallHandler.handle as jest.Mock).mockReturnValue(
+        of('success response'),
+      );
 
-      const result = interceptor.intercept(mockExecutionContext, mockCallHandler);
+      const result = interceptor.intercept(
+        mockExecutionContext,
+        mockCallHandler,
+      );
 
       result.subscribe({
         next: (response) => {
           expect(response).toBe('success response');
           expect(console.log).toHaveBeenCalledWith(
             'AUDIT_LOG:',
-            expect.stringContaining('"action": "CREATE_WELL"')
+            expect.stringContaining('"action": "CREATE_WELL"'),
           );
           expect(console.log).toHaveBeenCalledWith(
             'AUDIT_LOG:',
-            expect.stringContaining('"resource": "well"')
+            expect.stringContaining('"resource": "well"'),
           );
           expect(console.log).toHaveBeenCalledWith(
             'AUDIT_LOG:',
-            expect.stringContaining('"success": true')
+            expect.stringContaining('"success": true'),
           );
           done();
         },
@@ -135,32 +156,37 @@ describe('AuditLogInterceptor', () => {
         id: 'user-456',
         email: 'admin@example.com',
       };
-      mockRequest.get.mockReturnValue('Mozilla/5.0 Test Browser');
-      
-      const error = new Error('Well not found');
-      (error as any).status = 404;
-      (mockCallHandler.handle as jest.Mock).mockReturnValue(throwError(() => error));
+      mockRequest.get?.mockReturnValue('Mozilla/5.0 Test Browser');
 
-      const result = interceptor.intercept(mockExecutionContext, mockCallHandler);
+      const error = new Error('Well not found');
+      (error as unknown as { status: number }).status = 404;
+      (mockCallHandler.handle as jest.Mock).mockReturnValue(
+        throwError(() => error),
+      );
+
+      const result = interceptor.intercept(
+        mockExecutionContext,
+        mockCallHandler,
+      );
 
       result.subscribe({
         error: (err) => {
           expect(err.message).toBe('Well not found');
           expect(console.log).toHaveBeenCalledWith(
             'AUDIT_LOG:',
-            expect.stringContaining('"action": "DELETE_WELL"')
+            expect.stringContaining('"action": "DELETE_WELL"'),
           );
           expect(console.log).toHaveBeenCalledWith(
             'AUDIT_LOG:',
-            expect.stringContaining('"success": false')
+            expect.stringContaining('"success": false'),
           );
           expect(console.log).toHaveBeenCalledWith(
             'AUDIT_LOG:',
-            expect.stringContaining('"statusCode": 404')
+            expect.stringContaining('"statusCode": 404'),
           );
           expect(console.log).toHaveBeenCalledWith(
             'AUDIT_LOG:',
-            expect.stringContaining('"error": "Well not found"')
+            expect.stringContaining('"error": "Well not found"'),
           );
           done();
         },
@@ -176,13 +202,16 @@ describe('AuditLogInterceptor', () => {
       mockRequest.user = { id: 'user-789' };
       (mockCallHandler.handle as jest.Mock).mockReturnValue(of('wells data'));
 
-      const result = interceptor.intercept(mockExecutionContext, mockCallHandler);
+      const result = interceptor.intercept(
+        mockExecutionContext,
+        mockCallHandler,
+      );
 
       result.subscribe({
         next: () => {
           expect(console.log).toHaveBeenCalledWith(
             'AUDIT_LOG:',
-            expect.stringContaining('"resource": "WellsController"')
+            expect.stringContaining('"resource": "WellsController"'),
           );
           done();
         },
@@ -199,22 +228,25 @@ describe('AuditLogInterceptor', () => {
       mockRequest.user = null;
       (mockCallHandler.handle as jest.Mock).mockReturnValue(of('health check'));
 
-      const result = interceptor.intercept(mockExecutionContext, mockCallHandler);
+      const result = interceptor.intercept(
+        mockExecutionContext,
+        mockCallHandler,
+      );
 
       result.subscribe({
         next: () => {
           // When user is null, userId and userEmail are undefined and omitted from JSON
           expect(console.log).toHaveBeenCalledWith(
             'AUDIT_LOG:',
-            expect.not.stringContaining('"userId"')
+            expect.not.stringContaining('"userId"'),
           );
           expect(console.log).toHaveBeenCalledWith(
             'AUDIT_LOG:',
-            expect.not.stringContaining('"userEmail"')
+            expect.not.stringContaining('"userEmail"'),
           );
           expect(console.log).toHaveBeenCalledWith(
             'AUDIT_LOG:',
-            expect.stringContaining('"action": "PUBLIC_ACCESS"')
+            expect.stringContaining('"action": "PUBLIC_ACCESS"'),
           );
           done();
         },
@@ -228,15 +260,20 @@ describe('AuditLogInterceptor', () => {
 
       mockReflector.getAllAndOverride.mockReturnValue(auditOptions);
       const error = new Error('Internal error');
-      (mockCallHandler.handle as jest.Mock).mockReturnValue(throwError(() => error));
+      (mockCallHandler.handle as jest.Mock).mockReturnValue(
+        throwError(() => error),
+      );
 
-      const result = interceptor.intercept(mockExecutionContext, mockCallHandler);
+      const result = interceptor.intercept(
+        mockExecutionContext,
+        mockCallHandler,
+      );
 
       result.subscribe({
         error: () => {
           expect(console.log).toHaveBeenCalledWith(
             'AUDIT_LOG:',
-            expect.stringContaining('"statusCode": 500')
+            expect.stringContaining('"statusCode": 500'),
           );
           done();
         },
@@ -258,22 +295,29 @@ describe('AuditLogInterceptor', () => {
         email: 'operator@texasoil.com',
         roles: ['OPERATOR'],
         operatorId: 'TX-OP-456',
-      };
+      } as TestUser;
       mockRequest.method = 'POST';
       mockRequest.url = '/api/wells';
-      (mockCallHandler.handle as jest.Mock).mockReturnValue(of({ id: 'well-123' }));
+      (mockCallHandler.handle as jest.Mock).mockReturnValue(
+        of({ id: 'well-123' }),
+      );
 
-      const result = interceptor.intercept(mockExecutionContext, mockCallHandler);
+      const result = interceptor.intercept(
+        mockExecutionContext,
+        mockCallHandler,
+      );
 
       result.subscribe({
         next: () => {
           expect(console.log).toHaveBeenCalledWith(
             'AUDIT_LOG:',
-            expect.stringContaining('"description": "Create new oil well in Permian Basin"')
+            expect.stringContaining(
+              '"description": "Create new oil well in Permian Basin"',
+            ),
           );
           expect(console.log).toHaveBeenCalledWith(
             'AUDIT_LOG:',
-            expect.stringContaining('"method": "POST"')
+            expect.stringContaining('"method": "POST"'),
           );
           done();
         },
@@ -293,22 +337,27 @@ describe('AuditLogInterceptor', () => {
         email: 'inspector@rrc.texas.gov',
         roles: ['REGULATOR'],
         agency: 'Texas Railroad Commission',
-      };
+      } as TestUser;
       mockRequest.method = 'GET';
       mockRequest.url = '/api/wells/well-123/inspection';
-      (mockCallHandler.handle as jest.Mock).mockReturnValue(of({ inspectionResult: 'PASSED' }));
+      (mockCallHandler.handle as jest.Mock).mockReturnValue(
+        of({ inspectionResult: 'PASSED' }),
+      );
 
-      const result = interceptor.intercept(mockExecutionContext, mockCallHandler);
+      const result = interceptor.intercept(
+        mockExecutionContext,
+        mockCallHandler,
+      );
 
       result.subscribe({
         next: () => {
           expect(console.log).toHaveBeenCalledWith(
             'AUDIT_LOG:',
-            expect.stringContaining('"action": "REGULATORY_INSPECTION"')
+            expect.stringContaining('"action": "REGULATORY_INSPECTION"'),
           );
           expect(console.log).toHaveBeenCalledWith(
             'AUDIT_LOG:',
-            expect.stringContaining('"userEmail": "inspector@rrc.texas.gov"')
+            expect.stringContaining('"userEmail": "inspector@rrc.texas.gov"'),
           );
           done();
         },
@@ -330,19 +379,24 @@ describe('AuditLogInterceptor', () => {
       };
       mockRequest.method = 'PUT';
       mockRequest.url = '/api/wells/well-123/production';
-      (mockCallHandler.handle as jest.Mock).mockReturnValue(of({ updated: true }));
+      (mockCallHandler.handle as jest.Mock).mockReturnValue(
+        of({ updated: true }),
+      );
 
-      const result = interceptor.intercept(mockExecutionContext, mockCallHandler);
+      const result = interceptor.intercept(
+        mockExecutionContext,
+        mockCallHandler,
+      );
 
       result.subscribe({
         next: () => {
           expect(console.log).toHaveBeenCalledWith(
             'AUDIT_LOG:',
-            expect.stringContaining('"action": "UPDATE_PRODUCTION_DATA"')
+            expect.stringContaining('"action": "UPDATE_PRODUCTION_DATA"'),
           );
           expect(console.log).toHaveBeenCalledWith(
             'AUDIT_LOG:',
-            expect.stringContaining('"resource": "production"')
+            expect.stringContaining('"resource": "production"'),
           );
           done();
         },
@@ -362,15 +416,20 @@ describe('AuditLogInterceptor', () => {
         email: 'environmental@company.com',
         roles: ['ENVIRONMENTAL_OFFICER'],
       };
-      (mockCallHandler.handle as jest.Mock).mockReturnValue(of({ reportId: 'env-report-123' }));
+      (mockCallHandler.handle as jest.Mock).mockReturnValue(
+        of({ reportId: 'env-report-123' }),
+      );
 
-      const result = interceptor.intercept(mockExecutionContext, mockCallHandler);
+      const result = interceptor.intercept(
+        mockExecutionContext,
+        mockCallHandler,
+      );
 
       result.subscribe({
         next: () => {
           expect(console.log).toHaveBeenCalledWith(
             'AUDIT_LOG:',
-            expect.stringContaining('"action": "ENVIRONMENTAL_REPORT"')
+            expect.stringContaining('"action": "ENVIRONMENTAL_REPORT"'),
           );
           done();
         },
@@ -391,22 +450,27 @@ describe('AuditLogInterceptor', () => {
         id: 'user-123',
         email: 'test@example.com',
       };
-      mockRequest.ip = '10.0.0.1';
+      mockRequest.ip = '127.0.0.1';
       mockRequest.method = 'POST';
       mockRequest.url = '/api/test';
-      mockRequest.get.mockReturnValue('Test-Agent/1.0');
+      mockRequest.get?.mockReturnValue('Test-Agent/1.0');
       mockResponse.statusCode = 201;
-      (mockCallHandler.handle as jest.Mock).mockReturnValue(of('test response'));
+      (mockCallHandler.handle as jest.Mock).mockReturnValue(
+        of('test response'),
+      );
 
-      const result = interceptor.intercept(mockExecutionContext, mockCallHandler);
+      const result = interceptor.intercept(
+        mockExecutionContext,
+        mockCallHandler,
+      );
 
       result.subscribe({
         next: () => {
-          const logCall = (console.log as jest.Mock).mock.calls.find(call => 
-            call[0] === 'AUDIT_LOG:'
+          const logCall = (console.log as jest.Mock).mock.calls.find(
+            (call) => call[0] === 'AUDIT_LOG:',
           );
           expect(logCall).toBeDefined();
-          
+
           const auditData = JSON.parse(logCall[1]);
           expect(auditData).toMatchObject({
             action: 'TEST_ACTION',
@@ -414,7 +478,7 @@ describe('AuditLogInterceptor', () => {
             description: 'Test description',
             userId: 'user-123',
             userEmail: 'test@example.com',
-            ipAddress: '10.0.0.1',
+            ipAddress: '127.0.0.1',
             userAgent: 'Test-Agent/1.0',
             method: 'POST',
             url: '/api/test',
@@ -437,18 +501,23 @@ describe('AuditLogInterceptor', () => {
       mockReflector.getAllAndOverride.mockReturnValue(auditOptions);
       mockRequest.user = { id: 'user-456' };
       const error = new Error('Test error');
-      (error as any).status = 400;
-      (mockCallHandler.handle as jest.Mock).mockReturnValue(throwError(() => error));
+      (error as unknown as { status: number }).status = 400;
+      (mockCallHandler.handle as jest.Mock).mockReturnValue(
+        throwError(() => error),
+      );
 
-      const result = interceptor.intercept(mockExecutionContext, mockCallHandler);
+      const result = interceptor.intercept(
+        mockExecutionContext,
+        mockCallHandler,
+      );
 
       result.subscribe({
         error: () => {
-          const logCall = (console.log as jest.Mock).mock.calls.find(call => 
-            call[0] === 'AUDIT_LOG:'
+          const logCall = (console.log as jest.Mock).mock.calls.find(
+            (call) => call[0] === 'AUDIT_LOG:',
           );
           expect(logCall).toBeDefined();
-          
+
           const auditData = JSON.parse(logCall[1]);
           expect(auditData).toMatchObject({
             action: 'FAILED_ACTION',
@@ -473,7 +542,7 @@ describe('AuditLogInterceptor', () => {
       };
 
       mockReflector.getAllAndOverride.mockReturnValue(auditOptions);
-      
+
       // Mock Date.now to return different values for start and end
       let callCount = 0;
       jest.spyOn(Date, 'now').mockImplementation(() => {
@@ -483,12 +552,15 @@ describe('AuditLogInterceptor', () => {
 
       (mockCallHandler.handle as jest.Mock).mockReturnValue(of('response'));
 
-      const result = interceptor.intercept(mockExecutionContext, mockCallHandler);
+      const result = interceptor.intercept(
+        mockExecutionContext,
+        mockCallHandler,
+      );
 
       result.subscribe({
         next: () => {
-          const logCall = (console.log as jest.Mock).mock.calls.find(call => 
-            call[0] === 'AUDIT_LOG:'
+          const logCall = (console.log as jest.Mock).mock.calls.find(
+            (call) => call[0] === 'AUDIT_LOG:',
           );
           const auditData = JSON.parse(logCall[1]);
           expect(auditData.duration).toBe(500);

@@ -1,4 +1,7 @@
 import { createAbilityForUser, createAbilityForGuest } from '../abilities';
+import type { InferSubjects } from '@casl/ability';
+
+type Subjects = InferSubjects<'Well' | 'Lease' | 'Production'> | 'all';
 
 describe('Abilities', () => {
   describe('createAbilityForUser', () => {
@@ -145,17 +148,18 @@ describe('Abilities', () => {
     });
 
     it('should handle detectSubjectType function for admin', () => {
-      const user = { id: '1', roles: ['ADMIN'] };
+      const user = { id: '1', email: 'admin@test.com', roles: ['ADMIN'] };
       const ability = createAbilityForUser(user);
 
       // Test detectSubjectType with mock object
       const mockWell = { constructor: function Well() {} };
-      expect(() => ability.can('read', mockWell as any)).not.toThrow();
+      expect(() => ability.can('read', mockWell as unknown as Subjects)).not.toThrow();
     });
 
     it('should handle conditionsMatcher functionality', () => {
       const user = {
         id: 'operator-1',
+        email: 'operator@test.com',
         roles: ['OPERATOR'],
         operatorId: 'operator-1',
       };
@@ -170,6 +174,7 @@ describe('Abilities', () => {
     it('should handle regulator abilities with state restrictions', () => {
       const user = {
         id: 'regulator-1',
+        email: 'regulator@test.com',
         roles: ['REGULATOR'],
         allowedStates: ['TX', 'OK'],
       };
@@ -185,6 +190,7 @@ describe('Abilities', () => {
     it('should handle complex user scenarios', () => {
       const user = {
         id: 'operator-1',
+        email: 'operator2@test.com',
         roles: ['OPERATOR'],
         operatorId: 'operator-1',
       };
@@ -196,7 +202,6 @@ describe('Abilities', () => {
       expect(ability.can('update', 'Well')).toBe(true);
       expect(ability.can('delete', 'Well')).toBe(false);
     });
-
   });
 
   describe('createAbilityForGuest', () => {
@@ -218,7 +223,7 @@ describe('Abilities', () => {
 
       // Test detectSubjectType with mock object
       const mockWell = { constructor: function Well() {} };
-      expect(() => ability.can('read', mockWell as any)).not.toThrow();
+      expect(() => ability.can('read', mockWell as unknown as Subjects)).not.toThrow();
     });
 
     it('should handle guest abilities with public wells', () => {

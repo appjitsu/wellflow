@@ -1,0 +1,94 @@
+# WellFlow Semgrep Configuration
+# Static Application Security Testing for Oil & Gas Production Monitoring Platform
+# Focus on OWASP Top 10 and critical infrastructure security patterns
+
+rules:
+  # OWASP Top 10 2021 Coverage
+  - p/owasp-top-ten
+  - p/security-audit
+  - p/javascript
+  - p/typescript
+  - p/react
+  - p/nodejs
+  - p/express
+  - p/docker
+
+  # Additional security rule sets
+  - p/secrets
+  - p/jwt
+  - p/sql-injection
+  - p/xss
+  - p/command-injection
+  - p/path-traversal
+  - p/ssrf
+
+  # Custom rules for oil & gas specific patterns
+  - id: missing-auth-middleware
+    pattern: |
+      app.$METHOD($PATH, $HANDLER)
+    message: "API endpoint may be missing authentication middleware"
+    languages: [javascript, typescript]
+    severity: WARNING
+    metadata:
+      category: security
+      owasp: "A01:2021 - Broken Access Control"
+      cwe: "CWE-862: Missing Authorization"
+
+  - id: hardcoded-api-keys
+    patterns:
+      - pattern: |
+          const $VAR = "$VALUE"
+      - metavariable-regex:
+          metavariable: $VALUE
+          regex: (sk_|pk_|api_key_|secret_)[a-zA-Z0-9]{20,}
+    message: "Potential hardcoded API key detected"
+    languages: [javascript, typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      owasp: "A02:2021 - Cryptographic Failures"
+      cwe: "CWE-798: Use of Hard-coded Credentials"
+
+  # Database Security
+  - id: sql-injection-risk
+    pattern: |
+      $DB.query($QUERY + $INPUT)
+    message: "Potential SQL injection vulnerability"
+    languages: [javascript, typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      owasp: "A03:2021 - Injection"
+      cwe: "CWE-89: SQL Injection"
+
+  # Input Validation
+  - id: missing-input-validation
+    pattern: |
+      app.$METHOD($PATH, ($REQ, $RES) => {
+        ...
+        $REQ.body.$FIELD
+        ...
+      })
+    message: "Request body field used without validation"
+    languages: [javascript, typescript]
+    severity: WARNING
+    metadata:
+      category: security
+      owasp: "A03:2021 - Injection"
+      cwe: "CWE-20: Improper Input Validation"
+
+  # Logging Security
+  - id: logging-sensitive-data
+    patterns:
+      - pattern: |
+          console.log(..., $DATA, ...)
+      - metavariable-regex:
+          metavariable: $DATA
+          regex: .*(password|token|secret|key|credential).*
+    message: "Potential logging of sensitive data"
+    languages: [javascript, typescript]
+    severity: WARNING
+    metadata:
+      category: security
+      owasp: "A09:2021 - Security Logging and Monitoring Failures"
+      cwe: "CWE-532: Information Exposure Through Log Files"

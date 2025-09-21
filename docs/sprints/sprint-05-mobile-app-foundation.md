@@ -82,6 +82,17 @@ architecture, authentication integration, and core navigation structure.
   - Performance monitoring setup
   - Crash reporting integration
 
+### 6. Mobile Accessibility Framework (WCAG 2.2)
+
+- **Enhanced Mobile Accessibility**
+  - Implement enhanced focus management for screen readers
+  - Add larger touch targets (minimum 44px) for field use
+  - Create accessible authentication flows for cognitive disabilities
+  - Set up mobile accessibility testing framework
+  - Implement dragging movement alternatives for motor disabilities
+  - **Business Justification**: Critical for field workers with disabilities,
+    legal compliance, workforce inclusion
+
 ## Technical Requirements
 
 ### Offline Architecture
@@ -89,20 +100,20 @@ architecture, authentication integration, and core navigation structure.
 ```typescript
 // Local database schema (WatermelonDB)
 const wellSchema = tableSchema({
-  name: "wells",
+  name: 'wells',
   columns: [
-    { name: "server_id", type: "string", isOptional: true },
-    { name: "api_number", type: "string" },
-    { name: "well_name", type: "string" },
-    { name: "status", type: "string" },
-    { name: "last_synced", type: "number", isOptional: true },
-    { name: "is_dirty", type: "boolean" },
+    { name: 'server_id', type: 'string', isOptional: true },
+    { name: 'api_number', type: 'string' },
+    { name: 'well_name', type: 'string' },
+    { name: 'status', type: 'string' },
+    { name: 'last_synced', type: 'number', isOptional: true },
+    { name: 'is_dirty', type: 'boolean' },
   ],
 });
 
 // Sync strategy
 interface SyncOperation {
-  type: "CREATE" | "UPDATE" | "DELETE";
+  type: 'CREATE' | 'UPDATE' | 'DELETE';
   entity: string;
   localId: string;
   serverId?: string;
@@ -124,9 +135,9 @@ interface AuthTokens {
 // Secure storage
 const storeTokens = async (tokens: AuthTokens) => {
   await Keychain.setInternetCredentials(
-    "wellflow_tokens",
-    "user",
-    JSON.stringify(tokens),
+    'wellflow_tokens',
+    'user',
+    JSON.stringify(tokens)
   );
 };
 ```

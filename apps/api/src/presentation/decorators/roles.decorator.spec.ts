@@ -36,7 +36,10 @@ describe('Roles Decorator', () => {
         restrictedMethod() {}
       }
 
-      const metadata = reflector.get('roles', TestController.prototype.restrictedMethod);
+      const metadata = reflector.get(
+        'roles',
+        TestController.prototype.restrictedMethod,
+      );
       expect(metadata).toEqual(['admin', 'operator']);
     });
 
@@ -75,8 +78,14 @@ describe('Roles Decorator', () => {
         updateWellStatus() {}
       }
 
-      const productionMetadata = reflector.get('roles', ProductionController.prototype.recordProduction);
-      const statusMetadata = reflector.get('roles', ProductionController.prototype.updateWellStatus);
+      const productionMetadata = reflector.get(
+        'roles',
+        ProductionController.prototype.recordProduction,
+      );
+      const statusMetadata = reflector.get(
+        'roles',
+        ProductionController.prototype.updateWellStatus,
+      );
 
       expect(productionMetadata).toEqual(['OPERATOR', 'PRODUCTION_MANAGER']);
       expect(statusMetadata).toEqual(['OPERATOR', 'FIELD_SUPERVISOR']);
@@ -94,9 +103,18 @@ describe('Roles Decorator', () => {
         performAudit() {}
       }
 
-      const reportsMetadata = reflector.get('roles', ComplianceController.prototype.viewComplianceReports);
-      const violationsMetadata = reflector.get('roles', ComplianceController.prototype.issueViolations);
-      const auditMetadata = reflector.get('roles', ComplianceController.prototype.performAudit);
+      const reportsMetadata = reflector.get(
+        'roles',
+        ComplianceController.prototype.viewComplianceReports,
+      );
+      const violationsMetadata = reflector.get(
+        'roles',
+        ComplianceController.prototype.issueViolations,
+      );
+      const auditMetadata = reflector.get(
+        'roles',
+        ComplianceController.prototype.performAudit,
+      );
 
       expect(reportsMetadata).toEqual(['REGULATOR', 'AUDITOR']);
       expect(violationsMetadata).toEqual(['REGULATOR']);
@@ -117,9 +135,18 @@ describe('Roles Decorator', () => {
         viewWell() {}
       }
 
-      const deleteMetadata = reflector.get('roles', AdminController.prototype.deleteWell);
-      const updateMetadata = reflector.get('roles', AdminController.prototype.updateWell);
-      const viewMetadata = reflector.get('roles', AdminController.prototype.viewWell);
+      const deleteMetadata = reflector.get(
+        'roles',
+        AdminController.prototype.deleteWell,
+      );
+      const updateMetadata = reflector.get(
+        'roles',
+        AdminController.prototype.updateWell,
+      );
+      const viewMetadata = reflector.get(
+        'roles',
+        AdminController.prototype.viewWell,
+      );
 
       expect(deleteMetadata).toContain('ADMIN');
       expect(updateMetadata).toContain('ADMIN');
@@ -141,10 +168,22 @@ describe('Roles Decorator', () => {
         publicOperation() {}
       }
 
-      const highSec = reflector.get('roles', PermissionController.prototype.highSecurityOperation);
-      const medSec = reflector.get('roles', PermissionController.prototype.mediumSecurityOperation);
-      const lowSec = reflector.get('roles', PermissionController.prototype.lowSecurityOperation);
-      const publicOp = reflector.get('roles', PermissionController.prototype.publicOperation);
+      const highSec = reflector.get(
+        'roles',
+        PermissionController.prototype.highSecurityOperation,
+      );
+      const medSec = reflector.get(
+        'roles',
+        PermissionController.prototype.mediumSecurityOperation,
+      );
+      const lowSec = reflector.get(
+        'roles',
+        PermissionController.prototype.lowSecurityOperation,
+      );
+      const publicOp = reflector.get(
+        'roles',
+        PermissionController.prototype.publicOperation,
+      );
 
       expect(highSec).toHaveLength(1);
       expect(medSec).toHaveLength(2);
@@ -166,9 +205,18 @@ describe('Roles Decorator', () => {
         viewerMethod() {}
       }
 
-      const adminMetadata = reflector.get('roles', TestController.prototype.adminMethod);
-      const operatorMetadata = reflector.get('roles', TestController.prototype.operatorMethod);
-      const viewerMetadata = reflector.get('roles', TestController.prototype.viewerMethod);
+      const adminMetadata = reflector.get(
+        'roles',
+        TestController.prototype.adminMethod,
+      );
+      const operatorMetadata = reflector.get(
+        'roles',
+        TestController.prototype.operatorMethod,
+      );
+      const viewerMetadata = reflector.get(
+        'roles',
+        TestController.prototype.viewerMethod,
+      );
 
       expect(adminMetadata).toEqual(['admin']);
       expect(operatorMetadata).toEqual(['operator', 'viewer']);
@@ -183,8 +231,14 @@ describe('Roles Decorator', () => {
         publicMethod() {}
       }
 
-      const restrictedMetadata = reflector.get('roles', TestController.prototype.restrictedMethod);
-      const publicMetadata = reflector.get('roles', TestController.prototype.publicMethod);
+      const restrictedMetadata = reflector.get(
+        'roles',
+        TestController.prototype.restrictedMethod,
+      );
+      const publicMetadata = reflector.get(
+        'roles',
+        TestController.prototype.publicMethod,
+      );
 
       expect(restrictedMetadata).toEqual(['admin']);
       expect(publicMetadata).toBeUndefined();
@@ -237,7 +291,7 @@ describe('Roles Decorator', () => {
       // Test that the metadata key is exactly 'roles'
       const metadata = reflector.get('roles', TestController);
       expect(metadata).toEqual(['admin']);
-      
+
       // Test that other keys don't return the metadata
       const wrongMetadata1 = reflector.get('role', TestController);
       const wrongMetadata2 = reflector.get('user_roles', TestController);
@@ -249,14 +303,14 @@ describe('Roles Decorator', () => {
   describe('decorator function behavior', () => {
     it('should be a function that returns a decorator', () => {
       expect(typeof Roles).toBe('function');
-      
+
       const decorator = Roles('admin');
       expect(typeof decorator).toBe('function');
     });
 
     it('should work with spread operator', () => {
       const roleArray = ['admin', 'operator', 'viewer'];
-      
+
       @Roles(...roleArray)
       class TestController {}
 
@@ -278,8 +332,14 @@ describe('Roles Decorator', () => {
         method2() {}
       }
 
-      const metadata1 = reflector.get('roles', TestController1.prototype.method1);
-      const metadata2 = reflector.get('roles', TestController2.prototype.method2);
+      const metadata1 = reflector.get(
+        'roles',
+        TestController1.prototype.method1,
+      );
+      const metadata2 = reflector.get(
+        'roles',
+        TestController2.prototype.method2,
+      );
 
       expect(metadata1).toEqual(['admin']);
       expect(metadata2).toEqual(['operator', 'viewer']);
@@ -305,11 +365,26 @@ describe('Roles Decorator', () => {
         auditWell() {}
       }
 
-      const createRoles = reflector.get('roles', WellManagementController.prototype.createWell);
-      const getRoles = reflector.get('roles', WellManagementController.prototype.getWell);
-      const deleteRoles = reflector.get('roles', WellManagementController.prototype.deleteWell);
-      const updateRoles = reflector.get('roles', WellManagementController.prototype.updateWellStatus);
-      const auditRoles = reflector.get('roles', WellManagementController.prototype.auditWell);
+      const createRoles = reflector.get(
+        'roles',
+        WellManagementController.prototype.createWell,
+      );
+      const getRoles = reflector.get(
+        'roles',
+        WellManagementController.prototype.getWell,
+      );
+      const deleteRoles = reflector.get(
+        'roles',
+        WellManagementController.prototype.deleteWell,
+      );
+      const updateRoles = reflector.get(
+        'roles',
+        WellManagementController.prototype.updateWellStatus,
+      );
+      const auditRoles = reflector.get(
+        'roles',
+        WellManagementController.prototype.auditWell,
+      );
 
       expect(createRoles).toEqual(['ADMIN', 'OPERATOR']);
       expect(getRoles).toEqual(['ADMIN', 'OPERATOR', 'VIEWER']);

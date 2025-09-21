@@ -1,15 +1,25 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SentryService } from './sentry/sentry.service';
+import { DatabaseService } from './database/database.service';
 
 describe('AppController', () => {
   let appController: AppController;
-  let sentryService: SentryService;
 
   const mockSentryService = {
     captureMessage: jest.fn(),
     captureException: jest.fn(),
+  };
+
+  const mockDatabaseService = {
+    isHealthy: jest.fn().mockResolvedValue(true),
+    getConnection: jest.fn(),
+  };
+
+  const mockConfigService = {
+    get: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -21,11 +31,18 @@ describe('AppController', () => {
           provide: SentryService,
           useValue: mockSentryService,
         },
+        {
+          provide: DatabaseService,
+          useValue: mockDatabaseService,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
+        },
       ],
     }).compile();
 
     appController = app.get<AppController>(AppController);
-    sentryService = app.get<SentryService>(SentryService);
   });
 
   afterEach(() => {
@@ -59,7 +76,7 @@ describe('AppController', () => {
       expect(() => appController.testError()).toThrow(
         'This is a test error for Sentry',
       );
-      expect(sentryService.captureMessage).toHaveBeenCalledWith(
+      expect(mockSentryService.captureMessage).toHaveBeenCalledWith(
         'Test error endpoint called',
         'info',
       );
@@ -71,7 +88,7 @@ describe('AppController', () => {
       const result = appController.testSentry();
 
       expect(result).toEqual({ message: 'Sentry test message sent' });
-      expect(sentryService.captureMessage).toHaveBeenCalledWith(
+      expect(mockSentryService.captureMessage).toHaveBeenCalledWith(
         'Test Sentry integration',
         'info',
       );

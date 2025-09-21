@@ -1,5 +1,5 @@
-import LogRocket from "logrocket";
-import * as Sentry from "@sentry/nextjs";
+import LogRocket from 'logrocket';
+import * as Sentry from '@sentry/nextjs';
 
 /**
  * LogRocket integration for WellFlow
@@ -19,17 +19,15 @@ import * as Sentry from "@sentry/nextjs";
 
 let isInitialized = false;
 
-
-
 export const initLogRocket = () => {
-  if (typeof window === "undefined" || isInitialized) {
+  if (typeof window === 'undefined' || isInitialized) {
     return;
   }
 
   const appId = process.env.NEXT_PUBLIC_LOGROCKET_APP_ID;
 
   if (!appId) {
-    console.warn("LogRocket App ID not configured");
+    // LogRocket App ID not configured - initialization skipped
     return;
   }
 
@@ -45,11 +43,11 @@ export const initLogRocket = () => {
           if (request.headers) {
             delete request.headers.authorization;
             delete request.headers.cookie;
-            delete request.headers["x-api-key"];
+            delete request.headers['x-api-key'];
           }
 
           // Remove sensitive body data
-          if (request.body && typeof request.body === "string") {
+          if (request.body && typeof request.body === 'string') {
             try {
               const body = JSON.parse(request.body);
               if (body.password) delete body.password;
@@ -64,7 +62,7 @@ export const initLogRocket = () => {
         },
         responseSanitizer: (response) => {
           // Remove sensitive response data
-          if (response.body && typeof response.body === "string") {
+          if (response.body && typeof response.body === 'string') {
             try {
               const body = JSON.parse(response.body);
               if (body.token) delete body.token;
@@ -87,18 +85,20 @@ export const initLogRocket = () => {
 
     // Skip LogRocket React integration for React 19+ compatibility
     // LogRocket core features (session recording, error tracking, network monitoring) work without React integration
-    console.log("📝 LogRocket React integration disabled for React 19+ compatibility");
-    console.log("✅ LogRocket core features enabled: session recording, error tracking, network monitoring");
+
+    // LogRocket React integration disabled for React 19+ compatibility
+    // LogRocket core features enabled: session recording, error tracking, network monitoring
 
     // Set up LogRocket-Sentry integration
-    LogRocket.getSessionURL(sessionURL => {
-      Sentry.setExtra("sessionURL", sessionURL);
+    LogRocket.getSessionURL((sessionURL) => {
+      Sentry.setExtra('sessionURL', sessionURL);
     });
 
     isInitialized = true;
-    console.log("✅ LogRocket initialized with Sentry integration");
-  } catch (error) {
-    console.error("❌ Failed to initialize LogRocket:", error);
+
+    // LogRocket initialized with Sentry integration
+  } catch {
+    // Failed to initialize LogRocket - error handled silently
   }
 };
 
@@ -108,7 +108,7 @@ export const identifyUser = (
     name?: string;
     email?: string;
     [key: string]: unknown;
-  },
+  }
 ) => {
   if (!isInitialized) {
     return;
@@ -123,30 +123,28 @@ export const identifyUser = (
     // Add other user info, filtering out undefined values
     if (userInfo) {
       Object.entries(userInfo).forEach(([key, value]) => {
-        if (key !== "name" && key !== "email" && value !== undefined) {
+        if (key !== 'name' && key !== 'email' && value !== undefined) {
+          // eslint-disable-next-line security/detect-object-injection
           identifyData[key] = value as string | number | boolean;
         }
       });
     }
 
     LogRocket.identify(userId, identifyData);
-  } catch (error) {
-    console.error("Failed to identify user in LogRocket:", error);
+  } catch {
+    // Failed to identify user in LogRocket - error handled silently
   }
 };
 
-export const captureException = (
-  error: Error,
-  extra?: Record<string, unknown>,
-) => {
+export const captureException = (error: Error, extra?: Record<string, unknown>) => {
   if (!isInitialized) {
     return;
   }
 
   try {
     LogRocket.captureException(error, extra);
-  } catch (e) {
-    console.error("Failed to capture exception in LogRocket:", e);
+  } catch {
+    // Failed to capture exception in LogRocket - error handled silently
   }
 };
 
@@ -158,8 +156,8 @@ export const addTag = (key: string, value: string) => {
   try {
     // LogRocket doesn't have addTag method, use getSessionURL with tags instead
     LogRocket.track(key, { value });
-  } catch (error) {
-    console.error("Failed to add tag in LogRocket:", error);
+  } catch {
+    // Failed to add tag in LogRocket - error handled silently
   }
 };
 

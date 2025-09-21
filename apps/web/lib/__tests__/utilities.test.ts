@@ -18,15 +18,15 @@ describe('Web Utilities Coverage', () => {
     });
 
     it('should handle API errors', () => {
-      const formatApiError = (error: any): string => {
+      const formatApiError = (error: unknown): string => {
         if (error instanceof Error) {
           return error.message;
         }
         if (typeof error === 'string') {
           return error;
         }
-        if (error?.message) {
-          return error.message;
+        if (error && typeof error === 'object' && 'message' in error) {
+          return (error as { message: string }).message;
         }
         return 'An unknown error occurred';
       };
@@ -64,7 +64,7 @@ describe('Web Utilities Coverage', () => {
   describe('Data Formatting', () => {
     it('should format dates consistently', () => {
       const formatDate = (date: Date): string => {
-        return date.toISOString().split('T')[0];
+        return date.toISOString().split('T')[0] || '';
       };
 
       const testDate = new Date('2024-01-15T10:30:00Z');
@@ -113,7 +113,7 @@ describe('Web Utilities Coverage', () => {
   describe('Validation Utilities', () => {
     it('should validate email addresses', () => {
       const isValidEmail = (email: string): boolean => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         return emailRegex.test(email);
       };
 
@@ -125,7 +125,7 @@ describe('Web Utilities Coverage', () => {
     });
 
     it('should validate required fields', () => {
-      const isRequired = (value: any): boolean => {
+      const isRequired = (value: unknown): boolean => {
         if (value === null || value === undefined) return false;
         if (typeof value === 'string') return value.trim().length > 0;
         if (typeof value === 'number') return !isNaN(value);
@@ -145,7 +145,7 @@ describe('Web Utilities Coverage', () => {
 
     it('should validate phone numbers', () => {
       const isValidPhone = (phone: string): boolean => {
-        const phoneRegex = /^\+?[\d\s\-\(\)]{10,}$/;
+        const phoneRegex = /^\+?[\d\s\-()]{10,}$/;
         return phoneRegex.test(phone);
       };
 
@@ -158,16 +158,50 @@ describe('Web Utilities Coverage', () => {
     });
   });
 
+  // Helper function for safe property access
+  const safeGet = (obj: unknown, path: string, defaultValue: unknown = undefined): unknown => {
+    try {
+      return (
+        path.split('.').reduce((current, key) => {
+          if (
+            current &&
+            typeof current === 'object' &&
+            Object.prototype.hasOwnProperty.call(current, key)
+          ) {
+            // eslint-disable-next-line security/detect-object-injection
+            return (current as Record<string, unknown>)[key];
+          }
+          return undefined;
+        }, obj) ?? defaultValue
+      );
+    } catch {
+      return defaultValue;
+    }
+  };
+
+  // Helper function for grouping array items
+  const groupBy = <T, K extends string | number>(
+    array: T[],
+    keyFn: (item: T) => K
+  ): Record<K, T[]> => {
+    return array.reduce(
+      (groups, item) => {
+        const key = keyFn(item);
+        // eslint-disable-next-line security/detect-object-injection
+        if (!groups[key]) {
+          // eslint-disable-next-line security/detect-object-injection
+          groups[key] = [];
+        }
+        // eslint-disable-next-line security/detect-object-injection
+        groups[key].push(item);
+        return groups;
+      },
+      {} as Record<K, T[]>
+    );
+  };
+
   describe('Array and Object Utilities', () => {
     it('should safely access nested properties', () => {
-      const safeGet = (obj: any, path: string, defaultValue: any = undefined): any => {
-        try {
-          return path.split('.').reduce((current, key) => current?.[key], obj) ?? defaultValue;
-        } catch {
-          return defaultValue;
-        }
-      };
-
       const testObj = {
         user: {
           profile: {
@@ -203,20 +237,6 @@ describe('Web Utilities Coverage', () => {
     });
 
     it('should group array items', () => {
-      const groupBy = <T, K extends string | number>(
-        array: T[],
-        keyFn: (item: T) => K
-      ): Record<K, T[]> => {
-        return array.reduce((groups, item) => {
-          const key = keyFn(item);
-          if (!groups[key]) {
-            groups[key] = [];
-          }
-          groups[key].push(item);
-          return groups;
-        }, {} as Record<K, T[]>);
-      };
-
       const items = [
         { type: 'A', value: 1 },
         { type: 'B', value: 2 },
@@ -226,8 +246,8 @@ describe('Web Utilities Coverage', () => {
       const grouped = groupBy(items, (item) => item.type);
       expect(grouped.A).toHaveLength(2);
       expect(grouped.B).toHaveLength(1);
-      expect(grouped.A[0].value).toBe(1);
-      expect(grouped.A[1].value).toBe(3);
+      expect(grouped.A?.[0]?.value).toBe(1);
+      expect(grouped.A?.[1]?.value).toBe(3);
     });
   });
 
@@ -236,10 +256,19 @@ describe('Web Utilities Coverage', () => {
     const mockStorage = (() => {
       let store: Record<string, string> = {};
       return {
+        // eslint-disable-next-line security/detect-object-injection
         getItem: (key: string) => store[key] || null,
-        setItem: (key: string, value: string) => { store[key] = value; },
-        removeItem: (key: string) => { delete store[key]; },
-        clear: () => { store = {}; },
+        setItem: (key: string, value: string) => {
+          // eslint-disable-next-line security/detect-object-injection
+          store[key] = value;
+        },
+        removeItem: (key: string) => {
+          // eslint-disable-next-line security/detect-object-injection, @typescript-eslint/no-dynamic-delete
+          delete store[key];
+        },
+        clear: () => {
+          store = {};
+        },
       };
     })();
 
@@ -253,7 +282,7 @@ describe('Web Utilities Coverage', () => {
 
     it('should safely store and retrieve data', () => {
       const safeLocalStorage = {
-        set: (key: string, value: any): boolean => {
+        set: (key: string, value: unknown): boolean => {
           try {
             localStorage.setItem(key, JSON.stringify(value));
             return true;

@@ -8,7 +8,18 @@ import { WellStatus, WellType } from '../../domain/enums/well-status.enum';
 
 describe('WellRepositoryImpl', () => {
   let repository: WellRepositoryImpl;
-  let mockDb: any;
+  let mockDb: {
+    insert: jest.Mock;
+    select: jest.Mock;
+    from: jest.Mock;
+    where: jest.Mock;
+    limit: jest.Mock;
+    offset: jest.Mock;
+    update: jest.Mock;
+    set: jest.Mock;
+    values: jest.Mock;
+    delete: jest.Mock;
+  };
 
   const mockWellData = {
     id: 'well-123',
@@ -21,7 +32,7 @@ describe('WellRepositoryImpl', () => {
     location: {
       coordinates: {
         latitude: 32.7767,
-        longitude: -96.7970,
+        longitude: -96.797,
       },
       address: '123 Oil Field Rd',
       county: 'Dallas',
@@ -84,7 +95,7 @@ describe('WellRepositoryImpl', () => {
     let testWell: Well;
 
     beforeEach(() => {
-      const coordinates = new Coordinates(32.7767, -96.7970);
+      const coordinates = new Coordinates(32.7767, -96.797);
       const location = new Location(coordinates, {
         address: '123 Oil Field Rd',
         county: 'Dallas',
@@ -162,7 +173,9 @@ describe('WellRepositoryImpl', () => {
     it('should handle database errors during findById', async () => {
       mockDb.limit.mockRejectedValueOnce(new Error('Database error'));
 
-      await expect(repository.findById('well-123')).rejects.toThrow('Database error');
+      await expect(repository.findById('well-123')).rejects.toThrow(
+        'Database error',
+      );
     });
   });
 
@@ -190,7 +203,10 @@ describe('WellRepositoryImpl', () => {
 
   describe('findByOperatorId', () => {
     it('should return wells for operator', async () => {
-      mockDb.where.mockResolvedValueOnce([mockWellData, { ...mockWellData, id: 'well-456' }]);
+      mockDb.where.mockResolvedValueOnce([
+        mockWellData,
+        { ...mockWellData, id: 'well-456' },
+      ]);
 
       const result = await repository.findByOperatorId('operator-123');
 
@@ -231,7 +247,7 @@ describe('WellRepositoryImpl', () => {
     it('should return wells within radius', async () => {
       mockDb.where.mockResolvedValueOnce([mockWellData]);
 
-      const result = await repository.findByLocation(32.7767, -96.7970, 10);
+      const result = await repository.findByLocation(32.7767, -96.797, 10);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toBeInstanceOf(Well);
@@ -248,14 +264,18 @@ describe('WellRepositoryImpl', () => {
   });
 
   describe('findWithPagination', () => {
-    it.skip('should return paginated wells without filters', async () => {
+    it('should return paginated wells without filters', async () => {
       const mockWells = [mockWellData];
       const mockCount = [{ count: 1 }];
 
       // Mock the wells query chain: select().from().offset().limit()
       mockDb.limit.mockResolvedValueOnce(mockWells);
-      // Mock the count query chain: select().from()
-      mockDb.from.mockResolvedValueOnce(mockCount);
+
+      // Create a separate mock for the count query
+      const countMock = {
+        from: jest.fn().mockResolvedValueOnce(mockCount),
+      };
+      mockDb.select.mockReturnValueOnce(mockDb).mockReturnValueOnce(countMock);
 
       const result = await repository.findWithPagination(0, 10);
 
@@ -264,14 +284,20 @@ describe('WellRepositoryImpl', () => {
       expect(result.wells[0]).toBeInstanceOf(Well);
     });
 
-    it.skip('should return paginated wells with filters', async () => {
+    it('should return paginated wells with filters', async () => {
       const mockWells = [mockWellData];
       const mockCount = [{ count: 1 }];
 
       // Mock the wells query chain: select().from().where().offset().limit()
       mockDb.limit.mockResolvedValueOnce(mockWells);
-      // Mock the count query chain: select().from().where()
-      mockDb.where.mockResolvedValueOnce(mockCount);
+
+      // Create a separate mock for the count query
+      const countMock = {
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockResolvedValueOnce(mockCount),
+        }),
+      };
+      mockDb.select.mockReturnValueOnce(mockDb).mockReturnValueOnce(countMock);
 
       const filters = {
         operatorId: 'operator-123',
@@ -285,14 +311,20 @@ describe('WellRepositoryImpl', () => {
       expect(result.total).toBe(1);
     });
 
-    it.skip('should handle single filter condition', async () => {
+    it('should handle single filter condition', async () => {
       const mockWells = [mockWellData];
       const mockCount = [{ count: 1 }];
 
       // Mock the wells query chain: select().from().where().offset().limit()
       mockDb.limit.mockResolvedValueOnce(mockWells);
-      // Mock the count query chain: select().from().where()
-      mockDb.where.mockResolvedValueOnce(mockCount);
+
+      // Create a separate mock for the count query
+      const countMock = {
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockResolvedValueOnce(mockCount),
+        }),
+      };
+      mockDb.select.mockReturnValueOnce(mockDb).mockReturnValueOnce(countMock);
 
       const filters = { operatorId: 'operator-123' };
       const result = await repository.findWithPagination(0, 10, filters);
@@ -315,7 +347,9 @@ describe('WellRepositoryImpl', () => {
     it('should handle database errors during delete', async () => {
       mockDb.where.mockRejectedValueOnce(new Error('Database error'));
 
-      await expect(repository.delete('well-123')).rejects.toThrow('Database error');
+      await expect(repository.delete('well-123')).rejects.toThrow(
+        'Database error',
+      );
     });
   });
 
@@ -354,14 +388,18 @@ describe('WellRepositoryImpl', () => {
       expect(result?.getStatus()).toBe(mockWellData.status);
     });
 
-    it.skip('should handle location mapping correctly', async () => {
+    it('should handle location mapping correctly', async () => {
       mockDb.limit.mockResolvedValueOnce([mockWellData]);
 
       const result = await repository.findById('well-123');
 
       expect(result?.getLocation()).toBeInstanceOf(Location);
-      expect(result?.getLocation().getCoordinates().getLatitude()).toBe(32.7767);
-      expect(result?.getLocation().getCoordinates().getLongitude()).toBe(-96.7970);
+      expect(result?.getLocation().getCoordinates().getLatitude()).toBe(
+        32.7767,
+      );
+      expect(result?.getLocation().getCoordinates().getLongitude()).toBe(
+        -96.797,
+      );
     });
   });
 });

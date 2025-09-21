@@ -1,10 +1,10 @@
 export async function register() {
-  if (process.env.NEXT_RUNTIME === "nodejs") {
-    await import("./sentry.server.config");
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    await import('./sentry.server.config');
   }
 
-  if (process.env.NEXT_RUNTIME === "edge") {
-    await import("./sentry.edge.config");
+  if (process.env.NEXT_RUNTIME === 'edge') {
+    await import('./sentry.edge.config');
   }
 }
 
@@ -19,8 +19,8 @@ export async function onRequestError(
     routerKind: string;
     routePath: string;
     routeType: string;
-  },
+  }
 ) {
-  const { captureRequestError } = await import("@sentry/nextjs");
+  const { captureRequestError } = await import('@sentry/nextjs');
   captureRequestError(err, request, context);
 }

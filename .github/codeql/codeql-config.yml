@@ -1,0 +1,36 @@
+name: "WellFlow CodeQL Configuration"
+description: "CodeQL configuration for oil & gas production monitoring platform security analysis"
+
+# Use default queries plus security extensions
+disable-default-queries: false
+
+# Query packs to include
+packs:
+  - codeql/javascript-queries
+
+# Paths to analyze
+paths:
+  - "apps/web"
+  - "apps/api/src"
+  - "packages"
+
+# Paths to ignore during analysis
+paths-ignore:
+  - "node_modules"
+  - "dist"
+  - "build"
+  - ".next"
+  - "coverage"
+  - "**/*.test.*"
+  - "**/*.spec.*"
+  - "**/*.d.ts"
+  - "scripts"
+  - "docs"
+
+# Query filters for security analysis
+query-filters:
+  - include:
+      tags:
+        - security
+        - external/cwe
+        - external/owasp

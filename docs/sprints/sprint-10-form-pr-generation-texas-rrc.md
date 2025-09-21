@@ -140,7 +140,7 @@ export class SeveranceTaxService {
   calculateOilSeveranceTax(
     oilVolume: number,
     marketPrice: number,
-    wellInfo: WellInfo,
+    wellInfo: WellInfo
   ): TaxCalculation {
     const marketValue = oilVolume * marketPrice;
     const taxRate = 0.046; // 4.6%
@@ -164,7 +164,7 @@ export class SeveranceTaxService {
   calculateGasSeveranceTax(
     gasVolume: number,
     marketPrice: number,
-    wellInfo: WellInfo,
+    wellInfo: WellInfo
   ): TaxCalculation {
     const marketValue = gasVolume * marketPrice;
     const taxRate = 0.075; // 7.5%
@@ -179,7 +179,7 @@ export class SeveranceTaxService {
       marketValue,
       taxableValue: marketValue,
       taxRate: effectiveRate,
-      exemptions: isHighCostGas ? ["high_cost_gas"] : [],
+      exemptions: isHighCostGas ? ['high_cost_gas'] : [],
       taxOwed: Math.round(taxOwed * 100) / 100,
     };
   }
@@ -377,7 +377,7 @@ export class MarketPriceService {
 
   async getHistoricalPrices(
     dateRange: DateRange,
-    commodity: "oil" | "gas",
+    commodity: 'oil' | 'gas'
   ): Promise<PriceHistory[]> {
     return this.priceProvider.getHistoricalPrices(dateRange, commodity);
   }
