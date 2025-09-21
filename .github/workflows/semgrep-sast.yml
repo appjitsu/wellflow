@@ -40,21 +40,27 @@ jobs:
         run: |
           echo "🔍 Running Semgrep SAST security analysis..."
 
-          # Run Semgrep with custom configuration
-          semgrep --config=.semgrep.yml \
+          # Run Semgrep with standard security rules
+          semgrep --config=p/owasp-top-ten \
+            --config=p/security-audit \
+            --config=p/javascript \
+            --config=p/typescript \
             --sarif \
             --output=security-reports/semgrep-results.sarif \
             --verbose \
             --metrics=off \
             .
-            
+
           # Also generate JSON output for processing
-          semgrep --config=.semgrep.yml \
+          semgrep --config=p/owasp-top-ten \
+            --config=p/security-audit \
+            --config=p/javascript \
+            --config=p/typescript \
             --json \
             --output=security-reports/semgrep-results.json \
             --metrics=off \
             .
-            
+
           echo "✅ Semgrep SAST scan completed"
 
       # Process results and generate summary

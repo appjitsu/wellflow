@@ -2,7 +2,6 @@
 # Static Application Security Testing for Oil & Gas Production Monitoring Platform
 # Focus on OWASP Top 10 and critical infrastructure security patterns
 
-# Rule sets to include
 rules:
   # OWASP Top 10 2021 Coverage
   - p/owasp-top-ten
@@ -23,9 +22,7 @@ rules:
   - p/path-traversal
   - p/ssrf
 
-# Custom rules for oil & gas specific patterns
-custom_rules:
-  # Authentication and Authorization
+  # Custom rules for oil & gas specific patterns
   - id: missing-auth-middleware
     pattern: |
       app.$METHOD($PATH, $HANDLER)
@@ -95,94 +92,3 @@ custom_rules:
       category: security
       owasp: "A09:2021 - Security Logging and Monitoring Failures"
       cwe: "CWE-532: Information Exposure Through Log Files"
-
-# Paths to scan
-include:
-  - "apps/web/src/**"
-  - "apps/web/components/**"
-  - "apps/web/lib/**"
-  - "apps/web/pages/**"
-  - "apps/api/src/**"
-  - "packages/**"
-
-# Paths to exclude
-exclude:
-  - "node_modules/"
-  - "dist/"
-  - "build/"
-  - ".next/"
-  - "coverage/"
-  - "**/*.test.ts"
-  - "**/*.test.tsx"
-  - "**/*.spec.ts"
-  - "**/*.spec.tsx"
-  - "**/*.d.ts"
-  - "scripts/"
-  - "docs/"
-  - ".github/"
-
-# Output configuration
-output:
-  format: sarif
-  destination: security-reports/semgrep-results.sarif
-
-# Performance settings
-max_memory: 4096 # 4GB memory limit
-timeout: 300 # 5 minutes timeout per file
-jobs: 4 # Parallel jobs
-
-# Severity levels for oil & gas compliance
-severity_levels:
-  ERROR:
-    - "Critical vulnerabilities that must be fixed immediately"
-    - "OWASP Top 10 high-risk issues"
-    - "Authentication and authorization bypasses"
-    - "Injection vulnerabilities"
-    - "Hardcoded secrets and credentials"
-
-  WARNING:
-    - "Medium-risk security issues"
-    - "Missing security controls"
-    - "Potential information disclosure"
-    - "Insecure configurations"
-
-  INFO:
-    - "Security best practice violations"
-    - "Code quality issues with security implications"
-    - "Recommendations for security improvements"
-
-# Compliance mapping
-compliance_standards:
-  nist_csf:
-    - "PR.AC-1: Identities and credentials are issued, managed, verified"
-    - "PR.AC-4: Access permissions and authorizations are managed"
-    - "PR.DS-1: Data-at-rest is protected"
-    - "PR.DS-2: Data-in-transit is protected"
-    - "PR.PT-3: The principle of least functionality is incorporated"
-
-  iec_62443:
-    - "SR 1.1: Human user identification and authentication"
-    - "SR 1.2: Software process and device identification"
-    - "SR 2.1: Authorization enforcement"
-    - "SR 3.1: Communication integrity"
-    - "SR 7.1: Denial of service protection"
-
-  api_1164:
-    - "Access Control Requirements"
-    - "Data Protection Requirements"
-    - "Network Security Requirements"
-    - "Monitoring and Logging Requirements"
-
-# Oil & gas specific security patterns
-industry_patterns:
-  critical_infrastructure:
-    - "SCADA system security"
-    - "Industrial control system protection"
-    - "Real-time monitoring security"
-    - "Production data integrity"
-
-  regulatory_compliance:
-    - "Environmental data protection"
-    - "Safety system security"
-    - "Audit trail requirements"
-    - "Incident response procedures"
