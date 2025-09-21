@@ -124,5 +124,45 @@
       "monthlyScan": true,
       "onDependencyUpdate": true
     }
+  },
+
+  "backupSecurity": {
+    "encryption": {
+      "enabled": true,
+      "algorithm": "AES256",
+      "keyRotation": "quarterly"
+    },
+    "accessControl": {
+      "requireMFA": true,
+      "allowedRoles": ["admin", "devops", "backup-operator"],
+      "auditAccess": true
+    },
+    "retention": {
+      "database": "30 days",
+      "redis": "14 days",
+      "application": "30 days",
+      "logs": "90 days"
+    },
+    "monitoring": {
+      "backupSuccess": true,
+      "backupFailure": true,
+      "integrityChecks": true,
+      "unauthorizedAccess": true
+    }
+  },
+
+  "auditTrail": {
+    "backupOperations": {
+      "enabled": true,
+      "logLevel": "INFO",
+      "includeMetadata": true,
+      "retentionDays": 2555
+    },
+    "restoreOperations": {
+      "enabled": true,
+      "logLevel": "WARN",
+      "requireApproval": true,
+      "notifyStakeholders": true
+    }
   }
 }
