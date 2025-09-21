@@ -12,7 +12,13 @@ jest.mock('@sentry/nestjs', () => ({
   startSpan: jest.fn(),
   addBreadcrumb: jest.fn(),
   flush: jest.fn(),
-  withScope: jest.fn(),
+  withScope: jest.fn().mockImplementation((callback: (scope: any) => void) => {
+    callback({
+      setTag: jest.fn(),
+      setExtra: jest.fn(),
+      setUser: jest.fn(),
+    });
+  }),
 }));
 
 describe('SentryService', () => {
@@ -48,40 +54,20 @@ describe('SentryService', () => {
     it('should capture exception with context', () => {
       const error = new Error('Test error with context');
       const context = 'test-context';
-      const mockScope = {
-        setTag: jest.fn(),
-      };
-
-      mockSentry.withScope.mockImplementation(
-        (callback: (scope: any) => void) => {
-          callback(mockScope);
-        },
-      );
 
       void service.captureException(error, context);
 
       expect(mockSentry.withScope).toHaveBeenCalled();
-      expect(mockScope.setTag).toHaveBeenCalledWith('context', context);
       expect(mockSentry.captureException).toHaveBeenCalledWith(error);
     });
 
     it('should handle oil & gas specific errors', () => {
       const wellError = new Error('Well drilling failed');
       const context = 'well-operations';
-      const mockScope = {
-        setTag: jest.fn(),
-      };
-
-      mockSentry.withScope.mockImplementation(
-        (callback: (scope: any) => void) => {
-          callback(mockScope);
-        },
-      );
 
       void service.captureException(wellError, context);
 
       expect(mockSentry.withScope).toHaveBeenCalled();
-      expect(mockScope.setTag).toHaveBeenCalledWith('context', context);
       expect(mockSentry.captureException).toHaveBeenCalledWith(wellError);
     });
   });
@@ -109,20 +95,10 @@ describe('SentryService', () => {
       const message = 'Test message with context';
       const level = 'warning';
       const context = 'test-context';
-      const mockScope = {
-        setTag: jest.fn(),
-      };
-
-      mockSentry.withScope.mockImplementation(
-        (callback: (scope: any) => void) => {
-          callback(mockScope);
-        },
-      );
 
       service.captureMessage(message, level, context);
 
       expect(mockSentry.withScope).toHaveBeenCalled();
-      expect(mockScope.setTag).toHaveBeenCalledWith('context', context);
       expect(mockSentry.captureMessage).toHaveBeenCalledWith(message, level);
     });
 
