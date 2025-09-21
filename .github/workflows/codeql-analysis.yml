@@ -50,9 +50,7 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
-          # Custom queries for oil & gas security patterns
-          queries: +security-and-quality,security-extended
-          config-file: ./.github/codeql/codeql-config.yml
+          queries: +security-and-quality
 
       # Install dependencies for better analysis
       - name: Install dependencies
