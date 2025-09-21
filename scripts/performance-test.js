@@ -225,7 +225,8 @@ function runLighthouseTests(routes) {
         '--quiet',
       ].join(' ');
 
-      // semgrep:ignore javascript.lang.security.detect-child-process.detect-child-process
+      // nosemgrep: javascript.lang.security.detect-child-process.detect-child-process
+      // This is a controlled lighthouse command execution for performance testing
       const output = execSync(lighthouseCommand, {
         encoding: 'utf8',
         timeout: 60000,

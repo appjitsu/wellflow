@@ -101,36 +101,36 @@ jobs:
             echo "TOTAL_OVER_BUDGET=$TOTAL_OVER_BUDGET" >> $GITHUB_ENV
             
             # Generate bundle analysis report
-            cat > performance-reports/bundle-analysis.json << EOF
-            {
-              "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-              "repository": "${{ github.repository }}",
-              "branch": "${{ github.ref_name }}",
-              "commit": "${{ github.sha }}",
-              "bundles": {
-                "web": {
-                  "javascript": {
-                    "size_kb": $WEB_JS_KB,
-                    "budget_kb": $JS_BUDGET,
-                    "over_budget": $JS_OVER_BUDGET,
-                    "percentage": $(echo "scale=1; $WEB_JS_KB * 100 / $JS_BUDGET" | bc -l)
-                  },
-                  "css": {
-                    "size_kb": $WEB_CSS_KB,
-                    "budget_kb": $CSS_BUDGET,
-                    "over_budget": $CSS_OVER_BUDGET,
-                    "percentage": $(echo "scale=1; $WEB_CSS_KB * 100 / $CSS_BUDGET" | bc -l)
-                  },
-                  "total": {
-                    "size_kb": $WEB_TOTAL_KB,
-                    "budget_kb": $TOTAL_BUDGET,
-                    "over_budget": $TOTAL_OVER_BUDGET,
-                    "percentage": $(echo "scale=1; $WEB_TOTAL_KB * 100 / $TOTAL_BUDGET" | bc -l)
-                  }
-                }
-              }
-            }
-            EOF
+            cat > performance-reports/bundle-analysis.json << 'EOF'
+{
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "repository": "${{ github.repository }}",
+  "branch": "${{ github.ref_name }}",
+  "commit": "${{ github.sha }}",
+  "bundles": {
+    "web": {
+      "javascript": {
+        "size_kb": $WEB_JS_KB,
+        "budget_kb": $JS_BUDGET,
+        "over_budget": $JS_OVER_BUDGET,
+        "percentage": $(echo "scale=1; $WEB_JS_KB * 100 / $JS_BUDGET" | bc -l)
+      },
+      "css": {
+        "size_kb": $WEB_CSS_KB,
+        "budget_kb": $CSS_BUDGET,
+        "over_budget": $CSS_OVER_BUDGET,
+        "percentage": $(echo "scale=1; $WEB_CSS_KB * 100 / $CSS_BUDGET" | bc -l)
+      },
+      "total": {
+        "size_kb": $WEB_TOTAL_KB,
+        "budget_kb": $TOTAL_BUDGET,
+        "over_budget": $TOTAL_OVER_BUDGET,
+        "percentage": $(echo "scale=1; $WEB_TOTAL_KB * 100 / $TOTAL_BUDGET" | bc -l)
+      }
+    }
+  }
+}
+EOF
           else
             echo "⚠️ Web application build not found"
             echo "WEB_JS_SIZE_KB=0" >> $GITHUB_ENV
@@ -230,72 +230,72 @@ jobs:
         run: |
           echo "📋 Generating comprehensive performance report..."
 
-          cat > performance-reports/performance-summary.md << EOF
-          # WellFlow Performance Analysis Report
+          cat > performance-reports/performance-summary.md << 'EOF'
+# WellFlow Performance Analysis Report
 
-          **Generated:** $(date)
-          **Repository:** ${{ github.repository }}
-          **Branch:** ${{ github.ref_name }}
-          **Commit:** ${{ github.sha }}
+**Generated:** $(date)
+**Repository:** ${{ github.repository }}
+**Branch:** ${{ github.ref_name }}
+**Commit:** ${{ github.sha }}
 
-          ## Bundle Size Analysis
+## Bundle Size Analysis
 
-          | Asset Type | Size | Budget | Status | Usage |
-          |------------|------|--------|--------|-------|
-          | JavaScript | ${{ env.WEB_JS_SIZE_KB }}KB | ${{ env.JS_BUDGET }}KB | $([ "${{ env.JS_OVER_BUDGET }}" -eq "0" ] && echo "✅ PASS" || echo "❌ FAIL") | $(echo "scale=1; ${{ env.WEB_JS_SIZE_KB }} * 100 / ${{ env.JS_BUDGET }}" | bc -l)% |
-          | CSS | ${{ env.WEB_CSS_SIZE_KB }}KB | ${{ env.CSS_BUDGET }}KB | $([ "${{ env.CSS_OVER_BUDGET }}" -eq "0" ] && echo "✅ PASS" || echo "❌ FAIL") | $(echo "scale=1; ${{ env.WEB_CSS_SIZE_KB }} * 100 / ${{ env.CSS_BUDGET }}" | bc -l)% |
-          | Total | ${{ env.WEB_TOTAL_SIZE_KB }}KB | ${{ env.TOTAL_BUDGET }}KB | $([ "${{ env.TOTAL_OVER_BUDGET }}" -eq "0" ] && echo "✅ PASS" || echo "❌ FAIL") | $(echo "scale=1; ${{ env.WEB_TOTAL_SIZE_KB }} * 100 / ${{ env.TOTAL_BUDGET }}" | bc -l)% |
+| Asset Type | Size | Budget | Status | Usage |
+|------------|------|--------|--------|-------|
+| JavaScript | ${{ env.WEB_JS_SIZE_KB }}KB | ${{ env.JS_BUDGET }}KB | $([ "${{ env.JS_OVER_BUDGET }}" -eq "0" ] && echo "✅ PASS" || echo "❌ FAIL") | $(echo "scale=1; ${{ env.WEB_JS_SIZE_KB }} * 100 / ${{ env.JS_BUDGET }}" | bc -l)% |
+| CSS | ${{ env.WEB_CSS_SIZE_KB }}KB | ${{ env.CSS_BUDGET }}KB | $([ "${{ env.CSS_OVER_BUDGET }}" -eq "0" ] && echo "✅ PASS" || echo "❌ FAIL") | $(echo "scale=1; ${{ env.WEB_CSS_SIZE_KB }} * 100 / ${{ env.CSS_BUDGET }}" | bc -l)% |
+| Total | ${{ env.WEB_TOTAL_SIZE_KB }}KB | ${{ env.TOTAL_BUDGET }}KB | $([ "${{ env.TOTAL_OVER_BUDGET }}" -eq "0" ] && echo "✅ PASS" || echo "❌ FAIL") | $(echo "scale=1; ${{ env.WEB_TOTAL_SIZE_KB }} * 100 / ${{ env.TOTAL_BUDGET }}" | bc -l)% |
 
-          ## Performance Budgets
+## Performance Budgets
 
-          ### Oil & Gas Industry Requirements
-          - **Critical Infrastructure**: <500KB initial load for reliable operation
-          - **Field Operations**: Optimized for mobile and low-bandwidth connections
-          - **Real-time Monitoring**: Fast loading for emergency response scenarios
+### Oil & Gas Industry Requirements
+- **Critical Infrastructure**: <500KB initial load for reliable operation
+- **Field Operations**: Optimized for mobile and low-bandwidth connections
+- **Real-time Monitoring**: Fast loading for emergency response scenarios
 
-          ### Budget Compliance
-          - **JavaScript Budget**: ${{ env.JS_BUDGET }}KB (for interactive monitoring interfaces)
-          - **CSS Budget**: ${{ env.CSS_BUDGET }}KB (for responsive oil & gas dashboards)
-          - **Total Budget**: ${{ env.TOTAL_BUDGET }}KB (for complete application load)
+### Budget Compliance
+- **JavaScript Budget**: ${{ env.JS_BUDGET }}KB (for interactive monitoring interfaces)
+- **CSS Budget**: ${{ env.CSS_BUDGET }}KB (for responsive oil & gas dashboards)
+- **Total Budget**: ${{ env.TOTAL_BUDGET }}KB (for complete application load)
 
-          ## Core Web Vitals (Simulated)
+## Core Web Vitals (Simulated)
 
-          | Metric | Value | Threshold | Status |
-          |--------|-------|-----------|--------|
-          | Largest Contentful Paint | 1.2s | <2.5s | ✅ GOOD |
-          | First Input Delay | 50ms | <100ms | ✅ GOOD |
-          | Cumulative Layout Shift | 0.05 | <0.1 | ✅ GOOD |
-          | First Contentful Paint | 0.8s | <1.8s | ✅ GOOD |
-          | Time to Interactive | 2.1s | <3.8s | ✅ GOOD |
+| Metric | Value | Threshold | Status |
+|--------|-------|-----------|--------|
+| Largest Contentful Paint | 1.2s | <2.5s | ✅ GOOD |
+| First Input Delay | 50ms | <100ms | ✅ GOOD |
+| Cumulative Layout Shift | 0.05 | <0.1 | ✅ GOOD |
+| First Contentful Paint | 0.8s | <1.8s | ✅ GOOD |
+| Time to Interactive | 2.1s | <3.8s | ✅ GOOD |
 
-          ## API Performance
+## API Performance
 
-          | Endpoint | Target | Status |
-          |----------|--------|--------|
-          | Health Check | <100ms | ✅ MEASURED |
-          | Wells List | <500ms | ✅ MEASURED |
+| Endpoint | Target | Status |
+|----------|--------|--------|
+| Health Check | <100ms | ✅ MEASURED |
+| Wells List | <500ms | ✅ MEASURED |
 
-          ## Recommendations
+## Recommendations
 
-          $(if [ "${{ env.TOTAL_OVER_BUDGET }}" -eq "1" ]; then
-            echo "⚠️ **Action Required**: Bundle size exceeds performance budget"
-            echo "- Consider code splitting and lazy loading"
-            echo "- Optimize images and assets"
-            echo "- Review and remove unused dependencies"
-          else
-            echo "✅ **Performance Budget Compliant**: All assets within budget limits"
-            echo "- Continue monitoring bundle size growth"
-            echo "- Regular performance audits recommended"
-          fi)
+$(if [ "${{ env.TOTAL_OVER_BUDGET }}" -eq "1" ]; then
+  echo "⚠️ **Action Required**: Bundle size exceeds performance budget"
+  echo "- Consider code splitting and lazy loading"
+  echo "- Optimize images and assets"
+  echo "- Review and remove unused dependencies"
+else
+  echo "✅ **Performance Budget Compliant**: All assets within budget limits"
+  echo "- Continue monitoring bundle size growth"
+  echo "- Regular performance audits recommended"
+fi)
 
-          ## Oil & Gas Compliance
+## Oil & Gas Compliance
 
-          - 🏭 **Industrial Standards**: Performance optimized for critical infrastructure
-          - 📱 **Field Operations**: Mobile-optimized for remote oil & gas locations
-          - ⚡ **Emergency Response**: Fast loading for critical monitoring scenarios
-          - 🛡️ **Reliability**: Performance budgets ensure consistent operation
+- 🏭 **Industrial Standards**: Performance optimized for critical infrastructure
+- 📱 **Field Operations**: Mobile-optimized for remote oil & gas locations
+- ⚡ **Emergency Response**: Fast loading for critical monitoring scenarios
+- 🛡️ **Reliability**: Performance budgets ensure consistent operation
 
-          EOF
+EOF
 
       # Upload performance reports
       - name: Upload Performance Reports
