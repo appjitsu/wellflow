@@ -208,3 +208,4 @@ experiments/
 
 # GitHub Actions workflows with complex shell scripts in heredocs
 .github/workflows/performance-monitoring.yml
+.github/workflows/accessibility-testing.yml
