@@ -91,13 +91,16 @@ jobs:
 
           for page in "${PAGES[@]}"; do
             echo "Testing: $page"
-            
+
+            # Create sanitized filename (remove protocol, replace colons and slashes with dashes)
+            SANITIZED_NAME=$(echo "$page" | sed 's|https\?://||' | tr ':/' '--')
+
             # Test with axe-core CLI (if server is running)
             if curl -f "$page" >/dev/null 2>&1; then
               axe "$page" \
                 --rules-file .axe-rules.json \
                 --reporter json \
-                --output "accessibility-reports/axe-$(basename "$page" | tr '/' '-').json" \
+                --output "accessibility-reports/axe-${SANITIZED_NAME}.json" \
                 --timeout 30000 || echo "⚠️ Axe test failed for $page"
             else
               echo "⚠️ Server not available, skipping $page"
@@ -149,11 +152,14 @@ jobs:
 
           for page in "${PAGES[@]}"; do
             echo "Testing with Pa11y: $page"
-            
+
+            # Create sanitized filename (remove protocol, replace colons and slashes with dashes)
+            SANITIZED_NAME=$(echo "$page" | sed 's|https\?://||' | tr ':/' '--')
+
             if curl -f "$page" >/dev/null 2>&1; then
               pa11y "$page" \
                 --reporter json \
-                > "accessibility-reports/pa11y-$(basename "$page" | tr '/' '-').json" || echo "⚠️ Pa11y test failed for $page"
+                > "accessibility-reports/pa11y-${SANITIZED_NAME}.json" || echo "⚠️ Pa11y test failed for $page"
             else
               echo "⚠️ Server not available, skipping $page"
             fi
