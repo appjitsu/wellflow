@@ -1,5 +1,3 @@
-/* eslint-disable sonarjs/deprecation */
-
 // Import all table schemas
 import {
   organizations,

@@ -152,7 +152,7 @@ export class ProductionRepository extends BaseRepository<
     wellCount: number;
     recordCount: number;
   }> {
-    let whereConditions = [
+    const whereConditions = [
       eq(productionRecords.organizationId, organizationId),
     ];
 

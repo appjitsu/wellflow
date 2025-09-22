@@ -1,5 +1,3 @@
-/* eslint-disable sonarjs/deprecation */
-
 import { relations } from 'drizzle-orm';
 
 // Import all table schemas

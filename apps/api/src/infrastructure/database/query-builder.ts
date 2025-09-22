@@ -9,6 +9,8 @@ import {
   isNotNull,
   inArray,
   sql,
+  SQL,
+  SQLWrapper,
 } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { PgTable } from 'drizzle-orm/pg-core';
@@ -19,11 +21,11 @@ import * as schema from '../../database/schema';
  * Provides type-safe, fluent query building capabilities
  */
 export class QueryBuilder<T extends PgTable> {
-  private whereConditions: any[] = [];
-  private orderByClause: any[] = [];
+  private whereConditions: SQLWrapper[] = [];
+  private orderByClause: SQL[] = [];
   private limitValue?: number;
   private offsetValue?: number;
-  private selectFields?: any;
+  private selectFields?: Record<string, unknown>;
 
   constructor(
     private readonly db: NodePgDatabase<typeof schema>,
@@ -33,7 +35,7 @@ export class QueryBuilder<T extends PgTable> {
   /**
    * Add WHERE condition
    */
-  where(condition: any): this {
+  where(condition: SQLWrapper): this {
     this.whereConditions.push(condition);
     return this;
   }
@@ -41,7 +43,7 @@ export class QueryBuilder<T extends PgTable> {
   /**
    * Add WHERE condition with AND logic
    */
-  andWhere(condition: any): this {
+  andWhere(condition: SQLWrapper): this {
     this.whereConditions.push(condition);
     return this;
   }
@@ -49,7 +51,7 @@ export class QueryBuilder<T extends PgTable> {
   /**
    * Add WHERE condition with OR logic
    */
-  orWhere(condition: any): this {
+  orWhere(condition: SQLWrapper): this {
     if (this.whereConditions.length === 0) {
       this.whereConditions.push(condition);
     } else {
@@ -63,7 +65,12 @@ export class QueryBuilder<T extends PgTable> {
    * Filter by organization ID (multi-tenant support)
    */
   forOrganization(organizationId: string): this {
-    return this.where(eq((this.table as any).organizationId, organizationId));
+    return this.where(
+      eq(
+        (this.table as Record<string, unknown>).organizationId as PgColumn,
+        organizationId,
+      ),
+    );
   }
 
   /**
@@ -72,8 +79,8 @@ export class QueryBuilder<T extends PgTable> {
   dateRange(field: string, startDate: Date, endDate: Date): this {
     return this.where(
       and(
-        gte((this.table as any)[field], startDate),
-        lte((this.table as any)[field], endDate),
+        gte((this.table as Record<string, PgColumn>)[field], startDate),
+        lte((this.table as Record<string, PgColumn>)[field], endDate),
       ),
     );
   }
@@ -82,29 +89,35 @@ export class QueryBuilder<T extends PgTable> {
    * Filter by text search (case-insensitive)
    */
   search(field: string, query: string): this {
-    return this.where(ilike((this.table as any)[field], `%${query}%`));
+    return this.where(
+      ilike((this.table as Record<string, PgColumn>)[field], `%${query}%`),
+    );
   }
 
   /**
    * Filter by multiple values
    */
-  whereIn(field: string, values: any[]): this {
+  whereIn(field: string, values: unknown[]): this {
     if (values.length === 0) return this;
-    return this.where(inArray((this.table as any)[field], values));
+    return this.where(
+      inArray((this.table as Record<string, PgColumn>)[field], values),
+    );
   }
 
   /**
    * Filter by null values
    */
   whereNull(field: string): this {
-    return this.where(isNull((this.table as any)[field]));
+    return this.where(isNull((this.table as Record<string, PgColumn>)[field]));
   }
 
   /**
    * Filter by non-null values
    */
   whereNotNull(field: string): this {
-    return this.where(isNotNull((this.table as any)[field]));
+    return this.where(
+      isNotNull((this.table as Record<string, PgColumn>)[field]),
+    );
   }
 
   /**

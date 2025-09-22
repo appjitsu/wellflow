@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../../database/database.module';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import type * as schema from '../../database/schema';
 
 // Repository Implementations
 import { OrganizationRepository } from './organization.repository';
@@ -17,7 +19,7 @@ import { ProductionRepository } from './production.repository';
     // Core Repositories
     {
       provide: 'OrganizationRepository',
-      useFactory: (databaseConnection: any) => {
+      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
         return new OrganizationRepository(databaseConnection);
       },
       inject: ['DATABASE_CONNECTION'],
@@ -28,14 +30,14 @@ import { ProductionRepository } from './production.repository';
     },
     {
       provide: 'AfeRepository',
-      useFactory: (databaseConnection: any) => {
+      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
         return new AfeRepository(databaseConnection);
       },
       inject: ['DATABASE_CONNECTION'],
     },
     {
       provide: 'ProductionRepository',
-      useFactory: (databaseConnection: any) => {
+      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
         return new ProductionRepository(databaseConnection);
       },
       inject: ['DATABASE_CONNECTION'],
@@ -45,7 +47,7 @@ import { ProductionRepository } from './production.repository';
     // Example:
     // {
     //   provide: 'LeaseRepository',
-    //   useFactory: (databaseConnection: any) => {
+    //   useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
     //     return new LeaseRepository(databaseConnection);
     //   },
     //   inject: ['DATABASE_CONNECTION'],
@@ -58,4 +60,7 @@ import { ProductionRepository } from './production.repository';
     'ProductionRepository',
   ],
 })
-export class RepositoryModule {}
+export class RepositoryModule {
+  // This module provides repository implementations with proper dependency injection
+  // All repositories are configured with factory providers to ensure proper database connection
+}

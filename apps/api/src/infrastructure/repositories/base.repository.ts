@@ -190,9 +190,7 @@ export abstract class BaseRepository<T extends PgTable> {
   async batchCreate(data: T['$inferInsert'][]): Promise<T['$inferSelect'][]> {
     if (data.length === 0) return [];
 
-    const result = await this.db.insert(this.table).values(data).returning();
-
-    return result;
+    return await this.db.insert(this.table).values(data).returning();
   }
 
   /**

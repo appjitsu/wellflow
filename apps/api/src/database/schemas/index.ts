@@ -1,5 +1,3 @@
-/* eslint-disable sonarjs/deprecation */
-
 // Core business entities
 export { organizations } from './organizations';
 export { users } from './users';
