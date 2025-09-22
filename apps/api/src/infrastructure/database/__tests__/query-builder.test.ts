@@ -4,6 +4,7 @@ import {
   QueryUtils,
 } from '../query-builder';
 import { organizations } from '../../../database/schema';
+import { eq } from 'drizzle-orm';
 import '../../../database/__tests__/env';
 
 describe('QueryBuilder', () => {
@@ -40,7 +41,6 @@ describe('QueryBuilder', () => {
         const isCountQuery =
           fields &&
           typeof fields === 'object' &&
-          fields !== null &&
           !Array.isArray(fields) &&
           'count' in fields;
         const mockResult = isCountQuery ? mockCountResult : mockQueryResult;
@@ -57,15 +57,15 @@ describe('QueryBuilder', () => {
 
   describe('where conditions', () => {
     it('should add where condition', async () => {
-      await queryBuilder.where({ field: 'name', value: 'Test' }).execute();
+      await queryBuilder.where(eq(organizations.name, 'Test')).execute();
 
       expect(mockDb.select).toHaveBeenCalled();
     });
 
     it('should add multiple where conditions with AND', async () => {
       await queryBuilder
-        .where({ field: 'name', value: 'Test' })
-        .andWhere({ field: 'email', value: 'test@example.com' })
+        .where(eq(organizations.name, 'Test'))
+        .andWhere(eq(organizations.email, 'test@example.com'))
         .execute();
 
       expect(mockDb.select).toHaveBeenCalled();
@@ -73,8 +73,8 @@ describe('QueryBuilder', () => {
 
     it('should add OR where condition', async () => {
       await queryBuilder
-        .where({ field: 'name', value: 'Test' })
-        .orWhere({ field: 'name', value: 'Other' })
+        .where(eq(organizations.name, 'Test'))
+        .orWhere(eq(organizations.name, 'Other'))
         .execute();
 
       expect(mockDb.select).toHaveBeenCalled();
@@ -237,7 +237,10 @@ describe('QueryBuilder', () => {
         }),
       };
 
-      const testQueryBuilder = new QueryBuilder(testMockDb, organizations);
+      const testQueryBuilder = new QueryBuilder(
+        testMockDb as any,
+        organizations,
+      );
       const result = await testQueryBuilder.paginate(2, 10);
 
       expect(result).toEqual({
