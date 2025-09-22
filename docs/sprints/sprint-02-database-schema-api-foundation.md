@@ -1,11 +1,18 @@
-# Sprint 2: Database Schema & Core API Foundation
+# Sprint 2: Enhanced Database Schema & Core API Foundation
 
 ## Sprint Overview
 
-**Duration:** 3 weeks  
-**Story Points:** 13 points  
-**Sprint Goal:** Implement complete database schema, core API architecture, and
-foundational backend services for WellFlow MVP.
+**Duration:** 4 weeks **Story Points:** 18 points **Sprint Goal:** Implement
+core database schema foundation, basic API architecture, and foundational
+backend services for WellFlow MVP. Specialized entities will be implemented in
+subsequent enhancement sprints (2B-2E).
+
+## ⚠️ **SCOPE CLARIFICATION: Core Foundation Only**
+
+This sprint focuses on the essential foundation entities required for basic
+operations. Advanced operational, financial, regulatory, and technical entities
+are implemented in specialized enhancement sprints to avoid overlap and ensure
+focused development.
 
 ## Sprint Objectives
 
@@ -17,21 +24,45 @@ foundational backend services for WellFlow MVP.
 
 ## Deliverables
 
-### 1. Database Schema Implementation
+### 1. Enhanced Database Schema Implementation
 
-- **Core Entity Tables**
-  - Organizations (multi-tenant root)
-  - Users with role-based structure
-  - Leases with legal descriptions
-  - Wells with API number validation
-  - Production records with TimescaleDB optimization
-- **Relationship Tables**
-  - Partners and lease partnerships
-  - Equipment and well associations
-  - Documents with metadata
-- **Compliance Tables**
-  - Compliance reports structure
-  - JIB statements framework
+#### **Phase 1: Core Business Entities (Week 1)**
+
+- **Essential Core Tables**
+  - `organizations` - Multi-tenant root entity
+  - `users` - Role-based structure with basic permissions
+  - `fields` - ⭐ NEW: Basic geological field grouping
+  - `companies` - ⭐ NEW: Basic operator/partner/vendor management
+  - `leases` - Basic lease information with legal descriptions
+  - `wells` - Basic well information with API number validation
+
+#### **Phase 2: Basic Financial & Production (Week 2)**
+
+- **Basic Financial Systems**
+  - `afes` - Authorization for Expenditures (basic structure)
+  - `afe_line_items`, `afe_approvals` - Basic cost tracking
+  - `division_orders` - Basic division order management
+  - `revenue_distributions` - Basic revenue distribution tracking
+
+#### **Phase 3: Basic Production & Compliance (Week 3)**
+
+- **Basic Production Data**
+  - `production` - Basic production data (oil, gas, water volumes)
+  - `well_tests` - Basic well test data
+- **Basic Regulatory Compliance**
+  - `regulatory_reports` - Basic regulatory reporting structure
+  - `compliance_schedules` - Basic compliance deadline tracking
+
+#### **Phase 4: Core Infrastructure (Week 4)**
+
+- **System Infrastructure**
+  - Core API endpoints for all basic entities
+  - Basic validation and business rules
+  - Multi-tenant security implementation
+  - Background job processing setup
+- **Basic Enums**
+  - Essential enums for well status, lease status, report types
+  - Foundation for specialized enums in enhancement sprints
 
 ### 2. Drizzle ORM Configuration
 
@@ -86,17 +117,33 @@ foundational backend services for WellFlow MVP.
 
 ## Technical Requirements
 
-### Database Schema
+### Core Database Schema Relationships
 
 ```typescript
-// Core entities with proper relationships
+// Core Business Entity Relationships
 Organizations -> Users (1:many)
-Organizations -> Leases (1:many)
-Organizations -> Wells (1:many)
+Organizations -> Fields (1:many)
+Organizations -> Companies (1:many)
+Fields -> Leases (1:many)
+Fields -> Wells (1:many)
 Leases -> Wells (1:many)
-Wells -> ProductionRecords (1:many)
-Organizations -> Partners (1:many)
-Leases -> LeasePartners (many:many through Partners)
+Wells -> Production (1:many)
+
+// Basic Financial Relationships
+Organizations -> AFEs (1:many)
+AFEs -> AFELineItems (1:many)
+AFEs -> AFEApprovals (1:many)
+Wells -> DivisionOrders (1:many)
+Organizations -> RevenueDistributions (1:many)
+
+// Basic Compliance Relationships
+Organizations -> RegulatoryReports (1:many)
+Organizations -> ComplianceSchedules (1:many)
+Wells -> WellTests (1:many)
+
+// Note: Advanced relationships for operational, financial,
+// regulatory, and technical entities are implemented in
+// enhancement sprints 2B-2E
 ```
 
 ### API Architecture
@@ -123,15 +170,46 @@ src/
 
 ## Acceptance Criteria
 
-### Database Schema
+### Enhanced Database Schema (40+ Tables)
 
-- [ ] All tables created with proper constraints
-- [ ] Foreign key relationships established
-- [ ] Indexes created for performance-critical queries
-- [ ] Row Level Security policies implemented
-- [ ] TimescaleDB hypertable configured for production data
-- [ ] Migration scripts run successfully
-- [ ] Seed data populates development environment
+#### **Phase 1: Core Business Entities**
+
+- [ ] `fields` table with basin/play geological grouping
+- [ ] Enhanced `companies` table with comprehensive operator data
+- [ ] Enhanced `leases` table with working interest and NRI tracking
+- [ ] Enhanced `wells` table with horizontal/offshore flags and rig associations
+- [ ] All core foreign key relationships established
+
+#### **Phase 2: Basic Financial & Production**
+
+- [ ] Basic `afes` table with essential cost tracking
+- [ ] `afe_line_items` and `afe_approvals` tables
+- [ ] Basic `division_orders` table
+- [ ] Basic `revenue_distributions` table
+
+#### **Phase 3: Basic Production & Compliance**
+
+- [ ] Basic `regulatory_reports` table
+- [ ] Basic `compliance_schedules` table
+
+#### **Phase 4: Core Infrastructure**
+
+- [ ] Core API endpoints for all basic entities
+- [ ] Multi-tenant security implementation
+- [ ] Background job processing setup
+- [ ] Basic `production` table with essential volume data
+- [ ] Basic `well_tests` table with test results
+- [ ] Essential enums implemented for core operations
+
+#### **Infrastructure Requirements**
+
+- [ ] Core 15+ tables created with proper constraints
+- [ ] Essential foreign key relationships established
+- [ ] Performance indexes for critical query paths
+- [ ] Row Level Security policies for all tables
+- [ ] TimescaleDB hypertables for time-series data
+- [ ] Migration scripts handle schema changes
+- [ ] Basic seed data for development/testing
 
 ### API Endpoints
 
@@ -158,28 +236,48 @@ src/
 - [ ] Job monitoring dashboard accessible
 - [ ] Worker processes scale with load
 
-## Team Assignments
+## Enhanced Team Assignments
 
-### Backend Lead Developer
+### Backend Lead Developer (40 hours/week)
 
-- Database schema design and implementation
-- Drizzle ORM configuration and migrations
-- Core API architecture and module structure
-- Performance optimization and indexing
+- **Week 1**: Core business entities schema design (fields, companies, enhanced
+  leases/wells)
+- **Week 2**: Operational entities implementation (rigs, drilling programs,
+  facilities)
+- **Week 3**: Financial systems architecture (JIB, working interests, JOAs)
+- **Week 4**: Regulatory and technical data systems (permits, HSE, geological
+  data)
+- Complex relationship mapping and performance optimization
 
-### Backend Developers (2)
+### Senior Backend Developer (40 hours/week)
 
-- Individual module implementation (wells, leases, production)
-- API endpoint development and validation
-- Background job setup and configuration
-- Unit test implementation
+- **Week 1**: Enhanced enum systems and validation logic
+- **Week 2**: Drilling and operational API endpoints
+- **Week 3**: Financial calculation engines and payment processing
+- **Week 4**: Regulatory reporting and compliance systems
+- Advanced business logic implementation
 
-### DevOps Engineer
+### Backend Developer (40 hours/week)
 
-- Database deployment and configuration
-- Redis setup for background jobs
-- Performance monitoring setup
-- Database backup and recovery procedures
+- **Week 1**: Core CRUD operations and basic API endpoints
+- **Week 2**: Operational data entry and validation systems
+- **Week 3**: Financial data processing and reporting
+- **Week 4**: Technical data management and reserves calculations
+- Unit testing and integration testing
+
+### Database Specialist (20 hours/week)
+
+- **Weeks 1-4**: Complex migration scripts for 40+ table schema
+- Performance indexing strategy for large datasets
+- TimescaleDB optimization for production data
+- Row Level Security implementation across all entities
+
+### DevOps Engineer (20 hours/week)
+
+- Enhanced database deployment with complex schema
+- Redis setup for background job processing
+- Performance monitoring for 40+ table queries
+- Backup and recovery procedures for complex relationships
 
 ## Dependencies
 
@@ -265,22 +363,55 @@ ALTER TABLE wells ADD CONSTRAINT chk_valid_api_number
 - [ ] Input validation prevents injection attacks
 - [ ] Error messages don't leak sensitive data
 
-## Success Metrics
+## Enhanced Success Metrics
 
-- **API Performance**: < 200ms average response time
-- **Database Performance**: < 50ms average query time
-- **Test Coverage**: > 80% code coverage
+### **Schema Completeness**
+
+- **Foundation Coverage**: Core entities for basic upstream operations
+- **Table Implementation**: 15+ essential tables successfully deployed
+- **Relationship Integrity**: 100% foreign key constraints validated
+- **Enum Coverage**: Essential enums for core business operations
+
+### **Performance Benchmarks**
+
+- **API Performance**: < 200ms average response time (complex queries < 500ms)
+- **Database Performance**: < 50ms average query time (< 100ms for complex
+  joins)
+- **Migration Performance**: < 5 minutes for full schema deployment
+- **Index Effectiveness**: > 95% query performance improvement with indexes
+
+### **Quality Metrics**
+
+- **Test Coverage**: > 80% code coverage across all modules
 - **Error Rate**: < 0.1% API error rate
+- **Data Integrity**: 100% constraint validation success
+- **Security Compliance**: 100% RLS policy coverage
+
+## Schema Enhancement Impact
+
+### **Business Value Delivered**
+
+- **Financial Control**: Complete AFE, JIB, and revenue distribution systems
+- **Regulatory Compliance**: Comprehensive permit and HSE incident tracking
+- **Operational Excellence**: Drilling programs and daily reporting capabilities
+- **Stakeholder Management**: Working interest and royalty owner systems
+
+### **Technical Foundation**
+
+- **Enterprise Architecture**: Industry-standard data model
+- **Scalability**: Optimized for 10,000+ wells per organization
+- **Integration Ready**: Schema supports major industry software integrations
+- **Compliance Ready**: SEC, EPA, and state regulatory reporting capabilities
 
 ## Next Sprint Preparation
 
-- Authentication strategy implementation planning
-- JWT token structure design
-- Role-based access control specification
-- Password security requirements review
+- Enhanced authentication with role-based permissions for 40+ entities
+- JWT token structure with granular access control
+- Multi-tenant security across complex entity relationships
+- Advanced audit logging for financial and regulatory compliance
 
 ---
 
-**Sprint 2 creates the data foundation and API structure that all subsequent
-features will build upon. Quality and performance here directly impact the
-entire application.**
+**This enhanced Sprint 2 transforms WellFlow from a basic well tracking system
+to a comprehensive upstream operations platform, establishing the
+enterprise-grade foundation required for industry leadership.**

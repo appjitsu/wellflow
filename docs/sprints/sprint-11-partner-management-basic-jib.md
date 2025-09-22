@@ -5,15 +5,18 @@
 **Duration:** 3 weeks  
 **Story Points:** 13 points  
 **Sprint Goal:** Build partner management system with ownership tracking, basic
-Joint Interest Billing (JIB) framework, and partner communication tools.
+Joint Interest Billing (JIB) framework, division orders, revenue distribution,
+and partner communication tools.
 
 ## Sprint Objectives
 
 1. Create partner management system with ownership tracking
 2. Build lease partnership and working interest management
 3. Implement basic JIB framework and data models
-4. Develop partner communication and document sharing
-5. Create partner dashboard and reporting interface
+4. Implement division orders and revenue distribution system (CRITICAL ADDITION)
+5. Build owner statement generation and payment processing (CRITICAL ADDITION)
+6. Develop partner communication and document sharing
+7. Create partner dashboard and reporting interface
 
 ## Deliverables
 
@@ -56,7 +59,33 @@ Joint Interest Billing (JIB) framework, and partner communication tools.
   - Vendor invoice management
   - Cost approval workflows
 
-### 4. Partner Communication
+### 4. Division Orders & Revenue Distribution (CRITICAL ADDITION)
+
+- **Division Order Management**
+  - Division order creation and maintenance
+  - Owner interest tracking and validation
+  - Division order amendments and updates
+  - Regulatory compliance and filing
+- **Revenue Distribution System**
+  - Monthly revenue calculations
+  - Owner payment processing
+  - Revenue distribution statements
+  - Payment tracking and reconciliation
+
+### 5. Owner Statement Generation (CRITICAL ADDITION)
+
+- **Statement Creation**
+  - Monthly owner statement generation
+  - Production and revenue detail reporting
+  - Deduction and tax withholding calculations
+  - Statement formatting and customization
+- **Payment Processing**
+  - ACH and check payment processing
+  - Payment scheduling and automation
+  - Payment confirmation and tracking
+  - Escheatment and unclaimed property handling
+
+### 6. Partner Communication
 
 - **Document Sharing**
   - Partner-specific document access
