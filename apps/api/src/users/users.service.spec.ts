@@ -474,7 +474,7 @@ describe('UsersService', () => {
       const result = await service.deleteUser('1');
 
       expect(result).toBe(true);
-      expect(service.getUserById).toHaveBeenCalledWith(1);
+      expect(service.getUserById).toHaveBeenCalledWith('1');
       expect(mockDatabaseService.getDb).toHaveBeenCalled();
       expect(mockRedisService.del).toHaveBeenCalledWith('user:1');
       expect(mockRedisService.del).toHaveBeenCalledWith(

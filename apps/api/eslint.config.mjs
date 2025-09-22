@@ -87,6 +87,16 @@ export default tseslint.config(
       'no-implied-eval': 'error',
       'no-new-func': 'error',
       'no-process-env': 'warn', // Encourage using ConfigService
+
+      // Suppress deprecation warnings for Zod methods (still functional in current version)
+      'sonarjs/deprecation': 'off',
+    },
+  },
+  {
+    // Module files - NestJS requires these to be classes even when empty
+    files: ['**/*.module.ts'],
+    rules: {
+      '@typescript-eslint/no-extraneous-class': 'off',
     },
   },
   {
