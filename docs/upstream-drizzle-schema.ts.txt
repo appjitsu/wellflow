@@ -1,0 +1,1078 @@
+// Complete Upstream Oil & Gas Business Workflow Schema
+// Built with Drizzle ORM for PostgreSQL
+
+import { 
+  pgTable, 
+  pgEnum,
+  uuid, 
+  varchar, 
+  text, 
+  integer, 
+  decimal, 
+  boolean, 
+  timestamp, 
+  date, 
+  jsonb,
+  real,
+  index,
+  uniqueIndex,
+  primaryKey,
+  foreignKey
+} from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+
+// ==================== ENUMS ====================
+
+export const wellStatusEnum = pgEnum('well_status', [
+  'proposed',
+  'permitted', 
+  'spudded',
+  'drilling',
+  'completing',
+  'producing',
+  'shut_in',
+  'temporarily_abandoned',
+  'permanently_abandoned',
+  'plugged'
+]);
+
+export const wellTypeEnum = pgEnum('well_type', [
+  'oil',
+  'gas',
+  'oil_gas',
+  'injection',
+  'disposal',
+  'water_supply',
+  'observation',
+  'dry_hole'
+]);
+
+export const wellPurposeEnum = pgEnum('well_purpose', [
+  'exploration',
+  'appraisal',
+  'development',
+  'injection',
+  'disposal',
+  'observation'
+]);
+
+export const operatorTypeEnum = pgEnum('operator_type', [
+  'operator',
+  'non_operator',
+  'carried_interest',
+  'farm_in',
+  'farm_out'
+]);
+
+export const interestTypeEnum = pgEnum('interest_type', [
+  'working_interest',
+  'royalty_interest',
+  'overriding_royalty',
+  'net_profits_interest',
+  'carried_interest',
+  'production_payment'
+]);
+
+export const contractStatusEnum = pgEnum('contract_status', [
+  'draft',
+  'pending_approval',
+  'active',
+  'suspended',
+  'terminated',
+  'expired'
+]);
+
+export const documentTypeEnum = pgEnum('document_type', [
+  'lease',
+  'title_opinion',
+  'division_order',
+  'joa',
+  'farm_out',
+  'psa',
+  'permit',
+  'report',
+  'correspondence'
+]);
+
+export const permitTypeEnum = pgEnum('permit_type', [
+  'drilling',
+  'completion',
+  'workover',
+  'injection',
+  'disposal',
+  'facility',
+  'pipeline',
+  'environmental'
+]);
+
+export const permitStatusEnum = pgEnum('permit_status', [
+  'draft',
+  'submitted',
+  'under_review',
+  'approved',
+  'denied',
+  'expired',
+  'renewed'
+]);
+
+export const afeStatusEnum = pgEnum('afe_status', [
+  'draft',
+  'pending_approval',
+  'approved',
+  'rejected',
+  'in_progress',
+  'completed',
+  'closed'
+]);
+
+export const invoiceStatusEnum = pgEnum('invoice_status', [
+  'draft',
+  'submitted',
+  'approved',
+  'disputed',
+  'paid',
+  'partially_paid',
+  'void'
+]);
+
+export const paymentStatusEnum = pgEnum('payment_status', [
+  'pending',
+  'processing',
+  'completed',
+  'failed',
+  'reversed',
+  'suspended'
+]);
+
+export const productTypeEnum = pgEnum('product_type', [
+  'oil',
+  'gas',
+  'condensate',
+  'ngl',
+  'water',
+  'co2',
+  'helium'
+]);
+
+export const uomEnum = pgEnum('uom', [
+  'bbl',
+  'mcf',
+  'mmbtu',
+  'gal',
+  'ton',
+  'mt',
+  'boe'
+]);
+
+export const facilityTypeEnum = pgEnum('facility_type', [
+  'well_pad',
+  'tank_battery',
+  'separator',
+  'compressor',
+  'pump_station',
+  'processing_plant',
+  'terminal',
+  'pipeline'
+]);
+
+export const incidentTypeEnum = pgEnum('incident_type', [
+  'spill',
+  'release',
+  'injury',
+  'fatality',
+  'near_miss',
+  'equipment_failure',
+  'well_control',
+  'fire',
+  'explosion'
+]);
+
+export const severityEnum = pgEnum('severity', [
+  'low',
+  'medium',
+  'high',
+  'critical'
+]);
+
+// ==================== CORE ENTITIES ====================
+
+// Fields/Assets
+export const fields = pgTable('fields', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  fieldName: varchar('field_name', { length: 255 }).notNull(),
+  fieldCode: varchar('field_code', { length: 50 }).unique(),
+  basin: varchar('basin', { length: 255 }),
+  play: varchar('play', { length: 255 }),
+  country: varchar('country', { length: 100 }).notNull(),
+  state: varchar('state', { length: 100 }),
+  county: varchar('county', { length: 100 }),
+  discoveryDate: date('discovery_date'),
+  operatorId: uuid('operator_id').references(() => companies.id),
+  status: varchar('status', { length: 50 }).default('active'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+}, (table) => ({
+  operatorIdx: index('field_operator_idx').on(table.operatorId),
+  locationIdx: index('field_location_idx').on(table.state, table.county)
+}));
+
+// Leases
+export const leases = pgTable('leases', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  leaseNumber: varchar('lease_number', { length: 100 }).unique().notNull(),
+  leaseName: varchar('lease_name', { length: 255 }).notNull(),
+  fieldId: uuid('field_id').references(() => fields.id),
+  lessorName: varchar('lessor_name', { length: 255 }),
+  effectiveDate: date('effective_date').notNull(),
+  expirationDate: date('expiration_date'),
+  primaryTerm: integer('primary_term'),
+  royaltyRate: decimal('royalty_rate', { precision: 10, scale: 8 }).notNull(),
+  bonusAmount: decimal('bonus_amount', { precision: 15, scale: 2 }),
+  netAcres: decimal('net_acres', { precision: 12, scale: 4 }),
+  grossAcres: decimal('gross_acres', { precision: 12, scale: 4 }),
+  workingInterest: decimal('working_interest', { precision: 10, scale: 8 }),
+  netRevenueInterest: decimal('net_revenue_interest', { precision: 10, scale: 8 }),
+  legalDescription: text('legal_description'),
+  status: varchar('status', { length: 50 }).default('active'),
+  pughClause: boolean('pugh_clause').default(false),
+  depthLimitation: jsonb('depth_limitation'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+}, (table) => ({
+  fieldIdx: index('lease_field_idx').on(table.fieldId),
+  expirationIdx: index('lease_expiration_idx').on(table.expirationDate)
+}));
+
+// Wells
+export const wells = pgTable('wells', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  wellName: varchar('well_name', { length: 255 }).notNull(),
+  apiNumber: varchar('api_number', { length: 20 }).unique(),
+  wellNumber: varchar('well_number', { length: 50 }),
+  leaseId: uuid('lease_id').references(() => leases.id),
+  fieldId: uuid('field_id').references(() => fields.id),
+  operatorId: uuid('operator_id').references(() => companies.id),
+  wellType: wellTypeEnum('well_type').notNull(),
+  wellPurpose: wellPurposeEnum('well_purpose').notNull(),
+  wellStatus: wellStatusEnum('well_status').notNull(),
+  spudDate: date('spud_date'),
+  completionDate: date('completion_date'),
+  firstProductionDate: date('first_production_date'),
+  pluggedDate: date('plugged_date'),
+  surfaceLatitude: decimal('surface_latitude', { precision: 10, scale: 7 }),
+  surfaceLongitude: decimal('surface_longitude', { precision: 10, scale: 7 }),
+  bottomLatitude: decimal('bottom_latitude', { precision: 10, scale: 7 }),
+  bottomLongitude: decimal('bottom_longitude', { precision: 10, scale: 7 }),
+  totalDepth: decimal('total_depth', { precision: 10, scale: 2 }),
+  tvd: decimal('tvd', { precision: 10, scale: 2 }),
+  groundElevation: decimal('ground_elevation', { precision: 10, scale: 2 }),
+  kbElevation: decimal('kb_elevation', { precision: 10, scale: 2 }),
+  waterDepth: decimal('water_depth', { precision: 10, scale: 2 }),
+  isHorizontal: boolean('is_horizontal').default(false),
+  isOffshore: boolean('is_offshore').default(false),
+  rigId: uuid('rig_id').references(() => rigs.id),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+}, (table) => ({
+  apiIdx: uniqueIndex('well_api_idx').on(table.apiNumber),
+  leaseIdx: index('well_lease_idx').on(table.leaseId),
+  fieldIdx: index('well_field_idx').on(table.fieldId),
+  operatorIdx: index('well_operator_idx').on(table.operatorId),
+  statusIdx: index('well_status_idx').on(table.wellStatus),
+  locationIdx: index('well_location_idx').on(table.surfaceLatitude, table.surfaceLongitude)
+}));
+
+// ==================== STAKEHOLDER ENTITIES ====================
+
+// Companies (Operators, Partners, Vendors, etc.)
+export const companies = pgTable('companies', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  companyName: varchar('company_name', { length: 255 }).notNull(),
+  companyCode: varchar('company_code', { length: 50 }).unique(),
+  companyType: varchar('company_type', { length: 50 }),
+  taxId: varchar('tax_id', { length: 50 }),
+  dunsNumber: varchar('duns_number', { length: 20 }),
+  address: jsonb('address'),
+  primaryContact: jsonb('primary_contact'),
+  phone: varchar('phone', { length: 50 }),
+  email: varchar('email', { length: 255 }),
+  website: varchar('website', { length: 255 }),
+  creditRating: varchar('credit_rating', { length: 10 }),
+  insuranceCoverage: jsonb('insurance_coverage'),
+  vendorNumber: varchar('vendor_number', { length: 50 }),
+  isOperator: boolean('is_operator').default(false),
+  isVendor: boolean('is_vendor').default(false),
+  isPartner: boolean('is_partner').default(false),
+  status: varchar('status', { length: 50 }).default('active'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+}, (table) => ({
+  nameIdx: index('company_name_idx').on(table.companyName),
+  typeIdx: index('company_type_idx').on(table.companyType)
+}));
+
+// Working Interest Owners
+export const workingInterestOwners = pgTable('working_interest_owners', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  wellId: uuid('well_id').references(() => wells.id),
+  leaseId: uuid('lease_id').references(() => leases.id),
+  ownerId: uuid('owner_id').references(() => companies.id).notNull(),
+  interestType: interestTypeEnum('interest_type').notNull(),
+  ownershipPercentage: decimal('ownership_percentage', { precision: 12, scale: 8 }).notNull(),
+  nriPercentage: decimal('nri_percentage', { precision: 12, scale: 8 }),
+  effectiveDate: date('effective_date').notNull(),
+  terminationDate: date('termination_date'),
+  payStatus: varchar('pay_status', { length: 50 }).default('pay'),
+  suspenseReason: text('suspense_reason'),
+  joaId: uuid('joa_id').references(() => jointOperatingAgreements.id),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+}, (table) => ({
+  wellIdx: index('wio_well_idx').on(table.wellId),
+  leaseIdx: index('wio_lease_idx').on(table.leaseId),
+  ownerIdx: index('wio_owner_idx').on(table.ownerId),
+  dateIdx: index('wio_date_idx').on(table.effectiveDate, table.terminationDate)
+}));
+
+// Royalty Owners
+export const royaltyOwners = pgTable('royalty_owners', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  ownerName: varchar('owner_name', { length: 255 }).notNull(),
+  ownerType: varchar('owner_type', { length: 50 }),
+  taxId: varchar('tax_id', { length: 50 }),
+  address: jsonb('address'),
+  phone: varchar('phone', { length: 50 }),
+  email: varchar('email', { length: 255 }),
+  bankAccount: jsonb('bank_account'),
+  w9OnFile: boolean('w9_on_file').default(false),
+  paymentMethod: varchar('payment_method', { length: 50 }).default('check'),
+  minimumPayment: decimal('minimum_payment', { precision: 10, scale: 2 }).default('100.00'),
+  status: varchar('status', { length: 50 }).default('active'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+}, (table) => ({
+  nameIdx: index('royalty_owner_name_idx').on(table.ownerName),
+  taxIdIdx: index('royalty_owner_tax_idx').on(table.taxId)
+}));
+
+// Division Orders
+export const divisionOrders = pgTable('division_orders', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  doNumber: varchar('do_number', { length: 100 }).unique().notNull(),
+  wellId: uuid('well_id').references(() => wells.id),
+  leaseId: uuid('lease_id').references(() => leases.id),
+  ownerId: uuid('owner_id').references(() => royaltyOwners.id).notNull(),
+  interestType: interestTypeEnum('interest_type').notNull(),
+  decimalInterest: decimal('decimal_interest', { precision: 15, scale: 10 }).notNull(),
+  payCode: varchar('pay_code', { length: 50 }),
+  effectiveDate: date('effective_date').notNull(),
+  terminationDate: date('termination_date'),
+  signedDate: date('signed_date'),
+  suspenseStatus: boolean('suspense_status').default(false),
+  suspenseReason: text('suspense_reason'),
+  suspenseAmount: decimal('suspense_amount', { precision: 15, scale: 2 }),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+}, (table) => ({
+  wellIdx: index('do_well_idx').on(table.wellId),
+  leaseIdx: index('do_lease_idx').on(table.leaseId),
+  ownerIdx: index('do_owner_idx').on(table.ownerId),
+  suspenseIdx: index('do_suspense_idx').on(table.suspenseStatus)
+}));
+
+// ==================== OPERATIONAL ENTITIES ====================
+
+// Rigs
+export const rigs = pgTable('rigs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  rigName: varchar('rig_name', { length: 255 }).notNull(),
+  rigNumber: varchar('rig_number', { length: 100 }),
+  contractorId: uuid('contractor_id').references(() => companies.id),
+  rigType: varchar('rig_type', { length: 100 }),
+  ratedDepth: decimal('rated_depth', { precision: 10, scale: 2 }),
+  drawworks: varchar('drawworks', { length: 255 }),
+  mastCapacity: decimal('mast_capacity', { precision: 10, scale: 2 }),
+  mudPumps: jsonb('mud_pumps'),
+  bopConfiguration: jsonb('bop_configuration'),
+  dayRate: decimal('day_rate', { precision: 15, scale: 2 }),
+  mobilizationCost: decimal('mobilization_cost', { precision: 15, scale: 2 }),
+  status: varchar('status', { length: 50 }).default('available'),
+  currentWellId: uuid('current_well_id').references(() => wells.id),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+}, (table) => ({
+  contractorIdx: index('rig_contractor_idx').on(table.contractorId),
+  statusIdx: index('rig_status_idx').on(table.status)
+}));
+
+// Drilling Programs
+export const drillingPrograms = pgTable('drilling_programs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  wellId: uuid('well_id').references(() => wells.id).notNull(),
+  version: integer('version').default(1),
+  programType: varchar('program_type', { length: 50 }),
+  plannedTd: decimal('planned_td', { precision: 10, scale: 2 }),
+  plannedDays: integer('planned_days'),
+  estimatedCost: decimal('estimated_cost', { precision: 15, scale: 2 }),
+  actualCost: decimal('actual_cost', { precision: 15, scale: 2 }),
+  casingProgram: jsonb('casing_program'),
+  mudProgram: jsonb('mud_program'),
+  bitProgram: jsonb('bit_program'),
+  cementProgram: jsonb('cement_program'),
+  directionalPlan: jsonb('directional_plan'),
+  formationTops: jsonb('formation_tops'),
+  hazardAnalysis: jsonb('hazard_analysis'),
+  approvedBy: varchar('approved_by', { length: 255 }),
+  approvedDate: timestamp('approved_date'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+}, (table) => ({
+  wellIdx: index('drilling_program_well_idx').on(table.wellId),
+  versionIdx: index('drilling_program_version_idx').on(table.wellId, table.version)
+}));
+
+// Daily Drilling Reports
+export const dailyDrillingReports = pgTable('daily_drilling_reports', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  wellId: uuid('well_id').references(() => wells.id).notNull(),
+  reportDate: date('report_date').notNull(),
+  reportNumber: integer('report_number'),
+  dayNumber: integer('day_number'),
+  depthMd: decimal('depth_md', { precision: 10, scale: 2 }),
+  depthTvd: decimal('depth_tvd', { precision: 10, scale: 2 }),
+  progress24Hr: decimal('progress_24hr', { precision: 10, scale: 2 }),
+  rotatingHours: decimal('rotating_hours', { precision: 5, scale: 2 }),
+  operations: text('operations'),
+  mudWeight: decimal('mud_weight', { precision: 5, scale: 2 }),
+  mudViscosity: integer('mud_viscosity'),
+  chlorides: integer('chlorides'),
+  bitNumber: integer('bit_number'),
+  bitDetails: jsonb('bit_details'),
+  personnel: jsonb('personnel'),
+  weather: jsonb('weather'),
+  costs: jsonb('costs'),
+  hseIncidents: jsonb('hse_incidents'),
+  nptHours: decimal('npt_hours', { precision: 5, scale: 2 }),
+  nptDetails: text('npt_details'),
+  nextOperations: text('next_operations'),
+  preparedBy: varchar('prepared_by', { length: 255 }),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow()
+}, (table) => ({
+  wellDateIdx: uniqueIndex('ddr_well_date_idx').on(table.wellId, table.reportDate),
+  dateIdx: index('ddr_date_idx').on(table.reportDate)
+}));
+
+// Production Data
+export const production = pgTable('production', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  wellId: uuid('well_id').references(() => wells.id).notNull(),
+  productionDate: date('production_date').notNull(),
+  oilVolume: decimal('oil_volume', { precision: 15, scale: 4 }),
+  gasVolume: decimal('gas_volume', { precision: 15, scale: 4 }),
+  waterVolume: decimal('water_volume', { precision: 15, scale: 4 }),
+  condensateVolume: decimal('condensate_volume', { precision: 15, scale: 4 }),
+  injectionVolume: decimal('injection_volume', { precision: 15, scale: 4 }),
+  hoursOn: decimal('hours_on', { precision: 5, scale: 2 }).default('24'),
+  choke: varchar('choke', { length: 50 }),
+  tubingPressure: decimal('tubing_pressure', { precision: 10, scale: 2 }),
+  casingPressure: decimal('casing_pressure', { precision: 10, scale: 2 }),
+  linePressure: decimal('line_pressure', { precision: 10, scale: 2 }),
+  temperature: decimal('temperature', { precision: 10, scale: 2 }),
+  bsw: decimal('bsw', { precision: 5, scale: 2 }),
+  gor: decimal('gor', { precision: 15, scale: 4 }),
+  api: decimal('api', { precision: 5, scale: 2 }),
+  downtime: jsonb('downtime'),
+  allocatedOil: decimal('allocated_oil', { precision: 15, scale: 4 }),
+  allocatedGas: decimal('allocated_gas', { precision: 15, scale: 4 }),
+  salesOil: decimal('sales_oil', { precision: 15, scale: 4 }),
+  salesGas: decimal('sales_gas', { precision: 15, scale: 4 }),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow()
+}, (table) => ({
+  wellDateIdx: uniqueIndex('production_well_date_idx').on(table.wellId, table.productionDate),
+  dateIdx: index('production_date_idx').on(table.productionDate)
+}));
+
+// Well Tests
+export const wellTests = pgTable('well_tests', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  wellId: uuid('well_id').references(() => wells.id).notNull(),
+  testDate: timestamp('test_date').notNull(),
+  testType: varchar('test_type', { length: 100 }),
+  testDuration: decimal('test_duration', { precision: 10, scale: 2 }),
+  oilRate: decimal('oil_rate', { precision: 15, scale: 4 }),
+  gasRate: decimal('gas_rate', { precision: 15, scale: 4 }),
+  waterRate: decimal('water_rate', { precision: 15, scale: 4 }),
+  choke: varchar('choke', { length: 50 }),
+  ftp: decimal('ftp', { precision: 10, scale: 2 }),
+  sitp: decimal('sitp', { precision: 10, scale: 2 }),
+  bsw: decimal('bsw', { precision: 5, scale: 2 }),
+  temperature: decimal('temperature', { precision: 10, scale: 2 }),
+  glr: decimal('glr', { precision: 15, scale: 4 }),
+  validTest: boolean('valid_test').default(true),
+  testRemarks: text('test_remarks'),
+  witnessedBy: varchar('witnessed_by', { length: 255 }),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow()
+}, (table) => ({
+  wellIdx: index('well_test_well_idx').on(table.wellId),
+  dateIdx: index('well_test_date_idx').on(table.testDate)
+}));
+
+// Workovers
+export const workovers = pgTable('workovers', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  wellId: uuid('well_id').references(() => wells.id).notNull(),
+  workoverNumber: varchar('workover_number', { length: 100 }),
+  workoverType: varchar('workover_type', { length: 100 }),
+  reason: text('reason'),
+  startDate: date('start_date'),
+  endDate: date('end_date'),
+  rigId: uuid('rig_id').references(() => rigs.id),
+  contractorId: uuid('contractor_id').references(() => companies.id),
+  estimatedCost: decimal('estimated_cost', { precision: 15, scale: 2 }),
+  actualCost: decimal('actual_cost', { precision: 15, scale: 2 }),
+  workPerformed: text('work_performed'),
+  results: text('results'),
+  preWorkoverProduction: jsonb('pre_workover_production'),
+  postWorkoverProduction: jsonb('post_workover_production'),
+  afeId: uuid('afe_id').references(() => afes.id),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+}, (table) => ({
+  wellIdx: index('workover_well_idx').on(table.wellId),
+  dateIdx: index('workover_date_idx').on(table.startDate)
+}));
+
+// ==================== FINANCIAL ENTITIES ====================
+
+// Authorization for Expenditures (AFEs)
+export const afes = pgTable('afes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  afeNumber: varchar('afe_number', { length: 100 }).unique().notNull(),
+  afeTitle: varchar('afe_title', { length: 255 }).notNull(),
+  wellId: uuid('well_id').references(() => wells.id),
+  leaseId: uuid('lease_id').references(() => leases.id),
+  afeType: varchar('afe_type', { length: 100 }),
+  status: afeStatusEnum('status').notNull(),
+  totalEstimate: decimal('total_estimate', { precision: 18, scale: 2 }).notNull(),
+  intangibleCost: decimal('intangible_cost', { precision: 18, scale: 2 }),
+  tangibleCost: decimal('tangible_cost', { precision: 18, scale: 2 }),
+  actualCost: decimal('actual_cost', { precision: 18, scale: 2 }),
+  variance: decimal('variance', { precision: 18, scale: 2 }),
+  operatorId: uuid('operator_id').references(() => companies.id),
+  requestedBy: varchar('requested_by', { length: 255 }),
+  requestedDate: date('requested_date'),
+  approvalDeadline: date('approval_deadline'),
+  costBreakdown: jsonb('cost_breakdown'),
+  justification: text('justification'),
+  economics: jsonb('economics'),
+  partnersConsent: jsonb('partners_consent'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+}, (table) => ({
+  wellIdx: index('afe_well_idx').on(table.wellId),
+  statusIdx: index('afe_status_idx').on(table.status),
+  operatorIdx: index('afe_operator_idx').on(table.operatorId)
+}));
+
+// Joint Interest Billing
+export const jointInterestBilling = pgTable('joint_interest_billing', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  billMonth: date('bill_month').notNull(),
+  wellId: uuid('well_id').references(() => wells.id),
+  leaseId: uuid('lease_id').references(() => leases.id),
+  operatorId: uuid('operator_id').references(() => companies.id).notNull(),
+  partnerId: uuid('partner_id').references(() => companies.id).notNull(),
+  workingInterest: decimal('working_interest', { precision: 12, scale: 8 }).notNull(),
+  grossAmount: decimal('gross_amount', { precision: 18, scale: 2 }).notNull(),
+  netAmount: decimal('net_amount', { precision: 18, scale: 2 }).notNull(),
+  overhead: decimal('overhead', { precision: 15, scale: 2 }),
+  cashCallAmount: decimal('cash_call_amount', { precision: 18, scale: 2 }),
+  previousBalance: decimal('previous_balance', { precision: 18, scale: 2 }),
+  currentBalance: decimal('current_balance', { precision: 18, scale: 2 }),
+  billType: varchar('bill_type', { length: 50 }),
+  dueDate: date('due_date'),
+  paidDate: date('paid_date'),
+  paymentStatus: paymentStatusEnum('payment_status').notNull(),
+  lineItems: jsonb('line_items'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+}, (table) => ({
+  monthIdx: index('jib_month_idx').on(table.billMonth),
+  wellIdx: index('jib_well_idx').on(table.wellId),
+  partnerIdx: index('jib_partner_idx').on(table.partnerId),
+  statusIdx: index('jib_status_idx').on(table.paymentStatus)
+}));
+
+// Revenue Distribution
+export const revenueDistribution = pgTable('revenue_distribution', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  productionMonth: date('production_month').notNull(),
+  wellId: uuid('well_id').references(() => wells.id),
+  leaseId: uuid('lease_id').references(() => leases.id),
+  productType: productTypeEnum('product_type').notNull(),
+  grossVolume: decimal('gross_volume', { precision: 18, scale: 4 }).notNull(),
+  netVolume: decimal('net_volume', { precision: 18, scale: 4 }).notNull(),
+  price: decimal('price', { precision: 12, scale: 4 }).notNull(),
+  grossValue: decimal('gross_value', { precision: 18, scale: 2 }).notNull(),
+  deductions: jsonb('deductions'),
+  netValue: decimal('net_value', { precision: 18, scale: 2 }).notNull(),
+  severanceTax: decimal('severance_tax', { precision: 15, scale: 2 }),
+  adValoremTax: decimal('ad_valorem_tax', { precision: 15, scale: 2 }),
+  transportationCost: decimal('transportation_cost', { precision: 15, scale: 2 }),
+  processingCost: decimal('processing_cost', { precision: 15, scale: 2 }),
+  runTicketNumbers: jsonb('run_ticket_numbers'),
+  distributionDate: date('distribution_date'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow()
+}, (table) => ({
+  monthIdx: index('revenue_month_idx').on(table.productionMonth),
+  wellIdx: index('revenue_well_idx').on(table.wellId),
+  productIdx: index('revenue_product_idx').on(table.productType)
+}));
+
+// Owner Payments
+export const ownerPayments = pgTable('owner_payments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  paymentDate: date('payment_date').notNull(),
+  ownerId: uuid('owner_id').notNull(),
+  ownerType: varchar('owner_type', { length: 50 }),
+  distributionId: uuid('distribution_id').references(() => revenueDistribution.id),
+  checkNumber: varchar('check_number', { length: 100 }),
+  paymentMethod: varchar('payment_method', { length: 50 }),
+  decimalInterest: decimal('decimal_interest', { precision: 15, scale: 10 }).notNull(),
+  grossAmount: decimal('gross_amount', { precision: 18, scale: 2 }).notNull(),
+  deductions: jsonb('deductions'),
+  netAmount: decimal('net_amount', { precision: 18, scale: 2 }).notNull(),
+  taxWithheld: decimal('tax_withheld', { precision: 15, scale: 2 }),
+  status: paymentStatusEnum('status').notNull(),
+  clearedDate: date('cleared_date'),
+  voidDate: date('void_date'),
+  voidReason: text('void_reason'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow()
+}, (table) => ({
+  ownerIdx: index('payment_owner_idx').on(table.ownerId),
+  dateIdx: index('payment_date_idx').on(table.paymentDate),
+  checkIdx: index('payment_check_idx').on(table.checkNumber)
+}));
+
+// ==================== AGREEMENTS AND CONTRACTS ====================
+
+// Joint Operating Agreements
+export const jointOperatingAgreements = pgTable('joint_operating_agreements', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  joaNumber: varchar('joa_number', { length: 100 }).unique().notNull(),
+  joaName: varchar('joa_name', { length: 255 }),
+  operatorId: uuid('operator_id').references(() => companies.id).notNull(),
+  effectiveDate: date('effective_date').notNull(),
+  terminationDate: date('termination_date'),
+  accountingProcedure: varchar('accounting_procedure', { length: 100 }),
+  operatorOverhead: decimal('operator_overhead', { precision: 10, scale: 4 }),
+  area: jsonb('area'),
+  depthLimitations: jsonb('depth_limitations'),
+  votingStructure: jsonb('voting_structure'),
+  nonConsentPenalty: decimal('non_consent_penalty', { precision: 10, scale: 4 }),
+  preferentialRights: boolean('preferential_rights').default(true),
+  documentUrl: text('document_url'),
+  parties: jsonb('parties'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+}, (table) => ({
+  operatorIdx: index('joa_operator_idx').on(table.operatorId),
+  dateIdx: index('joa_date_idx').on(table.effectiveDate)
+}));
+
+// Service Contracts
+export const serviceContracts = pgTable('service_contracts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  contractNumber: varchar('contract_number', { length: 100 }).unique().notNull(),
+  contractTitle: varchar('contract_title', { length: 255 }).notNull(),
+  vendorId: uuid('vendor_id').references(() => companies.id).notNull(),
+  contractType: varchar('contract_type', { length: 100 }),
+  serviceCategory: varchar('service_category', { length: 100 }),
+  status: contractStatusEnum('status').notNull(),
+  startDate: date('start_date').notNull(),
+  endDate: date('end_date'),
+  contractValue: decimal('contract_value', { precision: 18, scale: 2 }),
+  rateSchedule: jsonb('rate_schedule'),
+  paymentTerms: varchar('payment_terms', { length: 100 }),
+  insuranceRequirements: jsonb('insurance_requirements'),
+  performanceMetrics: jsonb('performance_metrics'),
+  terminationClauses: jsonb('termination_clauses'),
+  documentUrl: text('document_url'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+}, (table) => ({
+  vendorIdx: index('contract_vendor_idx').on(table.vendorId),
+  statusIdx: index('contract_status_idx').on(table.status),
+  dateIdx: index('contract_date_idx').on(table.startDate, table.endDate)
+}));
+
+// ==================== REGULATORY AND COMPLIANCE ====================
+
+// Permits
+export const permits = pgTable('permits', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  permitNumber: varchar('permit_number', { length: 100 }).unique().notNull(),
+  permitType: permitTypeEnum('permit_type').notNull(),
+  status: permitStatusEnum('status').notNull(),
+  wellId: uuid('well_id').references(() => wells.id),
+  facilityId: uuid('facility_id').references(() => facilities.id),
+  issuingAgency: varchar('issuing_agency', { length: 255 }),
+  applicationDate: date('application_date'),
+  approvalDate: date('approval_date'),
+  expirationDate: date('expiration_date'),
+  renewalDate: date('renewal_date'),
+  conditions: jsonb('conditions'),
+  fees: decimal('fees', { precision: 15, scale: 2 }),
+  bondAmount: decimal('bond_amount', { precision: 15, scale: 2 }),
+  documentUrl: text('document_url'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+}, (table) => ({
+  typeIdx: index('permit_type_idx').on(table.permitType),
+  statusIdx: index('permit_status_idx').on(table.status),
+  expirationIdx: index('permit_expiration_idx').on(table.expirationDate),
+  wellIdx: index('permit_well_idx').on(table.wellId)
+}));
+
+// Regulatory Reports
+export const regulatoryReports = pgTable('regulatory_reports', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  reportType: varchar('report_type', { length: 100 }).notNull(),
+  reportingPeriod: date('reporting_period').notNull(),
+  agency: varchar('agency', { length: 255 }),
+  dueDate: date('due_date'),
+  submissionDate: date('submission_date'),
+  status: varchar('status', { length: 50 }).notNull(),
+  wellId: uuid('well_id').references(() => wells.id),
+  leaseId: uuid('lease_id').references(() => leases.id),
+  facilityId: uuid('facility_id').references(() => facilities.id),
+  reportData: jsonb('report_data'),
+  confirmationNumber: varchar('confirmation_number', { length: 100 }),
+  preparedBy: varchar('prepared_by', { length: 255 }),
+  approvedBy: varchar('approved_by', { length: 255 }),
+  documentUrl: text('document_url'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow()
+}, (table) => ({
+  typeIdx: index('reg_report_type_idx').on(table.reportType),
+  periodIdx: index('reg_report_period_idx').on(table.reportingPeriod),
+  statusIdx: index('reg_report_status_idx').on(table.status)
+}));
+
+// HSE Incidents
+export const hseIncidents = pgTable('hse_incidents', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  incidentNumber: varchar('incident_number', { length: 100 }).unique().notNull(),
+  incidentDate: timestamp('incident_date').notNull(),
+  incidentType: incidentTypeEnum('incident_type').notNull(),
+  severity: severityEnum('severity').notNull(),
+  wellId: uuid('well_id').references(() => wells.id),
+  facilityId: uuid('facility_id').references(() => facilities.id),
+  location: varchar('location', { length: 255 }),
+  description: text('description'),
+  rootCause: text('root_cause'),
+  correctiveActions: jsonb('corrective_actions'),
+  injuries: jsonb('injuries'),
+  environmentalImpact: jsonb('environmental_impact'),
+  reportableAgencies: jsonb('reportable_agencies'),
+  investigationStatus: varchar('investigation_status', { length: 50 }),
+  estimatedCost: decimal('estimated_cost', { precision: 15, scale: 2 }),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+}, (table) => ({
+  dateIdx: index('incident_date_idx').on(table.incidentDate),
+  typeIdx: index('incident_type_idx').on(table.incidentType),
+  severityIdx: index('incident_severity_idx').on(table.severity)
+}));
+
+// ==================== FACILITIES AND EQUIPMENT ====================
+
+// Facilities
+export const facilities = pgTable('facilities', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  facilityName: varchar('facility_name', { length: 255 }).notNull(),
+  facilityCode: varchar('facility_code', { length: 100 }).unique(),
+  facilityType: facilityTypeEnum('facility_type').notNull(),
+  fieldId: uuid('field_id').references(() => fields.id),
+  operatorId: uuid('operator_id').references(() => companies.id),
+  latitude: decimal('latitude', { precision: 10, scale: 7 }),
+  longitude: decimal('longitude', { precision: 10, scale: 7 }),
+  capacity: jsonb('capacity'),
+  designPressure: decimal('design_pressure', { precision: 10, scale: 2 }),
+  installationDate: date('installation_date'),
+  lastInspectionDate: date('last_inspection_date'),
+  nextInspectionDate: date('next_inspection_date'),
+  status: varchar('status', { length: 50 }).default('active'),
+  equipment: jsonb('equipment'),
+  piping: jsonb('piping'),
+  instrumentation: jsonb('instrumentation'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+}, (table) => ({
+  fieldIdx: index('facility_field_idx').on(table.fieldId),
+  typeIdx: index('facility_type_idx').on(table.facilityType),
+  operatorIdx: index('facility_operator_idx').on(table.operatorId)
+}));
+
+// Equipment
+export const equipment = pgTable('equipment', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  equipmentTag: varchar('equipment_tag', { length: 100 }).unique().notNull(),
+  equipmentName: varchar('equipment_name', { length: 255 }),
+  equipmentType: varchar('equipment_type', { length: 100 }),
+  manufacturer: varchar('manufacturer', { length: 255 }),
+  model: varchar('model', { length: 255 }),
+  serialNumber: varchar('serial_number', { length: 255 }),
+  wellId: uuid('well_id').references(() => wells.id),
+  facilityId: uuid('facility_id').references(() => facilities.id),
+  installationDate: date('installation_date'),
+  specifications: jsonb('specifications'),
+  maintenanceSchedule: jsonb('maintenance_schedule'),
+  lastMaintenanceDate: date('last_maintenance_date'),
+  nextMaintenanceDate: date('next_maintenance_date'),
+  status: varchar('status', { length: 50 }).default('active'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+}, (table) => ({
+  wellIdx: index('equipment_well_idx').on(table.wellId),
+  facilityIdx: index('equipment_facility_idx').on(table.facilityId),
+  typeIdx: index('equipment_type_idx').on(table.equipmentType)
+}));
+
+// ==================== DOCUMENTS AND DATA ====================
+
+// Documents
+export const documents = pgTable('documents', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  documentNumber: varchar('document_number', { length: 100 }).unique(),
+  documentName: varchar('document_name', { length: 255 }).notNull(),
+  documentType: documentTypeEnum('document_type').notNull(),
+  wellId: uuid('well_id').references(() => wells.id),
+  leaseId: uuid('lease_id').references(() => leases.id),
+  fieldId: uuid('field_id').references(() => fields.id),
+  fileUrl: text('file_url'),
+  fileSize: integer('file_size'),
+  mimeType: varchar('mime_type', { length: 100 }),
+  version: integer('version').default(1),
+  effectiveDate: date('effective_date'),
+  expirationDate: date('expiration_date'),
+  tags: jsonb('tags'),
+  uploadedBy: varchar('uploaded_by', { length: 255 }),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+}, (table) => ({
+  typeIdx: index('document_type_idx').on(table.documentType),
+  wellIdx: index('document_well_idx').on(table.wellId),
+  leaseIdx: index('document_lease_idx').on(table.leaseId)
+}));
+
+// Geological Data
+export const geologicalData = pgTable('geological_data', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  wellId: uuid('well_id').references(() => wells.id).notNull(),
+  dataType: varchar('data_type', { length: 100 }),
+  formationName: varchar('formation_name', { length: 255 }),
+  topDepthMd: decimal('top_depth_md', { precision: 10, scale: 2 }),
+  topDepthTvd: decimal('top_depth_tvd', { precision: 10, scale: 2 }),
+  baseDepthMd: decimal('base_depth_md', { precision: 10, scale: 2 }),
+  baseDepthTvd: decimal('base_depth_tvd', { precision: 10, scale: 2 }),
+  netPay: decimal('net_pay', { precision: 10, scale: 2 }),
+  porosity: decimal('porosity', { precision: 5, scale: 4 }),
+  permeability: decimal('permeability', { precision: 15, scale: 4 }),
+  waterSaturation: decimal('water_saturation', { precision: 5, scale: 4 }),
+  oilSaturation: decimal('oil_saturation', { precision: 5, scale: 4 }),
+  logData: jsonb('log_data'),
+  coreData: jsonb('core_data'),
+  interpretedBy: varchar('interpreted_by', { length: 255 }),
+  interpretationDate: date('interpretation_date'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow()
+}, (table) => ({
+  wellIdx: index('geo_well_idx').on(table.wellId),
+  formationIdx: index('geo_formation_idx').on(table.formationName)
+}));
+
+// Reserves
+export const reserves = pgTable('reserves', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  evaluationDate: date('evaluation_date').notNull(),
+  wellId: uuid('well_id').references(() => wells.id),
+  leaseId: uuid('lease_id').references(() => leases.id),
+  fieldId: uuid('field_id').references(() => fields.id),
+  category: varchar('category', { length: 50 }).notNull(),
+  provedDeveloped: jsonb('proved_developed'),
+  provedUndeveloped: jsonb('proved_undeveloped'),
+  probable: jsonb('probable'),
+  possible: jsonb('possible'),
+  oilReserves: decimal('oil_reserves', { precision: 18, scale: 2 }),
+  gasReserves: decimal('gas_reserves', { precision: 18, scale: 2 }),
+  nglReserves: decimal('ngl_reserves', { precision: 18, scale: 2 }),
+  netReserves: decimal('net_reserves', { precision: 18, scale: 2 }),
+  pv10: decimal('pv10', { precision: 18, scale: 2 }),
+  evaluatorId: uuid('evaluator_id').references(() => companies.id),
+  methodology: varchar('methodology', { length: 100 }),
+  priceAssumptions: jsonb('price_assumptions'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow()
+}, (table) => ({
+  dateIdx: index('reserves_date_idx').on(table.evaluationDate),
+  wellIdx: index('reserves_well_idx').on(table.wellId),
+  fieldIdx: index('reserves_field_idx').on(table.fieldId)
+}));
+
+// ==================== RELATIONS ====================
+
+// Define all relations between tables
+export const fieldsRelations = relations(fields, ({ one, many }) => ({
+  operator: one(companies, {
+    fields: [fields.operatorId],
+    references: [companies.id]
+  }),
+  leases: many(leases),
+  wells: many(wells)
+}));
+
+export const leasesRelations = relations(leases, ({ one, many }) => ({
+  field: one(fields, {
+    fields: [leases.fieldId],
+    references: [fields.id]
+  }),
+  wells: many(wells),
+  workingInterests: many(workingInterestOwners),
+  divisionOrders: many(divisionOrders)
+}));
+
+export const wellsRelations = relations(wells, ({ one, many }) => ({
+  lease: one(leases, {
+    fields: [wells.leaseId],
+    references: [leases.id]
+  }),
+  field: one(fields, {
+    fields: [wells.fieldId],
+    references: [fields.id]
+  }),
+  operator: one(companies, {
+    fields: [wells.operatorId],
+    references: [companies.id]
+  }),
+  rig: one(rigs, {
+    fields: [wells.rigId],
+    references: [rigs.id]
+  }),
+  production: many(production),
+  wellTests: many(wellTests),
+  workovers: many(workovers),
+  drillingPrograms: many(drillingPrograms),
+  dailyReports: many(dailyDrillingReports),
+  workingInterests: many(workingInterestOwners),
+  divisionOrders: many(divisionOrders),
+  geologicalData: many(geologicalData)
+}));
+
+export const companiesRelations = relations(companies, ({ many }) => ({
+  operatedFields: many(fields),
+  operatedWells: many(wells),
+  workingInterests: many(workingInterestOwners),
+  joas: many(jointOperatingAgreements),
+  contracts: many(serviceContracts),
+  rigs: many(rigs)
+}));
+
+export const workingInterestOwnersRelations = relations(workingInterestOwners, ({ one }) => ({
+  well: one(wells, {
+    fields: [workingInterestOwners.wellId],
+    references: [wells.id]
+  }),
+  lease: one(leases, {
+    fields: [workingInterestOwners.leaseId],
+    references: [leases.id]
+  }),
+  owner: one(companies, {
+    fields: [workingInterestOwners.ownerId],
+    references: [companies.id]
+  }),
+  joa: one(jointOperatingAgreements, {
+    fields: [workingInterestOwners.joaId],
+    references: [jointOperatingAgreements.id]
+  })
+}));
+
+export const productionRelations = relations(production, ({ one }) => ({
+  well: one(wells, {
+    fields: [production.wellId],
+    references: [wells.id]
+  })
+}));
+
+export const afesRelations = relations(afes, ({ one, many }) => ({
+  well: one(wells, {
+    fields: [afes.wellId],
+    references: [wells.id]
+  }),
+  lease: one(leases, {
+    fields: [afes.leaseId],
+    references: [leases.id]
+  }),
+  operator: one(companies, {
+    fields: [afes.operatorId],
+    references: [companies.id]
+  }),
+  workovers: many(workovers)
+}));
+
+export const jointInterestBillingRelations = relations(jointInterestBilling, ({ one }) => ({
+  well: one(wells, {
+    fields: [jointInterestBilling.wellId],
+    references: [wells.id]
+  }),
+  lease: one(leases, {
+    fields: [jointInterestBilling.leaseId],
+    references: [leases.id]
+  }),
+  operator: one(companies, {
+    fields: [jointInterestBilling.operatorId],
+    references: [companies.id]
+  }),
+  partner: one(companies, {
+    fields: [jointInterestBilling.partnerId],
+    references: [companies.id]
+  })
+}));
+
+// Export type definitions for TypeScript
+export type Field = typeof fields.$inferSelect;
+export type NewField = typeof fields.$inferInsert;
+export type Lease = typeof leases.$inferSelect;
+export type NewLease = typeof leases.$inferInsert;
+export type Well = typeof wells.$inferSelect;
+export type NewWell = typeof wells.$inferInsert;
+export type Company = typeof companies.$inferSelect;
+export type NewCompany = typeof companies.$inferInsert;
+export type Production = typeof production.$inferSelect;
+export type NewProduction = typeof production.$inferInsert;
+export type AFE = typeof afes.$inferSelect;
+export type NewAFE = typeof afes.$inferInsert;
