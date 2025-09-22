@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { eq, ilike, and } from 'drizzle-orm';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { BaseRepository } from './base.repository';
 import { organizations } from '../../database/schema';
+import * as schema from '../../database/schema';
 
 /**
  * Organization Repository Implementation
@@ -11,7 +13,10 @@ import { organizations } from '../../database/schema';
 export class OrganizationRepository extends BaseRepository<
   typeof organizations
 > {
-  constructor(db: any) {
+  constructor(
+    @Inject('DATABASE_CONNECTION')
+    db: NodePgDatabase<typeof schema>,
+  ) {
     super(db, organizations);
   }
 
@@ -80,7 +85,7 @@ export class OrganizationRepository extends BaseRepository<
    */
   async updateSettings(
     id: string,
-    settings: Record<string, any>,
+    settings: Record<string, unknown>,
   ): Promise<typeof organizations.$inferSelect | null> {
     const result = await this.db
       .update(organizations)
@@ -97,7 +102,8 @@ export class OrganizationRepository extends BaseRepository<
   /**
    * Get organization statistics
    */
-  async getStatistics(organizationId: string): Promise<{
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async getStatistics(_organizationId: string): Promise<{
     totalUsers: number;
     totalWells: number;
     totalLeases: number;

@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { eq, and, gte, lte, desc, sum } from 'drizzle-orm';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { BaseRepository } from './base.repository';
 import { afes, afeLineItems, afeApprovals } from '../../database/schema';
+import * as schema from '../../database/schema';
 
 /**
  * AFE (Authorization for Expenditure) Repository Implementation
@@ -9,7 +11,10 @@ import { afes, afeLineItems, afeApprovals } from '../../database/schema';
  */
 @Injectable()
 export class AfeRepository extends BaseRepository<typeof afes> {
-  constructor(db: any) {
+  constructor(
+    @Inject('DATABASE_CONNECTION')
+    db: NodePgDatabase<typeof schema>,
+  ) {
     super(db, afes);
   }
 
@@ -46,7 +51,7 @@ export class AfeRepository extends BaseRepository<typeof afes> {
    */
   async findByStatus(
     organizationId: string,
-    status: string,
+    status: 'draft' | 'submitted' | 'approved' | 'rejected' | 'closed',
   ): Promise<(typeof afes.$inferSelect)[]> {
     return this.db
       .select()
@@ -97,7 +102,7 @@ export class AfeRepository extends BaseRepository<typeof afes> {
     ]);
 
     return {
-      estimatedTotal: Number(afeData?.estimatedCost || 0),
+      estimatedTotal: Number(afeData?.totalEstimatedCost || 0),
       actualTotal: Number(afeData?.actualCost || 0),
       lineItemsTotal: Number(lineItemsSum[0]?.total || 0),
     };
@@ -135,8 +140,8 @@ export class AfeRepository extends BaseRepository<typeof afes> {
    */
   async updateStatus(
     afeId: string,
-    status: string,
-    updatedBy: string,
+    status: 'draft' | 'submitted' | 'approved' | 'rejected' | 'closed',
+    _updatedBy: string,
   ): Promise<typeof afes.$inferSelect | null> {
     return this.update(afeId, {
       status,
@@ -160,11 +165,14 @@ export class AfeRepository extends BaseRepository<typeof afes> {
 
     return {
       totalApprovals: approvals.length,
-      pendingApprovals: approvals.filter((a) => a.status === 'pending').length,
-      approvedApprovals: approvals.filter((a) => a.status === 'approved')
+      pendingApprovals: approvals.filter((a) => a.approvalStatus === 'pending')
         .length,
-      rejectedApprovals: approvals.filter((a) => a.status === 'rejected')
-        .length,
+      approvedApprovals: approvals.filter(
+        (a) => a.approvalStatus === 'approved',
+      ).length,
+      rejectedApprovals: approvals.filter(
+        (a) => a.approvalStatus === 'rejected',
+      ).length,
     };
   }
 
@@ -173,10 +181,10 @@ export class AfeRepository extends BaseRepository<typeof afes> {
    */
   async findRequiringApproval(
     organizationId: string,
-    partnerId: string,
+    _partnerId: string,
   ): Promise<(typeof afes.$inferSelect)[]> {
     // This would typically join with partner relationships
     // For now, returning AFEs in 'pending_approval' status
-    return this.findByStatus(organizationId, 'pending_approval');
+    return this.findByStatus(organizationId, 'submitted');
   }
 }

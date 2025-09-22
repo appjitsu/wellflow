@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { eq, and, gte, lte, desc, sum, avg, count } from 'drizzle-orm';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { BaseRepository } from './base.repository';
 import { productionRecords } from '../../database/schema';
+import * as schema from '../../database/schema';
 
 /**
  * Production Repository Implementation
@@ -11,8 +13,25 @@ import { productionRecords } from '../../database/schema';
 export class ProductionRepository extends BaseRepository<
   typeof productionRecords
 > {
-  constructor(db: any) {
+  constructor(
+    @Inject('DATABASE_CONNECTION')
+    db: NodePgDatabase<typeof schema>,
+  ) {
     super(db, productionRecords);
+  }
+
+  /**
+   * Convert Date to string format expected by Drizzle date fields
+   */
+  private dateToString(date: Date | undefined): string {
+    if (!date) {
+      throw new Error('Date is required');
+    }
+    const dateString = date.toISOString().split('T')[0];
+    if (!dateString) {
+      throw new Error('Failed to convert date to string');
+    }
+    return dateString;
   }
 
   /**
@@ -29,8 +48,8 @@ export class ProductionRepository extends BaseRepository<
       .where(
         and(
           eq(productionRecords.wellId, wellId),
-          gte(productionRecords.productionDate, startDate),
-          lte(productionRecords.productionDate, endDate),
+          gte(productionRecords.productionDate, this.dateToString(startDate)),
+          lte(productionRecords.productionDate, this.dateToString(endDate)),
         ),
       )
       .orderBy(desc(productionRecords.productionDate));
@@ -50,8 +69,8 @@ export class ProductionRepository extends BaseRepository<
       .where(
         and(
           eq(productionRecords.organizationId, organizationId),
-          gte(productionRecords.productionDate, startDate),
-          lte(productionRecords.productionDate, endDate),
+          gte(productionRecords.productionDate, this.dateToString(startDate)),
+          lte(productionRecords.productionDate, this.dateToString(endDate)),
         ),
       )
       .orderBy(desc(productionRecords.productionDate));
@@ -75,7 +94,20 @@ export class ProductionRepository extends BaseRepository<
     firstProductionDate: Date | null;
     lastProductionDate: Date | null;
   }> {
-    let query = this.db
+    let baseWhere = eq(productionRecords.wellId, wellId);
+
+    if (startDate && endDate) {
+      const combined = and(
+        eq(productionRecords.wellId, wellId),
+        gte(productionRecords.productionDate, this.dateToString(startDate)),
+        lte(productionRecords.productionDate, this.dateToString(endDate)),
+      );
+      if (combined) {
+        baseWhere = combined;
+      }
+    }
+
+    const query = this.db
       .select({
         totalOil: sum(productionRecords.oilVolume),
         totalGas: sum(productionRecords.gasVolume),
@@ -86,17 +118,7 @@ export class ProductionRepository extends BaseRepository<
         recordCount: count(),
       })
       .from(productionRecords)
-      .where(eq(productionRecords.wellId, wellId));
-
-    if (startDate && endDate) {
-      query = query.where(
-        and(
-          eq(productionRecords.wellId, wellId),
-          gte(productionRecords.productionDate, startDate),
-          lte(productionRecords.productionDate, endDate),
-        ),
-      );
-    }
+      .where(baseWhere);
 
     const [summary, dateRange] = await Promise.all([
       query,
@@ -133,8 +155,12 @@ export class ProductionRepository extends BaseRepository<
       averageGas: Number(result?.averageGas || 0),
       averageWater: Number(result?.averageWater || 0),
       recordCount: Number(result?.recordCount || 0),
-      firstProductionDate: dates[0]?.firstDate || null,
-      lastProductionDate: dates[1]?.lastDate || null,
+      firstProductionDate: dates[0]?.firstDate
+        ? new Date(dates[0].firstDate)
+        : null,
+      lastProductionDate: dates[1]?.lastDate
+        ? new Date(dates[1].lastDate)
+        : null,
     };
   }
 
@@ -158,8 +184,8 @@ export class ProductionRepository extends BaseRepository<
 
     if (startDate && endDate) {
       whereConditions.push(
-        gte(productionRecords.productionDate, startDate),
-        lte(productionRecords.productionDate, endDate),
+        gte(productionRecords.productionDate, this.dateToString(startDate)),
+        lte(productionRecords.productionDate, this.dateToString(endDate)),
       );
     }
 
@@ -220,18 +246,29 @@ export class ProductionRepository extends BaseRepository<
       .where(
         and(
           eq(productionRecords.organizationId, organizationId),
-          gte(productionRecords.productionDate, startDate),
-          lte(productionRecords.productionDate, endDate),
+          gte(productionRecords.productionDate, this.dateToString(startDate)),
+          lte(productionRecords.productionDate, this.dateToString(endDate)),
         ),
       )
       .groupBy(productionRecords.productionDate);
 
     // Group by month (this is simplified - in production you'd use date functions)
-    const monthlyData: Record<number, any> = {};
+    const monthlyData: Record<
+      number,
+      {
+        month: number;
+        totalOil: number;
+        totalGas: number;
+        totalWater: number;
+        recordCount: number;
+      }
+    > = {};
 
     result.forEach((record) => {
       const month = new Date(record.month).getMonth() + 1;
+      // eslint-disable-next-line security/detect-object-injection
       if (!monthlyData[month]) {
+        // eslint-disable-next-line security/detect-object-injection
         monthlyData[month] = {
           month,
           totalOil: 0,
@@ -241,10 +278,10 @@ export class ProductionRepository extends BaseRepository<
         };
       }
 
-      monthlyData[month].totalOil += Number(record.totalOil || 0);
-      monthlyData[month].totalGas += Number(record.totalGas || 0);
-      monthlyData[month].totalWater += Number(record.totalWater || 0);
-      monthlyData[month].recordCount += Number(record.recordCount || 0);
+      monthlyData[month].totalOil += Number(record.totalOil || 0); // eslint-disable-line security/detect-object-injection
+      monthlyData[month].totalGas += Number(record.totalGas || 0); // eslint-disable-line security/detect-object-injection
+      monthlyData[month].totalWater += Number(record.totalWater || 0); // eslint-disable-line security/detect-object-injection
+      monthlyData[month].recordCount += Number(record.recordCount || 0); // eslint-disable-line security/detect-object-injection
     });
 
     return Object.values(monthlyData);

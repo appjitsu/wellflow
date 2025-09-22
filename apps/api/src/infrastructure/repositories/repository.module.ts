@@ -60,6 +60,7 @@ import { ProductionRepository } from './production.repository';
     'ProductionRepository',
   ],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class RepositoryModule {
   // This module provides repository implementations with proper dependency injection
   // All repositories are configured with factory providers to ensure proper database connection
