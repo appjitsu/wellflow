@@ -1,6 +1,6 @@
 {
-  "id": "c57627fc-d548-4e3b-8df2-a5a5f2e5e902",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "cbab306a-89e2-446c-a478-1929b6354122",
+  "prevId": "c26b5011-f5ba-4a3c-bc92-eac683792a3d",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -350,13 +350,15 @@
         },
         "afe_type": {
           "name": "afe_type",
-          "type": "varchar(20)",
+          "type": "afe_type",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
         "status": {
           "name": "status",
-          "type": "varchar(20)",
+          "type": "afe_status",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
           "default": "'draft'"
@@ -4691,7 +4693,7 @@
         },
         "total_depth": {
           "name": "total_depth",
-          "type": "integer",
+          "type": "numeric(8, 2)",
           "primaryKey": false,
           "notNull": false
         },

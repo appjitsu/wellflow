@@ -1,6 +1,6 @@
 {
-  "id": "c57627fc-d548-4e3b-8df2-a5a5f2e5e902",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "bb9ceb91-a38b-47ce-b7f9-d9e863593478",
+  "prevId": "468f5485-09b4-47c2-9ae0-f05c3e2e6743",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -350,13 +350,15 @@
         },
         "afe_type": {
           "name": "afe_type",
-          "type": "varchar(20)",
+          "type": "afe_type",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
         "status": {
           "name": "status",
-          "type": "varchar(20)",
+          "type": "afe_status",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
           "default": "'draft'"
@@ -3461,10 +3463,34 @@
           "name": "total_revenue",
           "type": "numeric(12, 2)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "severance_tax": {
           "name": "severance_tax",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ad_valorem": {
+          "name": "ad_valorem",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "transportation_costs": {
+          "name": "transportation_costs",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "processing_costs": {
+          "name": "processing_costs",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "other_deductions": {
+          "name": "other_deductions",
           "type": "numeric(12, 2)",
           "primaryKey": false,
           "notNull": false
@@ -3473,7 +3499,7 @@
           "name": "net_revenue",
           "type": "numeric(12, 2)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "check_number": {
           "name": "check_number",
@@ -3618,7 +3644,13 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "revenue_distributions_partner_well_month_unique": {
+          "name": "revenue_distributions_partner_well_month_unique",
+          "nullsNotDistinct": false,
+          "columns": ["partner_id", "well_id", "production_month"]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -4691,7 +4723,7 @@
         },
         "total_depth": {
           "name": "total_depth",
-          "type": "integer",
+          "type": "numeric(8, 2)",
           "primaryKey": false,
           "notNull": false
         },

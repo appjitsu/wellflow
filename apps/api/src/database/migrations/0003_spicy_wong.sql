@@ -1,0 +1,1 @@
+ALTER TABLE "revenue_distributions" ADD CONSTRAINT "revenue_distributions_partner_well_month_unique" UNIQUE("partner_id","well_id","production_month");
