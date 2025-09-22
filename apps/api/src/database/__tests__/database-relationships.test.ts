@@ -8,7 +8,6 @@ import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { eq, desc } from 'drizzle-orm';
 import * as schema from '../schema';
-import { generateUniqueEmail, generateUniqueApiNumber } from './test-utils';
 
 describe('Database Relationships Tests', () => {
   let pool: Pool;
@@ -60,7 +59,7 @@ describe('Database Relationships Tests', () => {
       const users = [
         {
           organizationId: org.id,
-          email: generateUniqueEmail('owner'),
+          email: generateUniqueEmail(),
           firstName: 'John',
           lastName: 'Owner',
           role: 'owner' as const,
@@ -68,7 +67,7 @@ describe('Database Relationships Tests', () => {
         },
         {
           organizationId: org.id,
-          email: generateUniqueEmail('manager'),
+          email: generateUniqueEmail(),
           firstName: 'Jane',
           lastName: 'Manager',
           role: 'manager' as const,
@@ -441,17 +440,14 @@ describe('Database Relationships Tests', () => {
         .returning();
 
       // Create user
-      const [user] = await db
-        .insert(schema.users)
-        .values({
-          organizationId: org.id,
-          email: generateUniqueEmail('admin'),
-          firstName: 'Admin',
-          lastName: 'User',
-          role: 'owner' as const,
-          isActive: true,
-        })
-        .returning();
+      await db.insert(schema.users).values({
+        organizationId: org.id,
+        email: generateUniqueEmail(),
+        firstName: 'Admin',
+        lastName: 'User',
+        role: 'owner' as const,
+        isActive: true,
+      });
 
       // Create lease
       const [lease] = await db
@@ -531,7 +527,7 @@ describe('Database Relationships Tests', () => {
 
       await db.insert(schema.users).values({
         organizationId: org.id,
-        email: generateUniqueEmail('referenced'),
+        email: generateUniqueEmail(),
         firstName: 'Test',
         lastName: 'User',
         role: 'owner' as const,
@@ -553,7 +549,7 @@ describe('Database Relationships Tests', () => {
       await expect(
         db.insert(schema.users).values({
           organizationId: fakeOrgId,
-          email: generateUniqueEmail('orphan'),
+          email: generateUniqueEmail(),
           firstName: 'Orphan',
           lastName: 'User',
           role: 'owner' as const,

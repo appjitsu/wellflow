@@ -5,7 +5,6 @@ import {
   uuid,
   varchar,
   timestamp,
-  integer,
   decimal,
   date,
   index,

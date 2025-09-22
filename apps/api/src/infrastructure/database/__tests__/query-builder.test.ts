@@ -41,6 +41,7 @@ describe('QueryBuilder', () => {
           fields &&
           typeof fields === 'object' &&
           fields !== null &&
+          !Array.isArray(fields) &&
           'count' in fields;
         const mockResult = isCountQuery ? mockCountResult : mockQueryResult;
 

@@ -6,9 +6,8 @@
 
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import * as schema from '../schema';
-import { generateUniqueEmail, generateUniqueApiNumber } from './test-utils';
 
 describe('Database CRUD Operations Tests', () => {
   let pool: Pool;
@@ -149,7 +148,7 @@ describe('Database CRUD Operations Tests', () => {
     test('should create user with proper role validation', async () => {
       const userData = {
         organizationId,
-        email: generateUniqueEmail('test'),
+        email: generateUniqueEmail(),
         firstName: 'John',
         lastName: 'Doe',
         role: 'owner' as const,
@@ -173,7 +172,7 @@ describe('Database CRUD Operations Tests', () => {
     });
 
     test('should enforce unique email constraint', async () => {
-      const email = generateUniqueEmail('duplicate');
+      const email = generateUniqueEmail();
       const userData = {
         organizationId,
         email,

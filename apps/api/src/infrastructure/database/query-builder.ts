@@ -286,15 +286,15 @@ export class QueryUtils {
     tableSize: string;
     indexSize: string;
   }> {
-    const result = await this.raw(
+    await this.raw(
       `
-      SELECT 
+      SELECT
         schemaname,
         tablename,
         attname,
         n_distinct,
         correlation
-      FROM pg_stats 
+      FROM pg_stats
       WHERE tablename = $1
     `,
       [tableName],
