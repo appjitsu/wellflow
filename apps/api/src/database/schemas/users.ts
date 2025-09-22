@@ -1,5 +1,3 @@
-/* eslint-disable sonarjs/deprecation */
-
 import {
   pgTable,
   pgEnum,
