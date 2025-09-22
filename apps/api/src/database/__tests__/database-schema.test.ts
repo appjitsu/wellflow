@@ -10,7 +10,7 @@ import * as schema from '../schema';
 
 describe('Database Schema Tests', () => {
   let pool: Pool;
-  let db: ReturnType<typeof drizzle>;
+  let _db: ReturnType<typeof drizzle>;
 
   beforeAll(async () => {
     // Use test database configuration
@@ -23,10 +23,11 @@ describe('Database Schema Tests', () => {
     };
 
     pool = new Pool(testDbConfig);
-    db = drizzle(pool, { schema });
+    _db = drizzle(pool, { schema });
 
     // The database and migrations are already set up by the global setup
     // Just verify the connection works
+    await _db.select().from(schema.organizations).limit(1);
     console.log(`🔧 Connected to test database: ${testDbConfig.database}`);
   });
 

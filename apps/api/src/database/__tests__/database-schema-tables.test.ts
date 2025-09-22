@@ -5,7 +5,7 @@ import * as schema from '../schema';
 
 describe('Database Schema - Table Definitions', () => {
   let pool: Pool;
-  let db: ReturnType<typeof drizzle>;
+  let _db: ReturnType<typeof drizzle>;
 
   beforeAll(async () => {
     pool = new Pool({
@@ -16,7 +16,10 @@ describe('Database Schema - Table Definitions', () => {
       database: process.env.DB_NAME || 'wellflow_test',
     });
 
-    db = drizzle(pool, { schema });
+    _db = drizzle(pool, { schema });
+
+    // Verify database connection
+    await _db.select().from(schema.organizations).limit(1);
   });
 
   afterAll(async () => {

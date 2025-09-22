@@ -223,8 +223,8 @@ describe('Database Schema Coverage Tests', () => {
       ];
 
       tables.forEach((tableName) => {
-        expect(schema[tableName]).toBeDefined();
-        expect(schema[tableName].id).toBeDefined();
+        expect((schema as any)[tableName]).toBeDefined(); // eslint-disable-line security/detect-object-injection
+        expect((schema as any)[tableName].id).toBeDefined(); // eslint-disable-line security/detect-object-injection
       });
     });
   });
@@ -574,7 +574,7 @@ describe('Database Schema Coverage Tests', () => {
 
         // Access each column to force execution of field definition code
         columns.forEach((columnName) => {
-          const column = (table as any)[columnName];
+          const column = (table as any)[columnName]; // eslint-disable-line security/detect-object-injection
           expect(column).toBeDefined();
 
           // Access column properties to improve coverage

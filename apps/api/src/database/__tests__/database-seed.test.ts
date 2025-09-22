@@ -25,6 +25,9 @@ describe('Database Seed Tests', () => {
     });
 
     db = drizzle(pool, { schema });
+
+    // Verify database connection
+    await db.select().from(schema.organizations).limit(1);
   });
 
   afterAll(async () => {
@@ -50,7 +53,7 @@ describe('Database Seed Tests', () => {
         .select({ count: count() })
         .from(schema.organizations);
 
-      expect(orgCount[0].count).toBeGreaterThan(0);
+      expect(orgCount[0]!.count).toBeGreaterThan(0);
 
       // Verify organization structure
       const orgs = await db.select().from(schema.organizations);
@@ -70,7 +73,7 @@ describe('Database Seed Tests', () => {
       // Verify users were created
       const userCount = await db.select({ count: count() }).from(schema.users);
 
-      expect(userCount[0].count).toBeGreaterThan(0);
+      expect(userCount[0]!.count).toBeGreaterThan(0);
 
       // Verify user roles
       const users = await db.select().from(schema.users);
@@ -102,7 +105,7 @@ describe('Database Seed Tests', () => {
         .select({ count: count() })
         .from(schema.leases);
 
-      expect(leaseCount[0].count).toBeGreaterThan(0);
+      expect(leaseCount[0]!.count).toBeGreaterThan(0);
 
       // Verify lease structure
       const leases = await db.select().from(schema.leases);
@@ -117,7 +120,7 @@ describe('Database Seed Tests', () => {
         expect(lease.legalDescription).toBeDefined();
         expect(lease.lessor).toBeDefined();
         expect(lease.lessee).toBeDefined();
-        expect(['active', 'expired', 'terminated']).toContain(lease.status);
+        expect(['ACTIVE', 'expired', 'terminated']).toContain(lease.status);
       });
     });
 
@@ -128,7 +131,7 @@ describe('Database Seed Tests', () => {
       // Verify wells were created
       const wellCount = await db.select({ count: count() }).from(schema.wells);
 
-      expect(wellCount[0].count).toBeGreaterThan(0);
+      expect(wellCount[0]!.count).toBeGreaterThan(0);
 
       // Verify well structure and API numbers
       const wells = await db.select().from(schema.wells);
@@ -145,7 +148,7 @@ describe('Database Seed Tests', () => {
         expect(well.apiNumber).toMatch(/^\d{14}$/);
 
         // Validate enum values
-        expect(['active', 'inactive', 'plugged', 'drilling']).toContain(
+        expect(['ACTIVE', 'INACTIVE', 'plugged', 'drilling']).toContain(
           well.status,
         );
       });
@@ -160,7 +163,7 @@ describe('Database Seed Tests', () => {
         .select({ count: count() })
         .from(schema.productionRecords);
 
-      expect(productionCount[0].count).toBeGreaterThan(0);
+      expect(productionCount[0]!.count).toBeGreaterThan(0);
 
       // Verify production record structure
       const records = await db.select().from(schema.productionRecords);
@@ -177,14 +180,14 @@ describe('Database Seed Tests', () => {
         expect(record.gasPrice).toBeDefined();
 
         // Validate volume values are numeric strings
-        expect(parseFloat(record.oilVolume)).not.toBeNaN();
-        expect(parseFloat(record.gasVolume)).not.toBeNaN();
-        expect(parseFloat(record.waterVolume)).not.toBeNaN();
+        expect(parseFloat(record.oilVolume || '0')).not.toBeNaN();
+        expect(parseFloat(record.gasVolume || '0')).not.toBeNaN();
+        expect(parseFloat(record.waterVolume || '0')).not.toBeNaN();
 
         // Validate volumes are non-negative
-        expect(parseFloat(record.oilVolume)).toBeGreaterThanOrEqual(0);
-        expect(parseFloat(record.gasVolume)).toBeGreaterThanOrEqual(0);
-        expect(parseFloat(record.waterVolume)).toBeGreaterThanOrEqual(0);
+        expect(parseFloat(record.oilVolume || '0')).toBeGreaterThanOrEqual(0);
+        expect(parseFloat(record.gasVolume || '0')).toBeGreaterThanOrEqual(0);
+        expect(parseFloat(record.waterVolume || '0')).toBeGreaterThanOrEqual(0);
       });
     });
 
@@ -197,7 +200,7 @@ describe('Database Seed Tests', () => {
         .select({ count: count() })
         .from(schema.partners);
 
-      expect(partnerCount[0].count).toBeGreaterThan(0);
+      expect(partnerCount[0]!.count).toBeGreaterThan(0);
 
       // Verify partner structure
       const partners = await db.select().from(schema.partners);
@@ -293,8 +296,10 @@ describe('Database Seed Tests', () => {
 
       // Verify dates are in chronological order and realistic
       for (let i = 1; i < records.length; i++) {
-        const prevDate = new Date(records[i - 1].productionDate);
-        const currDate = new Date(records[i].productionDate);
+        expect(records[i - 1]).toBeDefined();
+        expect(records[i]).toBeDefined(); // eslint-disable-line security/detect-object-injection
+        const prevDate = new Date(records[i - 1]!.productionDate);
+        const currDate = new Date(records[i]!.productionDate); // eslint-disable-line security/detect-object-injection
 
         // Dates should be in order (or same date for different wells)
         expect(currDate.getTime()).toBeGreaterThanOrEqual(prevDate.getTime());
@@ -319,7 +324,7 @@ describe('Database Seed Tests', () => {
 
       // Should have at least one status
       expect(wellStatuses.length).toBeGreaterThanOrEqual(1);
-      expect(wellStatuses).toContain('active');
+      expect(wellStatuses).toContain('ACTIVE');
     });
   });
 
@@ -332,7 +337,7 @@ describe('Database Seed Tests', () => {
       const orgCount = await db
         .select({ count: count() })
         .from(schema.organizations);
-      expect(orgCount[0].count).toBeGreaterThan(0);
+      expect(orgCount[0]!.count).toBeGreaterThan(0);
 
       // Clean up in dependency order
       await db.delete(schema.productionRecords);
@@ -352,12 +357,12 @@ describe('Database Seed Tests', () => {
       const finalOrgCount = await db
         .select({ count: count() })
         .from(schema.organizations);
-      expect(finalOrgCount[0].count).toBe(0);
+      expect(finalOrgCount[0]!.count).toBe(0);
 
       const finalUserCount = await db
         .select({ count: count() })
         .from(schema.users);
-      expect(finalUserCount[0].count).toBe(0);
+      expect(finalUserCount[0]!.count).toBe(0);
     });
 
     test('should handle re-running seed script', async () => {
@@ -390,7 +395,7 @@ describe('Database Seed Tests', () => {
         .from(schema.organizations);
 
       // Should create same amount of data
-      expect(secondRunCount[0].count).toBe(firstRunCount[0].count);
+      expect(secondRunCount[0]!.count).toBe(firstRunCount[0]!.count);
     });
   });
 });

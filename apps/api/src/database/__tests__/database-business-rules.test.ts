@@ -16,7 +16,7 @@ describe('Database Business Rules Tests', () => {
   // Helper function to generate unique API numbers
   const generateUniqueApiNumber = (): string => {
     const timestamp = Date.now().toString().slice(-6);
-    const random = Math.floor(Math.random() * 1000)
+    const random = Math.floor(Math.random() * 1000) // eslint-disable-line sonarjs/pseudo-random
       .toString()
       .padStart(3, '0');
     return `42123${timestamp}${random}`.slice(0, 14);
@@ -32,6 +32,9 @@ describe('Database Business Rules Tests', () => {
     });
 
     db = drizzle(pool, { schema });
+
+    // Verify database connection
+    await db.select().from(schema.organizations).limit(1);
   });
 
   afterAll(async () => {
@@ -49,7 +52,7 @@ describe('Database Business Rules Tests', () => {
         .insert(schema.organizations)
         .values({ name: 'Test Oil Company' })
         .returning();
-      organizationId = org.id;
+      organizationId = org!.id;
     });
 
     test('should accept valid API numbers', async () => {
@@ -66,12 +69,12 @@ describe('Database Business Rules Tests', () => {
             organizationId,
             apiNumber,
             wellName: `Well ${apiNumber}`,
-            wellType: 'oil' as const,
-            status: 'active' as const,
+            wellType: 'OIL' as const,
+            status: 'ACTIVE' as const,
           })
           .returning();
 
-        expect(well.apiNumber).toBe(apiNumber);
+        expect(well!.apiNumber).toBe(apiNumber);
       }
     });
 
@@ -83,8 +86,8 @@ describe('Database Business Rules Tests', () => {
         organizationId,
         apiNumber,
         wellName: 'First Well',
-        wellType: 'oil' as const,
-        status: 'active' as const,
+        wellType: 'OIL' as const,
+        status: 'ACTIVE' as const,
       });
 
       // Create second organization
@@ -96,11 +99,11 @@ describe('Database Business Rules Tests', () => {
       // Attempt to create well with same API number in different org
       await expect(
         db.insert(schema.wells).values({
-          organizationId: org2.id,
+          organizationId: org2!.id,
           apiNumber, // Same API number
           wellName: 'Second Well',
-          wellType: 'oil' as const,
-          status: 'active' as const,
+          wellType: 'OIL' as const,
+          status: 'ACTIVE' as const,
         }),
       ).rejects.toThrow();
     });
@@ -115,10 +118,10 @@ describe('Database Business Rules Tests', () => {
         .insert(schema.organizations)
         .values({ name: 'Test Oil Company' })
         .returning();
-      organizationId = org.id;
+      organizationId = org!.id;
 
       // Use a unique API number for each test run
-      const uniqueApiNumber = `42123123450${Math.floor(Math.random() * 1000)
+      const uniqueApiNumber = `42123123450${Math.floor(Math.random() * 1000) // eslint-disable-line sonarjs/pseudo-random
         .toString()
         .padStart(3, '0')}`;
 
@@ -128,11 +131,11 @@ describe('Database Business Rules Tests', () => {
           organizationId,
           apiNumber: uniqueApiNumber,
           wellName: 'Production Test Well',
-          wellType: 'oil' as const,
-          status: 'active' as const,
+          wellType: 'OIL' as const,
+          status: 'ACTIVE' as const,
         })
         .returning();
-      wellId = well.id;
+      wellId = well!.id;
     });
 
     test('should accept valid production volumes', async () => {
@@ -153,9 +156,9 @@ describe('Database Business Rules Tests', () => {
         .values(validProduction)
         .returning();
 
-      expect(created.oilVolume).toBe('45.50');
-      expect(created.gasVolume).toBe('325.75');
-      expect(created.waterVolume).toBe('12.25');
+      expect(created!.oilVolume).toBe('45.50');
+      expect(created!.gasVolume).toBe('325.75');
+      expect(created!.waterVolume).toBe('12.25');
     });
 
     test('should handle zero production volumes', async () => {
@@ -176,9 +179,9 @@ describe('Database Business Rules Tests', () => {
         .values(zeroProduction)
         .returning();
 
-      expect(created.oilVolume).toBe('0.00');
-      expect(created.gasVolume).toBe('0.00');
-      expect(created.waterVolume).toBe('0.00');
+      expect(created!.oilVolume).toBe('0.00');
+      expect(created!.gasVolume).toBe('0.00');
+      expect(created!.waterVolume).toBe('0.00');
     });
 
     test('should store high precision decimal values', async () => {
@@ -199,9 +202,9 @@ describe('Database Business Rules Tests', () => {
         .values(preciseProduction)
         .returning();
 
-      expect(created.oilVolume).toBe('123.46');
-      expect(created.gasVolume).toBe('987.65');
-      expect(created.waterVolume).toBe('45.12');
+      expect(created!.oilVolume).toBe('123.46');
+      expect(created!.gasVolume).toBe('987.65');
+      expect(created!.waterVolume).toBe('45.12');
     });
   });
 
@@ -216,7 +219,7 @@ describe('Database Business Rules Tests', () => {
         .insert(schema.organizations)
         .values({ name: 'Test Oil Company' })
         .returning();
-      organizationId = org.id;
+      organizationId = org!.id;
 
       const [lease] = await db
         .insert(schema.leases)
@@ -229,7 +232,7 @@ describe('Database Business Rules Tests', () => {
           royaltyRate: '0.1875',
         })
         .returning();
-      leaseId = lease.id;
+      leaseId = lease!.id;
 
       const [partner1] = await db
         .insert(schema.partners)
@@ -240,7 +243,7 @@ describe('Database Business Rules Tests', () => {
           isActive: true,
         })
         .returning();
-      partner1Id = partner1.id;
+      partner1Id = partner1!.id;
 
       const [partner2] = await db
         .insert(schema.partners)
@@ -251,7 +254,7 @@ describe('Database Business Rules Tests', () => {
           isActive: true,
         })
         .returning();
-      partner2Id = partner2.id;
+      partner2Id = partner2!.id;
     });
 
     test('should allow valid partnership percentages', async () => {
@@ -280,8 +283,8 @@ describe('Database Business Rules Tests', () => {
         .returning();
 
       expect(created).toHaveLength(2);
-      expect(created[0].workingInterestPercent).toBe('0.6000');
-      expect(created[1].workingInterestPercent).toBe('0.4000');
+      expect(created[0]!.workingInterestPercent).toBe('0.6000');
+      expect(created[1]!.workingInterestPercent).toBe('0.4000');
     });
 
     test('should validate partnership percentage totals', async () => {
@@ -317,7 +320,7 @@ describe('Database Business Rules Tests', () => {
 
       // Note: This would require custom validation logic in application layer
       // Database stores as strings, so we'd need to convert and validate
-      const total = parseFloat(result[0].totalWorkingInterest || '0');
+      const total = parseFloat(result[0]!.totalWorkingInterest || '0');
       expect(total).toBe(1.0); // 0.6 + 0.4 = 1.0 (100%)
     });
   });
@@ -330,15 +333,15 @@ describe('Database Business Rules Tests', () => {
         .insert(schema.organizations)
         .values({ name: 'Test Oil Company' })
         .returning();
-      organizationId = org.id;
+      organizationId = org!.id;
     });
 
     test('should allow valid well status values', async () => {
       const validStatuses = [
-        'active',
-        'inactive',
-        'plugged',
-        'drilling',
+        'ACTIVE',
+        'INACTIVE',
+        'PLUGGED',
+        'DRILLING',
       ] as const;
 
       for (const status of validStatuses) {
@@ -346,14 +349,14 @@ describe('Database Business Rules Tests', () => {
           .insert(schema.wells)
           .values({
             organizationId,
-            apiNumber: `42123${Math.random().toString().slice(2, 7)}00`,
+            apiNumber: `42123${Math.random().toString().slice(2, 7)}00`, // eslint-disable-line sonarjs/pseudo-random
             wellName: `${status} Well`,
-            wellType: 'oil' as const,
+            wellType: 'OIL' as const,
             status,
           })
           .returning();
 
-        expect(well.status).toBe(status);
+        expect(well!.status).toBe(status);
       }
     });
 
@@ -364,8 +367,8 @@ describe('Database Business Rules Tests', () => {
           organizationId,
           apiNumber: generateUniqueApiNumber(),
           wellName: 'Status Test Well',
-          wellType: 'oil' as const,
-          status: 'drilling' as const,
+          wellType: 'OIL' as const,
+          status: 'DRILLING' as const,
         })
         .returning();
 
@@ -376,20 +379,20 @@ describe('Database Business Rules Tests', () => {
       await db
         .update(schema.wells)
         .set({
-          status: 'active' as const,
+          status: 'ACTIVE' as const,
           completionDate: '2024-01-15',
         })
-        .where(eq(schema.wells.id, well.id));
+        .where(eq(schema.wells.id, well!.id));
 
       const [updated] = await db
         .select()
         .from(schema.wells)
-        .where(eq(schema.wells.id, well.id));
+        .where(eq(schema.wells.id, well!.id));
 
-      expect(updated.status).toBe('active');
-      expect(updated.completionDate).toBe('2024-01-15');
-      expect(updated.updatedAt.getTime()).toBeGreaterThanOrEqual(
-        updated.createdAt.getTime(),
+      expect(updated!.status).toBe('ACTIVE');
+      expect(updated!.completionDate).toBe('2024-01-15');
+      expect(updated!.updatedAt.getTime()).toBeGreaterThanOrEqual(
+        updated!.createdAt.getTime(),
       );
     });
   });
@@ -402,7 +405,7 @@ describe('Database Business Rules Tests', () => {
         .insert(schema.organizations)
         .values({ name: 'Test Oil Company' })
         .returning();
-      organizationId = org.id;
+      organizationId = org!.id;
     });
 
     test('should enforce valid user roles', async () => {
@@ -421,7 +424,7 @@ describe('Database Business Rules Tests', () => {
           })
           .returning();
 
-        expect(user.role).toBe(role);
+        expect(user!.role).toBe(role);
       }
     });
 
@@ -459,7 +462,7 @@ describe('Database Business Rules Tests', () => {
         .insert(schema.organizations)
         .values({ name: 'Test Oil Company' })
         .returning();
-      organizationId = org.id;
+      organizationId = org!.id;
     });
 
     test('should automatically set created_at and updated_at timestamps', async () => {
@@ -471,23 +474,23 @@ describe('Database Business Rules Tests', () => {
           organizationId,
           apiNumber: generateUniqueApiNumber(),
           wellName: 'Audit Test Well',
-          wellType: 'oil' as const,
-          status: 'active' as const,
+          wellType: 'OIL' as const,
+          status: 'ACTIVE' as const,
         })
         .returning();
 
       const afterCreate = new Date();
 
-      expect(well.createdAt.getTime()).toBeGreaterThanOrEqual(
+      expect(well!.createdAt.getTime()).toBeGreaterThanOrEqual(
         beforeCreate.getTime() - 100, // Allow 100ms tolerance
       );
-      expect(well.createdAt.getTime()).toBeLessThanOrEqual(
+      expect(well!.createdAt.getTime()).toBeLessThanOrEqual(
         afterCreate.getTime(),
       );
-      expect(well.updatedAt.getTime()).toBeGreaterThanOrEqual(
+      expect(well!.updatedAt.getTime()).toBeGreaterThanOrEqual(
         beforeCreate.getTime() - 100, // Allow 100ms tolerance
       );
-      expect(well.updatedAt.getTime()).toBeLessThanOrEqual(
+      expect(well!.updatedAt.getTime()).toBeLessThanOrEqual(
         afterCreate.getTime(),
       );
     });
@@ -499,8 +502,8 @@ describe('Database Business Rules Tests', () => {
           organizationId,
           apiNumber: generateUniqueApiNumber(),
           wellName: 'Update Test Well',
-          wellType: 'oil' as const,
-          status: 'active' as const,
+          wellType: 'OIL' as const,
+          status: 'ACTIVE' as const,
         })
         .returning();
 
@@ -512,20 +515,20 @@ describe('Database Business Rules Tests', () => {
       await db
         .update(schema.wells)
         .set({ wellName: 'Updated Well Name' })
-        .where(eq(schema.wells.id, well.id));
+        .where(eq(schema.wells.id, well!.id));
 
       const [updated] = await db
         .select()
         .from(schema.wells)
-        .where(eq(schema.wells.id, well.id));
+        .where(eq(schema.wells.id, well!.id));
 
-      expect(updated.updatedAt.getTime()).toBeGreaterThanOrEqual(
-        well.updatedAt.getTime(),
+      expect(updated!.updatedAt.getTime()).toBeGreaterThanOrEqual(
+        well!.updatedAt.getTime(),
       );
-      expect(updated.updatedAt.getTime()).toBeGreaterThanOrEqual(
+      expect(updated!.updatedAt.getTime()).toBeGreaterThanOrEqual(
         beforeUpdate.getTime() - 100, // Allow 100ms tolerance
       );
-      expect(updated.createdAt.getTime()).toBe(well.createdAt.getTime()); // Should not change
+      expect(updated!.createdAt.getTime()).toBe(well!.createdAt.getTime()); // Should not change
     });
   });
 });

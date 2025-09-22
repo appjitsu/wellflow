@@ -15,6 +15,7 @@ describe('Database CRUD Operations Tests', () => {
   // Helper function to generate unique API numbers
   const generateUniqueApiNumber = (): string => {
     const timestamp = Date.now().toString().slice(-6);
+    // eslint-disable-next-line sonarjs/pseudo-random
     const random = Math.floor(Math.random() * 1000)
       .toString()
       .padStart(3, '0');
@@ -24,6 +25,7 @@ describe('Database CRUD Operations Tests', () => {
   // Helper function to generate unique email addresses
   const generateUniqueEmail = (): string => {
     const timestamp = Date.now().toString().slice(-6);
+    // eslint-disable-next-line sonarjs/pseudo-random
     const random = Math.floor(Math.random() * 1000)
       .toString()
       .padStart(3, '0');
@@ -40,6 +42,9 @@ describe('Database CRUD Operations Tests', () => {
     });
 
     db = drizzle(pool, { schema });
+
+    // Verify database connection
+    await db.select().from(schema.organizations).limit(1);
   });
 
   afterAll(async () => {
@@ -74,14 +79,14 @@ describe('Database CRUD Operations Tests', () => {
         taxId: orgData.taxId,
         phone: orgData.phone,
       });
-      expect(created.id).toBeDefined();
-      expect(created.createdAt).toBeInstanceOf(Date);
+      expect(created!.id).toBeDefined();
+      expect(created!.createdAt).toBeInstanceOf(Date);
 
       // Test read
       const found = await db
         .select()
         .from(schema.organizations)
-        .where(eq(schema.organizations.id, created.id));
+        .where(eq(schema.organizations.id, created!.id));
 
       expect(found).toHaveLength(1);
       expect(found[0]).toMatchObject(orgData);
@@ -93,6 +98,8 @@ describe('Database CRUD Operations Tests', () => {
         .values({ name: 'Original Name' })
         .returning();
 
+      expect(org).toBeDefined();
+
       const updatedData = {
         name: 'Updated Oil Company',
         phone: '555-9999',
@@ -101,17 +108,18 @@ describe('Database CRUD Operations Tests', () => {
       await db
         .update(schema.organizations)
         .set(updatedData)
-        .where(eq(schema.organizations.id, org.id));
+        .where(eq(schema.organizations.id, org!.id));
 
       const [updated] = await db
         .select()
         .from(schema.organizations)
-        .where(eq(schema.organizations.id, org.id));
+        .where(eq(schema.organizations.id, org!.id));
 
-      expect(updated.name).toBe(updatedData.name);
-      expect(updated.phone).toBe(updatedData.phone);
-      expect(updated.updatedAt.getTime()).toBeGreaterThanOrEqual(
-        updated.createdAt.getTime(),
+      expect(updated).toBeDefined();
+      expect(updated!.name).toBe(updatedData.name);
+      expect(updated!.phone).toBe(updatedData.phone);
+      expect(updated!.updatedAt.getTime()).toBeGreaterThanOrEqual(
+        updated!.createdAt.getTime(),
       );
     });
 
@@ -121,14 +129,16 @@ describe('Database CRUD Operations Tests', () => {
         .values({ name: 'To Delete' })
         .returning();
 
+      expect(org).toBeDefined();
+
       await db
         .delete(schema.organizations)
-        .where(eq(schema.organizations.id, org.id));
+        .where(eq(schema.organizations.id, org!.id));
 
       const found = await db
         .select()
         .from(schema.organizations)
-        .where(eq(schema.organizations.id, org.id));
+        .where(eq(schema.organizations.id, org!.id));
 
       expect(found).toHaveLength(0);
     });
@@ -142,7 +152,8 @@ describe('Database CRUD Operations Tests', () => {
         .insert(schema.organizations)
         .values({ name: 'Test Org' })
         .returning();
-      organizationId = org.id;
+      expect(org).toBeDefined();
+      organizationId = org!.id;
     });
 
     test('should create user with proper role validation', async () => {
@@ -152,7 +163,7 @@ describe('Database CRUD Operations Tests', () => {
         firstName: 'John',
         lastName: 'Doe',
         role: 'owner' as const,
-        passwordHash: '$2b$10$test.hash',
+        passwordHash: '$2b$10$test.hash', // eslint-disable-line sonarjs/no-hardcoded-passwords
         isActive: true,
       };
 
@@ -168,7 +179,8 @@ describe('Database CRUD Operations Tests', () => {
         role: userData.role,
         isActive: userData.isActive,
       });
-      expect(created.organizationId).toBe(organizationId);
+      expect(created).toBeDefined();
+      expect(created!.organizationId).toBe(organizationId);
     });
 
     test('should enforce unique email constraint', async () => {
@@ -179,7 +191,7 @@ describe('Database CRUD Operations Tests', () => {
         firstName: 'John',
         lastName: 'Doe',
         role: 'manager' as const,
-        passwordHash: '$2b$10$test.hash',
+        passwordHash: '$2b$10$test.hash', // eslint-disable-line sonarjs/no-hardcoded-passwords
         isActive: true,
       };
 
@@ -203,7 +215,8 @@ describe('Database CRUD Operations Tests', () => {
         .insert(schema.organizations)
         .values({ name: 'Test Org' })
         .returning();
-      organizationId = org.id;
+      expect(org).toBeDefined();
+      organizationId = org!.id;
     });
 
     test('should create well with API number validation', async () => {
@@ -211,8 +224,8 @@ describe('Database CRUD Operations Tests', () => {
         organizationId,
         apiNumber: generateUniqueApiNumber(),
         wellName: 'Test Well #1',
-        wellType: 'oil' as const,
-        status: 'active' as const,
+        wellType: 'OIL' as const,
+        status: 'ACTIVE' as const,
         totalDepth: '8500',
         spudDate: '2024-01-15',
       };
@@ -237,8 +250,8 @@ describe('Database CRUD Operations Tests', () => {
         organizationId,
         apiNumber,
         wellName: 'First Well',
-        wellType: 'oil',
-        status: 'active' as const,
+        wellType: 'OIL',
+        status: 'ACTIVE' as const,
       });
 
       // Attempt to insert duplicate API number
@@ -247,8 +260,8 @@ describe('Database CRUD Operations Tests', () => {
           organizationId,
           apiNumber, // Same API number
           wellName: 'Second Well',
-          wellType: 'oil',
-          status: 'active' as const,
+          wellType: 'OIL',
+          status: 'ACTIVE' as const,
         }),
       ).rejects.toThrow();
     });
@@ -257,14 +270,15 @@ describe('Database CRUD Operations Tests', () => {
   describe('Production Records CRUD', () => {
     let organizationId: string;
     let wellId: string;
-    let userId: string;
+    let _userId: string;
 
     beforeEach(async () => {
       const [org] = await db
         .insert(schema.organizations)
         .values({ name: 'Test Org' })
         .returning();
-      organizationId = org.id;
+      expect(org).toBeDefined();
+      organizationId = org!.id;
 
       const [well] = await db
         .insert(schema.wells)
@@ -272,11 +286,12 @@ describe('Database CRUD Operations Tests', () => {
           organizationId,
           apiNumber: generateUniqueApiNumber(),
           wellName: 'Production Test Well',
-          wellType: 'oil',
-          status: 'active' as const,
+          wellType: 'OIL' as const,
+          status: 'ACTIVE' as const,
         })
         .returning();
-      wellId = well.id;
+      expect(well).toBeDefined();
+      wellId = well!.id;
 
       const [user] = await db
         .insert(schema.users)
@@ -289,7 +304,8 @@ describe('Database CRUD Operations Tests', () => {
           isActive: true,
         })
         .returning();
-      userId = user.id;
+      expect(user).toBeDefined();
+      _userId = user!.id;
     });
 
     test('should create production record with volume validation', async () => {
@@ -352,8 +368,10 @@ describe('Database CRUD Operations Tests', () => {
         .orderBy(schema.productionRecords.productionDate);
 
       expect(found).toHaveLength(2);
-      expect(found[0].productionDate).toBe('2024-01-15');
-      expect(found[1].productionDate).toBe('2024-01-16');
+      expect(found[0]).toBeDefined();
+      expect(found[1]).toBeDefined();
+      expect(found[0]!.productionDate).toBe('2024-01-15');
+      expect(found[1]!.productionDate).toBe('2024-01-16');
     });
   });
 
@@ -370,21 +388,24 @@ describe('Database CRUD Operations Tests', () => {
         .values({ name: 'Oil Company 2' })
         .returning();
 
+      expect(org1).toBeDefined();
+      expect(org2).toBeDefined();
+
       // Create wells for each organization
       await db.insert(schema.wells).values([
         {
-          organizationId: org1.id,
+          organizationId: org1!.id,
           apiNumber: generateUniqueApiNumber(),
           wellName: 'Org1 Well',
-          wellType: 'oil',
-          status: 'active' as const,
+          wellType: 'OIL' as const,
+          status: 'ACTIVE' as const,
         },
         {
-          organizationId: org2.id,
+          organizationId: org2!.id,
           apiNumber: generateUniqueApiNumber(),
           wellName: 'Org2 Well',
-          wellType: 'oil',
-          status: 'active' as const,
+          wellType: 'OIL' as const,
+          status: 'ACTIVE' as const,
         },
       ]);
 
@@ -392,19 +413,19 @@ describe('Database CRUD Operations Tests', () => {
       const org1Wells = await db
         .select()
         .from(schema.wells)
-        .where(eq(schema.wells.organizationId, org1.id));
+        .where(eq(schema.wells.organizationId, org1!.id));
 
       expect(org1Wells).toHaveLength(1);
-      expect(org1Wells[0].wellName).toBe('Org1 Well');
+      expect(org1Wells[0]!.wellName).toBe('Org1 Well');
 
       // Query wells for org2 only
       const org2Wells = await db
         .select()
         .from(schema.wells)
-        .where(eq(schema.wells.organizationId, org2.id));
+        .where(eq(schema.wells.organizationId, org2!.id));
 
       expect(org2Wells).toHaveLength(1);
-      expect(org2Wells[0].wellName).toBe('Org2 Well');
+      expect(org2Wells[0]!.wellName).toBe('Org2 Well');
     });
   });
 });
