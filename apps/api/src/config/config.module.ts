@@ -14,5 +14,4 @@ import { AppConfigService } from './app.config';
   providers: [AppConfigService],
   exports: [AppConfigService],
 })
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class ConfigModule {}

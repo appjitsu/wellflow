@@ -21,6 +21,10 @@ import { LogRocketMiddleware } from './logrocket/logrocket.middleware';
 import { WellsModule } from './wells/wells.module';
 import { AuthorizationModule } from './authorization/authorization.module';
 import { MonitoringModule } from './monitoring/monitoring.module';
+import { OrganizationsModule } from './organizations/organizations.module';
+import { LeasesModule } from './leases/leases.module';
+import { ProductionModule } from './production/production.module';
+import { PartnersModule } from './partners/partners.module';
 // import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
 import { AbilitiesGuard } from './authorization/abilities.guard';
 import { AuditLogInterceptor } from './presentation/interceptors/audit-log.interceptor';
@@ -51,6 +55,10 @@ import {
     WellsModule,
     AuthorizationModule,
     MonitoringModule,
+    OrganizationsModule,
+    LeasesModule,
+    ProductionModule,
+    PartnersModule,
   ],
   controllers: [AppController, OperatorsController],
   providers: [
