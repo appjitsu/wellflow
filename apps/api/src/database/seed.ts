@@ -6,17 +6,17 @@ import * as schema from './schema';
  * Database seed script for development environment
  * Creates sample data for testing and development
  */
+/* eslint-disable sonarjs/pseudo-random, no-process-env */
 
 async function seed() {
-  // eslint-disable-next-line no-process-env
   const dbHost = process.env.DB_HOST || 'localhost';
-  // eslint-disable-next-line no-process-env
+
   const dbPort = parseInt(process.env.DB_PORT || '5432');
-  // eslint-disable-next-line no-process-env
+
   const dbUser = process.env.DB_USER || 'postgres';
-  // eslint-disable-next-line no-process-env
+
   const dbPassword = process.env.DB_PASSWORD;
-  // eslint-disable-next-line no-process-env
+
   const dbName = process.env.DB_NAME || 'wellflow';
 
   const pool = new Pool({
@@ -68,7 +68,7 @@ async function seed() {
         'Miller',
         'Davis',
       ];
-      return names[Math.floor(Math.random() * names.length)];
+      return names[Math.floor(Math.random() * names.length)] ?? baseName;
     }
     return baseName;
   };
@@ -80,7 +80,7 @@ async function seed() {
     const [organization] = await db
       .insert(schema.organizations)
       .values({
-        name: 'Permian Basin Oil Co.',
+        name: 'Permian Basin Oil Co.', // eslint-disable-line sonarjs/no-duplicate-string
         taxId: '12-3456789',
         address: {
           street: '123 Oil Field Road',
@@ -113,9 +113,8 @@ async function seed() {
           email: generateUniqueEmail('owner@permianbasinoil.com'),
           firstName: generateRandomName('John'),
           lastName: generateRandomName('Smith'),
-          role: 'owner',
-          // eslint-disable-next-line sonarjs/no-hardcoded-passwords
-          passwordHash: '$2b$10$example.hash.for.development', // In real app, use proper bcrypt hash
+          role: 'owner' as const,
+          phone: '(432) 555-0123',
           isActive: true,
         },
         {
@@ -123,9 +122,8 @@ async function seed() {
           email: generateUniqueEmail('manager@permianbasinoil.com'),
           firstName: generateRandomName('Sarah'),
           lastName: generateRandomName('Johnson'),
-          role: 'manager',
-          // eslint-disable-next-line sonarjs/no-hardcoded-passwords
-          passwordHash: '$2b$10$example.hash.for.development',
+          role: 'manager' as const,
+          phone: '(432) 555-0456',
           isActive: true,
         },
         {
@@ -133,9 +131,8 @@ async function seed() {
           email: generateUniqueEmail('pumper@permianbasinoil.com'),
           firstName: generateRandomName('Mike'),
           lastName: generateRandomName('Wilson'),
-          role: 'pumper',
-          // eslint-disable-next-line sonarjs/no-hardcoded-passwords
-          passwordHash: '$2b$10$example.hash.for.development',
+          role: 'pumper' as const,
+          phone: '(432) 555-0789',
           isActive: true,
         },
       ])
@@ -169,7 +166,7 @@ async function seed() {
           description:
             'Section 15, Township 2 South, Range 40 East, Midland County, Texas',
         }),
-        status: 'active',
+        status: 'ACTIVE',
       })
       .returning();
 
@@ -188,11 +185,11 @@ async function seed() {
           leaseId: lease.id,
           wellName: 'Smith Ranch #1H',
           apiNumber: generateUniqueApiNumber(),
-          wellType: 'oil',
-          status: 'active',
+          wellType: 'OIL',
+          status: 'ACTIVE',
           spudDate: '2020-03-15',
           completionDate: '2020-05-20',
-          totalDepth: 8500,
+          totalDepth: '8500.00',
           latitude: '32.0853000',
           longitude: '-102.0779000',
           operator: 'Permian Basin Oil Co.',
@@ -204,11 +201,11 @@ async function seed() {
           leaseId: lease.id,
           wellName: 'Smith Ranch #2H',
           apiNumber: generateUniqueApiNumber(),
-          wellType: 'oil',
-          status: 'active',
+          wellType: 'OIL',
+          status: 'ACTIVE',
           spudDate: '2020-06-01',
           completionDate: '2020-08-15',
-          totalDepth: 8750,
+          totalDepth: '8750.00',
           latitude: '32.0860000',
           longitude: '-102.0785000',
           operator: 'Permian Basin Oil Co.',
@@ -238,11 +235,11 @@ async function seed() {
           organizationId: organization.id,
           wellId: well.id,
           productionDate: dateString as string, // Ensure it's typed as string
-          // eslint-disable-next-line sonarjs/pseudo-random
+
           oilVolume: (Math.random() * 50 + 25).toFixed(2), // 25-75 barrels
-          // eslint-disable-next-line sonarjs/pseudo-random
+
           gasVolume: (Math.random() * 500 + 250).toFixed(2), // 250-750 MCF
-          // eslint-disable-next-line sonarjs/pseudo-random
+
           waterVolume: (Math.random() * 20 + 5).toFixed(2), // 5-25 barrels
           oilPrice: '75.5000',
           gasPrice: '3.2500',

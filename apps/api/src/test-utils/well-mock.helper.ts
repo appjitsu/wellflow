@@ -38,7 +38,7 @@ export function createMockWell(
     operatorId: 'operator-123',
     leaseId: 'lease-123',
     wellType: WellType.OIL,
-    status: WellStatus.PLANNED,
+    status: WellStatus.DRILLING,
     location: {
       coordinates: { latitude: 32.7767, longitude: -96.797 },
       address: '123 Test St',
@@ -110,7 +110,7 @@ export function createMinimalMockWell(
     name: 'Minimal Well',
     operatorId: 'operator-123',
     wellType: WellType.OIL,
-    status: WellStatus.PLANNED,
+    status: WellStatus.DRILLING,
   };
 
   const mockData = { ...defaults, ...overrides };
