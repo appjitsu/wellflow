@@ -148,11 +148,13 @@ describe('WellStatusChangedEvent', () => {
       ];
 
       statusPairs.forEach(([from, to]) => {
+        if (!from || !to) return; // Skip if either value is undefined
+
         const event = new WellStatusChangedEvent(
           'well-test',
           '42-000-00000',
-          from!,
-          to!,
+          from,
+          to,
           'test-user',
         );
 

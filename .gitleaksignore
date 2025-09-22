@@ -40,3 +40,4 @@ apps/api/.env.example:monitoring-tokens:16
 apps/api/.env.example:monitoring-tokens:51
 apps/web/.env.example:monitoring-tokens:12
 apps/web/.env.example:monitoring-tokens:18
+4dfb6f240a8c577222fa6a6475951bcd156c4e03:apps/api/src/database/__tests__/env.ts:jwt-secret-production:26

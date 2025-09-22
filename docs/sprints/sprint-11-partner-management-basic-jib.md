@@ -5,15 +5,18 @@
 **Duration:** 3 weeks  
 **Story Points:** 13 points  
 **Sprint Goal:** Build partner management system with ownership tracking, basic
-Joint Interest Billing (JIB) framework, and partner communication tools.
+Joint Interest Billing (JIB) framework, division orders, revenue distribution,
+and partner communication tools.
 
 ## Sprint Objectives
 
 1. Create partner management system with ownership tracking
 2. Build lease partnership and working interest management
 3. Implement basic JIB framework and data models
-4. Develop partner communication and document sharing
-5. Create partner dashboard and reporting interface
+4. Implement division orders and revenue distribution system (CRITICAL ADDITION)
+5. Build owner statement generation and payment processing (CRITICAL ADDITION)
+6. Develop partner communication and document sharing
+7. Create partner dashboard and reporting interface
 
 ## Deliverables
 
@@ -56,7 +59,33 @@ Joint Interest Billing (JIB) framework, and partner communication tools.
   - Vendor invoice management
   - Cost approval workflows
 
-### 4. Partner Communication
+### 4. Division Orders & Revenue Distribution (CRITICAL ADDITION)
+
+- **Division Order Management**
+  - Division order creation and maintenance
+  - Owner interest tracking and validation
+  - Division order amendments and updates
+  - Regulatory compliance and filing
+- **Revenue Distribution System**
+  - Monthly revenue calculations
+  - Owner payment processing
+  - Revenue distribution statements
+  - Payment tracking and reconciliation
+
+### 5. Owner Statement Generation (CRITICAL ADDITION)
+
+- **Statement Creation**
+  - Monthly owner statement generation
+  - Production and revenue detail reporting
+  - Deduction and tax withholding calculations
+  - Statement formatting and customization
+- **Payment Processing**
+  - ACH and check payment processing
+  - Payment scheduling and automation
+  - Payment confirmation and tracking
+  - Escheatment and unclaimed property handling
+
+### 6. Partner Communication
 
 - **Document Sharing**
   - Partner-specific document access
@@ -470,15 +499,91 @@ export class OwnershipValidationService {
 - **Document Sharing Efficiency**: 50%+ reduction in manual distribution
 - **Partner Satisfaction**: Positive feedback on portal and communications
 
+## Additional Database Models (Future Enhancement)
+
+### Financial Models to Add in Sprint 11
+
+- **`expenses`** - Operating expenses (LOE) and capital expenses tracking
+- **`revenue_distributions`** - Partner revenue calculations and distributions
+- **`bank_accounts`** - Financial account management for organizations and
+  partners
+
+### Database Schema Extensions
+
+```typescript
+// Expenses - Operating and capital expense tracking
+interface Expense {
+  id: string;
+  organizationId: string;
+  wellId?: string;
+  leaseId?: string;
+  expenseType: 'operating' | 'capital' | 'administrative';
+  category: string; // 'labor', 'materials', 'services', 'equipment', etc.
+  description: string;
+  amount: number;
+  expenseDate: Date;
+  vendor?: string;
+  invoiceNumber?: string;
+  isApproved: boolean;
+  approvedBy?: string;
+  approvedAt?: Date;
+  allocationMethod: 'per_well' | 'per_lease' | 'percentage' | 'fixed';
+  allocationData: Record<string, any>;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Revenue Distributions - Partner revenue calculations
+interface RevenueDistribution {
+  id: string;
+  organizationId: string;
+  partnerId: string;
+  wellId?: string;
+  leaseId?: string;
+  distributionPeriod: string; // 'YYYY-MM'
+  grossRevenue: number;
+  netRevenue: number;
+  partnerShare: number;
+  workingInterestPercent: number;
+  royaltyInterestPercent: number;
+  deductions: Record<string, number>;
+  distributionAmount: number;
+  status: 'calculated' | 'approved' | 'paid';
+  calculatedAt: Date;
+  paidAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Bank Accounts - Financial account management
+interface BankAccount {
+  id: string;
+  organizationId: string;
+  partnerId?: string;
+  accountName: string;
+  accountType: 'checking' | 'savings' | 'money_market';
+  bankName: string;
+  routingNumber: string;
+  accountNumber: string; // Encrypted
+  isActive: boolean;
+  isPrimary: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
 ## Next Sprint Preparation
 
 - Advanced JIB calculations and statement generation
 - Revenue distribution and payment processing
 - Cost allocation methodologies
 - Partner payment and banking integration
+- Expense tracking and approval workflows
+- Financial reporting and analytics
 
 ---
 
 **Sprint 11 establishes the partner management foundation that enables Joint
-Interest Billing automation. Accurate ownership tracking and partner
-communication are essential for operational efficiency.**
+Interest Billing automation. Accurate ownership tracking, partner communication,
+and financial data management are essential for operational efficiency.**

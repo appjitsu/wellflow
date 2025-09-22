@@ -6,7 +6,7 @@ import { Well } from '../../domain/entities/well.entity';
 import { ApiNumber } from '../../domain/value-objects/api-number';
 import { WellStatus, WellType } from '../../domain/enums/well-status.enum';
 
-import { wells } from '../database/schemas/well.schema';
+import { wells } from '../../database/schema';
 
 /**
  * Well Repository Implementation
@@ -20,20 +20,22 @@ export class WellRepositoryImpl implements WellRepository {
   ) {}
 
   async save(well: Well): Promise<void> {
+    // Map domain model to database schema
     const wellData = {
       id: well.getId(),
+      organizationId: well.getOperatorId(), // Map operatorId to organizationId in schema
       apiNumber: well.getApiNumber().getValue(),
-      name: well.getName(),
-      operatorId: well.getOperatorId(),
+      wellName: well.getName(), // Map name to wellName in schema
       leaseId: well.getLeaseId(),
       wellType: well.getWellType(),
       status: well.getStatus(),
-      location: well.getLocation().toObject(),
-      spudDate: well.getSpudDate(),
-      completionDate: well.getCompletionDate(),
-      totalDepth: well.getTotalDepth(),
+      spudDate: well.getSpudDate()?.toISOString().split('T')[0] || null, // Convert Date to string
+      completionDate:
+        well.getCompletionDate()?.toISOString().split('T')[0] || null, // Convert Date to string
+      totalDepth: well.getTotalDepth()?.toString() || null, // Convert number to decimal string
+      latitude: well.getLocation().getCoordinates().getLatitude().toString(),
+      longitude: well.getLocation().getCoordinates().getLongitude().toString(),
       updatedAt: well.getUpdatedAt(),
-      version: well.getVersion(),
     };
 
     // Check if well exists
@@ -99,7 +101,7 @@ export class WellRepositoryImpl implements WellRepository {
     const result = await this.db
       .select()
       .from(wells)
-      .where(eq(wells.operatorId, operatorId));
+      .where(eq(wells.organizationId, operatorId)); // Use organizationId instead of operatorId
 
     return result.map((row) => this.mapToEntity(row));
   }
@@ -151,13 +153,13 @@ export class WellRepositoryImpl implements WellRepository {
     const conditions: Array<ReturnType<typeof eq>> = [];
 
     if (filters?.operatorId) {
-      conditions.push(eq(wells.operatorId, filters.operatorId));
+      conditions.push(eq(wells.organizationId, filters.operatorId)); // Use organizationId
     }
     if (filters?.status) {
-      conditions.push(eq(wells.status, filters.status));
+      conditions.push(eq(wells.status, filters.status as WellStatus));
     }
     if (filters?.wellType) {
-      conditions.push(eq(wells.wellType, filters.wellType));
+      conditions.push(eq(wells.wellType, filters.wellType as WellType));
     }
 
     // Build where clause
@@ -211,30 +213,37 @@ export class WellRepositoryImpl implements WellRepository {
   }
 
   private mapToEntity(row: Record<string, unknown>): Well {
-    const locationData = row.location as {
-      coordinates: { latitude: number; longitude: number };
-      address?: string;
-      county?: string;
-      state?: string;
-      country?: string;
+    // Create location data from latitude/longitude fields
+    const locationData = {
+      coordinates: {
+        latitude: parseFloat(row.latitude as string) || 0,
+        longitude: parseFloat(row.longitude as string) || 0,
+      },
+      address: undefined,
+      county: undefined,
+      state: undefined,
+      country: 'USA',
     };
-    // Note: Location object construction is handled by Well.fromPersistence
 
     return Well.fromPersistence({
       id: row.id as string,
       apiNumber: row.apiNumber as string,
-      name: row.name as string,
-      operatorId: row.operatorId as string,
+      name: row.wellName as string, // Map wellName to name
+      operatorId: row.organizationId as string, // Map organizationId to operatorId
       leaseId: row.leaseId as string | undefined,
       wellType: row.wellType as WellType,
       status: row.status as WellStatus,
       location: locationData,
-      spudDate: row.spudDate as Date | undefined,
-      completionDate: row.completionDate as Date | undefined,
-      totalDepth: row.totalDepth as number | undefined,
+      spudDate: row.spudDate ? new Date(row.spudDate as string) : undefined,
+      completionDate: row.completionDate
+        ? new Date(row.completionDate as string)
+        : undefined,
+      totalDepth: row.totalDepth
+        ? parseFloat(row.totalDepth as string)
+        : undefined,
       createdAt: row.createdAt as Date,
       updatedAt: row.updatedAt as Date,
-      version: row.version as number,
+      version: 1, // Default version since schema doesn't have version field
     });
   }
 }

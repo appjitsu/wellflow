@@ -13,7 +13,10 @@ validation engine, and API endpoints to support mobile and web applications.
 2. Build robust API endpoints for production data management
 3. Create data quality control and anomaly detection systems
 4. Develop photo upload and storage handling
-5. Implement background job processing for data operations
+5. Implement production data aggregation and reporting
+6. Build background job processing for data operations
+7. Create production analytics and trend analysis
+8. Implement data export and integration capabilities
 
 ## Deliverables
 
@@ -69,7 +72,26 @@ validation engine, and API endpoints to support mobile and web applications.
   - Thumbnail generation
   - Storage quota management
 
-### 5. Background Job Processing
+### 5. Production Data Aggregation
+
+- **Data Aggregation System**
+  - Multi-well production summaries
+  - Time-based aggregation (daily, monthly, yearly)
+  - Field and lease-level rollups
+  - Production trend analysis
+- **Reporting and Analytics**
+  - Production performance metrics
+  - Decline trend identification
+  - Comparative analysis tools
+  - Export capabilities for external systems
+  - Reserves reporting and forecasting
+- **Economic Analysis**
+  - NPV and IRR calculations
+  - Price deck integration
+  - Operating cost modeling
+  - Abandonment cost estimates
+
+### 7. Background Job Processing
 
 - **Job Queue System**
   - BullMQ job queue setup
@@ -79,6 +101,7 @@ validation engine, and API endpoints to support mobile and web applications.
 - **Data Processing Jobs**
   - Production data aggregation
   - Quality control analysis
+  - Reserves calculations
   - Report generation
   - Data cleanup and maintenance
 
@@ -328,14 +351,90 @@ const productionValidationRules: ValidationRule[] = [
 - **Processing Efficiency**: Background jobs complete within SLA
 - **Storage Optimization**: Photo compression reduces size by 70%+
 
+## Additional Database Models (Future Enhancement)
+
+### Operational Models to Add in Sprint 6
+
+- **`maintenance_records`** - Equipment maintenance history and scheduling
+- **`incidents`** - Safety incidents, spills, regulatory violations
+- **`alerts`** - System notifications and operational alerts
+
+### Database Schema Extensions
+
+```typescript
+// Maintenance Records - Equipment maintenance tracking
+interface MaintenanceRecord {
+  id: string;
+  equipmentId: string;
+  wellId: string;
+  organizationId: string;
+  maintenanceType: 'preventive' | 'corrective' | 'emergency';
+  scheduledDate: Date;
+  completedDate?: Date;
+  performedBy: string;
+  description: string;
+  cost?: number;
+  partsUsed?: string[];
+  nextMaintenanceDate?: Date;
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Incidents - Safety and regulatory incident tracking
+interface Incident {
+  id: string;
+  organizationId: string;
+  wellId?: string;
+  leaseId?: string;
+  incidentType: 'safety' | 'environmental' | 'equipment' | 'regulatory';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  incidentDate: Date;
+  reportedDate: Date;
+  reportedBy: string;
+  description: string;
+  location: string;
+  injuriesReported: boolean;
+  environmentalImpact: boolean;
+  regulatoryNotificationRequired: boolean;
+  status: 'reported' | 'investigating' | 'resolved' | 'closed';
+  resolutionNotes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Alerts - System notifications and alerts
+interface Alert {
+  id: string;
+  organizationId: string;
+  userId?: string;
+  alertType: 'production' | 'equipment' | 'compliance' | 'financial' | 'system';
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  title: string;
+  message: string;
+  entityType?: 'well' | 'lease' | 'equipment' | 'partner';
+  entityId?: string;
+  isRead: boolean;
+  isResolved: boolean;
+  resolvedAt?: Date;
+  resolvedBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
 ## Next Sprint Preparation
 
 - Mobile production data entry requirements
 - API integration specifications
 - Offline sync mechanism design
 - Mobile app testing strategy
+- Maintenance tracking system design
+- Incident reporting workflow
 
 ---
 
 **Sprint 6 establishes the robust backend foundation that will support both
-mobile and web applications for production data management.**
+mobile and web applications for production data management, with extensible
+models for operational tracking.**

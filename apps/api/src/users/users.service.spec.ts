@@ -10,16 +10,25 @@ describe('UsersService', () => {
   let redisService: RedisService;
 
   const mockUser: User = {
-    id: 1,
+    id: 'user-123',
+    organizationId: 'org-123',
     email: 'test@example.com',
-    name: 'Test User',
+    firstName: 'Test',
+    lastName: 'User',
+    role: 'pumper',
+    phone: null,
+    isActive: true,
+    lastLoginAt: null,
     createdAt: new Date('2024-01-01T00:00:00.000Z'),
     updatedAt: new Date('2024-01-01T00:00:00.000Z'),
   };
 
   const mockNewUser: NewUser = {
+    organizationId: 'org-123',
     email: 'test@example.com',
-    name: 'Test User',
+    firstName: 'Test',
+    lastName: 'User',
+    role: 'pumper',
   };
 
   // Mock database operations with proper chaining
@@ -132,8 +141,11 @@ describe('UsersService', () => {
 
     it('should create user with minimal data', async () => {
       const minimalUser: NewUser = {
+        organizationId: 'org-123',
         email: 'minimal@example.com',
-        name: 'Minimal User',
+        firstName: 'Minimal',
+        lastName: 'User',
+        role: 'pumper',
       };
 
       const createdUser = { ...mockUser, ...minimalUser };
@@ -162,7 +174,7 @@ describe('UsersService', () => {
       };
       mockRedisService.get.mockResolvedValue(JSON.stringify(cachedUser));
 
-      const result = await service.getUserById(1);
+      const result = await service.getUserById('1');
 
       expect(result).toEqual(cachedUser);
       expect(mockRedisService.get).toHaveBeenCalledWith('user:1');
@@ -172,7 +184,7 @@ describe('UsersService', () => {
     it('should fetch from database and cache if not in cache', async () => {
       mockRedisService.get.mockResolvedValue(null);
 
-      const result = await service.getUserById(1);
+      const result = await service.getUserById('1');
 
       expect(result).toEqual(mockUser);
       expect(mockRedisService.get).toHaveBeenCalledWith('user:1');
@@ -197,7 +209,7 @@ describe('UsersService', () => {
         }),
       });
 
-      const result = await service.getUserById(999);
+      const result = await service.getUserById('999');
 
       expect(result).toBeNull();
       expect(mockRedisService.set).not.toHaveBeenCalled();
@@ -206,7 +218,7 @@ describe('UsersService', () => {
     it('should handle cache parsing errors gracefully', async () => {
       mockRedisService.get.mockResolvedValue('invalid-json');
 
-      await expect(service.getUserById(1)).rejects.toThrow();
+      await expect(service.getUserById('1')).rejects.toThrow();
     });
 
     it('should handle database errors during user fetch', async () => {
@@ -223,7 +235,7 @@ describe('UsersService', () => {
         }),
       });
 
-      await expect(service.getUserById(1)).rejects.toThrow(error);
+      await expect(service.getUserById('1')).rejects.toThrow(error);
     });
   });
 
@@ -353,7 +365,8 @@ describe('UsersService', () => {
 
   describe('updateUser', () => {
     const updateData: Partial<NewUser> = {
-      name: 'Updated User',
+      firstName: 'Updated',
+      lastName: 'User',
     };
 
     it('should update user and refresh cache', async () => {
@@ -369,7 +382,7 @@ describe('UsersService', () => {
         }),
       });
 
-      const result = await service.updateUser(1, updateData);
+      const result = await service.updateUser('1', updateData);
 
       expect(result).toEqual(updatedUser);
       expect(mockDatabaseService.getDb).toHaveBeenCalled();
@@ -398,7 +411,7 @@ describe('UsersService', () => {
         }),
       });
 
-      const result = await service.updateUser(1, emailUpdateData);
+      const result = await service.updateUser('1', emailUpdateData);
 
       expect(result).toEqual(updatedUser);
       expect(mockRedisService.del).toHaveBeenCalledWith(
@@ -422,7 +435,7 @@ describe('UsersService', () => {
         }),
       });
 
-      const result = await service.updateUser(999, updateData);
+      const result = await service.updateUser('999', updateData);
 
       expect(result).toBeNull();
       expect(mockRedisService.set).not.toHaveBeenCalled();
@@ -441,7 +454,7 @@ describe('UsersService', () => {
         }),
       });
 
-      await expect(service.updateUser(1, updateData)).rejects.toThrow(error);
+      await expect(service.updateUser('1', updateData)).rejects.toThrow(error);
     });
   });
 
@@ -458,7 +471,7 @@ describe('UsersService', () => {
         where: jest.fn().mockResolvedValue({ rowCount: 1 }),
       });
 
-      const result = await service.deleteUser(1);
+      const result = await service.deleteUser('1');
 
       expect(result).toBe(true);
       expect(service.getUserById).toHaveBeenCalledWith(1);
@@ -476,7 +489,7 @@ describe('UsersService', () => {
         where: jest.fn().mockResolvedValue({ rowCount: 0 }),
       });
 
-      const result = await service.deleteUser(999);
+      const result = await service.deleteUser('999');
 
       expect(result).toBe(false);
       expect(mockRedisService.del).not.toHaveBeenCalled();
@@ -486,7 +499,7 @@ describe('UsersService', () => {
       jest.spyOn(service, 'getUserById').mockResolvedValue(null);
       mockWhere.mockResolvedValue({ rowCount: 1 });
 
-      const result = await service.deleteUser(1);
+      const result = await service.deleteUser('1');
 
       expect(result).toBe(true);
       expect(mockRedisService.del).toHaveBeenCalledWith('user:1');
@@ -504,14 +517,14 @@ describe('UsersService', () => {
         where: jest.fn().mockRejectedValue(error),
       });
 
-      await expect(service.deleteUser(1)).rejects.toThrow(error);
+      await expect(service.deleteUser('1')).rejects.toThrow(error);
     });
 
     it('should handle getUserById errors during deletion', async () => {
       const error = new Error('Failed to get user');
       jest.spyOn(service, 'getUserById').mockRejectedValue(error);
 
-      await expect(service.deleteUser(1)).rejects.toThrow(error);
+      await expect(service.deleteUser('1')).rejects.toThrow(error);
     });
   });
 
@@ -520,7 +533,7 @@ describe('UsersService', () => {
       const redisError = new Error('Redis connection failed');
       mockRedisService.get.mockRejectedValue(redisError);
 
-      await expect(service.getUserById(1)).rejects.toThrow(redisError);
+      await expect(service.getUserById('1')).rejects.toThrow(redisError);
     });
 
     it('should handle Redis set failures during user creation', async () => {
@@ -535,7 +548,7 @@ describe('UsersService', () => {
       mockRedisService.set.mockResolvedValue('OK');
       mockRedisService.del.mockResolvedValue(1);
 
-      const result = await service.getUserById(1);
+      const result = await service.getUserById('1');
 
       expect(result).toEqual(mockUser);
       expect(mockRedisService.get).toHaveBeenCalled();
@@ -563,7 +576,7 @@ describe('UsersService', () => {
         }),
       });
 
-      const result = await service.getUserById(-1);
+      const result = await service.getUserById('-1');
 
       expect(result).toBeNull();
       expect(mockRedisService.get).toHaveBeenCalledWith('user:-1');
@@ -582,14 +595,14 @@ describe('UsersService', () => {
         }),
       });
 
-      const result = await service.getUserById(0);
+      const result = await service.getUserById('0');
 
       expect(result).toBeNull();
       expect(mockRedisService.get).toHaveBeenCalledWith('user:0');
     });
 
     it('should handle large user ID in getUserById', async () => {
-      const largeId = 999999999;
+      const largeId = '999999999';
       mockRedisService.get.mockResolvedValue(null);
 
       // Override the default mock to return empty array

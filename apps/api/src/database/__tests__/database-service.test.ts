@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { DatabaseService } from './database.service';
+import { DatabaseService } from '../database.service';
 import { Pool } from 'pg';
 
 // Mock pg Pool

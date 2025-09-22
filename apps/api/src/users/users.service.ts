@@ -30,7 +30,7 @@ export class UsersService {
     return newUser;
   }
 
-  async getUserById(id: number): Promise<User | null> {
+  async getUserById(id: string): Promise<User | null> {
     // Try to get from cache first
     const cached = await this.redisService.get(`user:${id}`);
     if (cached) {
@@ -84,7 +84,7 @@ export class UsersService {
   }
 
   async updateUser(
-    id: number,
+    id: string,
     userData: Partial<NewUser>,
   ): Promise<User | null> {
     const db = this.databaseService.getDb();
@@ -117,7 +117,7 @@ export class UsersService {
     return updatedUser || null;
   }
 
-  async deleteUser(id: number): Promise<boolean> {
+  async deleteUser(id: string): Promise<boolean> {
     const db = this.databaseService.getDb();
 
     // Get user first to clear email cache
