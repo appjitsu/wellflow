@@ -16,18 +16,33 @@ import { leases } from './leases';
 
 // Well type enum
 export const wellTypeEnum = pgEnum('well_type', [
-  'oil',
-  'gas',
-  'injection',
-  'disposal',
+  'OIL',
+  'GAS',
+  'OIL_AND_GAS',
+  'INJECTION',
+  'DISPOSAL',
+  'WATER',
+  'OTHER',
+  'oil', // Legacy support
+  'gas', // Legacy support
+  'injection', // Legacy support
+  'disposal', // Legacy support
 ]);
 
 // Well status enum
 export const wellStatusEnum = pgEnum('well_status', [
-  'active',
-  'inactive',
-  'plugged',
-  'drilling',
+  'PLANNED',
+  'PERMITTED',
+  'DRILLING',
+  'COMPLETED',
+  'PRODUCING',
+  'SHUT_IN',
+  'TEMPORARILY_ABANDONED',
+  'PERMANENTLY_ABANDONED',
+  'PLUGGED',
+  'UNKNOWN',
+  'ACTIVE', // Legacy support
+  'INACTIVE', // Legacy support
 ]);
 
 /**
@@ -46,7 +61,7 @@ export const wells = pgTable(
     wellName: varchar('well_name', { length: 255 }).notNull(),
     wellNumber: varchar('well_number', { length: 50 }),
     wellType: wellTypeEnum('well_type').notNull(),
-    status: wellStatusEnum('status').notNull().default('active'),
+    status: wellStatusEnum('status').notNull().default('PLANNED'),
     spudDate: date('spud_date'),
     completionDate: date('completion_date'),
     totalDepth: decimal('total_depth', { precision: 8, scale: 2 }), // feet with decimal precision

@@ -39,16 +39,22 @@ export const complianceSchedules = pgTable(
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   (table) => ({
+    // eslint-disable-next-line no-secrets/no-secrets
     organizationIdx: index('compliance_schedules_organization_id_idx').on(
       table.organizationId,
     ),
+
     wellIdx: index('compliance_schedules_well_id_idx').on(table.wellId),
+
     complianceTypeIdx: index('compliance_schedules_compliance_type_idx').on(
       table.complianceType,
     ),
+
     dueDateIdx: index('compliance_schedules_due_date_idx').on(table.dueDate),
+
     statusIdx: index('compliance_schedules_status_idx').on(table.status),
-    priorityIdx: index('compliance_schedules_priority_idx').on(table.priority),
+    priorityIdx: index('compliance_schedules_priority_idx').on(table.priority), // eslint-disable-line no-secrets/no-secrets
+
     recurringIdx: index('compliance_schedules_is_recurring_idx').on(
       table.isRecurring,
     ),

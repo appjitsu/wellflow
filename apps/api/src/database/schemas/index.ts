@@ -45,3 +45,6 @@ export { spillReports } from './spill-reports';
 // Regulatory compliance
 export { regulatoryFilings } from './regulatory-filings';
 export { complianceSchedules } from './compliance-schedules';
+
+// Relations
+export * from './relations';

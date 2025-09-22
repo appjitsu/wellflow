@@ -73,7 +73,7 @@ export class Well {
     this.wellType = wellType;
     this.location = location;
     this.leaseId = options?.leaseId;
-    this.status = options?.status || WellStatus.PLANNED;
+    this.status = options?.status || WellStatus.DRILLING;
     this.spudDate = options?.spudDate;
     this.completionDate = options?.completionDate;
     this.totalDepth = options?.totalDepth;
@@ -240,6 +240,8 @@ export class Well {
       ],
       [WellStatus.PERMANENTLY_ABANDONED]: [WellStatus.PLUGGED],
       [WellStatus.PLUGGED]: [], // Terminal state
+      [WellStatus.ACTIVE]: [WellStatus.INACTIVE], // Legacy status
+      [WellStatus.INACTIVE]: [WellStatus.ACTIVE], // Legacy status
       [WellStatus.UNKNOWN]: Object.values(WellStatus), // Can transition to any status
     };
 

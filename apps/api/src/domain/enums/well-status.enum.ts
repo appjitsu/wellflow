@@ -13,6 +13,8 @@ export enum WellStatus {
   PERMANENTLY_ABANDONED = 'PERMANENTLY_ABANDONED',
   PLUGGED = 'PLUGGED',
   UNKNOWN = 'UNKNOWN',
+  ACTIVE = 'ACTIVE', // Legacy compatibility
+  INACTIVE = 'INACTIVE', // Legacy compatibility
 }
 
 /**
