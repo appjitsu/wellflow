@@ -9,16 +9,25 @@ describe('UsersController', () => {
   let usersService: UsersService;
 
   const mockUser: User = {
-    id: 1,
+    id: 'user-123',
+    organizationId: 'org-123',
     email: 'test@example.com',
-    name: 'Test User',
+    firstName: 'Test',
+    lastName: 'User',
+    role: 'pumper',
+    phone: null,
+    isActive: true,
+    lastLoginAt: null,
     createdAt: new Date('2024-01-01T00:00:00.000Z'),
     updatedAt: new Date('2024-01-01T00:00:00.000Z'),
   };
 
   const mockNewUser: NewUser = {
+    organizationId: 'org-123',
     email: 'test@example.com',
-    name: 'Test User',
+    firstName: 'Test',
+    lastName: 'User',
+    role: 'pumper',
   };
 
   const mockUsersService = {
@@ -88,8 +97,11 @@ describe('UsersController', () => {
 
     it('should create user with minimal required fields', async () => {
       const minimalUser: NewUser = {
+        organizationId: 'org-123',
         email: 'minimal@example.com',
-        name: 'Minimal User',
+        firstName: 'Minimal',
+        lastName: 'User',
+        role: 'pumper',
       };
       const createdUser = { ...mockUser, ...minimalUser };
       mockUsersService.createUser.mockResolvedValue(createdUser);
@@ -140,16 +152,16 @@ describe('UsersController', () => {
     it('should return user by ID successfully', async () => {
       mockUsersService.getUserById.mockResolvedValue(mockUser);
 
-      const result = await controller.getUserById(1);
+      const result = await controller.getUserById('user-123');
 
       expect(result).toEqual(mockUser);
-      expect(mockUsersService.getUserById).toHaveBeenCalledWith(1);
+      expect(mockUsersService.getUserById).toHaveBeenCalledWith('user-123');
     });
 
     it('should throw NOT_FOUND when user does not exist', async () => {
       mockUsersService.getUserById.mockResolvedValue(null);
 
-      await expect(controller.getUserById(999)).rejects.toThrow(
+      await expect(controller.getUserById('user-999')).rejects.toThrow(
         new HttpException('User not found', HttpStatus.NOT_FOUND),
       );
     });
@@ -161,14 +173,16 @@ describe('UsersController', () => {
       );
       mockUsersService.getUserById.mockRejectedValue(httpError);
 
-      await expect(controller.getUserById(1)).rejects.toThrow(httpError);
+      await expect(controller.getUserById('user-123')).rejects.toThrow(
+        httpError,
+      );
     });
 
     it('should throw INTERNAL_SERVER_ERROR for non-HttpException errors', async () => {
       const error = new Error('Unexpected error');
       mockUsersService.getUserById.mockRejectedValue(error);
 
-      await expect(controller.getUserById(1)).rejects.toThrow(
+      await expect(controller.getUserById('user-123')).rejects.toThrow(
         new HttpException(
           'Failed to fetch user',
           HttpStatus.INTERNAL_SERVER_ERROR,
@@ -177,7 +191,7 @@ describe('UsersController', () => {
     });
 
     it('should handle large user ID', async () => {
-      const largeId = 999999999;
+      const largeId = 'user-999999999';
       mockUsersService.getUserById.mockResolvedValue(null);
 
       await expect(controller.getUserById(largeId)).rejects.toThrow(
@@ -251,23 +265,29 @@ describe('UsersController', () => {
 
   describe('updateUser', () => {
     const updateData: Partial<NewUser> = {
-      name: 'Updated User',
+      firstName: 'Updated',
+      lastName: 'User',
     };
 
     it('should update user successfully', async () => {
       const updatedUser = { ...mockUser, ...updateData };
       mockUsersService.updateUser.mockResolvedValue(updatedUser);
 
-      const result = await controller.updateUser(1, updateData);
+      const result = await controller.updateUser('user-123', updateData);
 
       expect(result).toEqual(updatedUser);
-      expect(mockUsersService.updateUser).toHaveBeenCalledWith(1, updateData);
+      expect(mockUsersService.updateUser).toHaveBeenCalledWith(
+        'user-123',
+        updateData,
+      );
     });
 
     it('should throw NOT_FOUND when user does not exist', async () => {
       mockUsersService.updateUser.mockResolvedValue(null);
 
-      await expect(controller.updateUser(999, updateData)).rejects.toThrow(
+      await expect(
+        controller.updateUser('user-999', updateData),
+      ).rejects.toThrow(
         new HttpException('User not found', HttpStatus.NOT_FOUND),
       );
     });
@@ -279,16 +299,18 @@ describe('UsersController', () => {
       );
       mockUsersService.updateUser.mockRejectedValue(httpError);
 
-      await expect(controller.updateUser(1, updateData)).rejects.toThrow(
-        httpError,
-      );
+      await expect(
+        controller.updateUser('user-123', updateData),
+      ).rejects.toThrow(httpError);
     });
 
     it('should throw INTERNAL_SERVER_ERROR for non-HttpException errors', async () => {
       const error = new Error('Update constraint violation');
       mockUsersService.updateUser.mockRejectedValue(error);
 
-      await expect(controller.updateUser(1, updateData)).rejects.toThrow(
+      await expect(
+        controller.updateUser('user-123', updateData),
+      ).rejects.toThrow(
         new HttpException(
           'Failed to update user',
           HttpStatus.INTERNAL_SERVER_ERROR,
@@ -301,11 +323,11 @@ describe('UsersController', () => {
       const updatedUser = { ...mockUser, ...partialUpdate };
       mockUsersService.updateUser.mockResolvedValue(updatedUser);
 
-      const result = await controller.updateUser(1, partialUpdate);
+      const result = await controller.updateUser('user-123', partialUpdate);
 
       expect(result).toEqual(updatedUser);
       expect(mockUsersService.updateUser).toHaveBeenCalledWith(
-        1,
+        'user-123',
         partialUpdate,
       );
     });
@@ -314,10 +336,13 @@ describe('UsersController', () => {
       const emptyUpdate = {};
       mockUsersService.updateUser.mockResolvedValue(mockUser);
 
-      const result = await controller.updateUser(1, emptyUpdate);
+      const result = await controller.updateUser('user-123', emptyUpdate);
 
       expect(result).toEqual(mockUser);
-      expect(mockUsersService.updateUser).toHaveBeenCalledWith(1, emptyUpdate);
+      expect(mockUsersService.updateUser).toHaveBeenCalledWith(
+        'user-123',
+        emptyUpdate,
+      );
     });
   });
 
@@ -325,16 +350,16 @@ describe('UsersController', () => {
     it('should delete user successfully', async () => {
       mockUsersService.deleteUser.mockResolvedValue(true);
 
-      const result = await controller.deleteUser(1);
+      const result = await controller.deleteUser('user-123');
 
       expect(result).toEqual({ message: 'User deleted successfully' });
-      expect(mockUsersService.deleteUser).toHaveBeenCalledWith(1);
+      expect(mockUsersService.deleteUser).toHaveBeenCalledWith('user-123');
     });
 
     it('should throw NOT_FOUND when user does not exist', async () => {
       mockUsersService.deleteUser.mockResolvedValue(false);
 
-      await expect(controller.deleteUser(999)).rejects.toThrow(
+      await expect(controller.deleteUser('user-999')).rejects.toThrow(
         new HttpException('User not found', HttpStatus.NOT_FOUND),
       );
     });
@@ -346,14 +371,16 @@ describe('UsersController', () => {
       );
       mockUsersService.deleteUser.mockRejectedValue(httpError);
 
-      await expect(controller.deleteUser(1)).rejects.toThrow(httpError);
+      await expect(controller.deleteUser('user-123')).rejects.toThrow(
+        httpError,
+      );
     });
 
     it('should throw INTERNAL_SERVER_ERROR for non-HttpException errors', async () => {
       const error = new Error('Foreign key constraint violation');
       mockUsersService.deleteUser.mockRejectedValue(error);
 
-      await expect(controller.deleteUser(1)).rejects.toThrow(
+      await expect(controller.deleteUser('user-123')).rejects.toThrow(
         new HttpException(
           'Failed to delete user',
           HttpStatus.INTERNAL_SERVER_ERROR,
@@ -364,10 +391,10 @@ describe('UsersController', () => {
     it('should handle deletion of non-existent user', async () => {
       mockUsersService.deleteUser.mockResolvedValue(false);
 
-      await expect(controller.deleteUser(0)).rejects.toThrow(
+      await expect(controller.deleteUser('user-0')).rejects.toThrow(
         new HttpException('User not found', HttpStatus.NOT_FOUND),
       );
-      expect(mockUsersService.deleteUser).toHaveBeenCalledWith(0);
+      expect(mockUsersService.deleteUser).toHaveBeenCalledWith('user-0');
     });
   });
 });

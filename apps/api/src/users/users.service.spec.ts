@@ -10,16 +10,25 @@ describe('UsersService', () => {
   let redisService: RedisService;
 
   const mockUser: User = {
-    id: 1,
+    id: 'user-123',
+    organizationId: 'org-123',
     email: 'test@example.com',
-    name: 'Test User',
+    firstName: 'Test',
+    lastName: 'User',
+    role: 'pumper',
+    phone: null,
+    isActive: true,
+    lastLoginAt: null,
     createdAt: new Date('2024-01-01T00:00:00.000Z'),
     updatedAt: new Date('2024-01-01T00:00:00.000Z'),
   };
 
   const mockNewUser: NewUser = {
+    organizationId: 'org-123',
     email: 'test@example.com',
-    name: 'Test User',
+    firstName: 'Test',
+    lastName: 'User',
+    role: 'pumper',
   };
 
   // Mock database operations with proper chaining
@@ -132,8 +141,11 @@ describe('UsersService', () => {
 
     it('should create user with minimal data', async () => {
       const minimalUser: NewUser = {
+        organizationId: 'org-123',
         email: 'minimal@example.com',
-        name: 'Minimal User',
+        firstName: 'Minimal',
+        lastName: 'User',
+        role: 'pumper',
       };
 
       const createdUser = { ...mockUser, ...minimalUser };
@@ -353,7 +365,8 @@ describe('UsersService', () => {
 
   describe('updateUser', () => {
     const updateData: Partial<NewUser> = {
-      name: 'Updated User',
+      firstName: 'Updated',
+      lastName: 'User',
     };
 
     it('should update user and refresh cache', async () => {
