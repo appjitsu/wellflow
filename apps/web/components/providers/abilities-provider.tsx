@@ -1,14 +1,16 @@
 'use client';
 
-import React, { createContext, useContext, ReactNode } from 'react';
-import { createContextualCan } from '@casl/react';
+import { createContext, useContext, ReactNode, ComponentType } from 'react';
+import { createContextualCan, CanProps } from '@casl/react';
 import { AppAbility, createAbilityForUser, createAbilityForGuest, User } from '../../lib/abilities';
 
 // Create CASL context
-const AbilityContext = createContext<AppAbility | undefined>(undefined);
+const AbilityContext = createContext<AppAbility>(createAbilityForGuest());
 
 // Create the Can component with proper typing
-export const Can: any = createContextualCan(AbilityContext.Consumer as any);
+export const Can: ComponentType<CanProps<AppAbility>> = createContextualCan(
+  AbilityContext.Consumer
+);
 
 interface AbilitiesProviderProps {
   children: ReactNode;
