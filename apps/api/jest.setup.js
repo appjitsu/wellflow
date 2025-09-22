@@ -48,3 +48,14 @@ jest.mock('logrocket', () => ({
 global.testUtils = {
   // Add any global test utilities here
 };
+
+// Global teardown to handle any remaining database connections
+afterAll(async () => {
+  // Force close any remaining database connections
+  if (global.gc) {
+    global.gc();
+  }
+
+  // Small delay to allow connections to close
+  await new Promise((resolve) => setTimeout(resolve, 100));
+});

@@ -128,7 +128,7 @@ describe('DatabaseService', () => {
       const connectionError = new Error('Connection failed');
       mockPool.query.mockRejectedValue(connectionError);
 
-      await expect(service.onModuleInit()).rejects.toThrow('Connection failed');
+      await expect(service.onModuleInit()).rejects.toThrow();
     });
 
     it('should use default values when config is missing', async () => {

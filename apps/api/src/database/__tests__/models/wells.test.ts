@@ -12,24 +12,79 @@ import { Pool } from 'pg';
 // Use test database connection
 const pool = new Pool({
   host: process.env.TEST_DB_HOST || 'localhost',
-  port: parseInt(process.env.TEST_DB_PORT || '5433'),
-  user: process.env.TEST_DB_USER || 'postgres',
+  port: parseInt(process.env.TEST_DB_PORT || '5432'),
+  user: process.env.TEST_DB_USER || 'jason',
   password: process.env.TEST_DB_PASSWORD || 'password',
   database: process.env.TEST_DB_NAME || 'wellflow_test',
 });
 const db = drizzle(pool, { schema });
 
+// Helper function to clean up all data in proper order
+async function cleanupAllData() {
+  // Delete in reverse dependency order, handling missing tables gracefully
+  try {
+    await db.delete(schema.productionRecords);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, sonarjs/no-ignored-exceptions
+  } catch (_error) {
+    // Ignore if table doesn't exist
+  }
+
+  try {
+    await db.delete(schema.wellTests);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, sonarjs/no-ignored-exceptions
+  } catch (_error) {
+    // Ignore if table doesn't exist
+  }
+
+  try {
+    await db.delete(schema.equipment);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, sonarjs/no-ignored-exceptions
+  } catch (_error) {
+    // Ignore if table doesn't exist
+  }
+
+  try {
+    await db.delete(schema.wells);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, sonarjs/no-ignored-exceptions
+  } catch (_error) {
+    // Ignore if table doesn't exist
+  }
+
+  try {
+    await db.delete(schema.leases);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, sonarjs/no-ignored-exceptions
+  } catch (_error) {
+    // Ignore if table doesn't exist
+  }
+
+  try {
+    await db.delete(schema.users);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, sonarjs/no-ignored-exceptions
+  } catch (_error) {
+    // Ignore if table doesn't exist
+  }
+
+  try {
+    await db.delete(schema.organizations);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, sonarjs/no-ignored-exceptions
+  } catch (_error) {
+    // Ignore if table doesn't exist
+  }
+}
+
 describe('Wells Model', () => {
   let testOrgId: string;
   let testLeaseId: string;
 
+  // Global cleanup before all tests in this file
   beforeAll(async () => {
+    await cleanupAllData();
     // Create test organization
     const org = await db
       .insert(organizations)
       .values({
-        name: 'Test Well Organization',
-        taxId: '88-8888888',
+        name: `Test Well Organization ${Date.now()}`,
+        taxId: `88-${Date.now().toString().slice(-7)}`,
       })
       .returning();
     testOrgId = org[0]!.id;
@@ -39,8 +94,8 @@ describe('Wells Model', () => {
       .insert(leases)
       .values({
         organizationId: testOrgId,
-        name: 'Test Lease for Wells',
-        leaseNumber: 'TL-WELLS-001',
+        name: `Test Lease for Wells ${Date.now()}`,
+        leaseNumber: `TL-WELLS-${Date.now()}`,
         lessor: 'Test Lessor',
         lessee: 'Test Well Organization',
         acreage: '160.0000',
@@ -55,6 +110,17 @@ describe('Wells Model', () => {
     // Clean up test data
     await db.delete(leases).where(eq(leases.id, testLeaseId));
     await db.delete(organizations).where(eq(organizations.id, testOrgId));
+
+    // Global cleanup after all tests in this file
+    await cleanupAllData();
+  });
+
+  beforeEach(async () => {
+    // Clean up in reverse dependency order to avoid foreign key constraints
+    await db.delete(schema.productionRecords);
+    await db.delete(schema.wellTests);
+    await db.delete(schema.equipment);
+    await db.delete(schema.wells);
   });
 
   describe('Schema Coverage', () => {
@@ -111,8 +177,8 @@ describe('Wells Model', () => {
         wellName: 'Test Well #1',
         apiNumber: '42201123450000',
         wellNumber: 'TW-001',
-        wellType: 'OIL' as const,
-        status: 'ACTIVE' as const,
+        wellType: 'oil' as const,
+        status: 'active' as const,
         spudDate: '2024-01-15',
         completionDate: '2024-02-15',
         totalDepth: '8500.00',
@@ -139,8 +205,8 @@ describe('Wells Model', () => {
         leaseId: testLeaseId,
         // Missing required wellName
         apiNumber: '42201123450001',
-        wellType: 'OIL',
-        status: 'ACTIVE',
+        wellType: 'oil',
+        status: 'active',
       };
 
       await expect(
@@ -155,7 +221,7 @@ describe('Wells Model', () => {
         wellName: 'Invalid Type Well',
         apiNumber: '42201123450002',
         wellType: 'invalid_type' as const, // Invalid enum value
-        status: 'ACTIVE' as const,
+        status: 'active' as const,
       };
 
       await expect(
@@ -186,8 +252,8 @@ describe('Wells Model', () => {
         leaseId: testLeaseId,
         wellName: 'Well 1',
         apiNumber,
-        wellType: 'OIL' as const,
-        status: 'ACTIVE' as const,
+        wellType: 'oil' as const,
+        status: 'active' as const,
       };
 
       const well2 = {
@@ -195,8 +261,8 @@ describe('Wells Model', () => {
         leaseId: testLeaseId,
         wellName: 'Well 2',
         apiNumber, // Same API number
-        wellType: 'GAS' as const,
-        status: 'ACTIVE' as const,
+        wellType: 'gas' as const,
+        status: 'active' as const,
       };
 
       // First insert should succeed
@@ -214,7 +280,7 @@ describe('Wells Model', () => {
         wellName: 'Status Update Well',
         apiNumber: '42201543210000',
         wellType: 'OIL' as const,
-        status: 'DRILLING' as const,
+        status: 'drilling' as const,
         spudDate: '2024-01-01',
       };
 
@@ -223,7 +289,7 @@ describe('Wells Model', () => {
 
       // Complete the well
       const completionData = {
-        status: 'ACTIVE' as const,
+        status: 'active' as const,
         completionDate: '2024-02-01',
         totalDepth: '9000.00',
       };
@@ -235,7 +301,7 @@ describe('Wells Model', () => {
         .returning();
 
       expect(updated).toHaveLength(1);
-      expect(updated[0]!.status).toBe('ACTIVE');
+      expect(updated[0]!.status).toBe('active');
       expect(updated[0]!.completionDate).toBeDefined();
       expect(parseFloat(updated[0]!.totalDepth || '0')).toBe(9000);
       expect(updated[0]!.updatedAt).not.toBe(created[0]!.updatedAt);
@@ -248,7 +314,7 @@ describe('Wells Model', () => {
         wellName: 'Invalid API Well',
         apiNumber: 'INVALID-API', // Invalid format
         wellType: 'OIL' as const,
-        status: 'ACTIVE' as const,
+        status: 'active' as const,
       };
 
       // Note: This test assumes API number format validation is implemented
@@ -267,7 +333,7 @@ describe('Wells Model', () => {
         wellName: 'GPS Well',
         apiNumber: '42201999990000',
         wellType: 'OIL' as const,
-        status: 'ACTIVE' as const,
+        status: 'active' as const,
         latitude: '32.7767',
         longitude: '-96.797',
       };
@@ -290,8 +356,8 @@ describe('Wells Model', () => {
           leaseId: testLeaseId,
           wellName: 'Active Oil Well',
           apiNumber: '42201111110000',
-          wellType: 'OIL' as const,
-          status: 'ACTIVE' as const,
+          wellType: 'oil' as const,
+          status: 'active' as const,
           totalDepth: '8000.00',
         },
         {
@@ -299,8 +365,8 @@ describe('Wells Model', () => {
           leaseId: testLeaseId,
           wellName: 'Active Gas Well',
           apiNumber: '42201222220000',
-          wellType: 'GAS' as const,
-          status: 'ACTIVE' as const,
+          wellType: 'gas' as const,
+          status: 'active' as const,
           totalDepth: '7500.00',
         },
         {
@@ -308,8 +374,8 @@ describe('Wells Model', () => {
           leaseId: testLeaseId,
           wellName: 'Plugged Well',
           apiNumber: '42201333330000',
-          wellType: 'OIL' as const,
-          status: 'PLUGGED' as const,
+          wellType: 'oil' as const,
+          status: 'plugged' as const,
           totalDepth: '9000.00',
         },
       ]);
@@ -323,20 +389,20 @@ describe('Wells Model', () => {
       const activeWells = await db
         .select()
         .from(wells)
-        .where(eq(wells.status, 'ACTIVE'));
+        .where(eq(wells.status, 'active'));
 
       expect(activeWells.length).toBeGreaterThanOrEqual(2);
-      expect(activeWells.every((well) => well.status === 'ACTIVE')).toBe(true);
+      expect(activeWells.every((well) => well.status === 'active')).toBe(true);
     });
 
     it('should find wells by type', async () => {
       const oilWells = await db
         .select()
         .from(wells)
-        .where(eq(wells.wellType, 'OIL'));
+        .where(eq(wells.wellType, 'oil'));
 
       expect(oilWells.length).toBeGreaterThanOrEqual(2);
-      expect(oilWells.every((well) => well.wellType === 'OIL')).toBe(true);
+      expect(oilWells.every((well) => well.wellType === 'oil')).toBe(true);
     });
 
     it('should find wells by lease', async () => {

@@ -16,8 +16,8 @@ describe('Database Schema Tests', () => {
     // Use test database configuration
     const testDbConfig = {
       host: process.env.TEST_DB_HOST || 'localhost',
-      port: parseInt(process.env.TEST_DB_PORT || '5433'),
-      user: process.env.TEST_DB_USER || 'postgres',
+      port: parseInt(process.env.TEST_DB_PORT || '5432'),
+      user: process.env.TEST_DB_USER || 'jason',
       password: process.env.TEST_DB_PASSWORD || 'password',
       database: process.env.TEST_DB_NAME || 'wellflow_test',
     };

@@ -35,8 +35,8 @@ describe('Database CRUD Operations Tests', () => {
   beforeAll(async () => {
     pool = new Pool({
       host: process.env.TEST_DB_HOST || 'localhost',
-      port: parseInt(process.env.TEST_DB_PORT || '5433'),
-      user: process.env.TEST_DB_USER || 'postgres',
+      port: parseInt(process.env.TEST_DB_PORT || '5432'),
+      user: process.env.TEST_DB_USER || 'jason',
       password: process.env.TEST_DB_PASSWORD || 'password',
       database: process.env.TEST_DB_NAME || 'wellflow_test',
     });
@@ -225,7 +225,7 @@ describe('Database CRUD Operations Tests', () => {
         apiNumber: generateUniqueApiNumber(),
         wellName: 'Test Well #1',
         wellType: 'OIL' as const,
-        status: 'ACTIVE' as const,
+        status: 'active' as const,
         totalDepth: '8500',
         spudDate: '2024-01-15',
       };
@@ -251,7 +251,7 @@ describe('Database CRUD Operations Tests', () => {
         apiNumber,
         wellName: 'First Well',
         wellType: 'OIL',
-        status: 'ACTIVE' as const,
+        status: 'active' as const,
       });
 
       // Attempt to insert duplicate API number
@@ -261,7 +261,7 @@ describe('Database CRUD Operations Tests', () => {
           apiNumber, // Same API number
           wellName: 'Second Well',
           wellType: 'OIL',
-          status: 'ACTIVE' as const,
+          status: 'active' as const,
         }),
       ).rejects.toThrow();
     });
@@ -287,7 +287,7 @@ describe('Database CRUD Operations Tests', () => {
           apiNumber: generateUniqueApiNumber(),
           wellName: 'Production Test Well',
           wellType: 'OIL' as const,
-          status: 'ACTIVE' as const,
+          status: 'active' as const,
         })
         .returning();
       expect(well).toBeDefined();
@@ -398,14 +398,14 @@ describe('Database CRUD Operations Tests', () => {
           apiNumber: generateUniqueApiNumber(),
           wellName: 'Org1 Well',
           wellType: 'OIL' as const,
-          status: 'ACTIVE' as const,
+          status: 'active' as const,
         },
         {
           organizationId: org2!.id,
           apiNumber: generateUniqueApiNumber(),
           wellName: 'Org2 Well',
           wellType: 'OIL' as const,
-          status: 'ACTIVE' as const,
+          status: 'active' as const,
         },
       ]);
 
