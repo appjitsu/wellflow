@@ -29,6 +29,50 @@ async function seed() {
 
   const db = drizzle(pool, { schema });
 
+  // Helper function to generate unique emails for test environments
+  const generateUniqueEmail = (baseEmail: string): string => {
+    const isTestEnv =
+      process.env.NODE_ENV === 'test' || dbName?.includes('test');
+    if (isTestEnv) {
+      const timestamp = Date.now().toString().slice(-6);
+      const random = Math.floor(Math.random() * 1000)
+        .toString()
+        .padStart(3, '0');
+      const [localPart, domain] = baseEmail.split('@');
+      return `${localPart}${timestamp}${random}@${domain}`;
+    }
+    return baseEmail;
+  };
+
+  // Helper function to generate unique API numbers
+  const generateUniqueApiNumber = (): string => {
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.floor(Math.random() * 10000)
+      .toString()
+      .padStart(4, '0');
+    return `42329${timestamp}${random}`.slice(0, 14);
+  };
+
+  // Helper function to generate random names for test environments
+  const generateRandomName = (baseName: string): string => {
+    const isTestEnv =
+      process.env.NODE_ENV === 'test' || dbName?.includes('test');
+    if (isTestEnv) {
+      const names = [
+        'Smith',
+        'Johnson',
+        'Williams',
+        'Brown',
+        'Jones',
+        'Garcia',
+        'Miller',
+        'Davis',
+      ];
+      return names[Math.floor(Math.random() * names.length)];
+    }
+    return baseName;
+  };
+
   try {
     console.log('🌱 Starting database seed...');
 
@@ -66,9 +110,9 @@ async function seed() {
       .values([
         {
           organizationId: organization.id,
-          email: 'owner@permianbasinoil.com',
-          firstName: 'John',
-          lastName: 'Smith',
+          email: generateUniqueEmail('owner@permianbasinoil.com'),
+          firstName: generateRandomName('John'),
+          lastName: generateRandomName('Smith'),
           role: 'owner',
           // eslint-disable-next-line sonarjs/no-hardcoded-passwords
           passwordHash: '$2b$10$example.hash.for.development', // In real app, use proper bcrypt hash
@@ -76,9 +120,9 @@ async function seed() {
         },
         {
           organizationId: organization.id,
-          email: 'manager@permianbasinoil.com',
-          firstName: 'Sarah',
-          lastName: 'Johnson',
+          email: generateUniqueEmail('manager@permianbasinoil.com'),
+          firstName: generateRandomName('Sarah'),
+          lastName: generateRandomName('Johnson'),
           role: 'manager',
           // eslint-disable-next-line sonarjs/no-hardcoded-passwords
           passwordHash: '$2b$10$example.hash.for.development',
@@ -86,9 +130,9 @@ async function seed() {
         },
         {
           organizationId: organization.id,
-          email: 'pumper@permianbasinoil.com',
-          firstName: 'Mike',
-          lastName: 'Wilson',
+          email: generateUniqueEmail('pumper@permianbasinoil.com'),
+          firstName: generateRandomName('Mike'),
+          lastName: generateRandomName('Wilson'),
           role: 'pumper',
           // eslint-disable-next-line sonarjs/no-hardcoded-passwords
           passwordHash: '$2b$10$example.hash.for.development',
@@ -108,9 +152,15 @@ async function seed() {
       .insert(schema.leases)
       .values({
         organizationId: organization.id,
-        leaseName: 'Smith Ranch Unit',
+        name: 'Smith Ranch Unit',
         leaseNumber: 'SRU-001',
-        legalDescription: {
+        lessor: 'Smith Family Trust',
+        lessee: 'Permian Basin Oil Co.',
+        acreage: '640.0000',
+        royaltyRate: '0.1875',
+        effectiveDate: '2020-01-01',
+        expirationDate: '2025-12-31',
+        legalDescription: JSON.stringify({
           section: '15',
           township: '2S',
           range: '40E',
@@ -118,14 +168,7 @@ async function seed() {
           state: 'TX',
           description:
             'Section 15, Township 2 South, Range 40 East, Midland County, Texas',
-        },
-        surfaceLocation: {
-          latitude: 32.0853,
-          longitude: -102.0779,
-        },
-        leaseStartDate: '2020-01-01',
-        leaseEndDate: '2025-12-31',
-        totalAcres: '640.00',
+        }),
         status: 'active',
       })
       .returning();
@@ -134,7 +177,7 @@ async function seed() {
       throw new Error('Failed to create lease');
     }
 
-    console.log('✅ Created lease:', lease.leaseName);
+    console.log('✅ Created lease:', lease.name);
 
     // Create sample wells
     const wells = await db
@@ -144,55 +187,33 @@ async function seed() {
           organizationId: organization.id,
           leaseId: lease.id,
           wellName: 'Smith Ranch #1H',
-          apiNumber: '42329123450001', // 14-digit API number for Texas
-          surfaceLocation: {
-            latitude: 32.0853,
-            longitude: -102.0779,
-          },
-          bottomHoleLocation: {
-            latitude: 32.0845,
-            longitude: -102.0785,
-          },
-          totalDepth: '8500.00',
+          apiNumber: generateUniqueApiNumber(),
+          wellType: 'oil',
+          status: 'active',
           spudDate: '2020-03-15',
           completionDate: '2020-05-20',
-          status: 'producing',
-          wellConfiguration: {
-            wellType: 'horizontal',
-            casingSize: '5.5',
-            tubingSize: '2.875',
-            perforations: [
-              { top: 8200, bottom: 8300 },
-              { top: 8350, bottom: 8450 },
-            ],
-          },
+          totalDepth: 8500,
+          latitude: '32.0853000',
+          longitude: '-102.0779000',
+          operator: 'Permian Basin Oil Co.',
+          field: 'Smith Ranch Field',
+          formation: 'Wolfcamp',
         },
         {
           organizationId: organization.id,
           leaseId: lease.id,
           wellName: 'Smith Ranch #2H',
-          apiNumber: '42329123450002',
-          surfaceLocation: {
-            latitude: 32.086,
-            longitude: -102.0775,
-          },
-          bottomHoleLocation: {
-            latitude: 32.0852,
-            longitude: -102.0781,
-          },
-          totalDepth: '8750.00',
+          apiNumber: generateUniqueApiNumber(),
+          wellType: 'oil',
+          status: 'active',
           spudDate: '2020-06-01',
           completionDate: '2020-08-15',
-          status: 'producing',
-          wellConfiguration: {
-            wellType: 'horizontal',
-            casingSize: '5.5',
-            tubingSize: '2.875',
-            perforations: [
-              { top: 8300, bottom: 8400 },
-              { top: 8450, bottom: 8550 },
-            ],
-          },
+          totalDepth: 8750,
+          latitude: '32.0860000',
+          longitude: '-102.0785000',
+          operator: 'Permian Basin Oil Co.',
+          field: 'Smith Ranch Field',
+          formation: 'Wolfcamp',
         },
       ])
       .returning();
@@ -214,9 +235,8 @@ async function seed() {
 
       for (const well of wells) {
         productionRecords.push({
+          organizationId: organization.id,
           wellId: well.id,
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          createdByUserId: users[2]!.id, // Pumper user
           productionDate: dateString as string, // Ensure it's typed as string
           // eslint-disable-next-line sonarjs/pseudo-random
           oilVolume: (Math.random() * 50 + 25).toFixed(2), // 25-75 barrels
@@ -224,17 +244,10 @@ async function seed() {
           gasVolume: (Math.random() * 500 + 250).toFixed(2), // 250-750 MCF
           // eslint-disable-next-line sonarjs/pseudo-random
           waterVolume: (Math.random() * 20 + 5).toFixed(2), // 5-25 barrels
-          oilPrice: '75.50',
-          gasPrice: '3.25',
-          equipmentReadings: {
-            // eslint-disable-next-line sonarjs/pseudo-random
-            casingPressure: Math.floor(Math.random() * 100 + 200),
-            // eslint-disable-next-line sonarjs/pseudo-random
-            tubingPressure: Math.floor(Math.random() * 50 + 150),
-            chokeSize: '12/64',
-          },
-          notes: i === 0 ? 'Normal operations' : null,
-          isEstimated: false,
+          oilPrice: '75.5000',
+          gasPrice: '3.2500',
+          runTicket: `RT-${dateString}-${well.wellName?.slice(-2)}`,
+          comments: i === 0 ? 'Normal operations' : null,
         });
       }
     }
@@ -278,9 +291,9 @@ async function seed() {
     await db.insert(schema.leasePartners).values({
       leaseId: lease.id,
       partnerId: partner.id,
-      workingInterestPercent: '75.0000', // 75% working interest
-      royaltyInterestPercent: '12.5000', // 12.5% royalty
-      netRevenueInterestPercent: '65.6250', // 75% - (75% * 12.5%) = 65.625%
+      workingInterestPercent: '0.7500', // 75% working interest
+      royaltyInterestPercent: '0.1250', // 12.5% royalty
+      netRevenueInterestPercent: '0.6563', // 75% - (75% * 12.5%) = 65.625%
       effectiveDate: '2020-01-01',
       isOperator: true,
     });

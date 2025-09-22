@@ -3,11 +3,17 @@ import { ConfigService } from '@nestjs/config';
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import * as schema from './schema';
+import {
+  QueryBuilderFactory,
+  QueryUtils,
+} from '../infrastructure/database/query-builder';
 
 @Injectable()
 export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   private pool!: Pool;
   public db!: NodePgDatabase<typeof schema>;
+  public queryBuilder!: QueryBuilderFactory;
+  public queryUtils!: QueryUtils;
 
   constructor(private configService: ConfigService) {}
 
@@ -24,6 +30,10 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     });
 
     this.db = drizzle(this.pool, { schema });
+
+    // Initialize query builders and utilities
+    this.queryBuilder = new QueryBuilderFactory(this.db);
+    this.queryUtils = new QueryUtils(this.db);
 
     // Test the connection
     try {
@@ -50,5 +60,13 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
   getDb() {
     return this.db;
+  }
+
+  getQueryBuilder() {
+    return this.queryBuilder;
+  }
+
+  getQueryUtils() {
+    return this.queryUtils;
   }
 }
