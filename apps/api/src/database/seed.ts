@@ -8,12 +8,23 @@ import * as schema from './schema';
  */
 
 async function seed() {
+  // eslint-disable-next-line no-process-env
+  const dbHost = process.env.DB_HOST || 'localhost';
+  // eslint-disable-next-line no-process-env
+  const dbPort = parseInt(process.env.DB_PORT || '5432');
+  // eslint-disable-next-line no-process-env
+  const dbUser = process.env.DB_USER || 'postgres';
+  // eslint-disable-next-line no-process-env
+  const dbPassword = process.env.DB_PASSWORD;
+  // eslint-disable-next-line no-process-env
+  const dbName = process.env.DB_NAME || 'wellflow';
+
   const pool = new Pool({
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '5432'),
-    user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME || 'wellflow',
+    host: dbHost,
+    port: dbPort,
+    user: dbUser,
+    password: dbPassword,
+    database: dbName,
   });
 
   const db = drizzle(pool, { schema });
@@ -59,6 +70,7 @@ async function seed() {
           firstName: 'John',
           lastName: 'Smith',
           role: 'owner',
+          // eslint-disable-next-line sonarjs/no-hardcoded-passwords
           passwordHash: '$2b$10$example.hash.for.development', // In real app, use proper bcrypt hash
           isActive: true,
         },
@@ -68,6 +80,7 @@ async function seed() {
           firstName: 'Sarah',
           lastName: 'Johnson',
           role: 'manager',
+          // eslint-disable-next-line sonarjs/no-hardcoded-passwords
           passwordHash: '$2b$10$example.hash.for.development',
           isActive: true,
         },
@@ -77,6 +90,7 @@ async function seed() {
           firstName: 'Mike',
           lastName: 'Wilson',
           role: 'pumper',
+          // eslint-disable-next-line sonarjs/no-hardcoded-passwords
           passwordHash: '$2b$10$example.hash.for.development',
           isActive: true,
         },
@@ -201,15 +215,21 @@ async function seed() {
       for (const well of wells) {
         productionRecords.push({
           wellId: well.id,
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           createdByUserId: users[2]!.id, // Pumper user
           productionDate: dateString as string, // Ensure it's typed as string
+          // eslint-disable-next-line sonarjs/pseudo-random
           oilVolume: (Math.random() * 50 + 25).toFixed(2), // 25-75 barrels
+          // eslint-disable-next-line sonarjs/pseudo-random
           gasVolume: (Math.random() * 500 + 250).toFixed(2), // 250-750 MCF
+          // eslint-disable-next-line sonarjs/pseudo-random
           waterVolume: (Math.random() * 20 + 5).toFixed(2), // 5-25 barrels
           oilPrice: '75.50',
           gasPrice: '3.25',
           equipmentReadings: {
+            // eslint-disable-next-line sonarjs/pseudo-random
             casingPressure: Math.floor(Math.random() * 100 + 200),
+            // eslint-disable-next-line sonarjs/pseudo-random
             tubingPressure: Math.floor(Math.random() * 50 + 150),
             chokeSize: '12/64',
           },

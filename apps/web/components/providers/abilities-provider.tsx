@@ -8,7 +8,7 @@ import { AppAbility, createAbilityForUser, createAbilityForGuest, User } from '.
 const AbilityContext = createContext<AppAbility | undefined>(undefined);
 
 // Create the Can component with proper typing
-export const Can = createContextualCan(AbilityContext.Consumer as React.Consumer<AppAbility>);
+export const Can: any = createContextualCan(AbilityContext.Consumer as any);
 
 interface AbilitiesProviderProps {
   children: ReactNode;

@@ -427,15 +427,80 @@ Complete at: {{shortUrl}}
 - **Compliance Rate**: Improved on-time filing rates
 - **Time Savings**: 50%+ reduction in compliance preparation time
 
+## Additional Database Models (Future Enhancement)
+
+### Regulatory Models to Add in Sprint 9
+
+- **`permits`** - Drilling permits, environmental permits, regulatory approvals
+- **`tax_records`** - Severance tax, depletion tracking, tax calculations
+
+### Database Schema Extensions
+
+```typescript
+// Permits - Regulatory permits and approvals
+interface Permit {
+  id: string;
+  organizationId: string;
+  wellId?: string;
+  leaseId?: string;
+  permitType:
+    | 'drilling'
+    | 'environmental'
+    | 'operating'
+    | 'transport'
+    | 'waste';
+  permitNumber: string;
+  issuingAuthority: string;
+  jurisdiction: string; // State/County
+  issueDate: Date;
+  effectiveDate: Date;
+  expirationDate?: Date;
+  status: 'pending' | 'approved' | 'active' | 'expired' | 'revoked';
+  conditions?: string[];
+  renewalRequired: boolean;
+  renewalDate?: Date;
+  cost?: number;
+  documentPath?: string;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Tax Records - Tax calculations and filings
+interface TaxRecord {
+  id: string;
+  organizationId: string;
+  wellId?: string;
+  leaseId?: string;
+  taxType: 'severance' | 'property' | 'income' | 'depletion';
+  taxPeriod: string; // 'YYYY-MM' or 'YYYY'
+  jurisdiction: string;
+  taxableAmount: number;
+  taxRate: number;
+  taxOwed: number;
+  taxPaid?: number;
+  paidDate?: Date;
+  dueDate: Date;
+  status: 'calculated' | 'filed' | 'paid' | 'overdue';
+  filingReference?: string;
+  calculationMethod: string;
+  deductionsApplied: Record<string, number>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
 ## Next Sprint Preparation
 
 - Form PR generation algorithm development
 - Texas RRC integration research
 - Production data aggregation for forms
 - PDF generation and formatting requirements
+- Permit tracking and renewal workflows
+- Tax calculation and filing automation
 
 ---
 
 **Sprint 9 establishes the compliance foundation that will differentiate
-WellFlow from competitors. Accurate deadline tracking and reliable notifications
-are critical for regulatory success.**
+WellFlow from competitors. Accurate deadline tracking, reliable notifications,
+and comprehensive permit management are critical for regulatory success.**

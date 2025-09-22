@@ -1,3 +1,5 @@
+/* eslint-disable sonarjs/deprecation */
+
 import {
   pgTable,
   uuid,

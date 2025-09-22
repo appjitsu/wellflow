@@ -1,3 +1,5 @@
+/* eslint-disable sonarjs/deprecation */
+
 import {
   pgTable,
   uuid,
@@ -38,6 +40,7 @@ export const organizations = pgTable('organizations', {
  * Users table - System users with role-based access control
  * Roles: owner, manager, pumper
  */
+
 export const users = pgTable(
   'users',
   {
