@@ -10,8 +10,8 @@ const { execSync } = require('child_process');
 // Test database configuration
 const TEST_DB_CONFIG = {
   host: process.env.TEST_DB_HOST || 'localhost',
-  port: parseInt(process.env.TEST_DB_PORT || '5433'),
-  user: process.env.TEST_DB_USER || 'postgres',
+  port: parseInt(process.env.TEST_DB_PORT || '5432'),
+  user: process.env.TEST_DB_USER || 'jason',
   password: process.env.TEST_DB_PASSWORD || 'password',
   database: process.env.TEST_DB_NAME || 'wellflow_test',
 };
@@ -45,15 +45,15 @@ async function setupTestDatabase() {
 
   // Run migrations on test database
   try {
-    execSync('pnpm drizzle-kit migrate', {
+    execSync('pnpm drizzle-kit migrate --config=drizzle.config.test.ts', {
       cwd: process.cwd(),
       env: {
         ...process.env,
-        DB_HOST: TEST_DB_CONFIG.host,
-        DB_PORT: TEST_DB_CONFIG.port.toString(),
-        DB_USER: TEST_DB_CONFIG.user,
-        DB_PASSWORD: TEST_DB_CONFIG.password,
-        DB_NAME: TEST_DB_CONFIG.database,
+        TEST_DB_HOST: TEST_DB_CONFIG.host,
+        TEST_DB_PORT: TEST_DB_CONFIG.port.toString(),
+        TEST_DB_USER: TEST_DB_CONFIG.user,
+        TEST_DB_PASSWORD: TEST_DB_CONFIG.password,
+        TEST_DB_NAME: TEST_DB_CONFIG.database,
       },
       stdio: 'inherit',
     });
@@ -163,7 +163,7 @@ async function globalTeardown() {
   console.log('✅ Database test cleanup complete');
 }
 
-// Export functions for CommonJS
+// Export functions for CommonJS and ES modules
 module.exports = {
   TEST_DB_CONFIG,
   setupTestDatabase,
@@ -173,3 +173,6 @@ module.exports = {
   globalSetup,
   globalTeardown,
 };
+
+// Default export for Jest globalSetup/globalTeardown
+module.exports.default = globalSetup;
