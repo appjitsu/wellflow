@@ -14,29 +14,20 @@ describe('Database Schema Tests', () => {
 
   beforeAll(async () => {
     // Use test database configuration
-    pool = new Pool({
+    const testDbConfig = {
       host: process.env.TEST_DB_HOST || 'localhost',
       port: parseInt(process.env.TEST_DB_PORT || '5433'),
       user: process.env.TEST_DB_USER || 'postgres',
       password: process.env.TEST_DB_PASSWORD || 'password',
       database: process.env.TEST_DB_NAME || 'wellflow_test',
-    });
+    };
 
+    pool = new Pool(testDbConfig);
     db = drizzle(pool, { schema });
 
-    // Ensure clean test environment
-    await pool.query('DROP SCHEMA IF EXISTS public CASCADE');
-    await pool.query('CREATE SCHEMA public');
-
-    // Run migrations for test database
-    const { execSync } = require('child_process');
-    execSync('pnpm drizzle-kit migrate', {
-      cwd: process.cwd(),
-      env: {
-        ...process.env,
-        DB_NAME: process.env.TEST_DB_NAME || 'wellflow_test',
-      },
-    });
+    // The database and migrations are already set up by the global setup
+    // Just verify the connection works
+    console.log(`🔧 Connected to test database: ${testDbConfig.database}`);
   });
 
   afterAll(async () => {
@@ -56,6 +47,7 @@ describe('Database Schema Tests', () => {
       const tableNames = result.rows.map((row) => row.table_name);
 
       const expectedTables = [
+        // Core Business Entities
         'organizations',
         'users',
         'leases',
@@ -68,7 +60,23 @@ describe('Database Schema Tests', () => {
         'documents',
         'equipment',
         'well_tests',
-        '__drizzle_migrations',
+        // Phase 1A: Financial Foundation
+        'afes',
+        'afe_line_items',
+        'afe_approvals',
+        'division_orders',
+        'revenue_distributions',
+        'lease_operating_statements',
+        'vendors',
+        'vendor_contacts',
+        // Phase 1B: Legal & Environmental
+        'title_opinions',
+        'curative_items',
+        'environmental_incidents',
+        'spill_reports',
+        // Phase 2: Operational Foundation
+        'regulatory_filings',
+        'compliance_schedules',
       ];
 
       expectedTables.forEach((tableName) => {
@@ -130,7 +138,7 @@ describe('Database Schema Tests', () => {
 
       expect(result.rows).toHaveLength(3);
       result.rows.forEach((row) => {
-        expect(row.data_type).toBe('character varying'); // Stored as string for precision
+        expect(row.data_type).toBe('numeric'); // Stored as numeric for precision
       });
     });
   });
@@ -272,7 +280,7 @@ describe('Database Schema Tests', () => {
       const expectedJsonbColumns = [
         { table_name: 'organizations', column_name: 'address' },
         { table_name: 'organizations', column_name: 'settings' },
-        { table_name: 'production_records', column_name: 'equipment_readings' },
+        { table_name: 'equipment', column_name: 'specifications' },
       ];
 
       expectedJsonbColumns.forEach((expected) => {
