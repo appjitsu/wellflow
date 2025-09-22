@@ -32,7 +32,7 @@ describe('Wells Model', () => {
         taxId: '88-8888888',
       })
       .returning();
-    testOrgId = org[0].id;
+    testOrgId = org[0]!.id;
 
     // Create test lease
     const lease = await db
@@ -45,10 +45,10 @@ describe('Wells Model', () => {
         lessee: 'Test Well Organization',
         acreage: '160.0000',
         royaltyRate: '0.1875',
-        status: 'active',
+        status: 'ACTIVE' as const,
       })
       .returning();
-    testLeaseId = lease[0].id;
+    testLeaseId = lease[0]!.id;
   });
 
   afterAll(async () => {
@@ -111,26 +111,26 @@ describe('Wells Model', () => {
         wellName: 'Test Well #1',
         apiNumber: '42201123450000',
         wellNumber: 'TW-001',
-        wellType: 'oil',
-        status: 'active',
-        spudDate: new Date('2024-01-15'),
-        completionDate: new Date('2024-02-15'),
-        totalDepth: 8500,
-        latitude: 29.7604,
-        longitude: -95.3698,
+        wellType: 'OIL' as const,
+        status: 'ACTIVE' as const,
+        spudDate: '2024-01-15',
+        completionDate: '2024-02-15',
+        totalDepth: '8500.00',
+        latitude: '29.7604000',
+        longitude: '-95.3698000',
       };
 
       const result = await db.insert(wells).values(newWell).returning();
 
       expect(result).toHaveLength(1);
-      expect(result[0].wellName).toBe(newWell.wellName);
-      expect(result[0].apiNumber).toBe(newWell.apiNumber);
-      expect(result[0].wellType).toBe(newWell.wellType);
-      expect(result[0].status).toBe(newWell.status);
-      expect(parseFloat(result[0].totalDepth || '0')).toBe(8500);
-      expect(result[0].id).toBeDefined();
-      expect(result[0].createdAt).toBeDefined();
-      expect(result[0].updatedAt).toBeDefined();
+      expect(result[0]!.wellName).toBe(newWell.wellName);
+      expect(result[0]!.apiNumber).toBe(newWell.apiNumber);
+      expect(result[0]!.wellType).toBe(newWell.wellType);
+      expect(result[0]!.status).toBe(newWell.status);
+      expect(parseFloat(result[0]!.totalDepth || '0')).toBe(8500);
+      expect(result[0]!.id).toBeDefined();
+      expect(result[0]!.createdAt).toBeDefined();
+      expect(result[0]!.updatedAt).toBeDefined();
     });
 
     it('should enforce required fields', async () => {
@@ -139,8 +139,8 @@ describe('Wells Model', () => {
         leaseId: testLeaseId,
         // Missing required wellName
         apiNumber: '42201123450001',
-        wellType: 'oil',
-        status: 'active',
+        wellType: 'OIL',
+        status: 'ACTIVE',
       };
 
       await expect(
@@ -154,8 +154,8 @@ describe('Wells Model', () => {
         leaseId: testLeaseId,
         wellName: 'Invalid Type Well',
         apiNumber: '42201123450002',
-        wellType: 'invalid_type', // Invalid enum value
-        status: 'active',
+        wellType: 'invalid_type' as const, // Invalid enum value
+        status: 'ACTIVE' as const,
       };
 
       await expect(
@@ -169,8 +169,8 @@ describe('Wells Model', () => {
         leaseId: testLeaseId,
         wellName: 'Invalid Status Well',
         apiNumber: '42201123450003',
-        wellType: 'oil',
-        status: 'invalid_status', // Invalid enum value
+        wellType: 'OIL' as const,
+        status: 'invalid_status' as const, // Invalid enum value
       };
 
       await expect(
@@ -186,8 +186,8 @@ describe('Wells Model', () => {
         leaseId: testLeaseId,
         wellName: 'Well 1',
         apiNumber,
-        wellType: 'oil',
-        status: 'active',
+        wellType: 'OIL' as const,
+        status: 'ACTIVE' as const,
       };
 
       const well2 = {
@@ -195,8 +195,8 @@ describe('Wells Model', () => {
         leaseId: testLeaseId,
         wellName: 'Well 2',
         apiNumber, // Same API number
-        wellType: 'gas',
-        status: 'active',
+        wellType: 'GAS' as const,
+        status: 'ACTIVE' as const,
       };
 
       // First insert should succeed
@@ -213,19 +213,19 @@ describe('Wells Model', () => {
         leaseId: testLeaseId,
         wellName: 'Status Update Well',
         apiNumber: '42201543210000',
-        wellType: 'oil',
-        status: 'drilling',
-        spudDate: new Date('2024-01-01'),
+        wellType: 'OIL' as const,
+        status: 'DRILLING' as const,
+        spudDate: '2024-01-01',
       };
 
       const created = await db.insert(wells).values(newWell).returning();
-      const wellId = created[0].id;
+      const wellId = created[0]!.id;
 
       // Complete the well
       const completionData = {
-        status: 'active',
-        completionDate: new Date('2024-02-01'),
-        totalDepth: 9000,
+        status: 'ACTIVE' as const,
+        completionDate: '2024-02-01',
+        totalDepth: '9000.00',
       };
 
       const updated = await db
@@ -235,10 +235,10 @@ describe('Wells Model', () => {
         .returning();
 
       expect(updated).toHaveLength(1);
-      expect(updated[0].status).toBe('active');
-      expect(updated[0].completionDate).toBeDefined();
-      expect(parseFloat(updated[0].totalDepth || '0')).toBe(9000);
-      expect(updated[0].updatedAt).not.toBe(created[0].updatedAt);
+      expect(updated[0]!.status).toBe('ACTIVE');
+      expect(updated[0]!.completionDate).toBeDefined();
+      expect(parseFloat(updated[0]!.totalDepth || '0')).toBe(9000);
+      expect(updated[0]!.updatedAt).not.toBe(created[0]!.updatedAt);
     });
 
     it('should validate API number format', async () => {
@@ -247,8 +247,8 @@ describe('Wells Model', () => {
         leaseId: testLeaseId,
         wellName: 'Invalid API Well',
         apiNumber: 'INVALID-API', // Invalid format
-        wellType: 'oil',
-        status: 'active',
+        wellType: 'OIL' as const,
+        status: 'ACTIVE' as const,
       };
 
       // Note: This test assumes API number format validation is implemented
@@ -257,7 +257,7 @@ describe('Wells Model', () => {
         .insert(wells)
         .values(wellWithInvalidAPI)
         .returning();
-      expect(result[0].apiNumber).toBe('INVALID-API');
+      expect(result[0]!.apiNumber).toBe('INVALID-API');
     });
 
     it('should handle GPS coordinates', async () => {
@@ -266,16 +266,16 @@ describe('Wells Model', () => {
         leaseId: testLeaseId,
         wellName: 'GPS Well',
         apiNumber: '42201999990000',
-        wellType: 'oil',
-        status: 'active',
-        latitude: 32.7767,
-        longitude: -96.797,
+        wellType: 'OIL' as const,
+        status: 'ACTIVE' as const,
+        latitude: '32.7767',
+        longitude: '-96.797',
       };
 
       const result = await db.insert(wells).values(wellWithGPS).returning();
 
-      expect(parseFloat(result[0].latitude)).toBe(wellWithGPS.latitude);
-      expect(parseFloat(result[0].longitude)).toBe(wellWithGPS.longitude);
+      expect(parseFloat(result[0]!.latitude || '0')).toBe(32.7767);
+      expect(parseFloat(result[0]!.longitude || '0')).toBe(-96.797);
     });
   });
 
@@ -290,27 +290,27 @@ describe('Wells Model', () => {
           leaseId: testLeaseId,
           wellName: 'Active Oil Well',
           apiNumber: '42201111110000',
-          wellType: 'oil',
-          status: 'active',
-          totalDepth: 8000,
+          wellType: 'OIL' as const,
+          status: 'ACTIVE' as const,
+          totalDepth: '8000.00',
         },
         {
           organizationId: testOrgId,
           leaseId: testLeaseId,
           wellName: 'Active Gas Well',
           apiNumber: '42201222220000',
-          wellType: 'gas',
-          status: 'active',
-          totalDepth: 7500,
+          wellType: 'GAS' as const,
+          status: 'ACTIVE' as const,
+          totalDepth: '7500.00',
         },
         {
           organizationId: testOrgId,
           leaseId: testLeaseId,
           wellName: 'Plugged Well',
           apiNumber: '42201333330000',
-          wellType: 'oil',
-          status: 'plugged',
-          totalDepth: 9000,
+          wellType: 'OIL' as const,
+          status: 'PLUGGED' as const,
+          totalDepth: '9000.00',
         },
       ]);
     });
@@ -323,20 +323,20 @@ describe('Wells Model', () => {
       const activeWells = await db
         .select()
         .from(wells)
-        .where(eq(wells.status, 'active'));
+        .where(eq(wells.status, 'ACTIVE'));
 
       expect(activeWells.length).toBeGreaterThanOrEqual(2);
-      expect(activeWells.every((well) => well.status === 'active')).toBe(true);
+      expect(activeWells.every((well) => well.status === 'ACTIVE')).toBe(true);
     });
 
     it('should find wells by type', async () => {
       const oilWells = await db
         .select()
         .from(wells)
-        .where(eq(wells.wellType, 'oil'));
+        .where(eq(wells.wellType, 'OIL'));
 
       expect(oilWells.length).toBeGreaterThanOrEqual(2);
-      expect(oilWells.every((well) => well.wellType === 'oil')).toBe(true);
+      expect(oilWells.every((well) => well.wellType === 'OIL')).toBe(true);
     });
 
     it('should find wells by lease', async () => {

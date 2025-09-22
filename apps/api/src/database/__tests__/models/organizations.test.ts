@@ -15,43 +15,50 @@ async function cleanupAllData() {
   // Delete in reverse dependency order, handling missing tables gracefully
   try {
     await db.delete(schema.productionRecords);
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, sonarjs/no-ignored-exceptions
+  } catch (_error) {
     // Ignore if table doesn't exist
   }
 
   try {
     await db.delete(schema.leasePartners);
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, sonarjs/no-ignored-exceptions
+  } catch (_error) {
     // Ignore if table doesn't exist
   }
 
   try {
     await db.delete(schema.partners);
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, sonarjs/no-ignored-exceptions
+  } catch (_error) {
     // Ignore if table doesn't exist
   }
 
   try {
     await db.delete(schema.wells);
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, sonarjs/no-ignored-exceptions
+  } catch (_error) {
     // Ignore if table doesn't exist
   }
 
   try {
     await db.delete(schema.leases);
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, sonarjs/no-ignored-exceptions
+  } catch (_error) {
     // Ignore if table doesn't exist
   }
 
   try {
     await db.delete(schema.users);
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, sonarjs/no-ignored-exceptions
+  } catch (_error) {
     // Ignore if table doesn't exist
   }
 
   try {
     await db.delete(schema.organizations);
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, sonarjs/no-ignored-exceptions
+  } catch (_error) {
     // Ignore if table doesn't exist
   }
 }
@@ -126,11 +133,11 @@ describe('Organizations Model', () => {
       const result = await db.insert(organizations).values(newOrg).returning();
 
       expect(result).toHaveLength(1);
-      expect(result[0].name).toBe(newOrg.name);
-      expect(result[0].taxId).toBe(newOrg.taxId);
-      expect(result[0].id).toBeDefined();
-      expect(result[0].createdAt).toBeDefined();
-      expect(result[0].updatedAt).toBeDefined();
+      expect(result[0]!.name).toBe(newOrg.name);
+      expect(result[0]!.taxId).toBe(newOrg.taxId);
+      expect(result[0]!.id).toBeDefined();
+      expect(result[0]!.createdAt).toBeDefined();
+      expect(result[0]!.updatedAt).toBeDefined();
     });
 
     it('should enforce required fields', async () => {
@@ -156,7 +163,7 @@ describe('Organizations Model', () => {
         .values(invalidOrg)
         .returning();
       expect(result).toHaveLength(1);
-      expect(result[0].name).toBe('Test Company');
+      expect(result[0]!.name).toBe('Test Company');
     });
 
     it('should update organization data', async () => {
@@ -167,7 +174,7 @@ describe('Organizations Model', () => {
       };
 
       const created = await db.insert(organizations).values(newOrg).returning();
-      const orgId = created[0].id;
+      const orgId = created[0]!.id;
 
       // Update the organization
       const updatedData = {
@@ -182,9 +189,9 @@ describe('Organizations Model', () => {
         .returning();
 
       expect(updated).toHaveLength(1);
-      expect(updated[0].name).toBe(updatedData.name);
-      expect(updated[0].phone).toBe(updatedData.phone);
-      expect(updated[0].updatedAt).not.toBe(created[0].updatedAt);
+      expect(updated[0]!.name).toBe(updatedData.name);
+      expect(updated[0]!.phone).toBe(updatedData.phone);
+      expect(updated[0]!.updatedAt).not.toBe(created[0]!.updatedAt);
     });
 
     it('should delete organization', async () => {
@@ -195,7 +202,7 @@ describe('Organizations Model', () => {
       };
 
       const created = await db.insert(organizations).values(newOrg).returning();
-      const orgId = created[0].id;
+      const orgId = created[0]!.id;
 
       // Delete the organization
       await db.delete(organizations).where(eq(organizations.id, orgId));
@@ -228,8 +235,8 @@ describe('Organizations Model', () => {
         .values(orgWithAddress)
         .returning();
 
-      expect(result[0].address).toEqual(orgWithAddress.address);
-      expect(typeof result[0].address).toBe('object');
+      expect(result[0]!.address).toEqual(orgWithAddress.address);
+      expect(typeof result[0]!.address).toBe('object');
     });
 
     it('should allow duplicate tax IDs for now', async () => {
@@ -250,7 +257,7 @@ describe('Organizations Model', () => {
       const result = await db.insert(organizations).values(org2).returning();
 
       expect(result).toHaveLength(1);
-      expect(result[0].taxId).toBe(taxId);
+      expect(result[0]!.taxId).toBe(taxId);
     });
   });
 
@@ -286,7 +293,7 @@ describe('Organizations Model', () => {
         .where(eq(organizations.name, 'Alpha Oil Corp'));
 
       expect(results).toHaveLength(1);
-      expect(results[0].name).toBe('Alpha Oil Corp');
+      expect(results[0]!.name).toBe('Alpha Oil Corp');
     });
 
     it('should search organizations by name pattern', async () => {
@@ -296,7 +303,7 @@ describe('Organizations Model', () => {
         .where(eq(organizations.name, 'Alpha Oil Corp'));
 
       expect(results).toHaveLength(1);
-      expect(results[0].name).toBe('Alpha Oil Corp');
+      expect(results[0]!.name).toBe('Alpha Oil Corp');
     });
 
     it('should count all organizations', async () => {

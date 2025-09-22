@@ -31,6 +31,9 @@ describe('Users Model', () => {
         taxId: '99-9999999',
       })
       .returning();
+    if (!org[0]) {
+      throw new Error('Failed to create test organization');
+    }
     testOrgId = org[0].id;
   });
 
@@ -87,20 +90,21 @@ describe('Users Model', () => {
         email: 'john.doe@testoil.com',
         firstName: 'John',
         lastName: 'Doe',
-        role: 'pumper',
+        role: 'pumper' as const,
       };
 
       const result = await db.insert(users).values(newUser).returning();
 
       expect(result).toHaveLength(1);
-      expect(result[0].email).toBe(newUser.email);
-      expect(result[0].firstName).toBe(newUser.firstName);
-      expect(result[0].lastName).toBe(newUser.lastName);
-      expect(result[0].role).toBe(newUser.role);
-      expect(result[0].isActive).toBe(true); // Default value
-      expect(result[0].id).toBeDefined();
-      expect(result[0].createdAt).toBeDefined();
-      expect(result[0].updatedAt).toBeDefined();
+      expect(result[0]!.email).toBe(newUser.email);
+      expect(result[0]!.firstName).toBe(newUser.firstName);
+      expect(result[0]!.lastName).toBe(newUser.lastName);
+      expect(result[0]!.role).toBe(newUser.role);
+      expect(result[0]!.isActive).toBe(true); // Default value
+      expect(result[0]).toBeDefined();
+      expect(result[0]!.id).toBeDefined();
+      expect(result[0]!.createdAt).toBeDefined();
+      expect(result[0]!.updatedAt).toBeDefined();
     });
 
     it('should enforce required fields', async () => {
@@ -139,7 +143,7 @@ describe('Users Model', () => {
         email,
         firstName: 'John',
         lastName: 'Doe',
-        role: 'pumper',
+        role: 'pumper' as const,
       };
 
       const user2 = {
@@ -147,7 +151,7 @@ describe('Users Model', () => {
         email, // Same email
         firstName: 'Jane',
         lastName: 'Smith',
-        role: 'manager',
+        role: 'manager' as const,
       };
 
       // First insert should succeed
@@ -164,17 +168,17 @@ describe('Users Model', () => {
         email: 'update.test@testoil.com',
         firstName: 'Original',
         lastName: 'Name',
-        role: 'pumper',
+        role: 'pumper' as const,
       };
 
       const created = await db.insert(users).values(newUser).returning();
-      const userId = created[0].id;
+      const userId = created[0]!.id;
 
       // Update the user
       const updatedData = {
         firstName: 'Updated',
         lastName: 'Name',
-        role: 'manager',
+        role: 'manager' as const,
         isActive: false,
       };
 
@@ -185,10 +189,10 @@ describe('Users Model', () => {
         .returning();
 
       expect(updated).toHaveLength(1);
-      expect(updated[0].firstName).toBe(updatedData.firstName);
-      expect(updated[0].role).toBe(updatedData.role);
-      expect(updated[0].isActive).toBe(updatedData.isActive);
-      expect(updated[0].updatedAt).not.toBe(created[0].updatedAt);
+      expect(updated[0]?.firstName).toBe(updatedData.firstName);
+      expect(updated[0]?.role).toBe(updatedData.role);
+      expect(updated[0]?.isActive).toBe(updatedData.isActive);
+      expect(updated[0]?.updatedAt).not.toBe(created[0]!.updatedAt);
     });
 
     it('should track last login timestamp', async () => {
@@ -197,11 +201,11 @@ describe('Users Model', () => {
         email: 'login.test@testoil.com',
         firstName: 'Login',
         lastName: 'Test',
-        role: 'pumper',
+        role: 'pumper' as const,
       };
 
       const created = await db.insert(users).values(newUser).returning();
-      const userId = created[0].id;
+      const userId = created[0]!.id;
 
       // Simulate login
       const loginTime = new Date();
@@ -212,8 +216,8 @@ describe('Users Model', () => {
 
       const updated = await db.select().from(users).where(eq(users.id, userId));
 
-      expect(updated[0].lastLoginAt).toBeDefined();
-      expect(new Date(updated[0].lastLoginAt!).getTime()).toBeCloseTo(
+      expect(updated[0]!.lastLoginAt).toBeDefined();
+      expect(new Date(updated[0]!.lastLoginAt!).getTime()).toBeCloseTo(
         loginTime.getTime(),
         -3,
       );
@@ -225,11 +229,11 @@ describe('Users Model', () => {
         email: 'deactivate.test@testoil.com',
         firstName: 'Deactivate',
         lastName: 'Test',
-        role: 'pumper',
+        role: 'pumper' as const,
       };
 
       const created = await db.insert(users).values(newUser).returning();
-      const userId = created[0].id;
+      const userId = created[0]!.id;
 
       // Deactivate user
       await db
@@ -243,7 +247,7 @@ describe('Users Model', () => {
         .where(eq(users.id, userId));
 
       expect(deactivated).toHaveLength(1);
-      expect(deactivated[0].isActive).toBe(false);
+      expect(deactivated[0]!.isActive).toBe(false);
     });
   });
 

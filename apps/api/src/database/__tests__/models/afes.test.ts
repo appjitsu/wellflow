@@ -31,11 +31,10 @@ describe('AFEs Model', () => {
       .insert(organizations)
       .values({
         name: 'Test AFE Organization',
-        type: 'operator',
         taxId: '77-7777777',
       })
       .returning();
-    testOrgId = org[0].id;
+    testOrgId = org[0]!.id;
 
     // Create test user
     const user = await db
@@ -48,7 +47,7 @@ describe('AFEs Model', () => {
         role: 'owner', // Use valid enum value
       })
       .returning();
-    testUserId = user[0].id;
+    testUserId = user[0]!.id;
 
     // Create test lease
     const lease = await db
@@ -61,10 +60,10 @@ describe('AFEs Model', () => {
         lessee: 'Test AFE Organization',
         acreage: '320.0000',
         royaltyRate: '0.1875',
-        status: 'active',
+        status: 'ACTIVE',
       })
       .returning();
-    testLeaseId = lease[0].id;
+    testLeaseId = lease[0]!.id;
 
     // Create test well
     const well = await db
@@ -74,11 +73,11 @@ describe('AFEs Model', () => {
         leaseId: testLeaseId,
         wellName: 'Test AFE Well #1',
         apiNumber: '42329123450000',
-        wellType: 'oil',
-        status: 'drilling', // Valid enum value for AFE context
+        wellType: 'OIL',
+        status: 'DRILLING', // Valid enum value for AFE context
       })
       .returning();
-    testWellId = well[0].id;
+    testWellId = well[0]!.id;
   });
 
   afterAll(async () => {
@@ -142,25 +141,25 @@ describe('AFEs Model', () => {
         organizationId: testOrgId,
         wellId: testWellId,
         afeNumber: 'AFE-2024-001',
-        afeType: 'drilling',
+        afeType: 'drilling' as const,
         description: 'Drill new horizontal oil well',
-        totalEstimatedCost: 2500000.0, // Correct field name
-        status: 'draft',
+        totalEstimatedCost: '2500000.00', // Correct field name
+        status: 'draft' as const,
       };
 
       const result = await db.insert(afes).values(newAfe).returning();
 
       expect(result).toHaveLength(1);
-      expect(result[0].afeNumber).toBe(newAfe.afeNumber);
-      expect(result[0].afeType).toBe(newAfe.afeType);
-      expect(result[0].description).toBe(newAfe.description);
-      expect(parseFloat(result[0].totalEstimatedCost || '0')).toBe(
-        newAfe.totalEstimatedCost,
+      expect(result[0]!.afeNumber).toBe(newAfe.afeNumber);
+      expect(result[0]!.afeType).toBe(newAfe.afeType);
+      expect(result[0]!.description).toBe(newAfe.description);
+      expect(parseFloat(result[0]!.totalEstimatedCost || '0')).toBe(
+        parseFloat(newAfe.totalEstimatedCost),
       );
-      expect(result[0].status).toBe(newAfe.status);
-      expect(result[0].id).toBeDefined();
-      expect(result[0].createdAt).toBeDefined();
-      expect(result[0].updatedAt).toBeDefined();
+      expect(result[0]!.status).toBe(newAfe.status);
+      expect(result[0]!.id).toBeDefined();
+      expect(result[0]!.createdAt).toBeDefined();
+      expect(result[0]!.updatedAt).toBeDefined();
     });
 
     it('should enforce required fields', async () => {
@@ -168,10 +167,10 @@ describe('AFEs Model', () => {
         organizationId: testOrgId,
         wellId: testWellId,
         // Missing required afeNumber
-        afeType: 'drilling',
+        afeType: 'drilling' as const,
         description: 'Test AFE',
-        totalEstimatedCost: 1000000.0,
-        status: 'draft',
+        totalEstimatedCost: '1000000.00',
+        status: 'draft' as const,
       };
 
       await expect(db.insert(afes).values(invalidAfe as any)).rejects.toThrow();
@@ -185,14 +184,21 @@ describe('AFEs Model', () => {
           organizationId: testOrgId,
           wellId: testWellId,
           afeNumber: `AFE-TYPE-${afeType.toUpperCase()}`,
-          afeType,
+          afeType: afeType as
+            | 'drilling'
+            | 'completion'
+            | 'workover'
+            | 'facility',
           description: `Test AFE for ${afeType}`,
-          totalEstimatedCost: 1000000.0,
-          status: 'draft',
+          totalEstimatedCost: '1000000.00',
+          status: 'draft' as const,
         };
 
-        const result = await db.insert(afes).values(afe).returning();
-        expect(result[0].afeType).toBe(afeType);
+        const result = await db
+          .insert(afes)
+          .values(afe as any)
+          .returning();
+        expect(result[0]!.afeType).toBe(afeType);
       }
     });
 
@@ -210,14 +216,17 @@ describe('AFEs Model', () => {
           organizationId: testOrgId,
           wellId: testWellId,
           afeNumber: `AFE-STATUS-${status.toUpperCase()}`,
-          afeType: 'drilling',
+          afeType: 'drilling' as const,
           description: `Test AFE with ${status} status`,
-          totalEstimatedCost: 1000000.0,
+          totalEstimatedCost: '1000000.00',
           status,
         };
 
-        const result = await db.insert(afes).values(afe).returning();
-        expect(result[0].status).toBe(status);
+        const result = await db
+          .insert(afes)
+          .values(afe as any)
+          .returning();
+        expect(result[0]!.status).toBe(status);
       }
     });
 
@@ -228,20 +237,20 @@ describe('AFEs Model', () => {
         organizationId: testOrgId,
         wellId: testWellId,
         afeNumber,
-        afeType: 'drilling',
+        afeType: 'drilling' as const,
         description: 'First AFE',
-        totalEstimatedCost: 1000000.0,
-        status: 'draft',
+        totalEstimatedCost: '1000000.00',
+        status: 'draft' as const,
       };
 
       const afe2 = {
         organizationId: testOrgId,
         wellId: testWellId,
         afeNumber, // Same AFE number
-        afeType: 'completion',
+        afeType: 'completion' as const,
         description: 'Second AFE',
-        totalEstimatedCost: 500000.0,
-        status: 'draft',
+        totalEstimatedCost: '500000.00',
+        status: 'draft' as const,
       };
 
       // First insert should succeed
@@ -257,19 +266,19 @@ describe('AFEs Model', () => {
         organizationId: testOrgId,
         wellId: testWellId,
         afeNumber: 'AFE-WORKFLOW-001',
-        afeType: 'drilling',
+        afeType: 'drilling' as const,
         description: 'Workflow test AFE',
-        totalEstimatedCost: 1500000.0,
-        status: 'draft',
+        totalEstimatedCost: '1500000.00',
+        status: 'draft' as const,
       };
 
       const created = await db.insert(afes).values(draftAfe).returning();
-      const afeId = created[0].id;
+      const afeId = created[0]!.id;
 
       // Submit for approval
       await db
         .update(afes)
-        .set({ status: 'submitted' })
+        .set({ status: 'submitted' as const })
         .where(eq(afes.id, afeId));
 
       // Approve AFE
@@ -277,14 +286,14 @@ describe('AFEs Model', () => {
       const approved = await db
         .update(afes)
         .set({
-          status: 'approved',
-          approvalDate: approvalDate,
+          status: 'approved' as const,
+          approvalDate: approvalDate.toISOString(),
         })
         .where(eq(afes.id, afeId))
         .returning();
 
-      expect(approved[0].status).toBe('approved');
-      expect(approved[0].approvalDate).toBeDefined();
+      expect(approved[0]!.status).toBe('approved');
+      expect(approved[0]!.approvalDate).toBeDefined();
     });
 
     it('should track actual costs vs estimated costs', async () => {
@@ -292,35 +301,37 @@ describe('AFEs Model', () => {
         organizationId: testOrgId,
         wellId: testWellId,
         afeNumber: 'AFE-COST-001',
-        afeType: 'drilling',
+        afeType: 'drilling' as const,
         description: 'Cost tracking AFE',
-        totalEstimatedCost: 2000000.0,
-        status: 'approved',
-        approvalDate: new Date('2024-01-15'),
-        effectiveDate: new Date('2024-02-01'),
+        totalEstimatedCost: '2000000.00',
+        status: 'approved' as const,
+        approvalDate: '2024-01-15',
+        effectiveDate: '2024-02-01',
       };
 
       const created = await db.insert(afes).values(afe).returning();
-      const afeId = created[0].id;
+      const afeId = created[0]!.id;
 
       // Update with actual costs
-      const actualCost = 2150000.0; // Over budget
+      const actualCost = '2150000.00'; // Over budget as string for decimal type
 
       const updated = await db
         .update(afes)
         .set({
           actualCost: actualCost,
-          status: 'closed', // Use valid status from schema
+          status: 'closed' as const, // Use valid status from schema
         })
         .where(eq(afes.id, afeId))
         .returning();
 
-      expect(parseFloat(updated[0].actualCost || '0')).toBe(actualCost);
-      expect(updated[0].status).toBe('closed');
+      expect(parseFloat(updated[0]!.actualCost || '0')).toBe(actualCost);
+      expect(updated[0]!.status).toBe('closed');
 
       // Calculate variance (PostgreSQL returns decimals as strings)
-      const actualCostNum = parseFloat(updated[0].actualCost || '0');
-      const estimatedCostNum = parseFloat(updated[0].totalEstimatedCost || '0');
+      const actualCostNum = parseFloat(updated[0]!.actualCost || '0');
+      const estimatedCostNum = parseFloat(
+        updated[0]!.totalEstimatedCost || '0',
+      );
       const variance = actualCostNum - estimatedCostNum;
       expect(variance).toBe(150000.0); // 7.5% over budget
     });
@@ -330,14 +341,14 @@ describe('AFEs Model', () => {
         organizationId: testOrgId,
         wellId: testWellId,
         afeNumber: 'AFE-CANCEL-001',
-        afeType: 'drilling',
+        afeType: 'drilling' as const,
         description: 'AFE to be cancelled',
-        totalEstimatedCost: 1000000.0,
-        status: 'draft',
+        totalEstimatedCost: '1000000.00',
+        status: 'draft' as const,
       };
 
       const created = await db.insert(afes).values(afe).returning();
-      const afeId = created[0].id;
+      const afeId = created[0]!.id;
 
       // Cancel AFE (using 'rejected' as closest valid status)
       const cancelled = await db
@@ -346,7 +357,7 @@ describe('AFEs Model', () => {
         .where(eq(afes.id, afeId))
         .returning();
 
-      expect(cancelled[0].status).toBe('rejected');
+      expect(cancelled[0]!.status).toBe('rejected');
     });
   });
 
@@ -360,29 +371,29 @@ describe('AFEs Model', () => {
           organizationId: testOrgId,
           wellId: testWellId,
           afeNumber: 'AFE-QUERY-001',
-          afeType: 'drilling',
+          afeType: 'drilling' as const,
           description: 'Drilling AFE',
-          totalEstimatedCost: 2000000.0,
-          status: 'approved',
+          totalEstimatedCost: '2000000.00',
+          status: 'approved' as const,
         },
         {
           organizationId: testOrgId,
           wellId: testWellId,
           afeNumber: 'AFE-QUERY-002',
-          afeType: 'completion',
+          afeType: 'completion' as const,
           description: 'Completion AFE',
-          totalEstimatedCost: 800000.0,
-          status: 'submitted', // Use valid status
+          totalEstimatedCost: '800000.00',
+          status: 'submitted' as const, // Use valid status
         },
         {
           organizationId: testOrgId,
           wellId: testWellId,
           afeNumber: 'AFE-QUERY-003',
-          afeType: 'workover',
+          afeType: 'workover' as const,
           description: 'Workover AFE',
-          totalEstimatedCost: 300000.0,
-          status: 'closed', // Use valid status
-          actualCost: 285000.0,
+          totalEstimatedCost: '300000.00',
+          status: 'closed' as const, // Use valid status
+          actualCost: '285000.00',
         },
       ]);
     });

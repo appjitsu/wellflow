@@ -33,7 +33,7 @@ describe('Production Records Model', () => {
         taxId: '66-6666666',
       })
       .returning();
-    testOrgId = org[0].id;
+    testOrgId = org[0]!.id;
 
     // Create test lease
     const lease = await db
@@ -46,10 +46,10 @@ describe('Production Records Model', () => {
         lessee: 'Test Production Organization',
         acreage: '640.0000',
         royaltyRate: '0.1875',
-        status: 'active',
+        status: 'ACTIVE',
       })
       .returning();
-    testLeaseId = lease[0].id;
+    testLeaseId = lease[0]!.id;
 
     // Create test well
     const well = await db
@@ -59,12 +59,12 @@ describe('Production Records Model', () => {
         leaseId: testLeaseId,
         wellName: 'Test Production Well #1',
         apiNumber: '42389543210000',
-        wellType: 'oil',
-        status: 'active',
-        completionDate: new Date('2023-12-01'),
+        wellType: 'OIL',
+        status: 'ACTIVE',
+        completionDate: '2023-12-01',
       })
       .returning();
-    testWellId = well[0].id;
+    testWellId = well[0]!.id;
   });
 
   afterAll(async () => {
@@ -126,7 +126,7 @@ describe('Production Records Model', () => {
       const newRecord = {
         organizationId: testOrgId,
         wellId: testWellId,
-        productionDate: new Date('2024-01-01'),
+        productionDate: '2024-01-01',
         oilVolume: '1250.50',
         gasVolume: '2500.00',
         waterVolume: '150.00',
@@ -142,15 +142,15 @@ describe('Production Records Model', () => {
         .returning();
 
       expect(result).toHaveLength(1);
-      expect(result[0].oilVolume).toBe(newRecord.oilVolume);
-      expect(result[0].gasVolume).toBe(newRecord.gasVolume);
-      expect(result[0].waterVolume).toBe(newRecord.waterVolume);
-      expect(result[0].oilPrice).toBe('75.2500'); // PostgreSQL returns 4 decimal places for price
-      expect(result[0].gasPrice).toBe('3.5000'); // PostgreSQL returns 4 decimal places for price
-      expect(result[0].runTicket).toBe(newRecord.runTicket);
-      expect(result[0].id).toBeDefined();
-      expect(result[0].createdAt).toBeDefined();
-      expect(result[0].updatedAt).toBeDefined();
+      expect(result[0]!.oilVolume).toBe(newRecord.oilVolume);
+      expect(result[0]!.gasVolume).toBe(newRecord.gasVolume);
+      expect(result[0]!.waterVolume).toBe(newRecord.waterVolume);
+      expect(result[0]!.oilPrice).toBe('75.2500'); // PostgreSQL returns 4 decimal places for price
+      expect(result[0]!.gasPrice).toBe('3.5000'); // PostgreSQL returns 4 decimal places for price
+      expect(result[0]!.runTicket).toBe(newRecord.runTicket);
+      expect(result[0]!.id).toBeDefined();
+      expect(result[0]!.createdAt).toBeDefined();
+      expect(result[0]!.updatedAt).toBeDefined();
     });
 
     it('should enforce required fields', async () => {
@@ -172,7 +172,7 @@ describe('Production Records Model', () => {
       const invalidRecord = {
         organizationId: testOrgId,
         wellId: testWellId,
-        productionDate: new Date('2024-01-01'),
+        productionDate: '2024-01-01',
         oilVolume: '-100.00', // Negative production
         gasVolume: '2500.00',
         waterVolume: '150.00',
@@ -184,14 +184,14 @@ describe('Production Records Model', () => {
         .insert(productionRecords)
         .values(invalidRecord)
         .returning();
-      expect(result[0].oilVolume).toBe('-100.00');
+      expect(result[0]!.oilVolume).toBe('-100.00');
     });
 
     it('should validate production data integrity', async () => {
       const validRecord = {
         organizationId: testOrgId,
         wellId: testWellId,
-        productionDate: new Date('2024-01-01'),
+        productionDate: '2024-01-01',
         oilVolume: '1000.00',
         gasVolume: '2000.00',
         waterVolume: '100.00',
@@ -204,12 +204,12 @@ describe('Production Records Model', () => {
         .insert(productionRecords)
         .values(validRecord)
         .returning();
-      expect(result[0].oilVolume).toBe('1000.00');
-      expect(result[0].gasVolume).toBe('2000.00');
+      expect(result[0]!.oilVolume).toBe('1000.00');
+      expect(result[0]!.gasVolume).toBe('2000.00');
     });
 
     it('should enforce unique well-date constraint', async () => {
-      const productionDate = new Date('2024-02-01');
+      const productionDate = '2024-02-01';
 
       const record1 = {
         organizationId: testOrgId,
@@ -243,7 +243,7 @@ describe('Production Records Model', () => {
       const initialRecord = {
         organizationId: testOrgId,
         wellId: testWellId,
-        productionDate: new Date('2024-03-01'),
+        productionDate: '2024-03-01',
         oilVolume: '1000.00',
         gasVolume: '2000.00',
         waterVolume: '100.00',
@@ -255,7 +255,7 @@ describe('Production Records Model', () => {
         .insert(productionRecords)
         .values(initialRecord)
         .returning();
-      const recordId = created[0].id;
+      const recordId = created[0]!.id;
 
       // Update with revised production data
       const updatedData = {
@@ -273,19 +273,19 @@ describe('Production Records Model', () => {
         .where(eq(productionRecords.id, recordId))
         .returning();
 
-      expect(updated[0].oilVolume).toBe(updatedData.oilVolume);
-      expect(updated[0].gasVolume).toBe(updatedData.gasVolume);
-      expect(updated[0].waterVolume).toBe(updatedData.waterVolume);
-      expect(updated[0].oilPrice).toBe('78.5000'); // PostgreSQL returns 4 decimal places for price
-      expect(updated[0].comments).toBe(updatedData.comments);
-      expect(updated[0].updatedAt).not.toBe(created[0].updatedAt);
+      expect(updated[0]!.oilVolume).toBe(updatedData.oilVolume);
+      expect(updated[0]!.gasVolume).toBe(updatedData.gasVolume);
+      expect(updated[0]!.waterVolume).toBe(updatedData.waterVolume);
+      expect(updated[0]!.oilPrice).toBe('78.5000'); // PostgreSQL returns 4 decimal places for price
+      expect(updated[0]!.comments).toBe(updatedData.comments);
+      expect(updated[0]!.updatedAt).not.toBe(created[0]!.updatedAt);
     });
 
     it('should store production volumes with decimal precision', async () => {
       const record = {
         organizationId: testOrgId,
         wellId: testWellId,
-        productionDate: new Date('2024-04-01'),
+        productionDate: '2024-04-01',
         oilVolume: '3100.50', // barrels with decimal
         gasVolume: '6200.75', // mcf with decimal
         waterVolume: '310.25', // barrels with decimal
@@ -299,18 +299,18 @@ describe('Production Records Model', () => {
         .returning();
 
       // Verify decimal precision is maintained
-      expect(result[0].oilVolume).toBe('3100.50');
-      expect(result[0].gasVolume).toBe('6200.75');
-      expect(result[0].waterVolume).toBe('310.25');
-      expect(result[0].oilPrice).toBe('82.1250'); // 4 decimal places for price
-      expect(result[0].gasPrice).toBe('4.3750'); // 4 decimal places for price
+      expect(result[0]!.oilVolume).toBe('3100.50');
+      expect(result[0]!.gasVolume).toBe('6200.75');
+      expect(result[0]!.waterVolume).toBe('310.25');
+      expect(result[0]!.oilPrice).toBe('82.1250'); // 4 decimal places for price
+      expect(result[0]!.gasPrice).toBe('4.3750'); // 4 decimal places for price
     });
 
     it('should handle zero production days', async () => {
       const zeroRecord = {
         organizationId: testOrgId,
         wellId: testWellId,
-        productionDate: new Date('2024-05-01'),
+        productionDate: '2024-05-01',
         oilVolume: '0.00',
         gasVolume: '0.00',
         waterVolume: '0.00',
@@ -322,10 +322,10 @@ describe('Production Records Model', () => {
         .values(zeroRecord)
         .returning();
 
-      expect(result[0].oilVolume).toBe('0.00');
-      expect(result[0].gasVolume).toBe('0.00');
-      expect(result[0].waterVolume).toBe('0.00');
-      expect(result[0].comments).toBe('Well was shut in');
+      expect(result[0]!.oilVolume).toBe('0.00');
+      expect(result[0]!.gasVolume).toBe('0.00');
+      expect(result[0]!.waterVolume).toBe('0.00');
+      expect(result[0]!.comments).toBe('Well was shut in');
     });
   });
 
@@ -385,7 +385,7 @@ describe('Production Records Model', () => {
         testData.map((data) => ({
           organizationId: testOrgId,
           wellId: testWellId,
-          productionDate: new Date(data.date),
+          productionDate: data.date,
           oilVolume: data.oil,
           gasVolume: data.gas,
           waterVolume: data.water,
@@ -402,8 +402,8 @@ describe('Production Records Model', () => {
     });
 
     it('should find production records by date range', async () => {
-      const startDate = new Date('2024-01-02');
-      const endDate = new Date('2024-01-04');
+      const startDate = '2024-01-02';
+      const endDate = '2024-01-04';
 
       const records = await db
         .select()
@@ -450,16 +450,19 @@ describe('Production Records Model', () => {
         .from(productionRecords)
         .where(eq(productionRecords.wellId, testWellId));
 
-      const peakOilRecord = allRecords.reduce((max, record) =>
-        parseFloat(record.oilVolume || '0') > parseFloat(max.oilVolume || '0')
+      const peakOilRecord = allRecords.reduce((max, record) => {
+        expect(max).toBeDefined();
+        return parseFloat(record.oilVolume || '0') >
+          parseFloat(max!.oilVolume || '0')
           ? record
-          : max,
-      );
+          : max;
+      }, allRecords[0]);
 
-      expect(peakOilRecord.oilVolume).toBe('120.00');
+      expect(peakOilRecord).toBeDefined();
+      expect(peakOilRecord!.oilVolume).toBe('120.00');
       // PostgreSQL returns dates as strings, but timezone conversion may affect the date
       // Just check that we got the record with the highest oil volume
-      expect(parseFloat(peakOilRecord.oilVolume)).toBe(120.0);
+      expect(parseFloat(peakOilRecord!.oilVolume || '0')).toBe(120.0);
     });
 
     it('should calculate production decline rate', async () => {
@@ -475,9 +478,10 @@ describe('Production Records Model', () => {
           new Date(b.productionDate).getTime(),
       );
 
-      const firstDay = parseFloat(allRecords[0].oilVolume || '0');
+      const firstDay = parseFloat(allRecords[0]!.oilVolume || '0');
+      expect(allRecords[allRecords.length - 1]).toBeDefined();
       const lastDay = parseFloat(
-        allRecords[allRecords.length - 1].oilVolume || '0',
+        allRecords[allRecords.length - 1]!.oilVolume || '0',
       );
       const declineRate = ((firstDay - lastDay) / firstDay) * 100;
 
@@ -489,7 +493,7 @@ describe('Production Records Model', () => {
       await db.insert(productionRecords).values({
         organizationId: testOrgId,
         wellId: testWellId,
-        productionDate: new Date('2024-01-07'),
+        productionDate: '2024-01-07',
         oilVolume: '0.00',
         gasVolume: '0.00',
         waterVolume: '0.00',
@@ -507,7 +511,7 @@ describe('Production Records Model', () => {
         );
 
       expect(zeroRecords).toHaveLength(1);
-      expect(zeroRecords[0].comments).toBe('Well shut in for maintenance');
+      expect(zeroRecords[0]!.comments).toBe('Well shut in for maintenance');
     });
   });
 });

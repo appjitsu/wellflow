@@ -39,11 +39,10 @@ describe('Revenue Distributions Model', () => {
       .insert(organizations)
       .values({
         name: 'Test Revenue Organization',
-        type: 'operator',
         taxId: '55-5555555',
       })
       .returning();
-    testOrgId = org[0].id;
+    testOrgId = org[0]!.id;
 
     // Create test lease
     const lease = await db
@@ -56,10 +55,10 @@ describe('Revenue Distributions Model', () => {
         lessee: 'Test Revenue Organization',
         acreage: '480.0000',
         royaltyRate: '0.1875',
-        status: 'active',
+        status: 'ACTIVE',
       })
       .returning();
-    testLeaseId = lease[0].id;
+    testLeaseId = lease[0]!.id;
 
     // Create test well
     const well = await db
@@ -69,11 +68,11 @@ describe('Revenue Distributions Model', () => {
         leaseId: testLeaseId,
         wellName: 'Test Revenue Well #1',
         apiNumber: '42255987650000',
-        wellType: 'oil',
-        status: 'active',
+        wellType: 'OIL',
+        status: 'ACTIVE',
       })
       .returning();
-    testWellId = well[0].id;
+    testWellId = well[0]!.id;
 
     // Create test partner
     const partner = await db
@@ -82,11 +81,10 @@ describe('Revenue Distributions Model', () => {
         organizationId: testOrgId,
         partnerName: 'Test Revenue Partner',
         partnerCode: 'REV001',
-        partnerType: 'working_interest',
         contactEmail: 'partner@revenue.test',
       })
       .returning();
-    testPartnerId = partner[0].id;
+    testPartnerId = partner[0]!.id;
 
     // Create test division order
     const divisionOrder = await db
@@ -95,12 +93,12 @@ describe('Revenue Distributions Model', () => {
         organizationId: testOrgId,
         wellId: testWellId,
         partnerId: testPartnerId,
-        decimalInterest: 0.125, // 12.5% working interest
-        effectiveDate: new Date('2024-01-01'),
+        decimalInterest: '0.125', // 12.5% working interest
+        effectiveDate: '2024-01-01',
         isActive: true,
       })
       .returning();
-    testDivisionOrderId = divisionOrder[0].id;
+    testDivisionOrderId = divisionOrder[0]!.id;
   });
 
   afterAll(async () => {
@@ -170,14 +168,14 @@ describe('Revenue Distributions Model', () => {
         wellId: testWellId,
         partnerId: testPartnerId,
         divisionOrderId: testDivisionOrderId,
-        productionMonth: new Date('2024-01-01'),
-        totalRevenue: 125000.0,
-        netRevenue: 110000.0,
-        severanceTax: 7500.0,
-        adValorem: 2500.0,
-        transportationCosts: 3000.0,
-        processingCosts: 2000.0,
-        otherDeductions: 0.0,
+        productionMonth: '2024-01-01',
+        totalRevenue: '125000.00',
+        netRevenue: '110000.00',
+        severanceTax: '7500.00',
+        adValorem: '2500.00',
+        transportationCosts: '3000.00',
+        processingCosts: '2000.00',
+        otherDeductions: '0.00',
       };
 
       const result = await db
@@ -186,21 +184,13 @@ describe('Revenue Distributions Model', () => {
         .returning();
 
       expect(result).toHaveLength(1);
-      expect(parseFloat(result[0].totalRevenue || '0')).toBe(
-        newDistribution.totalRevenue,
-      );
-      expect(parseFloat(result[0].netRevenue || '0')).toBe(
-        newDistribution.netRevenue,
-      );
-      expect(parseFloat(result[0].severanceTax || '0')).toBe(
-        newDistribution.severanceTax,
-      );
-      expect(parseFloat(result[0].adValorem || '0')).toBe(
-        newDistribution.adValorem,
-      );
-      expect(result[0].id).toBeDefined();
-      expect(result[0].createdAt).toBeDefined();
-      expect(result[0].updatedAt).toBeDefined();
+      expect(parseFloat(result[0]!.totalRevenue || '0')).toBe(125000.0);
+      expect(parseFloat(result[0]!.netRevenue || '0')).toBe(110000.0);
+      expect(parseFloat(result[0]!.severanceTax || '0')).toBe(7500.0);
+      expect(parseFloat(result[0]!.adValorem || '0')).toBe(2500.0);
+      expect(result[0]!.id).toBeDefined();
+      expect(result[0]!.createdAt).toBeDefined();
+      expect(result[0]!.updatedAt).toBeDefined();
     });
 
     it('should enforce required fields', async () => {
@@ -209,7 +199,7 @@ describe('Revenue Distributions Model', () => {
         wellId: testWellId,
         partnerId: testPartnerId,
         divisionOrderId: testDivisionOrderId,
-        productionMonth: new Date('2024-01-01'),
+        productionMonth: '2024-01-01',
         // Missing required totalRevenue
         netRevenue: 110000.0,
       };
@@ -225,14 +215,14 @@ describe('Revenue Distributions Model', () => {
         wellId: testWellId,
         partnerId: testPartnerId,
         divisionOrderId: testDivisionOrderId,
-        productionMonth: new Date('2024-02-01'),
-        totalRevenue: 100000.0,
-        netRevenue: 85000.0,
-        severanceTax: 6000.0,
-        adValorem: 2000.0,
-        transportationCosts: 4000.0,
-        processingCosts: 2500.0,
-        otherDeductions: 500.0,
+        productionMonth: '2024-02-01',
+        totalRevenue: '100000.00',
+        netRevenue: '85000.00',
+        severanceTax: '6000.00',
+        adValorem: '2000.00',
+        transportationCosts: '4000.00',
+        processingCosts: '2500.00',
+        otherDeductions: '500.00',
       };
 
       const result = await db
@@ -242,19 +232,19 @@ describe('Revenue Distributions Model', () => {
 
       // Verify deductions add up correctly
       const totalDeductions =
-        parseFloat(result[0].severanceTax || '0') +
-        parseFloat(result[0].adValorem || '0') +
-        parseFloat(result[0].transportationCosts || '0') +
-        parseFloat(result[0].processingCosts || '0') +
-        parseFloat(result[0].otherDeductions || '0');
+        parseFloat(result[0]!.severanceTax || '0') +
+        parseFloat(result[0]!.adValorem || '0') +
+        parseFloat(result[0]!.transportationCosts || '0') +
+        parseFloat(result[0]!.processingCosts || '0') +
+        parseFloat(result[0]!.otherDeductions || '0');
 
       const calculatedNet =
-        parseFloat(result[0].totalRevenue || '0') - totalDeductions;
-      expect(calculatedNet).toBe(parseFloat(result[0].netRevenue || '0'));
+        parseFloat(result[0]!.totalRevenue || '0') - totalDeductions;
+      expect(calculatedNet).toBe(parseFloat(result[0]!.netRevenue || '0'));
     });
 
     it('should enforce unique partner-well-month constraint', async () => {
-      const productionMonth = new Date('2024-03-01');
+      const productionMonth = '2024-03-01';
 
       const distribution1 = {
         organizationId: testOrgId,
@@ -262,13 +252,13 @@ describe('Revenue Distributions Model', () => {
         partnerId: testPartnerId,
         divisionOrderId: testDivisionOrderId,
         productionMonth,
-        totalRevenue: 100000.0,
-        netRevenue: 90000.0,
-        severanceTax: 6000.0,
-        adValorem: 2000.0,
-        transportationCosts: 2000.0,
-        processingCosts: 0.0,
-        otherDeductions: 0.0,
+        totalRevenue: '100000.00',
+        netRevenue: '90000.00',
+        severanceTax: '6000.00',
+        adValorem: '2000.00',
+        transportationCosts: '2000.00',
+        processingCosts: '0.00',
+        otherDeductions: '0.00',
       };
 
       const distribution2 = {
@@ -277,13 +267,13 @@ describe('Revenue Distributions Model', () => {
         partnerId: testPartnerId,
         divisionOrderId: testDivisionOrderId,
         productionMonth, // Same partner, well, and month
-        totalRevenue: 105000.0,
-        netRevenue: 95000.0,
-        severanceTax: 6300.0,
-        adValorem: 2100.0,
-        transportationCosts: 1600.0,
-        processingCosts: 0.0,
-        otherDeductions: 0.0,
+        totalRevenue: '105000.00',
+        netRevenue: '95000.00',
+        severanceTax: '6300.00',
+        adValorem: '2100.00',
+        transportationCosts: '1600.00',
+        processingCosts: '0.00',
+        otherDeductions: '0.00',
       };
 
       // First insert should succeed
@@ -305,14 +295,14 @@ describe('Revenue Distributions Model', () => {
         wellId: testWellId,
         partnerId: testPartnerId,
         divisionOrderId: testDivisionOrderId,
-        productionMonth: new Date('2024-04-01'),
-        totalRevenue: expectedPartnerRevenue, // Partner's share
-        netRevenue: expectedPartnerRevenue * 0.85, // After deductions
-        severanceTax: expectedPartnerRevenue * 0.06,
-        adValorem: expectedPartnerRevenue * 0.02,
-        transportationCosts: expectedPartnerRevenue * 0.05,
-        processingCosts: expectedPartnerRevenue * 0.02,
-        otherDeductions: 0.0,
+        productionMonth: '2024-04-01',
+        totalRevenue: expectedPartnerRevenue.toFixed(2), // Partner's share
+        netRevenue: (expectedPartnerRevenue * 0.85).toFixed(2), // After deductions
+        severanceTax: (expectedPartnerRevenue * 0.06).toFixed(2),
+        adValorem: (expectedPartnerRevenue * 0.02).toFixed(2),
+        transportationCosts: (expectedPartnerRevenue * 0.05).toFixed(2),
+        processingCosts: (expectedPartnerRevenue * 0.02).toFixed(2),
+        otherDeductions: '0.00',
       };
 
       const result = await db
@@ -320,8 +310,8 @@ describe('Revenue Distributions Model', () => {
         .values(distribution)
         .returning();
 
-      expect(parseFloat(result[0].totalRevenue || '0')).toBe(25000.0); // 12.5% of $200,000
-      expect(parseFloat(result[0].netRevenue || '0')).toBe(21250.0); // 85% of partner's share
+      expect(parseFloat(result[0]!.totalRevenue || '0')).toBe(25000.0); // 12.5% of $200,000
+      expect(parseFloat(result[0]!.netRevenue || '0')).toBe(21250.0); // 85% of partner's share
     });
 
     it('should update revenue distribution data', async () => {
@@ -331,30 +321,30 @@ describe('Revenue Distributions Model', () => {
         wellId: testWellId,
         partnerId: testPartnerId,
         divisionOrderId: testDivisionOrderId,
-        productionMonth: new Date('2024-05-01'),
-        totalRevenue: 80000.0,
-        netRevenue: 70000.0,
-        severanceTax: 4800.0,
-        adValorem: 1600.0,
-        transportationCosts: 2400.0,
-        processingCosts: 1200.0,
-        otherDeductions: 0.0,
+        productionMonth: '2024-05-01',
+        totalRevenue: '80000.00',
+        netRevenue: '70000.00',
+        severanceTax: '4800.00',
+        adValorem: '1600.00',
+        transportationCosts: '2400.00',
+        processingCosts: '1200.00',
+        otherDeductions: '0.00',
       };
 
       const created = await db
         .insert(revenueDistributions)
         .values(initialDistribution)
         .returning();
-      const distributionId = created[0].id;
+      const distributionId = created[0]!.id;
 
       // Update with revised revenue data
       const updatedData = {
-        totalRevenue: 85000.0,
-        netRevenue: 74500.0,
-        severanceTax: 5100.0,
-        adValorem: 1700.0,
-        transportationCosts: 2550.0,
-        processingCosts: 1150.0,
+        totalRevenue: '85000.00',
+        netRevenue: '74500.00',
+        severanceTax: '5100.00',
+        adValorem: '1700.00',
+        transportationCosts: '2550.00',
+        processingCosts: '1150.00',
       };
 
       const updated = await db
@@ -363,16 +353,10 @@ describe('Revenue Distributions Model', () => {
         .where(eq(revenueDistributions.id, distributionId))
         .returning();
 
-      expect(parseFloat(updated[0].totalRevenue || '0')).toBe(
-        updatedData.totalRevenue,
-      );
-      expect(parseFloat(updated[0].netRevenue || '0')).toBe(
-        updatedData.netRevenue,
-      );
-      expect(parseFloat(updated[0].severanceTax || '0')).toBe(
-        updatedData.severanceTax,
-      );
-      expect(updated[0].updatedAt).not.toBe(created[0].updatedAt);
+      expect(parseFloat(updated[0]!.totalRevenue || '0')).toBe(85000.0);
+      expect(parseFloat(updated[0]!.netRevenue || '0')).toBe(74500.0);
+      expect(parseFloat(updated[0]!.severanceTax || '0')).toBe(5100.0);
+      expect(updated[0]!.updatedAt).not.toBe(created[0]!.updatedAt);
     });
 
     it('should handle zero revenue months', async () => {
@@ -381,14 +365,14 @@ describe('Revenue Distributions Model', () => {
         wellId: testWellId,
         partnerId: testPartnerId,
         divisionOrderId: testDivisionOrderId,
-        productionMonth: new Date('2024-06-01'),
-        totalRevenue: 0.0,
-        netRevenue: 0.0,
-        severanceTax: 0.0,
-        adValorem: 0.0,
-        transportationCosts: 0.0,
-        processingCosts: 0.0,
-        otherDeductions: 0.0,
+        productionMonth: '2024-06-01',
+        totalRevenue: '0.00',
+        netRevenue: '0.00',
+        severanceTax: '0.00',
+        adValorem: '0.00',
+        transportationCosts: '0.00',
+        processingCosts: '0.00',
+        otherDeductions: '0.00',
       };
 
       const result = await db
@@ -396,9 +380,9 @@ describe('Revenue Distributions Model', () => {
         .values(zeroDistribution)
         .returning();
 
-      expect(parseFloat(result[0].totalRevenue || '0')).toBe(0.0);
-      expect(parseFloat(result[0].netRevenue || '0')).toBe(0.0);
-      expect(parseFloat(result[0].severanceTax || '0')).toBe(0.0);
+      expect(parseFloat(result[0]!.totalRevenue || '0')).toBe(0.0);
+      expect(parseFloat(result[0]!.netRevenue || '0')).toBe(0.0);
+      expect(parseFloat(result[0]!.severanceTax || '0')).toBe(0.0);
     });
   });
 
@@ -460,14 +444,14 @@ describe('Revenue Distributions Model', () => {
           wellId: testWellId,
           partnerId: testPartnerId,
           divisionOrderId: testDivisionOrderId,
-          productionMonth: new Date(data.month),
-          totalRevenue: data.total,
-          netRevenue: data.net,
-          severanceTax: data.tax,
-          adValorem: data.adVal,
-          transportationCosts: 2000.0,
-          processingCosts: 1000.0,
-          otherDeductions: 0.0,
+          productionMonth: data.month,
+          totalRevenue: data.total.toFixed(2),
+          netRevenue: data.net.toFixed(2),
+          severanceTax: data.tax.toFixed(2),
+          adValorem: data.adVal.toFixed(2),
+          transportationCosts: '2000.00',
+          processingCosts: '1000.00',
+          otherDeductions: '0.00',
         })),
       );
     });
@@ -479,8 +463,8 @@ describe('Revenue Distributions Model', () => {
     });
 
     it('should find revenue distributions by date range', async () => {
-      const startDate = new Date('2024-02-01');
-      const endDate = new Date('2024-04-30');
+      const startDate = '2024-02-01';
+      const endDate = '2024-04-30';
 
       const distributions = await db
         .select()
@@ -528,19 +512,21 @@ describe('Revenue Distributions Model', () => {
         .where(eq(revenueDistributions.partnerId, testPartnerId))
         .orderBy(revenueDistributions.productionMonth);
 
-      const peakRevenueDistribution = allDistributions.reduce((max, dist) =>
-        parseFloat(dist.totalRevenue || '0') >
-        parseFloat(max.totalRevenue || '0')
-          ? dist
-          : max,
+      const peakRevenueDistribution = allDistributions.reduce(
+        (max, dist) =>
+          parseFloat(dist.totalRevenue || '0') >
+          parseFloat(max?.totalRevenue || '0')
+            ? dist
+            : max,
+        allDistributions[0],
       );
 
-      expect(parseFloat(peakRevenueDistribution.totalRevenue || '0')).toBe(
+      expect(parseFloat(peakRevenueDistribution!.totalRevenue || '0')).toBe(
         120000.0,
       );
-      expect(new Date(peakRevenueDistribution.productionMonth).getMonth()).toBe(
-        11,
-      ); // December (11-based)
+      expect(
+        new Date(peakRevenueDistribution!.productionMonth).getMonth(),
+      ).toBe(0); // January (0-based)
     });
 
     it('should calculate average deduction rates', async () => {

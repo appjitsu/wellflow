@@ -8,12 +8,12 @@ import '../env'; // Load test environment configuration
 describe('Database Models Test Suite', () => {
   describe('Core Business Models', () => {
     // Import and run all model tests
-    require('./organizations.test');
-    require('./users.test');
-    require('./wells.test');
-    require('./production-records.test');
-    require('./afes.test');
-    require('./revenue-distributions.test');
+    require('./organizations.test'); // eslint-disable-line @typescript-eslint/no-require-imports
+    require('./users.test'); // eslint-disable-line @typescript-eslint/no-require-imports
+    require('./wells.test'); // eslint-disable-line @typescript-eslint/no-require-imports
+    require('./production-records.test'); // eslint-disable-line @typescript-eslint/no-require-imports
+    require('./afes.test'); // eslint-disable-line @typescript-eslint/no-require-imports
+    require('./revenue-distributions.test'); // eslint-disable-line @typescript-eslint/no-require-imports
   });
 
   it('should have completed all model tests', () => {
