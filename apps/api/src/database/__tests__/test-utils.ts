@@ -10,7 +10,7 @@
  */
 export function generateUniqueEmail(prefix = 'test'): string {
   const timestamp = Date.now().toString().slice(-6);
-  const random = Math.floor(Math.random() * 1000)
+  const random = Math.floor(Math.random() * 1000) // eslint-disable-line sonarjs/pseudo-random
     .toString()
     .padStart(3, '0');
   return `${prefix}-${timestamp}-${random}@example.com`;
@@ -22,7 +22,7 @@ export function generateUniqueEmail(prefix = 'test'): string {
  */
 export function generateUniqueApiNumber(): string {
   const timestamp = Date.now().toString().slice(-6);
-  const random = Math.floor(Math.random() * 1000)
+  const random = Math.floor(Math.random() * 1000) // eslint-disable-line sonarjs/pseudo-random
     .toString()
     .padStart(3, '0');
   return `42123${timestamp}${random}`.slice(0, 14);
@@ -41,7 +41,7 @@ export function generateUniqueOrgName(prefix = 'Test Org'): string {
  */
 export function generateUniqueWellName(prefix = 'Test Well'): string {
   const timestamp = Date.now().toString().slice(-6);
-  const random = Math.floor(Math.random() * 100);
+  const random = Math.floor(Math.random() * 100); // eslint-disable-line sonarjs/pseudo-random
   return `${prefix} #${random}-${timestamp}`;
 }
 
@@ -66,7 +66,7 @@ export function generateUniquePartnerName(prefix = 'Test Partner'): string {
  */
 export function generateUniqueTaxId(): string {
   const timestamp = Date.now().toString().slice(-6);
-  const random = Math.floor(Math.random() * 1000)
+  const random = Math.floor(Math.random() * 1000) // eslint-disable-line sonarjs/pseudo-random
     .toString()
     .padStart(3, '0');
   return `${timestamp.slice(0, 2)}-${timestamp.slice(2)}${random}`;
@@ -150,15 +150,15 @@ export function generateTestWell(
     leaseId: string;
     apiNumber: string;
     wellName: string;
-    wellType: 'oil' | 'gas' | 'water' | 'injection';
-    status: 'active' | 'inactive' | 'plugged' | 'drilling';
+    wellType: 'OIL' | 'GAS' | 'water' | 'injection';
+    status: 'ACTIVE' | 'INACTIVE' | 'plugged' | 'drilling';
   }> = {},
 ) {
   return {
     apiNumber: generateUniqueApiNumber(),
     wellName: generateUniqueWellName(),
-    wellType: 'oil' as const,
-    status: 'active' as const,
+    wellType: 'OIL' as const,
+    status: 'ACTIVE' as const,
     ...overrides,
   };
 }

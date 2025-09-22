@@ -3,6 +3,7 @@
  *
  * Sets up environment variables for database testing
  */
+/* eslint-disable no-process-env */
 
 // Test database environment variables
 process.env.NODE_ENV = 'test';

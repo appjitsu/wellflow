@@ -3,9 +3,17 @@
  *
  * Configuration and utilities for database testing
  */
+/* eslint-disable
+  @typescript-eslint/no-unsafe-assignment,
+  @typescript-eslint/no-unsafe-call,
+  @typescript-eslint/no-unsafe-member-access,
+  sonarjs/sql-queries,
+  sonarjs/no-os-command-from-path,
+  no-process-env
+*/
 
-const { Pool } = require('pg');
-const { execSync } = require('child_process');
+const { Pool } = require('pg'); // eslint-disable-line @typescript-eslint/no-require-imports
+const { execSync } = require('child_process'); // eslint-disable-line @typescript-eslint/no-require-imports
 
 // Test database configuration
 const TEST_DB_CONFIG = {
