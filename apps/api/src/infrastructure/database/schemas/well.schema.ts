@@ -18,7 +18,7 @@ export const wells = pgTable(
   'wells',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    apiNumber: varchar('api_number', { length: 12 }).notNull().unique(),
+    apiNumber: varchar('api_number', { length: 14 }).notNull().unique(),
     name: varchar('name', { length: 255 }).notNull(),
     operatorId: uuid('operator_id').notNull(),
     leaseId: uuid('lease_id'),

@@ -6,7 +6,7 @@ import { Well } from '../../domain/entities/well.entity';
 import { ApiNumber } from '../../domain/value-objects/api-number';
 import { WellStatus, WellType } from '../../domain/enums/well-status.enum';
 
-import { wells } from '../database/schemas/well.schema';
+import { wells } from '../../database/schema';
 
 /**
  * Well Repository Implementation
