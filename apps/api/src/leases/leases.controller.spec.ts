@@ -3,6 +3,8 @@ import { LeasesController } from './leases.controller';
 import { LeasesService } from './leases.service';
 import { ValidationService } from '../common/validation/validation.service';
 import { TenantGuard } from '../common/tenant/tenant.guard';
+import { AbilitiesGuard } from '../authorization/abilities.guard';
+import { AbilitiesFactory } from '../authorization/abilities.factory';
 
 describe('LeasesController', () => {
   let controller: LeasesController;
@@ -54,6 +56,13 @@ describe('LeasesController', () => {
         {
           provide: ValidationService,
           useValue: mockValidationService,
+        },
+        AbilitiesGuard,
+        {
+          provide: AbilitiesFactory,
+          useValue: {
+            createForUser: jest.fn(),
+          },
         },
       ],
     })

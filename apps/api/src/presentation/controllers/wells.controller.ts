@@ -3,10 +3,12 @@ import {
   Get,
   Post,
   Put,
+  Delete,
   Param,
   Body,
   Query,
   HttpStatus,
+  HttpCode,
   UseGuards,
   Request,
 } from '@nestjs/common';
@@ -19,8 +21,10 @@ import {
   ApiQuery,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { CreateWellCommand } from '../../application/commands/create-well.command';
 import { UpdateWellStatusCommand } from '../../application/commands/update-well-status.command';
+import { DeleteWellCommand } from '../../application/commands/delete-well.command';
 import { GetWellByIdQuery } from '../../application/queries/get-well-by-id.query';
 import { GetWellsByOperatorQuery } from '../../application/queries/get-wells-by-operator.query';
 import { CreateWellDto } from '../../application/dtos/create-well.dto';
@@ -30,10 +34,21 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { AbilitiesGuard } from '../../authorization/abilities.guard';
 import {
   CanCreateWell,
+  CanDeleteWell,
   CanReadWell,
   CanUpdateWellStatus,
 } from '../../authorization/abilities.decorator';
 import { AuditLog } from '../decorators/audit-log.decorator';
+
+// Common API response descriptions
+const API_RESPONSES: Record<string, string> = {
+  INVALID_INPUT: 'Invalid input data',
+  UNAUTHORIZED: 'Unauthorized',
+  FORBIDDEN: 'Forbidden',
+  TOO_MANY_REQUESTS: 'Too many requests',
+  NOT_FOUND: 'Resource not found',
+  INTERNAL_ERROR: 'Internal server error',
+} as const;
 
 /**
  * Wells Controller
@@ -43,6 +58,7 @@ import { AuditLog } from '../decorators/audit-log.decorator';
 @Controller('wells')
 @UseGuards(JwtAuthGuard, AbilitiesGuard)
 @ApiBearerAuth()
+@Throttle({ default: { limit: 100, ttl: 60000 } }) // 100 requests per minute
 export class WellsController {
   constructor(
     private readonly commandBus: CommandBus,
@@ -66,11 +82,23 @@ export class WellsController {
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid input data',
+    description: API_RESPONSES.INVALID_INPUT,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: API_RESPONSES.UNAUTHORIZED,
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: API_RESPONSES.FORBIDDEN,
   })
   @ApiResponse({
     status: HttpStatus.CONFLICT,
     description: 'Well with API number already exists',
+  })
+  @ApiResponse({
+    status: HttpStatus.TOO_MANY_REQUESTS,
+    description: API_RESPONSES.TOO_MANY_REQUESTS,
   })
   async createWell(
     @Body() createWellDto: CreateWellDto,
@@ -108,8 +136,24 @@ export class WellsController {
     type: WellDto,
   })
   @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid well ID',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: API_RESPONSES.UNAUTHORIZED,
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: API_RESPONSES.FORBIDDEN,
+  })
+  @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: 'Well not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.TOO_MANY_REQUESTS,
+    description: API_RESPONSES.TOO_MANY_REQUESTS,
   })
   async getWellById(@Param('id') id: string): Promise<WellDto> {
     const query = new GetWellByIdQuery(id);
@@ -158,6 +202,22 @@ export class WellsController {
         totalPages: { type: 'number', description: 'Total number of pages' },
       },
     },
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid query parameters',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: API_RESPONSES.UNAUTHORIZED,
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: API_RESPONSES.FORBIDDEN,
+  })
+  @ApiResponse({
+    status: HttpStatus.TOO_MANY_REQUESTS,
+    description: API_RESPONSES.TOO_MANY_REQUESTS,
   })
   async getWellsByOperator(
     @Query('operatorId') operatorId: string,
@@ -213,12 +273,24 @@ export class WellsController {
     },
   })
   @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data or status transition',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: API_RESPONSES.UNAUTHORIZED,
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: API_RESPONSES.FORBIDDEN,
+  })
+  @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: 'Well not found',
   })
   @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid status transition',
+    status: HttpStatus.TOO_MANY_REQUESTS,
+    description: API_RESPONSES.TOO_MANY_REQUESTS,
   })
   async updateWellStatus(
     @Param('id') id: string,
@@ -237,5 +309,44 @@ export class WellsController {
     return {
       message: 'Well status updated successfully',
     };
+  }
+
+  @Delete(':id')
+  @CanDeleteWell()
+  @AuditLog({ action: 'DELETE_WELL' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete well by ID' })
+  @ApiParam({ name: 'id', description: 'Well ID' })
+  @ApiResponse({
+    status: HttpStatus.NO_CONTENT,
+    description: 'Well deleted successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid well ID',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: API_RESPONSES.UNAUTHORIZED,
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: API_RESPONSES.FORBIDDEN,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Well not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.TOO_MANY_REQUESTS,
+    description: API_RESPONSES.TOO_MANY_REQUESTS,
+  })
+  async deleteWell(
+    @Param('id') id: string,
+    @Request() req: { user?: { id?: string } },
+  ): Promise<void> {
+    const command = new DeleteWellCommand(id, req.user?.id || 'system');
+
+    await this.commandBus.execute(command);
   }
 }

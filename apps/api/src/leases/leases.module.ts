@@ -4,9 +4,15 @@ import { LeasesController } from './leases.controller';
 import { DatabaseModule } from '../database/database.module';
 import { TenantModule } from '../common/tenant/tenant.module';
 import { ValidationModule } from '../common/validation/validation.module';
+import { AuthorizationModule } from '../authorization/authorization.module';
 
 @Module({
-  imports: [DatabaseModule, TenantModule, ValidationModule],
+  imports: [
+    DatabaseModule,
+    TenantModule,
+    ValidationModule,
+    AuthorizationModule,
+  ],
   controllers: [LeasesController],
   providers: [LeasesService],
   exports: [LeasesService],

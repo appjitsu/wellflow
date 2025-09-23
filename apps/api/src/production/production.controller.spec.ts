@@ -3,6 +3,8 @@ import { ProductionController } from './production.controller';
 import { ProductionService } from './production.service';
 import { ValidationService } from '../common/validation/validation.service';
 import { TenantGuard } from '../common/tenant/tenant.guard';
+import { AbilitiesGuard } from '../authorization/abilities.guard';
+import { AbilitiesFactory } from '../authorization/abilities.factory';
 
 describe('ProductionController', () => {
   let controller: ProductionController;
@@ -51,6 +53,13 @@ describe('ProductionController', () => {
         {
           provide: ValidationService,
           useValue: mockValidationService,
+        },
+        AbilitiesGuard,
+        {
+          provide: AbilitiesFactory,
+          useValue: {
+            createForUser: jest.fn(),
+          },
         },
       ],
     })
