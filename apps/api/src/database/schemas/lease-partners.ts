@@ -6,7 +6,9 @@ import {
   decimal,
   date,
   index,
+  check,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { leases } from './leases';
 import { partners } from './partners';
 
@@ -52,12 +54,17 @@ export const leasePartners = pgTable(
     effectiveDateIdx: index('lease_partners_effective_date_idx').on(
       table.effectiveDate,
     ),
-    // Percentage validation constraints - must be between 0 and 100 (will be added via migration)
-    // percentageCheck: check(
-    //   'lease_partners_percentage_check',
-    //   `working_interest_percent >= 0 AND working_interest_percent <= 100 AND
-    //    royalty_interest_percent >= 0 AND royalty_interest_percent <= 100 AND
-    //    net_revenue_interest_percent >= 0 AND net_revenue_interest_percent <= 100`,
-    // ),
+    // Business rule constraints - percentage validation (0-100%)
+    percentageRangeCheck: check(
+      'lease_partners_percentage_range_check',
+      sql`working_interest_percent >= 0 AND working_interest_percent <= 1 AND
+          royalty_interest_percent >= 0 AND royalty_interest_percent <= 1 AND
+          net_revenue_interest_percent >= 0 AND net_revenue_interest_percent <= 1`,
+    ),
+    // Ensure effective date is before end date when end date is specified
+    dateRangeCheck: check(
+      'lease_partners_date_range_check',
+      sql`end_date IS NULL OR effective_date <= end_date`,
+    ),
   }),
 );

@@ -7,7 +7,9 @@ import {
   decimal,
   date,
   index,
+  check,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { organizations } from './organizations';
 
 /**
@@ -39,5 +41,18 @@ export const leases = pgTable(
       table.organizationId,
     ),
     leaseNumberIdx: index('leases_lease_number_idx').on(table.leaseNumber),
+    // Business rule constraints
+    royaltyRateRangeCheck: check(
+      'leases_royalty_rate_range_check',
+      sql`royalty_rate IS NULL OR (royalty_rate >= 0 AND royalty_rate <= 1)`,
+    ),
+    acreagePositiveCheck: check(
+      'leases_acreage_positive_check',
+      sql`acreage IS NULL OR acreage > 0`,
+    ),
+    dateRangeCheck: check(
+      'leases_date_range_check',
+      sql`expiration_date IS NULL OR effective_date IS NULL OR effective_date <= expiration_date`,
+    ),
   }),
 );
