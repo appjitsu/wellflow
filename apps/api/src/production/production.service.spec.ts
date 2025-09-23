@@ -1,32 +1,21 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { ProductionService } from './production.service';
-import { DatabaseService } from '../database/database.service';
+import type { ProductionRepository } from '../domain/repositories/production.repository.interface';
 import { TenantContextService } from '../common/tenant/tenant-context.service';
 
 describe('ProductionService', () => {
   let service: ProductionService;
-  let mockDatabaseService: jest.Mocked<DatabaseService>;
+  let mockProductionRepository: jest.Mocked<ProductionRepository>;
   let mockTenantContextService: jest.Mocked<TenantContextService>;
-  let mockDb: any;
 
   beforeEach(async () => {
-    mockDb = {
-      insert: jest.fn().mockReturnThis(),
-      values: jest.fn().mockReturnThis(),
-      returning: jest.fn(),
-      select: jest.fn().mockReturnThis(),
-      from: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      orderBy: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis(),
-      set: jest.fn().mockReturnThis(),
-      delete: jest.fn().mockReturnThis(),
-    };
-
-    mockDatabaseService = {
-      getDb: jest.fn().mockReturnValue(mockDb),
+    mockProductionRepository = {
+      create: jest.fn(),
+      findById: jest.fn(),
+      findByWellId: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
     } as any;
 
     mockTenantContextService = {
@@ -37,8 +26,8 @@ describe('ProductionService', () => {
       providers: [
         ProductionService,
         {
-          provide: DatabaseService,
-          useValue: mockDatabaseService,
+          provide: 'ProductionRepository',
+          useValue: mockProductionRepository,
         },
         {
           provide: TenantContextService,
@@ -55,14 +44,17 @@ describe('ProductionService', () => {
   });
 
   describe('createProductionRecord', () => {
-    it('should create a production record successfully', async () => {
+    it('should create production record successfully', async () => {
       const dto = {
         wellId: 'well-123',
         productionDate: '2024-01-15',
         oilVolume: '100.5',
         gasVolume: '500.2',
         waterVolume: '25.1',
-        notes: 'Good production day',
+        oilPrice: '60.50',
+        gasPrice: '3.25',
+        runTicket: 'RT-001',
+        comments: 'Good production day',
       };
 
       const mockRecord = {
@@ -73,11 +65,14 @@ describe('ProductionService', () => {
         updatedAt: new Date(),
       };
 
-      mockDb.returning.mockResolvedValue([mockRecord]);
+      mockProductionRepository.create.mockResolvedValue(mockRecord);
 
       const result = await service.createProductionRecord(dto);
 
-      expect(mockDatabaseService.getDb).toHaveBeenCalled();
+      expect(mockProductionRepository.create).toHaveBeenCalledWith({
+        ...dto,
+        organizationId: 'org-123',
+      });
       expect(mockTenantContextService.getOrganizationId).toHaveBeenCalled();
       expect(result).toEqual(mockRecord);
     });
@@ -90,13 +85,21 @@ describe('ProductionService', () => {
 
       const mockRecord = {
         id: 'prod-456',
-        ...dto,
+        wellId: 'well-456',
+        productionDate: '2024-01-16',
         organizationId: 'org-123',
+        oilVolume: null,
+        gasVolume: null,
+        waterVolume: null,
+        oilPrice: null,
+        gasPrice: null,
+        runTicket: null,
+        comments: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      mockDb.returning.mockResolvedValue([mockRecord]);
+      mockProductionRepository.create.mockResolvedValue(mockRecord);
 
       const result = await service.createProductionRecord(dto);
 
@@ -107,12 +110,15 @@ describe('ProductionService', () => {
       const dto = {
         wellId: 'well-123',
         productionDate: '2024-01-15',
+        organizationId: 'org-123',
       };
 
-      mockDb.returning.mockResolvedValue([]);
+      mockProductionRepository.create.mockRejectedValue(
+        new Error('Database error'),
+      );
 
       await expect(service.createProductionRecord(dto)).rejects.toThrow(
-        'Failed to create production record',
+        'Database error',
       );
     });
   });
@@ -124,19 +130,29 @@ describe('ProductionService', () => {
         wellId: 'well-123',
         productionDate: '2024-01-15',
         oilVolume: '100.5',
+        gasVolume: '500.2',
+        waterVolume: '25.1',
+        oilPrice: '60.50',
+        gasPrice: '3.25',
+        runTicket: 'RT-001',
+        comments: 'Good production day',
         organizationId: 'org-123',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
-      mockDb.limit.mockResolvedValue([mockRecord]);
+      mockProductionRepository.findById.mockResolvedValue(mockRecord);
 
       const result = await service.getProductionRecordById('prod-123');
 
-      expect(mockTenantContextService.getOrganizationId).toHaveBeenCalled();
+      expect(mockProductionRepository.findById).toHaveBeenCalledWith(
+        'prod-123',
+      );
       expect(result).toEqual(mockRecord);
     });
 
     it('should throw NotFoundException when production record not found', async () => {
-      mockDb.limit.mockResolvedValue([]);
+      mockProductionRepository.findById.mockResolvedValue(null);
 
       await expect(service.getProductionRecordById('prod-123')).rejects.toThrow(
         NotFoundException,
@@ -152,27 +168,45 @@ describe('ProductionService', () => {
           wellId: 'well-123',
           productionDate: '2024-01-15',
           oilVolume: '100.5',
+          gasVolume: '500.2',
+          waterVolume: '25.1',
+          oilPrice: '60.50',
+          gasPrice: '3.25',
+          runTicket: 'RT-001',
+          comments: 'Good production day',
           organizationId: 'org-123',
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
         {
           id: 'prod-2',
           wellId: 'well-123',
           productionDate: '2024-01-14',
           oilVolume: '95.2',
+          gasVolume: '480.1',
+          waterVolume: '22.3',
+          oilPrice: '61.00',
+          gasPrice: '3.30',
+          runTicket: 'RT-002',
+          comments: 'Another good day',
           organizationId: 'org-123',
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       ];
 
-      mockDb.orderBy.mockResolvedValue(mockRecords);
+      mockProductionRepository.findByWellId.mockResolvedValue(mockRecords);
 
       const result = await service.getProductionRecordsByWell('well-123');
 
-      expect(mockTenantContextService.getOrganizationId).toHaveBeenCalled();
+      expect(mockProductionRepository.findByWellId).toHaveBeenCalledWith(
+        'well-123',
+      );
       expect(result).toEqual(mockRecords);
     });
 
     it('should return empty array when no production records exist for well', async () => {
-      mockDb.orderBy.mockResolvedValue([]);
+      mockProductionRepository.findByWellId.mockResolvedValue([]);
 
       const result = await service.getProductionRecordsByWell('well-123');
 
@@ -187,13 +221,25 @@ describe('ProductionService', () => {
         wellId: 'well-123',
         productionDate: '2024-01-15',
         oilVolume: '100.5',
+        gasVolume: '500.2',
+        waterVolume: '25.1',
+        oilPrice: '60.50',
+        gasPrice: '3.25',
+        runTicket: 'RT-001',
+        comments: 'Good production day',
         organizationId: 'org-123',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       const updateDto = {
         oilVolume: '120.0',
         gasVolume: '550.0',
-        notes: 'Updated production',
+        waterVolume: '30.0',
+        oilPrice: '62.00',
+        gasPrice: '3.40',
+        runTicket: 'RT-001-UPD',
+        comments: 'Updated production',
       };
 
       const updatedRecord = {
@@ -203,22 +249,28 @@ describe('ProductionService', () => {
       };
 
       // Mock getProductionRecordById
-      mockDb.limit.mockResolvedValueOnce([existingRecord]);
+      mockProductionRepository.findById.mockResolvedValue(existingRecord);
       // Mock update
-      mockDb.returning.mockResolvedValue([updatedRecord]);
+      mockProductionRepository.update.mockResolvedValue(updatedRecord);
 
       const result = await service.updateProductionRecord(
         'prod-123',
         updateDto,
       );
 
-      expect(mockTenantContextService.getOrganizationId).toHaveBeenCalled();
+      expect(mockProductionRepository.findById).toHaveBeenCalledWith(
+        'prod-123',
+      );
+      expect(mockProductionRepository.update).toHaveBeenCalledWith(
+        'prod-123',
+        updateDto,
+      );
       expect(result).toEqual(updatedRecord);
     });
 
     it('should throw error when production record not found', async () => {
       // Mock getProductionRecordById to throw NotFoundException
-      mockDb.limit.mockResolvedValue([]);
+      mockProductionRepository.findById.mockResolvedValue(null);
 
       await expect(
         service.updateProductionRecord('prod-123', { oilVolume: '120.0' }),
@@ -230,13 +282,22 @@ describe('ProductionService', () => {
         id: 'prod-123',
         wellId: 'well-123',
         productionDate: '2024-01-15',
+        oilVolume: '100.5',
+        gasVolume: '500.2',
+        waterVolume: '25.1',
+        oilPrice: '60.50',
+        gasPrice: '3.25',
+        runTicket: 'RT-001',
+        comments: 'Good production day',
         organizationId: 'org-123',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       // Mock getProductionRecordById
-      mockDb.limit.mockResolvedValueOnce([existingRecord]);
+      mockProductionRepository.findById.mockResolvedValue(existingRecord);
       // Mock update failure
-      mockDb.returning.mockResolvedValue([]);
+      mockProductionRepository.update.mockResolvedValue(null);
 
       await expect(
         service.updateProductionRecord('prod-123', { oilVolume: '120.0' }),
@@ -250,23 +311,35 @@ describe('ProductionService', () => {
         id: 'prod-123',
         wellId: 'well-123',
         productionDate: '2024-01-15',
+        oilVolume: '100.5',
+        gasVolume: '500.2',
+        waterVolume: '25.1',
+        oilPrice: '60.50',
+        gasPrice: '3.25',
+        runTicket: 'RT-001',
+        comments: 'Good production day',
         organizationId: 'org-123',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       // Mock getProductionRecordById
-      mockDb.limit.mockResolvedValueOnce([existingRecord]);
+      mockProductionRepository.findById.mockResolvedValue(existingRecord);
       // Mock delete
-      mockDb.returning.mockResolvedValue([existingRecord]);
+      mockProductionRepository.delete.mockResolvedValue(true);
 
       const result = await service.deleteProductionRecord('prod-123');
 
-      expect(mockTenantContextService.getOrganizationId).toHaveBeenCalled();
-      expect(result).toEqual(existingRecord);
+      expect(mockProductionRepository.findById).toHaveBeenCalledWith(
+        'prod-123',
+      );
+      expect(mockProductionRepository.delete).toHaveBeenCalledWith('prod-123');
+      expect(result).toEqual({ success: true });
     });
 
     it('should throw error when production record not found', async () => {
       // Mock getProductionRecordById to throw NotFoundException
-      mockDb.limit.mockResolvedValue([]);
+      mockProductionRepository.findById.mockResolvedValue(null);
 
       await expect(service.deleteProductionRecord('prod-123')).rejects.toThrow(
         NotFoundException,
@@ -278,13 +351,22 @@ describe('ProductionService', () => {
         id: 'prod-123',
         wellId: 'well-123',
         productionDate: '2024-01-15',
+        oilVolume: '100.5',
+        gasVolume: '500.2',
+        waterVolume: '25.1',
+        oilPrice: '60.50',
+        gasPrice: '3.25',
+        runTicket: 'RT-001',
+        comments: 'Good production day',
         organizationId: 'org-123',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       // Mock getProductionRecordById
-      mockDb.limit.mockResolvedValueOnce([existingRecord]);
+      mockProductionRepository.findById.mockResolvedValue(existingRecord);
       // Mock delete failure
-      mockDb.returning.mockResolvedValue([]);
+      mockProductionRepository.delete.mockResolvedValue(false);
 
       await expect(service.deleteProductionRecord('prod-123')).rejects.toThrow(
         'Failed to delete production record',

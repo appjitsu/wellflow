@@ -245,9 +245,9 @@ describe('ProductionController', () => {
   describe('deleteProductionRecord', () => {
     it('should delete production record successfully', async () => {
       mockValidationService.validate.mockReturnValue('prod-123');
-      mockProductionService.deleteProductionRecord.mockResolvedValue(
-        mockProductionRecord,
-      );
+      mockProductionService.deleteProductionRecord.mockResolvedValue({
+        success: true,
+      });
 
       const result = await controller.deleteProductionRecord('prod-123');
 
@@ -258,7 +258,7 @@ describe('ProductionController', () => {
       expect(mockProductionService.deleteProductionRecord).toHaveBeenCalledWith(
         'prod-123',
       );
-      expect(result).toEqual(mockProductionRecord);
+      expect(result).toEqual({ success: true });
     });
 
     it('should throw validation error for invalid id', async () => {

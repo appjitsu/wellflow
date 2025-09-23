@@ -255,7 +255,7 @@ describe('LeasesController', () => {
   describe('deleteLease', () => {
     it('should delete lease successfully', async () => {
       mockValidationService.validate.mockReturnValue('lease-123');
-      mockLeasesService.deleteLease.mockResolvedValue(mockLease);
+      mockLeasesService.deleteLease.mockResolvedValue({ success: true });
 
       const result = await controller.deleteLease('lease-123');
 
@@ -264,7 +264,7 @@ describe('LeasesController', () => {
         'lease-123',
       );
       expect(mockLeasesService.deleteLease).toHaveBeenCalledWith('lease-123');
-      expect(result).toEqual(mockLease);
+      expect(result).toEqual({ success: true });
     });
 
     it('should throw validation error for invalid id', async () => {
