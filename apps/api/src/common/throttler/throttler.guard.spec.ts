@@ -10,7 +10,7 @@ describe('ThrottlerGuard', () => {
   // Test constants for IP addresses - these are safe in test context
   const TEST_IP = '127.0.0.1';
 
-  const FORWARDED_IP = '192.168.1.1';
+  const FORWARDED_IP = '10.0.0.1'; // eslint-disable-line sonarjs/no-hardcoded-ip
 
   beforeEach(() => {
     // Mock Express request

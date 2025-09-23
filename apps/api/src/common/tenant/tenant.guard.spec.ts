@@ -47,9 +47,10 @@ describe('TenantGuard', () => {
       const mockRequest = {
         user: undefined,
       };
-      mockExecutionContext
-        .switchToHttp()
-        .getRequest.mockReturnValue(mockRequest);
+      (
+        mockExecutionContext.switchToHttp()
+          .getRequest as jest.MockedFunction<any>
+      ).mockReturnValue(mockRequest);
 
       const result = guard.canActivate(mockExecutionContext);
 
@@ -61,9 +62,10 @@ describe('TenantGuard', () => {
       const mockRequest = {
         user: null,
       };
-      mockExecutionContext
-        .switchToHttp()
-        .getRequest.mockReturnValue(mockRequest);
+      (
+        mockExecutionContext.switchToHttp()
+          .getRequest as jest.MockedFunction<any>
+      ).mockReturnValue(mockRequest);
 
       const result = guard.canActivate(mockExecutionContext);
 
@@ -79,9 +81,10 @@ describe('TenantGuard', () => {
       };
 
       const mockRequest = { user };
-      mockExecutionContext
-        .switchToHttp()
-        .getRequest.mockReturnValue(mockRequest);
+      (
+        mockExecutionContext.switchToHttp()
+          .getRequest as jest.MockedFunction<any>
+      ).mockReturnValue(mockRequest);
 
       const result = guard.canActivate(mockExecutionContext);
 
@@ -101,9 +104,10 @@ describe('TenantGuard', () => {
       };
 
       const mockRequest = { user };
-      mockExecutionContext
-        .switchToHttp()
-        .getRequest.mockReturnValue(mockRequest);
+      (
+        mockExecutionContext.switchToHttp()
+          .getRequest as jest.MockedFunction<any>
+      ).mockReturnValue(mockRequest);
 
       const result = guard.canActivate(mockExecutionContext);
 
@@ -123,9 +127,10 @@ describe('TenantGuard', () => {
       };
 
       const mockRequest = { user };
-      mockExecutionContext
-        .switchToHttp()
-        .getRequest.mockReturnValue(mockRequest);
+      (
+        mockExecutionContext.switchToHttp()
+          .getRequest as jest.MockedFunction<any>
+      ).mockReturnValue(mockRequest);
 
       const result = guard.canActivate(mockExecutionContext);
 
@@ -145,9 +150,10 @@ describe('TenantGuard', () => {
       };
 
       const mockRequest = { user };
-      mockExecutionContext
-        .switchToHttp()
-        .getRequest.mockReturnValue(mockRequest);
+      (
+        mockExecutionContext.switchToHttp()
+          .getRequest as jest.MockedFunction<any>
+      ).mockReturnValue(mockRequest);
 
       const result = guard.canActivate(mockExecutionContext);
 
