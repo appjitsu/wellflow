@@ -1,5 +1,5 @@
-import { Command, CommandRunner, Option } from 'nest-commander';
-import { Injectable, Logger, Inject } from '@nestjs/common';
+import { CommandRunner } from 'nest-commander';
+import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   PerformanceTestService,
@@ -45,28 +45,21 @@ interface PerformanceTestOptions {
  * npm run performance-test
  * npm run performance-test -- --iterations 100 --concurrent 20 --output results.json
  */
-@Injectable()
-// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-@Command({
-  name: 'performance-test',
-  description:
-    'Run KAN-33 performance test suite to validate database and API performance requirements',
-})
 export class PerformanceTestCommand extends CommandRunner {
   private readonly logger = new Logger(PerformanceTestCommand.name);
 
   constructor(
     private readonly performanceTestService: PerformanceTestService,
     private readonly configService: ConfigService,
-    @Inject('DATABASE_CONNECTION')
     private readonly db: NodePgDatabase<typeof schema>,
   ) {
+    // Call parent constructor - CommandRunner has no constructor parameters
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     super();
   }
 
   async run(
-    passedParams: string[],
+    _passedParams: string[],
     options?: PerformanceTestOptions,
   ): Promise<void> {
     this.logger.log('🚀 Starting KAN-33 Performance Test Suite...');
@@ -325,48 +318,23 @@ export class PerformanceTestCommand extends CommandRunner {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  @Option({
-    flags: '-i, --iterations <number>',
-    description: 'Number of test iterations to run (default: 50)',
-  })
-  parseIterations(val: string): number {
+  static parseIterations(val: string): number {
     return parseInt(val, 10);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  @Option({
-    flags: '-c, --concurrent <number>',
-    description: 'Number of concurrent requests to test (default: 10)',
-  })
-  parseConcurrent(val: string): number {
+  static parseConcurrent(val: string): number {
     return parseInt(val, 10);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  @Option({
-    flags: '-o, --output <path>',
-    description: 'Output file path for test results (JSON format)',
-  })
-  parseOutput(val: string): string {
+  static parseOutput(val: string): string {
     return val;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  @Option({
-    flags: '-v, --verbose',
-    description: 'Enable verbose output with detailed metrics',
-  })
-  parseVerbose(): boolean {
+  static parseVerbose(): boolean {
     return true;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  @Option({
-    flags: '--config <path>',
-    description: 'Path to JSON configuration file',
-  })
-  parseConfig(val: string): string {
+  static parseConfig(val: string): string {
     return val;
   }
 }
