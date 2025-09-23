@@ -596,15 +596,13 @@ describe('Database Schema Relations', () => {
 
     it('should handle relation configuration access', () => {
       expect(() => {
-        const config = organizationsRelations.config;
-        return config;
+        return organizationsRelations.config;
       }).not.toThrow();
     });
 
     it('should handle relation function calls', () => {
       expect(() => {
-        const relations = organizationsRelations;
-        return relations;
+        return organizationsRelations;
       }).not.toThrow();
     });
   });

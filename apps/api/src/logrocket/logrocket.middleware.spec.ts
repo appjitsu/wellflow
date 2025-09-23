@@ -275,15 +275,13 @@ describe('LogRocketMiddleware', () => {
 
     it('should add error context tags', () => {
       const addErrorTags = (error: Error, request: any) => {
-        const tags = {
+        return {
           errorType: error.name,
           endpoint: request.url,
           method: request.method,
           userRole: request.user?.role,
           organizationId: request.user?.organizationId,
         };
-
-        return tags;
       };
 
       const error = new Error('Test error');
