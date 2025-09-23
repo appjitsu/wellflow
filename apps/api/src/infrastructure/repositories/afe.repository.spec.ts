@@ -54,7 +54,7 @@ describe('AfeRepository', () => {
       const mockApprovals = [{ id: 'approval-1', afeId: 'afe-1' }];
 
       // Mock the base repository findById method
-      jest.spyOn(repository, 'findById').mockResolvedValue(mockAfe);
+      jest.spyOn(repository, 'findById').mockResolvedValue(mockAfe as any);
 
       // Mock the database queries for line items and approvals
       mockDb.select.mockReturnValue({
@@ -102,7 +102,7 @@ describe('AfeRepository', () => {
       mockDb.select.mockReturnValue({
         from: jest.fn().mockReturnValue({
           where: jest.fn().mockReturnValue({
-            orderBy: jest.fn().mockResolvedValue(mockAfes),
+            orderBy: jest.fn().mockResolvedValue(mockAfes as any),
           }),
         }),
       });
@@ -138,7 +138,7 @@ describe('AfeRepository', () => {
       mockDb.select.mockReturnValue({
         from: jest.fn().mockReturnValue({
           where: jest.fn().mockReturnValue({
-            orderBy: jest.fn().mockResolvedValue(mockAfes),
+            orderBy: jest.fn().mockResolvedValue(mockAfes as any),
           }),
         }),
       });
@@ -182,7 +182,7 @@ describe('AfeRepository', () => {
       mockDb.select.mockReturnValue({
         from: jest.fn().mockReturnValue({
           where: jest.fn().mockReturnValue({
-            orderBy: jest.fn().mockResolvedValue(mockAfes),
+            orderBy: jest.fn().mockResolvedValue(mockAfes as any),
           }),
         }),
       });
@@ -228,7 +228,7 @@ describe('AfeRepository', () => {
       };
       const mockLineItemsSum = [{ total: '85000' }];
 
-      jest.spyOn(repository, 'findById').mockResolvedValue(mockAfe);
+      jest.spyOn(repository, 'findById').mockResolvedValue(mockAfe as any);
       mockDb.select.mockReturnValue({
         from: jest.fn().mockReturnValue({
           where: jest.fn().mockResolvedValue(mockLineItemsSum),
@@ -275,14 +275,17 @@ describe('AfeRepository', () => {
         { id: 'line-2', afeId: 'afe-1', ...lineItems[1] },
       ];
 
-      jest.spyOn(repository, 'create').mockResolvedValue(mockAfe);
+      jest.spyOn(repository, 'create').mockResolvedValue(mockAfe as any);
       mockDb.insert.mockReturnValue({
         values: jest.fn().mockReturnValue({
           returning: jest.fn().mockResolvedValue(mockLineItems),
         }),
       });
 
-      const result = await repository.createWithLineItems(afeData, lineItems);
+      const result = await repository.createWithLineItems(
+        afeData as any,
+        lineItems as any,
+      );
 
       expect(result).toEqual({
         afe: mockAfe,
@@ -295,14 +298,14 @@ describe('AfeRepository', () => {
       const afeData = { name: 'Test AFE', organizationId: 'org-1' };
       const mockAfe = { id: 'afe-1', ...afeData };
 
-      jest.spyOn(repository, 'create').mockResolvedValue(mockAfe);
+      jest.spyOn(repository, 'create').mockResolvedValue(mockAfe as any);
       mockDb.insert.mockReturnValue({
         values: jest.fn().mockReturnValue({
           returning: jest.fn().mockResolvedValue([]),
         }),
       });
 
-      const result = await repository.createWithLineItems(afeData, []);
+      const result = await repository.createWithLineItems(afeData as any, []);
 
       expect(result).toEqual({
         afe: mockAfe,
@@ -319,7 +322,7 @@ describe('AfeRepository', () => {
         updatedAt: expect.any(Date),
       };
 
-      jest.spyOn(repository, 'update').mockResolvedValue(mockUpdatedAfe);
+      jest.spyOn(repository, 'update').mockResolvedValue(mockUpdatedAfe as any);
 
       const result = await repository.updateStatus(
         'afe-1',
@@ -346,7 +349,7 @@ describe('AfeRepository', () => {
       for (const status of statuses) {
         jest
           .spyOn(repository, 'update')
-          .mockResolvedValue({ id: 'afe-1', status });
+          .mockResolvedValue({ id: 'afe-1', status } as any);
 
         const result = await repository.updateStatus('afe-1', status, 'user-1');
         expect(result?.status).toBe(status);
@@ -404,7 +407,7 @@ describe('AfeRepository', () => {
         { id: 'afe-2', status: 'submitted', organizationId: 'org-1' },
       ];
 
-      jest.spyOn(repository, 'findByStatus').mockResolvedValue(mockAfes);
+      jest.spyOn(repository, 'findByStatus').mockResolvedValue(mockAfes as any);
 
       const result = await repository.findRequiringApproval(
         'org-1',

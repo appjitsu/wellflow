@@ -73,7 +73,7 @@ describe('Database Seed Functions', () => {
       }),
     };
 
-    (drizzle as jest.Mock).mockReturnValue(mockDb);
+    (drizzle as any).mockReturnValue(mockDb);
 
     // Mock environment variables
     // eslint-disable-next-line sonarjs/no-hardcoded-passwords
@@ -403,9 +403,10 @@ describe('Database Seed Functions', () => {
       expect(moduleKeys.length).toBeGreaterThanOrEqual(0);
     });
 
-    it('should handle module imports correctly', async () => {
-      // Test that all imports work
-      await expect(import('./seed.js')).resolves.toBeDefined();
+    it('should handle module imports correctly', () => {
+      // Test that the module is properly imported and defined
+      expect(seedModule).toBeDefined();
+      expect(typeof seedModule).toBe('object');
     });
   });
 });
