@@ -2,10 +2,12 @@ import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Pool, PoolClient } from 'pg';
 import { IDatabaseConnectionManager } from '../../application/interfaces/tenant-isolation-strategy.interface';
+import { ConnectionPoolConfigService } from '../database/connection-pool-config.service';
 
 /**
  * Database connection service following Single Responsibility Principle
  * Only handles database connection management, not tenant context
+ * Enhanced with optimized connection pooling for KAN-33 performance requirements
  */
 @Injectable()
 export class DatabaseConnectionService
@@ -13,8 +15,16 @@ export class DatabaseConnectionService
 {
   private pool!: Pool;
   private isConnected = false;
+  private poolMetrics = {
+    totalConnections: 0,
+    idleConnections: 0,
+    waitingClients: 0,
+  };
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly poolConfigService: ConnectionPoolConfigService,
+  ) {}
 
   async onModuleInit(): Promise<void> {
     await this.initializeConnection();
@@ -25,29 +35,34 @@ export class DatabaseConnectionService
   }
 
   /**
-   * Initialize database connection pool
+   * Initialize database connection pool with optimized configuration
+   * Uses Strategy pattern for environment-specific optimization
    */
   private async initializeConnection(): Promise<void> {
     try {
-      const connectionString = this.configService.get<string>('DATABASE_URL');
+      // Get optimized pool configuration based on environment
+      const poolConfig = this.poolConfigService.getOptimizedPoolConfig();
 
-      if (!connectionString) {
-        throw new Error('DATABASE_URL environment variable is required');
-      }
+      // Validate configuration meets performance requirements
+      this.poolConfigService.validatePoolConfig(poolConfig);
 
-      this.pool = new Pool({
-        connectionString,
-        max: 20, // Maximum number of connections in the pool
-        idleTimeoutMillis: 30000, // Close idle connections after 30 seconds
-        connectionTimeoutMillis: 2000, // Return error after 2 seconds if connection could not be established
-        maxUses: 7500, // Close (and replace) a connection after it has been used 7500 times
-      });
+      // Create pool with optimized configuration
+      this.pool = new Pool(poolConfig);
+
+      // Set up pool event listeners for monitoring
+      this.setupPoolEventListeners();
 
       // Test the connection
       await this.testConnection();
       this.isConnected = true;
 
-      console.log('✅ Database connection pool initialized successfully');
+      const strategyName = this.poolConfigService.getCurrentStrategyName();
+      console.log(
+        `✅ Database connection pool initialized successfully with ${strategyName} strategy`,
+      );
+      console.log(
+        `📊 Pool config: min=${poolConfig.min}, max=${poolConfig.max}, timeout=${poolConfig.connectionTimeoutMillis}ms`,
+      );
     } catch (error) {
       console.error('❌ Failed to initialize database connection:', error);
       throw error;
@@ -91,6 +106,66 @@ export class DatabaseConnectionService
       console.error('Database connection test failed:', error);
       return false;
     }
+  }
+
+  /**
+   * Set up pool event listeners for performance monitoring
+   * Implements Observer pattern for pool health monitoring
+   */
+  private setupPoolEventListeners(): void {
+    if (!this.pool) return;
+
+    // Monitor connection events
+    this.pool.on('connect', (_client) => {
+      this.poolMetrics.totalConnections++;
+      console.log(
+        `🔗 New database connection established (total: ${this.poolMetrics.totalConnections})`,
+      );
+    });
+
+    this.pool.on('acquire', (_client) => {
+      this.poolMetrics.idleConnections--;
+      console.log(
+        `📤 Connection acquired from pool (idle: ${this.poolMetrics.idleConnections})`,
+      );
+    });
+
+    this.pool.on('release', (_client) => {
+      this.poolMetrics.idleConnections++;
+      console.log(
+        `📥 Connection released to pool (idle: ${this.poolMetrics.idleConnections})`,
+      );
+    });
+
+    this.pool.on('remove', (_client) => {
+      this.poolMetrics.totalConnections--;
+      console.log(
+        `🗑️ Connection removed from pool (total: ${this.poolMetrics.totalConnections})`,
+      );
+    });
+
+    this.pool.on('error', (err, _client) => {
+      console.error('❌ Database pool error:', err);
+    });
+  }
+
+  /**
+   * Get current pool metrics for monitoring
+   * Supports performance monitoring requirements
+   */
+  getPoolMetrics() {
+    if (!this.pool) {
+      return { error: 'Pool not initialized' };
+    }
+
+    return {
+      totalCount: this.pool.totalCount,
+      idleCount: this.pool.idleCount,
+      waitingCount: this.pool.waitingCount,
+      maxConnections: this.pool.options.max,
+      minConnections: this.pool.options.min,
+      ...this.poolMetrics,
+    };
   }
 
   /**

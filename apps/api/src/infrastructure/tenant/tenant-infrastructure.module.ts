@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
+// Database Configuration
+import { DatabaseConfigModule } from '../database/database-config.module';
+
 // Domain Services
 import { TenantIsolationDomainService } from '../../domain/services/tenant-isolation.domain-service';
 
@@ -25,7 +28,7 @@ import { TenantContextService } from '../../common/tenant/tenant-context.service
  * Follows Clean Architecture and Dependency Injection principles
  */
 @Module({
-  imports: [ConfigModule],
+  imports: [ConfigModule, DatabaseConfigModule],
   providers: [
     // Domain Services
     TenantIsolationDomainService,

@@ -1,4 +1,5 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
+import { eq } from 'drizzle-orm';
 import { Pool } from 'pg';
 import * as schema from './schema';
 
@@ -37,26 +38,33 @@ function createDatabaseConnection(): {
  * Create sample organization
  */
 async function createSampleOrganization(db: ReturnType<typeof drizzle>) {
-  const [organization] = await db
-    .insert(schema.organizations)
-    .values({
-      name: 'Permian Basin Oil Co.', // eslint-disable-line sonarjs/no-duplicate-string
-      taxId: '12-3456789',
-      address: {
-        street: '123 Oil Field Road',
-        city: 'Midland',
-        state: 'TX',
-        zipCode: '79701',
-      },
-      phone: '(432) 555-0123',
-      email: 'info@permianbasinoil.com',
-      settings: {
-        timezone: 'America/Chicago',
-        currency: 'USD',
-        units: 'imperial',
-      },
-    })
-    .returning();
+  // Insert the organization
+  await db.insert(schema.organizations).values({
+    name: 'Permian Basin Oil Co.', // eslint-disable-line sonarjs/no-duplicate-string
+    taxId: '12-3456789',
+    address: {
+      street: '123 Oil Field Road',
+      city: 'Midland',
+      state: 'TX',
+      zipCode: '79701',
+    },
+    phone: '(432) 555-0123',
+    email: 'info@permianbasinoil.com',
+    settings: {
+      timezone: 'America/Chicago',
+      currency: 'USD',
+      units: 'imperial',
+    },
+  });
+
+  // Get the created organization
+  const organizations = await db
+    .select()
+    .from(schema.organizations)
+    .where(eq(schema.organizations.name, 'Permian Basin Oil Co.'))
+    .limit(1);
+
+  const organization = organizations[0];
 
   if (!organization) {
     throw new Error('Failed to create organization');
