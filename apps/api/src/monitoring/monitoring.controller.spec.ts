@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { HttpException } from '@nestjs/common';
 import { MonitoringController } from './monitoring.controller';
 import { SentryService } from '../sentry/sentry.service';
 import { LogRocketService } from '../logrocket/logrocket.service';
