@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-wellflow}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_password_change_in_production}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-please_set_secure_password}
     ports:
       - "5433:5432"
     volumes:

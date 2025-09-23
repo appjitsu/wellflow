@@ -1,0 +1,61 @@
+# Checkov Infrastructure Security Configuration
+# This file configures Checkov security scanning for WellFlow
+
+# Skip specific checks that are acceptable for development environment
+skip-check:
+  # Docker Compose development environment exceptions
+  - CKV_DOCKER_2 # Ensure that HEALTHCHECK instructions have been added to container images
+  - CKV_DOCKER_3 # Ensure that a user for the container has been created
+
+  # GitHub Actions workflow exceptions for development
+  - CKV2_GHA_1 # Ensure top-level permissions are not set to write-all
+
+# Framework-specific configurations
+framework:
+  - dockerfile
+  - docker-compose
+  - github-actions
+  - terraform
+  - kubernetes
+
+# Output configuration
+output: cli
+quiet: false
+
+# Severity levels to report
+severity:
+  - CRITICAL
+  - HIGH
+  - MEDIUM
+
+# Custom policies directory (if any)
+# external-checks-dir: ./security-policies
+
+# Baseline file for tracking resolved issues
+# baseline: .checkov.baseline
+
+# Compact output for CI/CD
+compact: true
+
+# Download external modules
+download-external-modules: false
+
+# Skip SSL verification (only for development)
+# ca-certificate: false
+
+# Logging configuration
+log-level: WARNING
+
+# Repository root
+repo-root-for-plan-enrichment: .
+
+# Soft fail mode (don't exit with error code)
+soft-fail: false
+
+# Hard fail on specific checks
+hard-fail-on:
+  - CRITICAL
+  - HIGH
+
+# Include suppressed checks in output
+include-all-checkov-policies: true

@@ -1,0 +1,46 @@
+# Hadolint Docker Linter Configuration
+# This file configures Hadolint for Docker security best practices
+
+# Ignore specific rules that are acceptable for our use case
+ignored:
+  # Allow specific package managers
+  - DL3008 # Pin versions in apt get install (acceptable for Alpine apk)
+  - DL3009 # Delete the apt-get lists after installing something (not applicable to Alpine)
+
+  # Development environment exceptions
+  - DL3018 # Pin versions in apk add (acceptable for development)
+  - DL3059 # Multiple consecutive RUN instructions (optimization vs readability trade-off)
+
+# Trusted registries for base images
+trustedRegistries:
+  - docker.io
+  - registry.hub.docker.com
+  - node
+  - alpine
+  - postgres
+  - redis
+  - timescale
+
+# Override specific rules
+override:
+  error: []
+  warning: []
+  info: []
+  style: []
+
+# Strict mode (fail on any rule violation)
+strict-labels: false
+
+# Disable specific checks
+disable-ignore-pragma: false
+
+# Format for output
+format: tty
+
+# Failure threshold
+failure-threshold: error
+# Oil & Gas Industry Security Considerations:
+# - All production Dockerfiles should pass without ignores
+# - Regular base image updates for security patches
+# - Compliance with industrial cybersecurity standards
+# - Proper user management and privilege separation

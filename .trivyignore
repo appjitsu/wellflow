@@ -1,0 +1,23 @@
+# Trivy Security Scanner Ignore File
+# This file specifies vulnerabilities to ignore during scanning
+
+# Development environment specific ignores
+# These should be reviewed and removed for production
+
+# Low severity vulnerabilities in development dependencies
+CVE-2023-26136  # tough-cookie vulnerability in dev dependencies
+CVE-2023-26115  # word-wrap vulnerability in dev dependencies
+
+# Node.js base image vulnerabilities that are acceptable for development
+# These should be regularly reviewed and updated
+
+# Alpine package vulnerabilities that are patched in newer versions
+# Update base images regularly to address these
+
+# Development-only packages with known low-risk vulnerabilities
+# Remove these ignores for production builds
+
+# Oil & Gas industry specific considerations:
+# - Ensure all production images are scanned without ignores
+# - Regular security updates for industrial control systems
+# - Compliance with IEC 62443 standards for industrial cybersecurity

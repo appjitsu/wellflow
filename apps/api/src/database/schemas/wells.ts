@@ -8,7 +8,9 @@ import {
   index,
   unique,
   pgEnum,
+  check,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { organizations } from './organizations';
 import { leases } from './leases';
 
@@ -69,5 +71,14 @@ export const wells = pgTable(
       table.organizationId,
     ),
     leaseIdx: index('wells_lease_id_idx').on(table.leaseId),
+    // Business rule constraints
+    wellsApiNumberFormatCheck: check(
+      'api_format',
+      sql`LENGTH(api_number) = 14 AND api_number ~ '^[0-9]+$'`,
+    ),
+    totalDepthPositiveCheck: check(
+      'wells_total_depth_positive_check',
+      sql`total_depth IS NULL OR total_depth >= 0`,
+    ),
   }),
 );

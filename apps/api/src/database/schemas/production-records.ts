@@ -8,7 +8,9 @@ import {
   date,
   index,
   unique,
+  check,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { organizations } from './organizations';
 import { wells } from './wells';
 
@@ -48,6 +50,18 @@ export const productionRecords = pgTable(
     wellDateIdx: unique('production_records_well_date_unique').on(
       table.wellId,
       table.productionDate,
+    ),
+    // Business rule constraints - production volumes must be non-negative
+    positiveVolumesCheck: check(
+      'production_records_positive_volumes_check',
+      sql`(oil_volume IS NULL OR oil_volume >= 0) AND
+          (gas_volume IS NULL OR gas_volume >= 0) AND
+          (water_volume IS NULL OR water_volume >= 0)`,
+    ),
+    positivePricesCheck: check(
+      'production_records_positive_prices_check',
+      sql`(oil_price IS NULL OR oil_price >= 0) AND
+          (gas_price IS NULL OR gas_price >= 0)`,
     ),
   }),
 );
