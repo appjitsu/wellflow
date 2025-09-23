@@ -52,7 +52,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    if (this.pool) {
+    if (this.pool && !this.pool.ended) {
       await this.pool.end();
       console.log('🔌 Database connection closed');
     }
@@ -119,7 +119,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         'SELECT current_setting($1, true) as org_id',
         ['app.current_organization_id'],
       );
-      return result.rows[0]?.org_id || null;
+      const row = result.rows[0] as { org_id?: string } | undefined;
+      return row?.org_id || null;
     } catch (error) {
       console.error('Failed to get current organization context:', error);
       return null;

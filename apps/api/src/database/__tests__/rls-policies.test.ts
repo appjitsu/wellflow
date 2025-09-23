@@ -33,7 +33,7 @@ describe('Row Level Security Policies', () => {
     // Clear any organization context before closing
     try {
       await databaseService.clearOrganizationContext();
-    } catch (error) {
+    } catch {
       // Ignore errors during cleanup
     }
 
@@ -45,7 +45,7 @@ describe('Row Level Security Policies', () => {
     // Clear any existing organization context first
     try {
       await databaseService.clearOrganizationContext();
-    } catch (error) {
+    } catch {
       // Ignore errors during cleanup
     }
 
@@ -69,8 +69,8 @@ describe('Row Level Security Policies', () => {
       // Should only see org1
       const orgs = await db.select().from(schema.organizations);
       expect(orgs).toHaveLength(1);
-      expect(orgs[0].id).toBe(org1Id);
-      expect(orgs[0].name).toBe('Oil Company 1');
+      expect(orgs[0]?.id).toBe(org1Id);
+      expect(orgs[0]?.name).toBe('Oil Company 1');
 
       // Switch to org2 context
       await databaseService.setOrganizationContext(org2Id);
@@ -78,8 +78,8 @@ describe('Row Level Security Policies', () => {
       // Should only see org2
       const orgs2 = await db.select().from(schema.organizations);
       expect(orgs2).toHaveLength(1);
-      expect(orgs2[0].id).toBe(org2Id);
-      expect(orgs2[0].name).toBe('Oil Company 2');
+      expect(orgs2[0]?.id).toBe(org2Id);
+      expect(orgs2[0]?.name).toBe('Oil Company 2');
     });
   });
 
@@ -114,13 +114,13 @@ describe('Row Level Security Policies', () => {
       await databaseService.setOrganizationContext(org1Id);
       const org1Users = await db.select().from(schema.users);
       expect(org1Users).toHaveLength(1);
-      expect(org1Users[0].email).toBe('user1@org1.com');
+      expect(org1Users[0]?.email).toBe('user1@org1.com');
 
       // Set context for org2
       await databaseService.setOrganizationContext(org2Id);
       const org2Users = await db.select().from(schema.users);
       expect(org2Users).toHaveLength(1);
-      expect(org2Users[0].email).toBe('user2@org2.com');
+      expect(org2Users[0]?.email).toBe('user2@org2.com');
     });
   });
 
@@ -155,15 +155,15 @@ describe('Row Level Security Policies', () => {
       await databaseService.setOrganizationContext(org1Id);
       const org1Wells = await db.select().from(schema.wells);
       expect(org1Wells).toHaveLength(1);
-      expect(org1Wells[0].wellName).toBe('Well 1');
-      expect(org1Wells[0].apiNumber).toBe('12345678901234');
+      expect(org1Wells[0]?.wellName).toBe('Well 1');
+      expect(org1Wells[0]?.apiNumber).toBe('12345678901234');
 
       // Set context for org2
       await databaseService.setOrganizationContext(org2Id);
       const org2Wells = await db.select().from(schema.wells);
       expect(org2Wells).toHaveLength(1);
-      expect(org2Wells[0].wellName).toBe('Well 2');
-      expect(org2Wells[0].apiNumber).toBe('98765432109876');
+      expect(org2Wells[0]?.wellName).toBe('Well 2');
+      expect(org2Wells[0]?.apiNumber).toBe('98765432109876');
     });
 
     it('should prevent cross-tenant well updates', async () => {
@@ -193,7 +193,7 @@ describe('Row Level Security Policies', () => {
       const updateResult = await db
         .update(schema.wells)
         .set({ wellName: 'Hacked Well' })
-        .where(eq(schema.wells.id, well.id));
+        .where(eq(schema.wells.id, well!.id));
 
       // The update should not affect any rows due to RLS
       expect(updateResult.rowCount).toBe(0);
@@ -203,9 +203,9 @@ describe('Row Level Security Policies', () => {
       const [updatedWell] = await db
         .select()
         .from(schema.wells)
-        .where(eq(schema.wells.id, well.id));
+        .where(eq(schema.wells.id, well!.id));
 
-      expect(updatedWell.wellName).toBe('Well 1'); // Should remain unchanged
+      expect(updatedWell?.wellName).toBe('Well 1'); // Should remain unchanged
     });
   });
 

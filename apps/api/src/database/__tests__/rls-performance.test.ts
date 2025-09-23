@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule } from '@nestjs/config';
+import { eq } from 'drizzle-orm';
 import { DatabaseService } from '../database.service';
 import * as schema from '../schema';
 
@@ -31,7 +32,7 @@ describe('RLS Performance Impact Assessment', () => {
   afterAll(async () => {
     try {
       await databaseService.clearOrganizationContext();
-    } catch (error) {
+    } catch {
       // Ignore errors during cleanup
     }
 
@@ -43,7 +44,7 @@ describe('RLS Performance Impact Assessment', () => {
     // Clear any existing organization context first
     try {
       await databaseService.clearOrganizationContext();
-    } catch (error) {
+    } catch {
       // Ignore errors during cleanup
     }
 
@@ -148,8 +149,11 @@ describe('RLS Performance Impact Assessment', () => {
           organizationName: schema.organizations.name,
         })
         .from(schema.wells)
-        .innerJoin(schema.organizations, schema.wells.organizationId)
-        .where(schema.wells.status)
+        .innerJoin(
+          schema.organizations,
+          eq(schema.wells.organizationId, schema.organizations.id),
+        )
+        .where(eq(schema.wells.status, 'active'))
         .limit(25);
       const endComplex = performance.now();
       const timeComplex = endComplex - startComplex;
@@ -178,7 +182,7 @@ describe('RLS Performance Impact Assessment', () => {
         organizationId: i < 250 ? org1Id : org2Id,
         apiNumber: `1234567890${i.toString().padStart(4, '0')}`,
         wellName: `Well ${i + 1}`,
-        wellType: (i % 2 === 0 ? 'oil' : 'gas') as const,
+        wellType: i % 2 === 0 ? ('oil' as const) : ('gas' as const),
         status: 'active' as const,
       }));
 
@@ -192,7 +196,7 @@ describe('RLS Performance Impact Assessment', () => {
       const indexedQuery = await db
         .select()
         .from(schema.wells)
-        .where(schema.wells.wellType);
+        .where(eq(schema.wells.wellType, 'oil'));
       const endIndexed = performance.now();
       const timeIndexed = endIndexed - startIndexed;
 
