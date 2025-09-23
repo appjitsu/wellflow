@@ -1,31 +1,37 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { PartnersService } from './partners.service';
-import { DatabaseService } from '../database/database.service';
+import { PartnersRepository } from './domain/partners.repository';
 import { TenantContextService } from '../common/tenant/tenant-context.service';
 
 describe('PartnersService', () => {
   let service: PartnersService;
-  let mockDatabaseService: jest.Mocked<DatabaseService>;
+  let mockPartnersRepository: jest.Mocked<PartnersRepository>;
   let mockTenantContextService: jest.Mocked<TenantContextService>;
-  let mockDb: any;
+
+  const createMockPartner = (overrides: Partial<any> = {}): any => ({
+    id: 'partner-123',
+    organizationId: 'org-123',
+    partnerName: 'Test Partner',
+    partnerCode: 'TP001',
+    taxId: '123456789',
+    billingAddress: null,
+    remitAddress: null,
+    contactEmail: 'test@partner.com',
+    contactPhone: null,
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  });
 
   beforeEach(async () => {
-    mockDb = {
-      insert: jest.fn().mockReturnThis(),
-      values: jest.fn().mockReturnThis(),
-      returning: jest.fn(),
-      select: jest.fn().mockReturnThis(),
-      from: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis(),
-      set: jest.fn().mockReturnThis(),
-      delete: jest.fn().mockReturnThis(),
-    };
-
-    mockDatabaseService = {
-      getDb: jest.fn().mockReturnValue(mockDb),
+    mockPartnersRepository = {
+      create: jest.fn(),
+      findById: jest.fn(),
+      findAll: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
     } as any;
 
     mockTenantContextService = {
@@ -36,8 +42,8 @@ describe('PartnersService', () => {
       providers: [
         PartnersService,
         {
-          provide: DatabaseService,
-          useValue: mockDatabaseService,
+          provide: 'PartnersRepository',
+          useValue: mockPartnersRepository,
         },
         {
           provide: TenantContextService,
@@ -63,20 +69,19 @@ describe('PartnersService', () => {
         isActive: true,
       };
 
-      const mockPartner = {
-        id: 'partner-123',
+      const mockPartner = createMockPartner({
         ...dto,
-        organizationId: 'org-123',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+        id: 'partner-123',
+      });
 
-      mockDb.returning.mockResolvedValue([mockPartner]);
+      mockPartnersRepository.create.mockResolvedValue(mockPartner);
 
       const result = await service.createPartner(dto);
 
-      expect(mockDatabaseService.getDb).toHaveBeenCalled();
-      expect(mockTenantContextService.getOrganizationId).toHaveBeenCalled();
+      expect(mockPartnersRepository.create).toHaveBeenCalledWith({
+        ...dto,
+        organizationId: 'org-123',
+      });
       expect(result).toEqual(mockPartner);
     });
 
@@ -86,18 +91,22 @@ describe('PartnersService', () => {
         partnerCode: 'MP001',
       };
 
-      const mockPartner = {
-        id: 'partner-456',
+      const mockPartner = createMockPartner({
         ...dto,
-        organizationId: 'org-123',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+        id: 'partner-456',
+        taxId: null,
+        contactEmail: null,
+        isActive: true,
+      });
 
-      mockDb.returning.mockResolvedValue([mockPartner]);
+      mockPartnersRepository.create.mockResolvedValue(mockPartner);
 
       const result = await service.createPartner(dto);
 
+      expect(mockPartnersRepository.create).toHaveBeenCalledWith({
+        ...dto,
+        organizationId: 'org-123',
+      });
       expect(result).toEqual(mockPartner);
     });
 
@@ -107,7 +116,9 @@ describe('PartnersService', () => {
         partnerCode: 'TP001',
       };
 
-      mockDb.returning.mockResolvedValue([]);
+      mockPartnersRepository.create.mockRejectedValue(
+        new Error('Database error'),
+      );
 
       await expect(service.createPartner(dto)).rejects.toThrow(
         'Failed to create partner',
@@ -117,23 +128,23 @@ describe('PartnersService', () => {
 
   describe('getPartnerById', () => {
     it('should return partner when found', async () => {
-      const mockPartner = {
+      const mockPartner = createMockPartner({
         id: 'partner-123',
-        partnerName: 'Test Partner',
-        partnerCode: 'TP001',
-        organizationId: 'org-123',
-      };
+      });
 
-      mockDb.limit.mockResolvedValue([mockPartner]);
+      mockPartnersRepository.findById.mockResolvedValue(mockPartner);
 
       const result = await service.getPartnerById('partner-123');
 
-      expect(mockTenantContextService.getOrganizationId).toHaveBeenCalled();
+      expect(mockPartnersRepository.findById).toHaveBeenCalledWith(
+        'partner-123',
+        'org-123',
+      );
       expect(result).toEqual(mockPartner);
     });
 
     it('should throw NotFoundException when partner not found', async () => {
-      mockDb.limit.mockResolvedValue([]);
+      mockPartnersRepository.findById.mockResolvedValue(null);
 
       await expect(service.getPartnerById('partner-123')).rejects.toThrow(
         NotFoundException,
@@ -144,30 +155,28 @@ describe('PartnersService', () => {
   describe('getPartners', () => {
     it('should return all partners for organization', async () => {
       const mockPartners = [
-        {
+        createMockPartner({
           id: 'partner-1',
           partnerName: 'Partner 1',
           partnerCode: 'P001',
-          organizationId: 'org-123',
-        },
-        {
+        }),
+        createMockPartner({
           id: 'partner-2',
           partnerName: 'Partner 2',
           partnerCode: 'P002',
-          organizationId: 'org-123',
-        },
+        }),
       ];
 
-      mockDb.where.mockResolvedValue(mockPartners);
+      mockPartnersRepository.findAll.mockResolvedValue(mockPartners);
 
       const result = await service.getPartners();
 
-      expect(mockTenantContextService.getOrganizationId).toHaveBeenCalled();
+      expect(mockPartnersRepository.findAll).toHaveBeenCalledWith('org-123');
       expect(result).toEqual(mockPartners);
     });
 
     it('should return empty array when no partners exist', async () => {
-      mockDb.where.mockResolvedValue([]);
+      mockPartnersRepository.findAll.mockResolvedValue([]);
 
       const result = await service.getPartners();
 
@@ -177,38 +186,42 @@ describe('PartnersService', () => {
 
   describe('updatePartner', () => {
     it('should update partner successfully', async () => {
-      const existingPartner = {
+      const existingPartner = createMockPartner({
         id: 'partner-123',
         partnerName: 'Old Name',
         partnerCode: 'OLD001',
-        organizationId: 'org-123',
-      };
+      });
 
       const updateDto = {
         partnerName: 'New Name',
         contactEmail: 'new@email.com',
       };
 
-      const updatedPartner = {
+      const updatedPartner = createMockPartner({
         ...existingPartner,
         ...updateDto,
         updatedAt: new Date(),
-      };
+      });
 
-      // Mock getPartnerById
-      mockDb.limit.mockResolvedValueOnce([existingPartner]);
-      // Mock update
-      mockDb.returning.mockResolvedValue([updatedPartner]);
+      mockPartnersRepository.findById.mockResolvedValue(existingPartner);
+      mockPartnersRepository.update.mockResolvedValue(updatedPartner);
 
       const result = await service.updatePartner('partner-123', updateDto);
 
-      expect(mockTenantContextService.getOrganizationId).toHaveBeenCalled();
+      expect(mockPartnersRepository.findById).toHaveBeenCalledWith(
+        'partner-123',
+        'org-123',
+      );
+      expect(mockPartnersRepository.update).toHaveBeenCalledWith(
+        'partner-123',
+        updateDto,
+        'org-123',
+      );
       expect(result).toEqual(updatedPartner);
     });
 
     it('should throw error when partner not found', async () => {
-      // Mock getPartnerById to throw NotFoundException
-      mockDb.limit.mockResolvedValue([]);
+      mockPartnersRepository.findById.mockResolvedValue(null);
 
       await expect(
         service.updatePartner('partner-123', { partnerName: 'New Name' }),
@@ -216,17 +229,14 @@ describe('PartnersService', () => {
     });
 
     it('should throw error when update fails', async () => {
-      const existingPartner = {
+      const existingPartner = createMockPartner({
         id: 'partner-123',
-        partnerName: 'Test Partner',
-        partnerCode: 'TP001',
-        organizationId: 'org-123',
-      };
+      });
 
-      // Mock getPartnerById
-      mockDb.limit.mockResolvedValueOnce([existingPartner]);
-      // Mock update failure
-      mockDb.returning.mockResolvedValue([]);
+      mockPartnersRepository.findById.mockResolvedValue(existingPartner);
+      mockPartnersRepository.update.mockRejectedValue(
+        new Error('Database error'),
+      );
 
       await expect(
         service.updatePartner('partner-123', { partnerName: 'New Name' }),
@@ -236,27 +246,28 @@ describe('PartnersService', () => {
 
   describe('deletePartner', () => {
     it('should delete partner successfully', async () => {
-      const existingPartner = {
+      const existingPartner = createMockPartner({
         id: 'partner-123',
-        partnerName: 'Test Partner',
-        partnerCode: 'TP001',
-        organizationId: 'org-123',
-      };
+      });
 
-      // Mock getPartnerById
-      mockDb.limit.mockResolvedValueOnce([existingPartner]);
-      // Mock delete
-      mockDb.returning.mockResolvedValue([existingPartner]);
+      mockPartnersRepository.findById.mockResolvedValue(existingPartner);
+      mockPartnersRepository.delete.mockResolvedValue(true);
 
       const result = await service.deletePartner('partner-123');
 
-      expect(mockTenantContextService.getOrganizationId).toHaveBeenCalled();
-      expect(result).toEqual(existingPartner);
+      expect(mockPartnersRepository.findById).toHaveBeenCalledWith(
+        'partner-123',
+        'org-123',
+      );
+      expect(mockPartnersRepository.delete).toHaveBeenCalledWith(
+        'partner-123',
+        'org-123',
+      );
+      expect(result).toEqual({ success: true });
     });
 
     it('should throw error when partner not found', async () => {
-      // Mock getPartnerById to throw NotFoundException
-      mockDb.limit.mockResolvedValue([]);
+      mockPartnersRepository.findById.mockResolvedValue(null);
 
       await expect(service.deletePartner('partner-123')).rejects.toThrow(
         NotFoundException,
@@ -264,17 +275,12 @@ describe('PartnersService', () => {
     });
 
     it('should throw error when delete fails', async () => {
-      const existingPartner = {
+      const existingPartner = createMockPartner({
         id: 'partner-123',
-        partnerName: 'Test Partner',
-        partnerCode: 'TP001',
-        organizationId: 'org-123',
-      };
+      });
 
-      // Mock getPartnerById
-      mockDb.limit.mockResolvedValueOnce([existingPartner]);
-      // Mock delete failure
-      mockDb.returning.mockResolvedValue([]);
+      mockPartnersRepository.findById.mockResolvedValue(existingPartner);
+      mockPartnersRepository.delete.mockResolvedValue(false);
 
       await expect(service.deletePartner('partner-123')).rejects.toThrow(
         'Failed to delete partner',
