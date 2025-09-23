@@ -50,7 +50,7 @@ describe('ValidationService', () => {
         service.validate(schema, data);
       } catch (error) {
         expect(error).toBeInstanceOf(BadRequestException);
-        expect(error.getResponse()).toMatchObject({
+        expect((error as BadRequestException).getResponse()).toMatchObject({
           message: 'Validation failed',
           errors: expect.arrayContaining([
             expect.objectContaining({
@@ -178,7 +178,7 @@ describe('ValidationService', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.errors[0].field).toBe('user.profile.name');
+        expect(result.errors?.[0]?.field).toBe('user.profile.name');
       }
     });
   });

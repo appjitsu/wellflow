@@ -111,7 +111,7 @@ describe('DatabaseService', () => {
         rollback: jest.fn().mockResolvedValue(undefined),
       };
 
-      mockDrizzle.transaction.mockImplementation((callback) => {
+      mockDrizzle.transaction.mockImplementation((callback: any) => {
         return callback(mockTransaction);
       });
 
@@ -132,7 +132,7 @@ describe('DatabaseService', () => {
         rollback: jest.fn().mockResolvedValue(undefined),
       };
 
-      mockDrizzle.transaction.mockImplementation(async (callback) => {
+      mockDrizzle.transaction.mockImplementation(async (callback: any) => {
         try {
           return await callback(mockTransaction);
         } catch (error) {

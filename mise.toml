@@ -1,0 +1,14 @@
+# WellFlow Mise Configuration
+# This file configures mise to use specific tool versions
+# Prevents network timeouts during deployment by specifying exact versions
+
+[tools]
+# Node.js version - use LTS version for deployment stability
+node = "20.18.0"
+
+# Optional: Configure mise behavior
+[settings]
+# Disable automatic version checking to prevent network calls
+disable_tools = []
+# Use local versions first
+prefer_local_versions = true

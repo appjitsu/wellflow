@@ -79,9 +79,10 @@ describe('AbilitiesGuard', () => {
       const mockRequest = {
         user: undefined,
       };
-      mockExecutionContext
-        .switchToHttp()
-        .getRequest.mockReturnValue(mockRequest);
+      (
+        mockExecutionContext.switchToHttp()
+          .getRequest as jest.MockedFunction<any>
+      ).mockReturnValue(mockRequest);
 
       expect(() => guard.canActivate(mockExecutionContext)).toThrow(
         ForbiddenException,
@@ -102,9 +103,10 @@ describe('AbilitiesGuard', () => {
       };
 
       const mockRequest = { user };
-      mockExecutionContext
-        .switchToHttp()
-        .getRequest.mockReturnValue(mockRequest);
+      (
+        mockExecutionContext.switchToHttp()
+          .getRequest as jest.MockedFunction<any>
+      ).mockReturnValue(mockRequest);
 
       const mockAbility = {
         can: jest.fn().mockReturnValue(true),
@@ -129,9 +131,10 @@ describe('AbilitiesGuard', () => {
       };
 
       const mockRequest = { user };
-      mockExecutionContext
-        .switchToHttp()
-        .getRequest.mockReturnValue(mockRequest);
+      (
+        mockExecutionContext.switchToHttp()
+          .getRequest as jest.MockedFunction<any>
+      ).mockReturnValue(mockRequest);
 
       const mockAbility = {
         can: jest.fn().mockReturnValue(false),
@@ -160,9 +163,10 @@ describe('AbilitiesGuard', () => {
       };
 
       const mockRequest = { user };
-      mockExecutionContext
-        .switchToHttp()
-        .getRequest.mockReturnValue(mockRequest);
+      (
+        mockExecutionContext.switchToHttp()
+          .getRequest as jest.MockedFunction<any>
+      ).mockReturnValue(mockRequest);
 
       const mockAbility = {
         can: jest
@@ -194,9 +198,10 @@ describe('AbilitiesGuard', () => {
       };
 
       const mockRequest = { user };
-      mockExecutionContext
-        .switchToHttp()
-        .getRequest.mockReturnValue(mockRequest);
+      (
+        mockExecutionContext.switchToHttp()
+          .getRequest as jest.MockedFunction<any>
+      ).mockReturnValue(mockRequest);
 
       const mockAbility = {
         can: jest
@@ -226,9 +231,10 @@ describe('AbilitiesGuard', () => {
       };
 
       const mockRequest = { user };
-      mockExecutionContext
-        .switchToHttp()
-        .getRequest.mockReturnValue(mockRequest);
+      (
+        mockExecutionContext.switchToHttp()
+          .getRequest as jest.MockedFunction<any>
+      ).mockReturnValue(mockRequest);
 
       const mockAbility = {
         can: jest.fn().mockReturnValue(true),

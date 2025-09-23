@@ -11,7 +11,16 @@ import { WellStatus } from '../domain/enums/well-status.enum';
 
 // Define all subjects that can be used in permissions
 type Subjects =
-  | InferSubjects<typeof Well | 'Well' | 'User' | 'Operator'>
+  | InferSubjects<
+      | typeof Well
+      | 'Well'
+      | 'User'
+      | 'Operator'
+      | 'Organization'
+      | 'Lease'
+      | 'Production'
+      | 'Partner'
+    >
   | 'all';
 
 // Define all actions that can be performed

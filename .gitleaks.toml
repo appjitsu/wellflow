@@ -104,6 +104,7 @@ files = [
     '''README\.md$''',
     '''CHANGELOG\.md$''',
     '''LICENSE$''',
+    '''\.env\.example$''',
 ]
 
 # Regex patterns to allowlist
@@ -112,6 +113,7 @@ regexes = [
     '''test[_-]?(api[_-]?key|secret|token)''',
     '''demo[_-]?(api[_-]?key|secret|token)''',
     '''placeholder[_-]?(api[_-]?key|secret|token)''',
+    '''SENTRY_DSN=https://example@sentry\.io/project-id''',
     '''your[_-]?(api[_-]?key|secret|token)''',
     '''insert[_-]?(api[_-]?key|secret|token)''',
     '''replace[_-]?(api[_-]?key|secret|token)''',

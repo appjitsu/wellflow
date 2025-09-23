@@ -3,7 +3,14 @@ import { Actions } from './abilities.factory';
 
 export interface RequiredRule {
   action: Actions;
-  subject: 'Well' | 'all';
+  subject:
+    | 'Well'
+    | 'User'
+    | 'Organization'
+    | 'Lease'
+    | 'Production'
+    | 'Partner'
+    | 'all';
 }
 
 export const CHECK_ABILITIES_KEY = 'check_abilities';
@@ -41,3 +48,63 @@ export const CanExportWells = () =>
 
 export const CanAuditWells = () =>
   CheckAbilities({ action: 'audit', subject: 'Well' });
+
+export const CanCreateUser = () =>
+  CheckAbilities({ action: 'create', subject: 'User' });
+
+export const CanReadUser = () =>
+  CheckAbilities({ action: 'read', subject: 'User' });
+
+export const CanUpdateUser = () =>
+  CheckAbilities({ action: 'update', subject: 'User' });
+
+export const CanDeleteUser = () =>
+  CheckAbilities({ action: 'delete', subject: 'User' });
+
+export const CanCreateOrganization = () =>
+  CheckAbilities({ action: 'create', subject: 'Organization' });
+
+export const CanReadOrganization = () =>
+  CheckAbilities({ action: 'read', subject: 'Organization' });
+
+export const CanUpdateOrganization = () =>
+  CheckAbilities({ action: 'update', subject: 'Organization' });
+
+export const CanDeleteOrganization = () =>
+  CheckAbilities({ action: 'delete', subject: 'Organization' });
+
+export const CanCreateLease = () =>
+  CheckAbilities({ action: 'create', subject: 'Lease' });
+
+export const CanReadLease = () =>
+  CheckAbilities({ action: 'read', subject: 'Lease' });
+
+export const CanUpdateLease = () =>
+  CheckAbilities({ action: 'update', subject: 'Lease' });
+
+export const CanDeleteLease = () =>
+  CheckAbilities({ action: 'delete', subject: 'Lease' });
+
+export const CanCreateProduction = () =>
+  CheckAbilities({ action: 'create', subject: 'Production' });
+
+export const CanReadProduction = () =>
+  CheckAbilities({ action: 'read', subject: 'Production' });
+
+export const CanUpdateProduction = () =>
+  CheckAbilities({ action: 'update', subject: 'Production' });
+
+export const CanDeleteProduction = () =>
+  CheckAbilities({ action: 'delete', subject: 'Production' });
+
+export const CanCreatePartner = () =>
+  CheckAbilities({ action: 'create', subject: 'Partner' });
+
+export const CanReadPartner = () =>
+  CheckAbilities({ action: 'read', subject: 'Partner' });
+
+export const CanUpdatePartner = () =>
+  CheckAbilities({ action: 'update', subject: 'Partner' });
+
+export const CanDeletePartner = () =>
+  CheckAbilities({ action: 'delete', subject: 'Partner' });

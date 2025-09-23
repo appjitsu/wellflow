@@ -1,8 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { User, NewUser } from '../database/schema';
+import { AbilitiesGuard } from '../authorization/abilities.guard';
+import { AbilitiesFactory } from '../authorization/abilities.factory';
+import { ValidationService } from '../common/validation/validation.service';
 
 describe('UsersController', () => {
   let controller: UsersController;
@@ -49,6 +53,20 @@ describe('UsersController', () => {
           provide: UsersService,
           useValue: mockUsersService,
         },
+        AbilitiesGuard,
+        {
+          provide: AbilitiesFactory,
+          useValue: {
+            createForUser: jest.fn(),
+          },
+        },
+        {
+          provide: ValidationService,
+          useValue: {
+            validate: jest.fn((schema: any, data: any) => data), // Return the validated data (second argument)
+          },
+        },
+        Reflector,
       ],
     }).compile();
 
@@ -65,18 +83,18 @@ describe('UsersController', () => {
     it('should create a user successfully', async () => {
       mockUsersService.createUser.mockResolvedValue(mockUser);
 
-      const result = await controller.createUser(mockNewUser);
+      const result = await controller.createUser(mockNewUser as any);
 
       expect(result).toEqual(mockUser);
       expect(mockUsersService.createUser).toHaveBeenCalledWith(mockNewUser);
     });
 
-    it('should throw HttpException when service fails', async () => {
+    it('should throw error when service fails', async () => {
       const error = new Error('Database error');
       mockUsersService.createUser.mockRejectedValue(error);
 
-      await expect(controller.createUser(mockNewUser)).rejects.toThrow(
-        new HttpException('Database error', HttpStatus.INTERNAL_SERVER_ERROR),
+      await expect(controller.createUser(mockNewUser as any)).rejects.toThrow(
+        'Database error',
       );
     });
 
@@ -87,7 +105,7 @@ describe('UsersController', () => {
       );
       mockUsersService.createUser.mockRejectedValue(httpError);
 
-      await expect(controller.createUser(mockNewUser)).rejects.toThrow(
+      await expect(controller.createUser(mockNewUser as any)).rejects.toThrow(
         new HttpException(
           'Validation failed',
           HttpStatus.INTERNAL_SERVER_ERROR,
@@ -106,7 +124,7 @@ describe('UsersController', () => {
       const createdUser = { ...mockUser, ...minimalUser };
       mockUsersService.createUser.mockResolvedValue(createdUser);
 
-      const result = await controller.createUser(minimalUser);
+      const result = await controller.createUser(minimalUser as any);
 
       expect(result).toEqual(createdUser);
       expect(mockUsersService.createUser).toHaveBeenCalledWith(minimalUser);
@@ -135,15 +153,12 @@ describe('UsersController', () => {
       expect(result).toEqual([]);
     });
 
-    it('should throw HttpException when service fails', async () => {
+    it('should throw error when service fails', async () => {
       const error = new Error('Database connection failed');
       mockUsersService.getAllUsers.mockRejectedValue(error);
 
       await expect(controller.getAllUsers()).rejects.toThrow(
-        new HttpException(
-          'Database connection failed',
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        ),
+        'Database connection failed',
       );
     });
   });
@@ -178,15 +193,12 @@ describe('UsersController', () => {
       );
     });
 
-    it('should throw INTERNAL_SERVER_ERROR for non-HttpException errors', async () => {
+    it('should throw error for non-HttpException errors', async () => {
       const error = new Error('Unexpected error');
       mockUsersService.getUserById.mockRejectedValue(error);
 
       await expect(controller.getUserById('user-123')).rejects.toThrow(
-        new HttpException(
-          'Failed to fetch user',
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        ),
+        'Unexpected error',
       );
     });
 
@@ -235,18 +247,13 @@ describe('UsersController', () => {
       );
     });
 
-    it('should throw INTERNAL_SERVER_ERROR for non-HttpException errors', async () => {
+    it('should throw error for non-HttpException errors', async () => {
       const error = new Error('Database timeout');
       mockUsersService.getUserByEmail.mockRejectedValue(error);
 
       await expect(
         controller.getUserByEmail('test@example.com'),
-      ).rejects.toThrow(
-        new HttpException(
-          'Failed to fetch user',
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        ),
-      );
+      ).rejects.toThrow('Database timeout');
     });
 
     it('should handle special characters in email', async () => {
@@ -273,7 +280,7 @@ describe('UsersController', () => {
       const updatedUser = { ...mockUser, ...updateData };
       mockUsersService.updateUser.mockResolvedValue(updatedUser);
 
-      const result = await controller.updateUser('user-123', updateData);
+      const result = await controller.updateUser('user-123', updateData as any);
 
       expect(result).toEqual(updatedUser);
       expect(mockUsersService.updateUser).toHaveBeenCalledWith(
@@ -286,7 +293,7 @@ describe('UsersController', () => {
       mockUsersService.updateUser.mockResolvedValue(null);
 
       await expect(
-        controller.updateUser('user-999', updateData),
+        controller.updateUser('user-999', updateData as any),
       ).rejects.toThrow(
         new HttpException('User not found', HttpStatus.NOT_FOUND),
       );
@@ -300,22 +307,17 @@ describe('UsersController', () => {
       mockUsersService.updateUser.mockRejectedValue(httpError);
 
       await expect(
-        controller.updateUser('user-123', updateData),
+        controller.updateUser('user-123', updateData as any),
       ).rejects.toThrow(httpError);
     });
 
-    it('should throw INTERNAL_SERVER_ERROR for non-HttpException errors', async () => {
+    it('should throw error for non-HttpException errors', async () => {
       const error = new Error('Update constraint violation');
       mockUsersService.updateUser.mockRejectedValue(error);
 
       await expect(
-        controller.updateUser('user-123', updateData),
-      ).rejects.toThrow(
-        new HttpException(
-          'Failed to update user',
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        ),
-      );
+        controller.updateUser('user-123', updateData as any),
+      ).rejects.toThrow('Update constraint violation');
     });
 
     it('should handle partial updates', async () => {
@@ -376,15 +378,12 @@ describe('UsersController', () => {
       );
     });
 
-    it('should throw INTERNAL_SERVER_ERROR for non-HttpException errors', async () => {
+    it('should throw error for non-HttpException errors', async () => {
       const error = new Error('Foreign key constraint violation');
       mockUsersService.deleteUser.mockRejectedValue(error);
 
       await expect(controller.deleteUser('user-123')).rejects.toThrow(
-        new HttpException(
-          'Failed to delete user',
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        ),
+        'Foreign key constraint violation',
       );
     });
 

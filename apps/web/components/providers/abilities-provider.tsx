@@ -4,8 +4,8 @@ import { createContext, useContext, ReactNode, ComponentType } from 'react';
 import { createContextualCan, CanProps } from '@casl/react';
 import { AppAbility, createAbilityForUser, createAbilityForGuest, User } from '../../lib/abilities';
 
-// Create CASL context
-const AbilityContext = createContext<AppAbility>(createAbilityForGuest());
+// Create CASL context with null default
+const AbilityContext = createContext<AppAbility | null>(null);
 
 // Create the Can component with proper typing
 export const Can: ComponentType<CanProps<AppAbility>> = createContextualCan(

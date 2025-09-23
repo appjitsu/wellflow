@@ -490,8 +490,8 @@ describe('ProductionRepository', () => {
       const result = await repository.findLatestByWells(['well-1', 'well-2']);
 
       expect(result).toHaveLength(2);
-      expect(result[0]).toEqual(mockRecords[0][0]);
-      expect(result[1]).toEqual(mockRecords[1][0]);
+      expect(result[0]).toEqual(mockRecords[0]?.[0]);
+      expect(result[1]).toEqual(mockRecords[1]?.[0]);
     });
 
     it('should return empty array for empty well IDs', async () => {
@@ -529,9 +529,9 @@ describe('ProductionRepository', () => {
 
       jest
         .spyOn(repository, 'batchCreate')
-        .mockResolvedValue(mockInsertedRecords);
+        .mockResolvedValue(mockInsertedRecords as any);
 
-      const result = await repository.bulkInsert(records);
+      const result = await repository.bulkInsert(records as any);
 
       expect(result).toEqual(mockInsertedRecords);
       expect(repository.batchCreate).toHaveBeenCalledWith(records);

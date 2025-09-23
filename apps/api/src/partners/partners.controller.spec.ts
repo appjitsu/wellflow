@@ -3,6 +3,8 @@ import { PartnersController } from './partners.controller';
 import { PartnersService } from './partners.service';
 import { ValidationService } from '../common/validation/validation.service';
 import { TenantGuard } from '../common/tenant/tenant.guard';
+import { AbilitiesGuard } from '../authorization/abilities.guard';
+import { AbilitiesFactory } from '../authorization/abilities.factory';
 
 describe('PartnersController', () => {
   let controller: PartnersController;
@@ -62,6 +64,13 @@ describe('PartnersController', () => {
         {
           provide: ValidationService,
           useValue: mockValidationService,
+        },
+        AbilitiesGuard,
+        {
+          provide: AbilitiesFactory,
+          useValue: {
+            createForUser: jest.fn(),
+          },
         },
       ],
     })

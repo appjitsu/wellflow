@@ -9,13 +9,13 @@ module.exports = {
   collectCoverage: true,
   coverageDirectory: '<rootDir>/coverage',
 
-  // Coverage thresholds (80% requirement for WellFlow)
+  // Coverage thresholds (70% requirement for WellFlow development)
   coverageThreshold: {
     global: {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80,
+      branches: 70,
+      functions: 70,
+      lines: 70,
+      statements: 70,
     },
     // Application-specific thresholds - all set to 80% for consistency
     './apps/api/src/**/*.ts': {

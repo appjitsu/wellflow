@@ -1,0 +1,5 @@
+# WellFlow Node.js Version Configuration
+# This file specifies the Node.js version for mise to use
+# Prevents network timeouts during deployment by avoiding version index fetches
+
+node = "20.18.0"
