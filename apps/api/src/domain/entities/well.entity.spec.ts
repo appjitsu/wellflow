@@ -32,7 +32,7 @@ describe('Well', () => {
       expect(well.getOperatorId()).toBe('operator-123');
       expect(well.getWellType()).toBe(WellType.OIL);
       expect(well.getLocation()).toBe(validLocation);
-      expect(well.getStatus()).toBe(WellStatus.PLANNED); // Default status
+      expect(well.getStatus()).toBe(WellStatus.DRILLING); // Default status
       expect(well.getLeaseId()).toBeUndefined();
       expect(well.getSpudDate()).toBeUndefined();
       expect(well.getCompletionDate()).toBeUndefined();

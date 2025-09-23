@@ -57,6 +57,11 @@ describe('UsersService', () => {
     // Reset all mocks
     jest.clearAllMocks();
 
+    // Reset Redis service mocks to default successful behavior
+    mockRedisService.get.mockResolvedValue(null);
+    mockRedisService.set.mockResolvedValue('OK');
+    mockRedisService.del.mockResolvedValue(1);
+
     // Create a complete mock database with proper chaining
     const mockDb = {
       insert: jest.fn().mockReturnValue({
@@ -161,6 +166,39 @@ describe('UsersService', () => {
       const result = await service.createUser(minimalUser);
 
       expect(result).toEqual(createdUser);
+    });
+
+    it('should throw error when user creation returns empty result', async () => {
+      const mockDb = mockDatabaseService.getDb();
+      mockDb.insert.mockReturnValue({
+        values: jest.fn().mockReturnValue({
+          returning: jest.fn().mockResolvedValue([]),
+        }),
+      });
+
+      await expect(service.createUser(mockNewUser)).rejects.toThrow(
+        'Failed to create user',
+      );
+    });
+
+    it('should handle Redis caching errors gracefully', async () => {
+      // Mock successful database operations but failing Redis
+      const mockDb = mockDatabaseService.getDb();
+      mockDb.select.mockReturnValue({
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            limit: jest.fn().mockResolvedValue([{ id: 'org-123' }]), // Organization exists
+          }),
+        }),
+      });
+
+      mockRedisService.set.mockRejectedValue(
+        new Error('Redis connection failed'),
+      );
+
+      await expect(service.createUser(mockNewUser)).rejects.toThrow(
+        'Redis connection failed',
+      );
     });
   });
 
@@ -474,7 +512,7 @@ describe('UsersService', () => {
       const result = await service.deleteUser('1');
 
       expect(result).toBe(true);
-      expect(service.getUserById).toHaveBeenCalledWith(1);
+      expect(service.getUserById).toHaveBeenCalledWith('1');
       expect(mockDatabaseService.getDb).toHaveBeenCalled();
       expect(mockRedisService.del).toHaveBeenCalledWith('user:1');
       expect(mockRedisService.del).toHaveBeenCalledWith(
@@ -619,6 +657,160 @@ describe('UsersService', () => {
 
       expect(result).toBeNull();
       expect(mockRedisService.get).toHaveBeenCalledWith(`user:${largeId}`);
+    });
+  });
+
+  describe('getAllUsers', () => {
+    it('should return all users from database', async () => {
+      const allUsers = [
+        mockUser,
+        { ...mockUser, id: '2', email: 'user2@example.com' },
+      ];
+
+      const mockDb = mockDatabaseService.getDb();
+      mockDb.select.mockReturnValue({
+        from: jest.fn().mockResolvedValue(allUsers),
+      });
+
+      const result = await service.getAllUsers();
+
+      expect(result).toEqual(allUsers);
+      expect(mockDb.select).toHaveBeenCalled();
+    });
+
+    it('should return empty array when no users exist', async () => {
+      const mockDb = mockDatabaseService.getDb();
+      mockDb.select.mockReturnValue({
+        from: jest.fn().mockResolvedValue([]),
+      });
+
+      const result = await service.getAllUsers();
+
+      expect(result).toEqual([]);
+    });
+
+    it('should handle database errors in getAllUsers', async () => {
+      const mockDb = mockDatabaseService.getDb();
+      mockDb.select.mockReturnValue({
+        from: jest.fn().mockRejectedValue(new Error('Database error')),
+      });
+
+      await expect(service.getAllUsers()).rejects.toThrow('Database error');
+    });
+  });
+
+  describe('updateUser', () => {
+    it('should update user and cache', async () => {
+      const updateData = { firstName: 'Updated', lastName: 'Name' };
+      const updatedUser = { ...mockUser, ...updateData };
+
+      const mockDb = mockDatabaseService.getDb();
+      mockDb.update.mockReturnValue({
+        set: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            returning: jest.fn().mockResolvedValue([updatedUser]),
+          }),
+        }),
+      });
+
+      const result = await service.updateUser('1', updateData);
+
+      expect(result).toEqual(updatedUser);
+      expect(mockRedisService.set).toHaveBeenCalledWith(
+        'user:1',
+        JSON.stringify(updatedUser),
+        3600,
+      );
+    });
+
+    it('should update email and handle email cache', async () => {
+      const updateData = { email: 'newemail@example.com' };
+      const updatedUser = { ...mockUser, ...updateData };
+
+      const mockDb = mockDatabaseService.getDb();
+      mockDb.update.mockReturnValue({
+        set: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            returning: jest.fn().mockResolvedValue([updatedUser]),
+          }),
+        }),
+      });
+
+      const result = await service.updateUser('1', updateData);
+
+      expect(result).toEqual(updatedUser);
+      expect(mockRedisService.del).toHaveBeenCalledWith(
+        'user:email:newemail@example.com',
+      );
+      expect(mockRedisService.set).toHaveBeenCalledWith(
+        'user:email:newemail@example.com',
+        JSON.stringify(updatedUser),
+        3600,
+      );
+    });
+
+    it('should return null when user not found for update', async () => {
+      const mockDb = mockDatabaseService.getDb();
+      mockDb.update.mockReturnValue({
+        set: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            returning: jest.fn().mockResolvedValue([]),
+          }),
+        }),
+      });
+
+      const result = await service.updateUser('999', { firstName: 'Test' });
+
+      expect(result).toBeNull();
+      expect(mockRedisService.set).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteUser', () => {
+    it('should delete user and clear cache', async () => {
+      // Mock getUserById to return user for cache clearing
+      jest.spyOn(service, 'getUserById').mockResolvedValue(mockUser);
+
+      const mockDb = mockDatabaseService.getDb();
+      mockDb.delete.mockReturnValue({
+        where: jest.fn().mockResolvedValue({ rowCount: 1 }),
+      });
+
+      const result = await service.deleteUser('1');
+
+      expect(result).toBe(true);
+      expect(mockRedisService.del).toHaveBeenCalledWith('user:1');
+      expect(mockRedisService.del).toHaveBeenCalledWith(
+        `user:email:${mockUser.email}`,
+      );
+    });
+
+    it('should return false when user not found for deletion', async () => {
+      jest.spyOn(service, 'getUserById').mockResolvedValue(null);
+
+      const mockDb = mockDatabaseService.getDb();
+      mockDb.delete.mockReturnValue({
+        where: jest.fn().mockResolvedValue({ rowCount: 0 }),
+      });
+
+      const result = await service.deleteUser('999');
+
+      expect(result).toBe(false);
+      // Redis del should NOT be called when deletion fails (rowCount: 0)
+      expect(mockRedisService.del).not.toHaveBeenCalled();
+    });
+
+    it('should handle deletion when rowCount is undefined', async () => {
+      jest.spyOn(service, 'getUserById').mockResolvedValue(mockUser);
+
+      const mockDb = mockDatabaseService.getDb();
+      mockDb.delete.mockReturnValue({
+        where: jest.fn().mockResolvedValue({ rowCount: undefined }),
+      });
+
+      const result = await service.deleteUser('1');
+
+      expect(result).toBe(false);
     });
   });
 });

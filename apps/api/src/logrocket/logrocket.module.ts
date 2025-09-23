@@ -6,5 +6,4 @@ import { LogRocketService } from './logrocket.service';
   providers: [LogRocketService],
   exports: [LogRocketService],
 })
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class LogRocketModule {}

@@ -12,8 +12,8 @@ import { Pool } from 'pg';
 // Use test database connection
 const pool = new Pool({
   host: process.env.TEST_DB_HOST || 'localhost',
-  port: parseInt(process.env.TEST_DB_PORT || '5433'),
-  user: process.env.TEST_DB_USER || 'postgres',
+  port: parseInt(process.env.TEST_DB_PORT || '5432'),
+  user: process.env.TEST_DB_USER || 'jason',
   password: process.env.TEST_DB_PASSWORD || 'password',
   database: process.env.TEST_DB_NAME || 'wellflow_test',
 });
@@ -74,7 +74,7 @@ describe('AFEs Model', () => {
         wellName: 'Test AFE Well #1',
         apiNumber: '42329123450000',
         wellType: 'OIL',
-        status: 'DRILLING', // Valid enum value for AFE context
+        status: 'drilling', // Valid enum value for AFE context
       })
       .returning();
     testWellId = well[0]!.id;
@@ -324,7 +324,9 @@ describe('AFEs Model', () => {
         .where(eq(afes.id, afeId))
         .returning();
 
-      expect(parseFloat(updated[0]!.actualCost || '0')).toBe(actualCost);
+      expect(parseFloat(updated[0]!.actualCost || '0')).toBe(
+        parseFloat(actualCost),
+      );
       expect(updated[0]!.status).toBe('closed');
 
       // Calculate variance (PostgreSQL returns decimals as strings)

@@ -74,6 +74,16 @@ const pool = new Pool({
 const db = drizzle(pool, { schema });
 
 describe('Organizations Model', () => {
+  // Global cleanup before all tests in this file
+  beforeAll(async () => {
+    await cleanupAllData();
+  });
+
+  // Global cleanup after all tests in this file
+  afterAll(async () => {
+    await cleanupAllData();
+  });
+
   describe('Schema Coverage', () => {
     it('should have all required fields defined', () => {
       const table = schema.organizations;

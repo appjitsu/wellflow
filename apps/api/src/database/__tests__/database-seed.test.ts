@@ -18,8 +18,8 @@ describe('Database Seed Tests', () => {
   beforeAll(async () => {
     pool = new Pool({
       host: process.env.TEST_DB_HOST || 'localhost',
-      port: parseInt(process.env.TEST_DB_PORT || '5433'),
-      user: process.env.TEST_DB_USER || 'postgres',
+      port: parseInt(process.env.TEST_DB_PORT || '5432'),
+      user: process.env.TEST_DB_USER || 'jason',
       password: process.env.TEST_DB_PASSWORD || 'password',
       database: process.env.TEST_DB_NAME || 'wellflow_test',
     });
@@ -37,16 +37,46 @@ describe('Database Seed Tests', () => {
   // Note: Removed aggressive beforeEach cleanup that was interfering with other tests
   // Individual tests will clean up their own data as needed
 
+  // beforeEach(async () => {
+  //   // Clean up seed data before each test to ensure clean state
+  //   // Delete in correct order to avoid foreign key constraint violations
+  //   await db.delete(schema.productionRecords);
+  //   await db.delete(schema.leasePartners);
+  //   await db.delete(schema.wells);
+  //   await db.delete(schema.leases);
+  //   await db.delete(schema.partners);
+  //   await db.delete(schema.users);
+  //   await db.delete(schema.organizations);
+  // });
+
   describe('Seed Data Execution', () => {
     test('should run seed script without errors', async () => {
-      // Run the seed script
+      // Clean up before seeding
+      await db.delete(schema.productionRecords);
+      await db.delete(schema.leasePartners);
+      await db.delete(schema.wells);
+      await db.delete(schema.leases);
+      await db.delete(schema.partners);
+      await db.delete(schema.users);
+      await db.delete(schema.organizations);
+
+      // Run the seed script with test database connection
       // The seed script should execute without throwing errors
-      await expect(seed()).resolves.not.toThrow();
+      await expect(seed(db)).resolves.not.toThrow();
     });
 
     test('should create sample organizations', async () => {
-      // Run seed
-      await seed();
+      // Clean up before seeding
+      await db.delete(schema.productionRecords);
+      await db.delete(schema.leasePartners);
+      await db.delete(schema.wells);
+      await db.delete(schema.leases);
+      await db.delete(schema.partners);
+      await db.delete(schema.users);
+      await db.delete(schema.organizations);
+
+      // Run seed with test database connection
+      await seed(db);
 
       // Verify organizations were created
       const orgCount = await db
@@ -67,8 +97,17 @@ describe('Database Seed Tests', () => {
     });
 
     test('should create sample users with proper roles', async () => {
-      // Run seed
-      await seed();
+      // Clean up before seeding
+      await db.delete(schema.productionRecords);
+      await db.delete(schema.leasePartners);
+      await db.delete(schema.wells);
+      await db.delete(schema.leases);
+      await db.delete(schema.partners);
+      await db.delete(schema.users);
+      await db.delete(schema.organizations);
+
+      // Run seed with test database connection
+      await seed(db);
 
       // Verify users were created
       const userCount = await db.select({ count: count() }).from(schema.users);
@@ -97,8 +136,17 @@ describe('Database Seed Tests', () => {
     });
 
     test('should create sample leases with proper structure', async () => {
-      // Run seed
-      await seed();
+      // Clean up before seeding
+      await db.delete(schema.productionRecords);
+      await db.delete(schema.leasePartners);
+      await db.delete(schema.wells);
+      await db.delete(schema.leases);
+      await db.delete(schema.partners);
+      await db.delete(schema.users);
+      await db.delete(schema.organizations);
+
+      // Run seed with test database connection
+      await seed(db);
 
       // Verify leases were created
       const leaseCount = await db
@@ -120,13 +168,22 @@ describe('Database Seed Tests', () => {
         expect(lease.legalDescription).toBeDefined();
         expect(lease.lessor).toBeDefined();
         expect(lease.lessee).toBeDefined();
-        expect(['ACTIVE', 'expired', 'terminated']).toContain(lease.status);
+        expect(['active', 'expired', 'terminated']).toContain(lease.status);
       });
     });
 
     test('should create sample wells with valid API numbers', async () => {
-      // Run seed
-      await seed();
+      // Clean up before seeding
+      await db.delete(schema.productionRecords);
+      await db.delete(schema.leasePartners);
+      await db.delete(schema.wells);
+      await db.delete(schema.leases);
+      await db.delete(schema.partners);
+      await db.delete(schema.users);
+      await db.delete(schema.organizations);
+
+      // Run seed with test database connection
+      await seed(db);
 
       // Verify wells were created
       const wellCount = await db.select({ count: count() }).from(schema.wells);
@@ -148,15 +205,24 @@ describe('Database Seed Tests', () => {
         expect(well.apiNumber).toMatch(/^\d{14}$/);
 
         // Validate enum values
-        expect(['ACTIVE', 'INACTIVE', 'plugged', 'drilling']).toContain(
+        expect(['active', 'inactive', 'plugged', 'drilling']).toContain(
           well.status,
         );
       });
     });
 
     test('should create sample production records with valid data', async () => {
-      // Run seed
-      await seed();
+      // Clean up before seeding
+      await db.delete(schema.productionRecords);
+      await db.delete(schema.leasePartners);
+      await db.delete(schema.wells);
+      await db.delete(schema.leases);
+      await db.delete(schema.partners);
+      await db.delete(schema.users);
+      await db.delete(schema.organizations);
+
+      // Run seed with test database connection
+      await seed(db);
 
       // Verify production records were created
       const productionCount = await db
@@ -192,8 +258,17 @@ describe('Database Seed Tests', () => {
     });
 
     test('should create sample partners with proper types', async () => {
-      // Run seed
-      await seed();
+      // Clean up before seeding
+      await db.delete(schema.productionRecords);
+      await db.delete(schema.leasePartners);
+      await db.delete(schema.wells);
+      await db.delete(schema.leases);
+      await db.delete(schema.partners);
+      await db.delete(schema.users);
+      await db.delete(schema.organizations);
+
+      // Run seed with test database connection
+      await seed(db);
 
       // Verify partners were created
       const partnerCount = await db
@@ -220,8 +295,17 @@ describe('Database Seed Tests', () => {
 
   describe('Seed Data Relationships', () => {
     test('should maintain referential integrity', async () => {
-      // Run seed
-      await seed();
+      // Clean up before seeding
+      await db.delete(schema.productionRecords);
+      await db.delete(schema.leasePartners);
+      await db.delete(schema.wells);
+      await db.delete(schema.leases);
+      await db.delete(schema.partners);
+      await db.delete(schema.users);
+      await db.delete(schema.organizations);
+
+      // Run seed with test database connection
+      await seed(db);
 
       // Verify all users belong to existing organizations
       const usersWithOrgs = await db
@@ -283,8 +367,8 @@ describe('Database Seed Tests', () => {
     });
 
     test('should create realistic production data timeline', async () => {
-      // Run seed
-      await seed();
+      // Run seed with test database connection
+      await seed(db);
 
       // Get production records ordered by date
       const records = await db
@@ -312,8 +396,8 @@ describe('Database Seed Tests', () => {
     });
 
     test('should create diverse well types and statuses', async () => {
-      // Run seed
-      await seed();
+      // Run seed with test database connection
+      await seed(db);
 
       const wells = await db.select().from(schema.wells);
 
@@ -324,14 +408,14 @@ describe('Database Seed Tests', () => {
 
       // Should have at least one status
       expect(wellStatuses.length).toBeGreaterThanOrEqual(1);
-      expect(wellStatuses).toContain('ACTIVE');
+      expect(wellStatuses).toContain('active');
     });
   });
 
   describe('Seed Data Cleanup', () => {
     test('should be able to clean up seed data', async () => {
-      // Run seed
-      await seed();
+      // Run seed with test database connection
+      await seed(db);
 
       // Verify data exists
       const orgCount = await db
@@ -367,7 +451,7 @@ describe('Database Seed Tests', () => {
 
     test('should handle re-running seed script', async () => {
       // Run seed twice
-      await seed();
+      await seed(db);
 
       const firstRunCount = await db
         .select({ count: count() })
@@ -388,7 +472,7 @@ describe('Database Seed Tests', () => {
       await db.delete(schema.organizations);
 
       // Run seed again
-      await seed();
+      await seed(db);
 
       const secondRunCount = await db
         .select({ count: count() })

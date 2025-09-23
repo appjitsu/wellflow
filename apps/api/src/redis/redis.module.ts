@@ -7,5 +7,4 @@ import { RedisService } from './redis.service';
   providers: [RedisService],
   exports: [RedisService],
 })
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class RedisModule {}

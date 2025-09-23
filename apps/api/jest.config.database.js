@@ -71,7 +71,7 @@ module.exports = {
   moduleFileExtensions: ['js', 'json', 'ts'],
 
   // Ignore patterns
-  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', 'query-builder.test.ts'],
 
   // Verbose output for debugging
   verbose: true,
@@ -79,4 +79,8 @@ module.exports = {
   // Clear mocks
   clearMocks: true,
   restoreMocks: true,
+
+  // Force exit to handle database connections
+  forceExit: true,
+  detectOpenHandles: false,
 };

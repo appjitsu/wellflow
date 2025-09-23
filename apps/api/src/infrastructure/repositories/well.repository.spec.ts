@@ -24,27 +24,18 @@ describe('WellRepositoryImpl', () => {
   const mockWellData = {
     id: 'well-123',
     apiNumber: '4212345678',
-    name: 'Test Well #1',
-    operatorId: 'operator-123',
+    wellName: 'Test Well #1', // Database column name
+    organizationId: 'operator-123', // Database column name
     leaseId: 'lease-123',
     wellType: WellType.OIL,
     status: WellStatus.DRILLING,
-    location: {
-      coordinates: {
-        latitude: 32.7767,
-        longitude: -96.797,
-      },
-      address: '123 Oil Field Rd',
-      county: 'Dallas',
-      state: 'TX',
-      country: 'USA',
-    },
+    latitude: '32.7767', // Database stores as string
+    longitude: '-96.797', // Database stores as string
     spudDate: new Date('2024-01-15'),
     completionDate: null,
-    totalDepth: 8500,
+    totalDepth: '8500', // Database stores as string
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-15'),
-    version: 1,
   };
 
   beforeEach(async () => {
@@ -381,9 +372,9 @@ describe('WellRepositoryImpl', () => {
 
       expect(result).toBeInstanceOf(Well);
       expect(result?.getId()).toBe(mockWellData.id);
-      expect(result?.getName()).toBe(mockWellData.name);
-      expect(result?.getApiNumber().getValue()).toBe('42-123-45678');
-      expect(result?.getOperatorId()).toBe(mockWellData.operatorId);
+      expect(result?.getName()).toBe(mockWellData.wellName);
+      expect(result?.getApiNumber().getValue()).toBe('42-123-45678'); // ApiNumber formats the input
+      expect(result?.getOperatorId()).toBe(mockWellData.organizationId);
       expect(result?.getWellType()).toBe(mockWellData.wellType);
       expect(result?.getStatus()).toBe(mockWellData.status);
     });
@@ -395,10 +386,10 @@ describe('WellRepositoryImpl', () => {
 
       expect(result?.getLocation()).toBeInstanceOf(Location);
       expect(result?.getLocation().getCoordinates().getLatitude()).toBe(
-        32.7767,
+        parseFloat(mockWellData.latitude),
       );
       expect(result?.getLocation().getCoordinates().getLongitude()).toBe(
-        -96.797,
+        parseFloat(mockWellData.longitude),
       );
     });
   });

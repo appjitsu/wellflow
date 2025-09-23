@@ -1,5 +1,3 @@
-/* eslint-disable sonarjs/deprecation */
-
 import {
   pgTable,
   uuid,
@@ -31,18 +29,10 @@ export const wellTypeEnum = pgEnum('well_type', [
 
 // Well status enum
 export const wellStatusEnum = pgEnum('well_status', [
-  'PLANNED',
-  'PERMITTED',
-  'DRILLING',
-  'COMPLETED',
-  'PRODUCING',
-  'SHUT_IN',
-  'TEMPORARILY_ABANDONED',
-  'PERMANENTLY_ABANDONED',
-  'PLUGGED',
-  'UNKNOWN',
-  'ACTIVE', // Legacy support
-  'INACTIVE', // Legacy support
+  'active',
+  'inactive',
+  'plugged',
+  'drilling',
 ]);
 
 /**
@@ -61,7 +51,7 @@ export const wells = pgTable(
     wellName: varchar('well_name', { length: 255 }).notNull(),
     wellNumber: varchar('well_number', { length: 50 }),
     wellType: wellTypeEnum('well_type').notNull(),
-    status: wellStatusEnum('status').notNull().default('PLANNED'),
+    status: wellStatusEnum('status').notNull().default('active'),
     spudDate: date('spud_date'),
     completionDate: date('completion_date'),
     totalDepth: decimal('total_depth', { precision: 8, scale: 2 }), // feet with decimal precision

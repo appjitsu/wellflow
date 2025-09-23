@@ -16,24 +16,26 @@ describe('QueryBuilder', () => {
     const mockQueryResult = [{ id: 'test-id', name: 'Test Org' }];
     const mockCountResult = [{ count: '5' }];
 
-    // Create a chainable mock that always resolves to the correct data
+    // Create a chainable mock that behaves like Drizzle's query builder
     const createChainableMock = (finalResult: unknown[]) => {
-      interface ChainableMock {
-        where: jest.Mock;
-        orderBy: jest.Mock;
-        offset: jest.Mock;
-        limit: jest.Mock;
-        then: jest.Mock;
+      // Create a class that extends Promise and has chaining methods
+      class ChainablePromise extends Promise<unknown[]> {
+        where(_args: any[]) {
+          return this;
+        }
+        orderBy(_args: any[]) {
+          return this;
+        }
+        offset(_args: any[]) {
+          return this;
+        }
+        limit(_args: any[]) {
+          return this;
+        }
       }
 
-      const chainable = {} as ChainableMock;
-      chainable.where = jest.fn().mockReturnValue(chainable);
-      chainable.orderBy = jest.fn().mockReturnValue(chainable);
-      chainable.offset = jest.fn().mockReturnValue(chainable);
-      chainable.limit = jest.fn().mockReturnValue(chainable);
-      chainable.then = jest.fn().mockResolvedValue(finalResult);
-
-      return chainable;
+      // Create a resolved promise with chaining methods
+      return ChainablePromise.resolve(finalResult);
     };
 
     mockDb = {
@@ -206,9 +208,7 @@ describe('QueryBuilder', () => {
 
     it('should count results', async () => {
       mockDb.select.mockReturnValue({
-        from: jest.fn().mockReturnValue({
-          where: jest.fn().mockResolvedValue([{ count: '5' }]),
-        }),
+        from: jest.fn().mockResolvedValue([{ count: '5' }]),
       });
 
       const result = await queryBuilder.count();
@@ -220,19 +220,29 @@ describe('QueryBuilder', () => {
       const mockQueryResult = [{ id: 'test-id', name: 'Test Org' }];
       const mockCountResult = [{ count: '25' }];
 
+      // Simple mock that returns chainable promises
+      const createPaginateMock = (finalResult: unknown[]) => {
+        class PaginatePromise extends Promise<unknown[]> {
+          where() {
+            return this;
+          }
+          offset() {
+            return this;
+          }
+          limit() {
+            return this;
+          }
+        }
+        return PaginatePromise.resolve(finalResult);
+      };
+
       const testMockDb = {
         select: jest.fn().mockImplementation((fields?: any) => {
           const isCountQuery = fields && fields.count;
           const mockResult = isCountQuery ? mockCountResult : mockQueryResult;
 
           return {
-            from: jest.fn().mockReturnValue({
-              where: jest.fn().mockReturnValue({
-                offset: jest.fn().mockReturnValue({
-                  limit: jest.fn().mockResolvedValue(mockResult),
-                }),
-              }),
-            }),
+            from: jest.fn().mockReturnValue(createPaginateMock(mockResult)),
           };
         }),
       };

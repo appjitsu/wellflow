@@ -19,6 +19,26 @@ export class WellRepositoryImpl implements WellRepository {
     private readonly db: NodePgDatabase<Record<string, never>>,
   ) {}
 
+  private mapWellStatusToDatabase(
+    status: WellStatus,
+  ): 'active' | 'inactive' | 'plugged' | 'drilling' {
+    switch (status) {
+      case WellStatus.ACTIVE:
+      case WellStatus.PRODUCING:
+        return 'active';
+      case WellStatus.INACTIVE:
+      case WellStatus.SHUT_IN:
+        return 'inactive';
+      case WellStatus.PLUGGED:
+      case WellStatus.PERMANENTLY_ABANDONED:
+        return 'plugged';
+      case WellStatus.DRILLING:
+        return 'drilling';
+      default:
+        return 'active'; // Default fallback
+    }
+  }
+
   async save(well: Well): Promise<void> {
     // Map domain model to database schema
     const wellData = {
@@ -28,7 +48,7 @@ export class WellRepositoryImpl implements WellRepository {
       wellName: well.getName(), // Map name to wellName in schema
       leaseId: well.getLeaseId(),
       wellType: well.getWellType(),
-      status: well.getStatus(),
+      status: this.mapWellStatusToDatabase(well.getStatus()),
       spudDate: well.getSpudDate()?.toISOString().split('T')[0] || null, // Convert Date to string
       completionDate:
         well.getCompletionDate()?.toISOString().split('T')[0] || null, // Convert Date to string
@@ -156,7 +176,12 @@ export class WellRepositoryImpl implements WellRepository {
       conditions.push(eq(wells.organizationId, filters.operatorId)); // Use organizationId
     }
     if (filters?.status) {
-      conditions.push(eq(wells.status, filters.status as WellStatus));
+      conditions.push(
+        eq(
+          wells.status,
+          this.mapWellStatusToDatabase(filters.status as WellStatus),
+        ),
+      );
     }
     if (filters?.wellType) {
       conditions.push(eq(wells.wellType, filters.wellType as WellType));

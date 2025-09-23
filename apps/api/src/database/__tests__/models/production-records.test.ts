@@ -8,12 +8,13 @@ import { productionRecords, organizations, wells, leases } from '../../schema';
 import { eq, and, gte, lte } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
+import { cleanupAllData } from '../test-utils';
 
 // Use test database connection
 const pool = new Pool({
   host: process.env.TEST_DB_HOST || 'localhost',
-  port: parseInt(process.env.TEST_DB_PORT || '5433'),
-  user: process.env.TEST_DB_USER || 'postgres',
+  port: parseInt(process.env.TEST_DB_PORT || '5432'),
+  user: process.env.TEST_DB_USER || 'jason',
   password: process.env.TEST_DB_PASSWORD || 'password',
   database: process.env.TEST_DB_NAME || 'wellflow_test',
 });
@@ -24,7 +25,9 @@ describe('Production Records Model', () => {
   let testLeaseId: string;
   let testWellId: string;
 
+  // Global cleanup before all tests in this file
   beforeAll(async () => {
+    await cleanupAllData(db);
     // Create test organization
     const org = await db
       .insert(organizations)
@@ -60,7 +63,7 @@ describe('Production Records Model', () => {
         wellName: 'Test Production Well #1',
         apiNumber: '42389543210000',
         wellType: 'OIL',
-        status: 'ACTIVE',
+        status: 'active',
         completionDate: '2023-12-01',
       })
       .returning();
@@ -72,6 +75,9 @@ describe('Production Records Model', () => {
     await db.delete(wells).where(eq(wells.id, testWellId));
     await db.delete(leases).where(eq(leases.id, testLeaseId));
     await db.delete(organizations).where(eq(organizations.id, testOrgId));
+
+    // Global cleanup after all tests in this file
+    await cleanupAllData(db);
   });
 
   describe('Schema Coverage', () => {

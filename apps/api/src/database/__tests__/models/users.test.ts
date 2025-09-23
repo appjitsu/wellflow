@@ -9,11 +9,64 @@ import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
+// Helper function to clean up all data in proper order
+async function cleanupAllData() {
+  // Delete in reverse dependency order, handling missing tables gracefully
+  try {
+    await db.delete(schema.productionRecords);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, sonarjs/no-ignored-exceptions
+  } catch (_error) {
+    // Ignore if table doesn't exist
+  }
+
+  try {
+    await db.delete(schema.wellTests);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, sonarjs/no-ignored-exceptions
+  } catch (_error) {
+    // Ignore if table doesn't exist
+  }
+
+  try {
+    await db.delete(schema.equipment);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, sonarjs/no-ignored-exceptions
+  } catch (_error) {
+    // Ignore if table doesn't exist
+  }
+
+  try {
+    await db.delete(schema.wells);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, sonarjs/no-ignored-exceptions
+  } catch (_error) {
+    // Ignore if table doesn't exist
+  }
+
+  try {
+    await db.delete(schema.leases);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, sonarjs/no-ignored-exceptions
+  } catch (_error) {
+    // Ignore if table doesn't exist
+  }
+
+  try {
+    await db.delete(schema.users);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, sonarjs/no-ignored-exceptions
+  } catch (_error) {
+    // Ignore if table doesn't exist
+  }
+
+  try {
+    await db.delete(schema.organizations);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, sonarjs/no-ignored-exceptions
+  } catch (_error) {
+    // Ignore if table doesn't exist
+  }
+}
+
 // Use test database connection
 const pool = new Pool({
   host: process.env.TEST_DB_HOST || 'localhost',
-  port: parseInt(process.env.TEST_DB_PORT || '5433'),
-  user: process.env.TEST_DB_USER || 'postgres',
+  port: parseInt(process.env.TEST_DB_PORT || '5432'),
+  user: process.env.TEST_DB_USER || 'jason',
   password: process.env.TEST_DB_PASSWORD || 'password',
   database: process.env.TEST_DB_NAME || 'wellflow_test',
 });
@@ -22,13 +75,15 @@ const db = drizzle(pool, { schema });
 describe('Users Model', () => {
   let testOrgId: string;
 
+  // Global cleanup before all tests in this file
   beforeAll(async () => {
+    await cleanupAllData();
     // Create a test organization for user tests
     const org = await db
       .insert(organizations)
       .values({
-        name: 'Test Organization',
-        taxId: '99-9999999',
+        name: `Test Organization ${Date.now()}`,
+        taxId: `99-${Date.now().toString().slice(-7)}`,
       })
       .returning();
     if (!org[0]) {
@@ -40,6 +95,15 @@ describe('Users Model', () => {
   afterAll(async () => {
     // Clean up test organization
     await db.delete(organizations).where(eq(organizations.id, testOrgId));
+
+    // Global cleanup after all tests in this file
+    await cleanupAllData();
+  });
+
+  beforeEach(async () => {
+    // Clean up users before each test (delete in correct order to avoid foreign key constraints)
+    await db.delete(schema.wellTests);
+    await db.delete(schema.users);
   });
 
   describe('Schema Coverage', () => {

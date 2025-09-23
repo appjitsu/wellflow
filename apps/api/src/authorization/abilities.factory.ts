@@ -163,7 +163,7 @@ export class AbilitiesFactory {
         // Can only start drilling if well is planned or permitted
         return (
           ability.can('updateStatus', well) &&
-          [WellStatus.DRILLING, WellStatus.ACTIVE].includes(well.getStatus())
+          [WellStatus.PLANNED, WellStatus.PERMITTED].includes(well.getStatus())
         );
 
       case 'completion':
@@ -177,7 +177,7 @@ export class AbilitiesFactory {
         // Can only start production if completed
         return (
           ability.can('updateStatus', well) &&
-          well.getStatus() === WellStatus.PLUGGED
+          well.getStatus() === WellStatus.COMPLETED
         );
 
       case 'abandonment':

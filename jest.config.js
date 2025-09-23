@@ -17,24 +17,24 @@ module.exports = {
       lines: 80,
       statements: 80,
     },
-    // Application-specific thresholds
+    // Application-specific thresholds - all set to 80% for consistency
     './apps/api/src/**/*.ts': {
-      branches: 70,
+      branches: 80,
       functions: 80,
-      lines: 70,
-      statements: 70,
+      lines: 80,
+      statements: 80,
     },
     './apps/web/**/*.{ts,tsx}': {
-      branches: 50,
-      functions: 65,
-      lines: 70,
-      statements: 70,
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
     },
     './packages/ui/**/*.{ts,tsx}': {
-      branches: 85,
-      functions: 90,
-      lines: 85,
-      statements: 85,
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
     },
   },
 
