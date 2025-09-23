@@ -34,14 +34,14 @@ redis.on('error', (err) => {
 
 // Initialize BullMQ queues
 const queueNames = ['data-validation', 'report-generation', 'email-notifications'];
-const queues = queueNames.map(name => new Queue(name, { connection: redis }));
+const queues = queueNames.map((name) => new Queue(name, { connection: redis }));
 
 // Create Bull-Board
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/');
 
-const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
-  queues: queues.map(queue => new BullMQAdapter(queue)),
+createBullBoard({
+  queues: queues.map((queue) => new BullMQAdapter(queue)),
   serverAdapter,
 });
 
@@ -65,7 +65,7 @@ async function startServer() {
   try {
     // Connect to Redis
     await redis.connect();
-    
+
     // Start Express server
     app.listen(PORT, () => {
       console.log(`🚀 Queue UI Test Server running on port ${PORT}`);
@@ -83,26 +83,26 @@ async function startServer() {
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('🔄 Shutting down Queue UI Test Server...');
-  
+
   // Close Redis connection
   await redis.quit();
-  
+
   // Close queues
-  await Promise.all(queues.map(queue => queue.close()));
-  
+  await Promise.all(queues.map((queue) => queue.close()));
+
   console.log('✅ Queue UI Test Server shut down gracefully');
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
   console.log('🔄 Shutting down Queue UI Test Server...');
-  
+
   // Close Redis connection
   await redis.quit();
-  
+
   // Close queues
-  await Promise.all(queues.map(queue => queue.close()));
-  
+  await Promise.all(queues.map((queue) => queue.close()));
+
   console.log('✅ Queue UI Test Server shut down gracefully');
   process.exit(0);
 });
