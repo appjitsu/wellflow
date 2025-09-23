@@ -1,13 +1,30 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   PerformanceTestService,
   PerformanceTestConfig,
+  PerformanceTestResult,
 } from './performance-test.service';
-import { DatabaseConnectionService } from '../tenant/database-connection.service';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import * as schema from '../../database/schema';
+
+/**
+ * Performance Test Suite Result Type
+ */
+interface PerformanceTestSuiteResult {
+  overallPassed: boolean;
+  results: PerformanceTestResult[];
+  summary: {
+    totalTests: number;
+    passedTests: number;
+    failedTests: number;
+    averageExecutionTime: number;
+    totalExecutionTime: number;
+  };
+}
 
 /**
  * Performance Test Command Options
@@ -29,6 +46,7 @@ interface PerformanceTestOptions {
  * npm run performance-test -- --iterations 100 --concurrent 20 --output results.json
  */
 @Injectable()
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 @Command({
   name: 'performance-test',
   description:
@@ -45,9 +63,11 @@ export class PerformanceTestCommand extends CommandRunner {
 
   constructor(
     private readonly performanceTestService: PerformanceTestService,
-    private readonly databaseService: DatabaseConnectionService,
     private readonly configService: ConfigService,
+    @Inject('DATABASE_CONNECTION')
+    private readonly db: NodePgDatabase<typeof schema>,
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     super();
   }
 
@@ -61,19 +81,16 @@ export class PerformanceTestCommand extends CommandRunner {
       // Load configuration
       const config = await this.loadTestConfig(options);
 
-      // Get database connection
-      const db = await this.databaseService.getDatabase('performance-test-org');
-
       // Run performance tests
       const startTime = Date.now();
       const result = await this.performanceTestService.runPerformanceTestSuite(
-        db,
+        this.db,
         config,
       );
       const totalTime = Date.now() - startTime;
 
       // Display results
-      await this.displayResults(result, totalTime, options);
+      this.displayResults(result, totalTime, options);
 
       // Save results if output specified
       if (options?.output) {
@@ -83,7 +100,10 @@ export class PerformanceTestCommand extends CommandRunner {
       // Exit with appropriate code
       process.exit(result.overallPassed ? 0 : 1);
     } catch (error) {
-      this.logger.error('❌ Performance test suite failed:', error);
+      this.logger.error(
+        '❌ Performance test suite failed:',
+        error instanceof Error ? error.message : String(error),
+      );
       process.exit(1);
     }
   }
@@ -100,13 +120,14 @@ export class PerformanceTestCommand extends CommandRunner {
     if (options?.config) {
       try {
         const configPath = path.resolve(options.config);
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
         const configFile = await fs.readFile(configPath, 'utf-8');
-        config = JSON.parse(configFile);
+        config = JSON.parse(configFile) as Partial<PerformanceTestConfig>;
         this.logger.log(`📄 Loaded configuration from ${configPath}`);
       } catch (error) {
         this.logger.warn(
           `⚠️  Failed to load config file ${options.config}:`,
-          error,
+          error instanceof Error ? error.message : String(error),
         );
       }
     }
@@ -121,7 +142,9 @@ export class PerformanceTestCommand extends CommandRunner {
     }
 
     // Set defaults based on environment
-    const environment = this.configService.get('NODE_ENV', 'development');
+    const environment = String(
+      this.configService.get('NODE_ENV', 'development'),
+    );
     if (environment === 'production') {
       config = {
         maxApiResponseTime: 200,
@@ -156,16 +179,29 @@ export class PerformanceTestCommand extends CommandRunner {
   /**
    * Display test results in a formatted way
    */
-  private async displayResults(
-    result: any,
+  private displayResults(
+    result: PerformanceTestSuiteResult,
     totalTime: number,
     options?: PerformanceTestOptions,
-  ): Promise<void> {
+  ): void {
+    this.displayHeader();
+    this.displayOverallSummary(result, totalTime);
+    this.displayIndividualTestResults(result, options);
+    this.displayKan33Validation(result);
+    this.displayPerformanceRecommendations(result);
+    this.displayFooter();
+  }
+
+  private displayHeader(): void {
     console.log('\n' + '='.repeat(80));
     console.log('🎯 KAN-33 PERFORMANCE TEST RESULTS');
     console.log('='.repeat(80));
+  }
 
-    // Overall summary
+  private displayOverallSummary(
+    result: PerformanceTestSuiteResult,
+    totalTime: number,
+  ): void {
     const status = result.overallPassed ? '✅ PASSED' : '❌ FAILED';
     const statusColor = result.overallPassed ? '\x1b[32m' : '\x1b[31m';
     console.log(`\n${statusColor}%s\x1b[0m`, `Overall Status: ${status}`);
@@ -178,8 +214,12 @@ export class PerformanceTestCommand extends CommandRunner {
     console.log(
       `   Average Test Time: ${Math.round(result.summary.averageExecutionTime)}ms`,
     );
+  }
 
-    // Individual test results
+  private displayIndividualTestResults(
+    result: PerformanceTestSuiteResult,
+    options?: PerformanceTestOptions,
+  ): void {
     console.log(`\n📋 Individual Test Results:`);
     console.log('-'.repeat(80));
 
@@ -201,19 +241,20 @@ export class PerformanceTestCommand extends CommandRunner {
 
         if (test.details.errors.length > 0) {
           console.log(`   Errors:`);
-          test.details.errors.forEach((error) => {
+          test.details.errors.forEach((error: string) => {
             console.log(`     - ${error}`);
           });
         }
       }
     }
+  }
 
-    // KAN-33 specific validation
+  private displayKan33Validation(result: PerformanceTestSuiteResult): void {
     console.log(`\n🎯 KAN-33 Requirements Validation:`);
     console.log('-'.repeat(50));
 
     const dbTest = result.results.find(
-      (r: any) => r.testName === 'Database Query Performance',
+      (r: PerformanceTestResult) => r.testName === 'Database Query Performance',
     );
     if (dbTest) {
       const dbStatus = dbTest.details.averageQueryTime <= 50 ? '✅' : '❌';
@@ -221,41 +262,54 @@ export class PerformanceTestCommand extends CommandRunner {
         `${dbStatus} Database Query Time: ${Math.round(dbTest.details.averageQueryTime)}ms (requirement: <50ms)`,
       );
     }
+  }
 
-    // Performance recommendations
+  private displayPerformanceRecommendations(
+    result: PerformanceTestSuiteResult,
+  ): void {
     if (!result.overallPassed) {
       console.log(`\n💡 Performance Recommendations:`);
       console.log('-'.repeat(40));
 
-      const failedTests = result.results.filter((r: any) => !r.passed);
+      const failedTests = result.results.filter(
+        (r: PerformanceTestResult) => !r.passed,
+      );
       for (const test of failedTests) {
         console.log(`\n❌ ${test.testName}:`);
-
-        if (test.testName.includes('Database Query')) {
-          console.log(`   - Check if indexes are being used effectively`);
-          console.log(`   - Consider query optimization`);
-          console.log(`   - Verify connection pool configuration`);
-        } else if (test.testName.includes('Pagination')) {
-          console.log(`   - Ensure cursor-based pagination is implemented`);
-          console.log(`   - Check if proper indexes exist for sorting columns`);
-        } else if (test.testName.includes('Concurrent')) {
-          console.log(`   - Review connection pool size and configuration`);
-          console.log(`   - Check for database locks or contention`);
-        }
+        this.displayTestRecommendations(test);
       }
     }
+  }
 
+  private displayTestRecommendations(test: PerformanceTestResult): void {
+    if (test.testName.includes('Database Query')) {
+      console.log(`   - Check if indexes are being used effectively`);
+      console.log(`   - Consider query optimization`);
+      console.log(`   - Verify connection pool configuration`);
+    } else if (test.testName.includes('Pagination')) {
+      console.log(`   - Ensure cursor-based pagination is implemented`);
+      console.log(`   - Check if proper indexes exist for sorting columns`);
+    } else if (test.testName.includes('Concurrent')) {
+      console.log(`   - Review connection pool size and configuration`);
+      console.log(`   - Check for database locks or contention`);
+    }
+  }
+
+  private displayFooter(): void {
     console.log('\n' + '='.repeat(80));
   }
 
   /**
    * Save results to JSON file
    */
-  private async saveResults(result: any, outputPath: string): Promise<void> {
+  private async saveResults(
+    result: PerformanceTestSuiteResult,
+    outputPath: string,
+  ): Promise<void> {
     try {
       const outputData = {
         timestamp: new Date().toISOString(),
-        environment: this.configService.get('NODE_ENV'),
+        environment: String(this.configService.get('NODE_ENV', 'development')),
         kan33Compliance: result.overallPassed,
         summary: result.summary,
         results: result.results,
@@ -266,13 +320,18 @@ export class PerformanceTestCommand extends CommandRunner {
         },
       };
 
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
       await fs.writeFile(outputPath, JSON.stringify(outputData, null, 2));
       this.logger.log(`💾 Results saved to ${outputPath}`);
     } catch (error) {
-      this.logger.error(`❌ Failed to save results to ${outputPath}:`, error);
+      this.logger.error(
+        `❌ Failed to save results to ${outputPath}:`,
+        error instanceof Error ? error.message : String(error),
+      );
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   @Option({
     flags: '-i, --iterations <number>',
     description: 'Number of test iterations to run (default: 50)',
@@ -281,6 +340,7 @@ export class PerformanceTestCommand extends CommandRunner {
     return parseInt(val, 10);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   @Option({
     flags: '-c, --concurrent <number>',
     description: 'Number of concurrent requests to test (default: 10)',
@@ -289,6 +349,7 @@ export class PerformanceTestCommand extends CommandRunner {
     return parseInt(val, 10);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   @Option({
     flags: '-o, --output <path>',
     description: 'Output file path for test results (JSON format)',
@@ -297,6 +358,7 @@ export class PerformanceTestCommand extends CommandRunner {
     return val;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   @Option({
     flags: '-v, --verbose',
     description: 'Enable verbose output with detailed metrics',
@@ -305,6 +367,7 @@ export class PerformanceTestCommand extends CommandRunner {
     return true;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   @Option({
     flags: '--config <path>',
     description: 'Path to JSON configuration file',

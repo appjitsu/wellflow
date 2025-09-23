@@ -112,12 +112,14 @@ export class QueryPerformanceService {
       this.queryMetrics.set(organizationKey, []);
     }
 
-    const orgMetrics = this.queryMetrics.get(organizationKey)!;
-    orgMetrics.push(metrics);
+    const orgMetrics = this.queryMetrics.get(organizationKey);
+    if (orgMetrics) {
+      orgMetrics.push(metrics);
 
-    // Keep only last 1000 queries per organization to prevent memory leaks
-    if (orgMetrics.length > 1000) {
-      orgMetrics.shift();
+      // Keep only last 1000 queries per organization to prevent memory leaks
+      if (orgMetrics.length > 1000) {
+        orgMetrics.shift();
+      }
     }
 
     // Notify observers
@@ -379,7 +381,11 @@ export class QueryPerformanceService {
     if (sortedArray.length === 0) return 0;
 
     const index = Math.ceil(sortedArray.length * percentile) - 1;
-    return sortedArray[Math.max(0, index)];
+    const clampedIndex = Math.max(0, Math.min(index, sortedArray.length - 1));
+
+    // Use slice to safely get the element
+    const result = sortedArray.slice(clampedIndex, clampedIndex + 1);
+    return result[0] ?? 0;
   }
 
   /**

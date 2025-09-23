@@ -28,7 +28,6 @@ export class DevelopmentPoolStrategy implements IConnectionPoolStrategy {
       // Timeout configurations
       idleTimeoutMillis: 30000, // 30 seconds - close idle connections
       connectionTimeoutMillis: 5000, // 5 seconds - wait for connection
-      acquireTimeoutMillis: 10000, // 10 seconds - wait to acquire connection
 
       // Connection lifecycle
       maxUses: 5000, // Rotate connections after 5000 uses
@@ -69,7 +68,6 @@ export class ProductionPoolStrategy implements IConnectionPoolStrategy {
       // Aggressive timeout configurations for performance
       idleTimeoutMillis: 60000, // 60 seconds - keep connections longer
       connectionTimeoutMillis: 2000, // 2 seconds - fail fast for performance
-      acquireTimeoutMillis: 5000, // 5 seconds - quick acquisition
 
       // Connection lifecycle optimization
       maxUses: 10000, // Higher reuse before rotation
@@ -90,11 +88,18 @@ export class ProductionPoolStrategy implements IConnectionPoolStrategy {
     };
   }
 
-  private getSSLConfig() {
+  private getSSLConfig(): {
+    rejectUnauthorized: boolean;
+    ca?: string;
+    cert?: string;
+    key?: string;
+  } {
     const sslMode = this.configService.get<string>('DB_SSL_MODE', 'prefer');
 
     if (sslMode === 'disable') {
-      return false;
+      return {
+        rejectUnauthorized: false,
+      };
     }
 
     return {
@@ -128,7 +133,6 @@ export class TestPoolStrategy implements IConnectionPoolStrategy {
       // Fast timeouts for test speed
       idleTimeoutMillis: 5000, // 5 seconds
       connectionTimeoutMillis: 1000, // 1 second
-      acquireTimeoutMillis: 2000, // 2 seconds
 
       // Quick rotation for test isolation
       maxUses: 100,

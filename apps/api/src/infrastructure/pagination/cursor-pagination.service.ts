@@ -91,73 +91,201 @@ export class CursorPaginationService {
         ? config.decodeCursor(cursor)
         : this.decodeCursor(cursor);
 
-      if (direction === 'forward') {
-        if (sortOrder === 'desc') {
-          // For DESC order, forward means smaller values
-          if (secondaryColumn && cursorData.secondary !== undefined) {
-            conditions.push(
-              or(
-                lt(primaryColumn, cursorData.primary),
-                and(
-                  eq(primaryColumn, cursorData.primary),
-                  lt(secondaryColumn, cursorData.secondary),
-                ),
-              )!,
-            );
-          } else {
-            conditions.push(lt(primaryColumn, cursorData.primary));
-          }
-        } else {
-          // For ASC order, forward means larger values
-          if (secondaryColumn && cursorData.secondary !== undefined) {
-            conditions.push(
-              or(
-                gt(primaryColumn, cursorData.primary),
-                and(
-                  eq(primaryColumn, cursorData.primary),
-                  gt(secondaryColumn, cursorData.secondary),
-                ),
-              )!,
-            );
-          } else {
-            conditions.push(gt(primaryColumn, cursorData.primary));
-          }
-        }
-      } else {
-        // Backward direction - reverse the logic
-        if (sortOrder === 'desc') {
-          if (secondaryColumn && cursorData.secondary !== undefined) {
-            conditions.push(
-              or(
-                gt(primaryColumn, cursorData.primary),
-                and(
-                  eq(primaryColumn, cursorData.primary),
-                  gt(secondaryColumn, cursorData.secondary),
-                ),
-              )!,
-            );
-          } else {
-            conditions.push(gt(primaryColumn, cursorData.primary));
-          }
-        } else {
-          if (secondaryColumn && cursorData.secondary !== undefined) {
-            conditions.push(
-              or(
-                lt(primaryColumn, cursorData.primary),
-                and(
-                  eq(primaryColumn, cursorData.primary),
-                  lt(secondaryColumn, cursorData.secondary),
-                ),
-              )!,
-            );
-          } else {
-            conditions.push(lt(primaryColumn, cursorData.primary));
-          }
-        }
-      }
+      this.addCursorConditions(
+        conditions,
+        primaryColumn,
+        secondaryColumn,
+        cursorData,
+        direction,
+        sortOrder,
+      );
     }
 
-    // Add ordering
+    this.addOrdering(
+      orderBy,
+      primaryColumn,
+      secondaryColumn,
+      sortOrder,
+      direction,
+    );
+
+    return {
+      conditions,
+      orderBy,
+      limit: limit + 1, // +1 to check for next/previous page
+    };
+  }
+
+  private addCursorConditions(
+    conditions: SQL[],
+    primaryColumn: AnyPgColumn,
+    secondaryColumn: AnyPgColumn | null,
+    cursorData: { primary: unknown; secondary?: unknown },
+    direction: 'forward' | 'backward',
+    sortOrder: 'asc' | 'desc',
+  ): void {
+    if (direction === 'forward') {
+      this.addForwardCursorConditions(
+        conditions,
+        primaryColumn,
+        secondaryColumn,
+        cursorData,
+        sortOrder,
+      );
+    } else {
+      this.addBackwardCursorConditions(
+        conditions,
+        primaryColumn,
+        secondaryColumn,
+        cursorData,
+        sortOrder,
+      );
+    }
+  }
+
+  private addForwardCursorConditions(
+    conditions: SQL[],
+    primaryColumn: AnyPgColumn,
+    secondaryColumn: AnyPgColumn | null,
+    cursorData: { primary: unknown; secondary?: unknown },
+    sortOrder: 'asc' | 'desc',
+  ): void {
+    if (sortOrder === 'desc') {
+      this.addForwardDescConditions(
+        conditions,
+        primaryColumn,
+        secondaryColumn,
+        cursorData,
+      );
+    } else {
+      this.addForwardAscConditions(
+        conditions,
+        primaryColumn,
+        secondaryColumn,
+        cursorData,
+      );
+    }
+  }
+
+  private addForwardDescConditions(
+    conditions: SQL[],
+    primaryColumn: AnyPgColumn,
+    secondaryColumn: AnyPgColumn | null,
+    cursorData: { primary: unknown; secondary?: unknown },
+  ): void {
+    if (secondaryColumn && cursorData.secondary !== undefined) {
+      conditions.push(
+        or(
+          lt(primaryColumn, cursorData.primary),
+          and(
+            eq(primaryColumn, cursorData.primary),
+            lt(secondaryColumn, cursorData.secondary),
+          ),
+        ),
+      );
+    } else {
+      conditions.push(lt(primaryColumn, cursorData.primary));
+    }
+  }
+
+  private addForwardAscConditions(
+    conditions: SQL[],
+    primaryColumn: AnyPgColumn,
+    secondaryColumn: AnyPgColumn | null,
+    cursorData: { primary: unknown; secondary?: unknown },
+  ): void {
+    if (secondaryColumn && cursorData.secondary !== undefined) {
+      const condition = or(
+        gt(primaryColumn, cursorData.primary),
+        and(
+          eq(primaryColumn, cursorData.primary),
+          gt(secondaryColumn, cursorData.secondary),
+        ),
+      );
+      if (condition) {
+        conditions.push(condition);
+      }
+    } else {
+      conditions.push(gt(primaryColumn, cursorData.primary));
+    }
+  }
+
+  private addBackwardCursorConditions(
+    conditions: SQL[],
+    primaryColumn: AnyPgColumn,
+    secondaryColumn: AnyPgColumn | null,
+    cursorData: { primary: unknown; secondary?: unknown },
+    sortOrder: 'asc' | 'desc',
+  ): void {
+    if (sortOrder === 'desc') {
+      this.addBackwardDescConditions(
+        conditions,
+        primaryColumn,
+        secondaryColumn,
+        cursorData,
+      );
+    } else {
+      this.addBackwardAscConditions(
+        conditions,
+        primaryColumn,
+        secondaryColumn,
+        cursorData,
+      );
+    }
+  }
+
+  // eslint-disable-next-line sonarjs/no-identical-functions
+  private addBackwardDescConditions(
+    conditions: SQL[],
+    primaryColumn: AnyPgColumn,
+    secondaryColumn: AnyPgColumn | null,
+    cursorData: { primary: unknown; secondary?: unknown },
+  ): void {
+    if (secondaryColumn && cursorData.secondary !== undefined) {
+      const condition = or(
+        gt(primaryColumn, cursorData.primary),
+        and(
+          eq(primaryColumn, cursorData.primary),
+          gt(secondaryColumn, cursorData.secondary),
+        ),
+      );
+      if (condition) {
+        conditions.push(condition);
+      }
+    } else {
+      conditions.push(gt(primaryColumn, cursorData.primary));
+    }
+  }
+
+  private addBackwardAscConditions(
+    conditions: SQL[],
+    primaryColumn: AnyPgColumn,
+    secondaryColumn: AnyPgColumn | null,
+    cursorData: { primary: unknown; secondary?: unknown },
+  ): void {
+    if (secondaryColumn && cursorData.secondary !== undefined) {
+      const condition = or(
+        lt(primaryColumn, cursorData.primary),
+        and(
+          eq(primaryColumn, cursorData.primary),
+          lt(secondaryColumn, cursorData.secondary),
+        ),
+      );
+      if (condition) {
+        conditions.push(condition);
+      }
+    } else {
+      conditions.push(lt(primaryColumn, cursorData.primary));
+    }
+  }
+
+  private addOrdering(
+    orderBy: SQL[],
+    primaryColumn: AnyPgColumn,
+    secondaryColumn: AnyPgColumn | null,
+    sortOrder: 'asc' | 'desc',
+    direction: 'forward' | 'backward',
+  ): void {
     if (sortOrder === 'desc') {
       orderBy.push(desc(primaryColumn));
       if (secondaryColumn) {
@@ -174,12 +302,6 @@ export class CursorPaginationService {
     if (direction === 'backward') {
       orderBy.reverse();
     }
-
-    return {
-      conditions,
-      orderBy,
-      limit: limit + 1, // +1 to check for next/previous page
-    };
   }
 
   /**
@@ -275,9 +397,26 @@ export class CursorPaginationService {
   } {
     try {
       const decoded = Buffer.from(cursor, 'base64').toString('utf-8');
-      return JSON.parse(decoded);
+      const parsed = JSON.parse(decoded) as {
+        primary: unknown;
+        secondary?: unknown;
+      };
+
+      // Validate the structure
+
+      if (
+        parsed == null ||
+        typeof parsed !== 'object' ||
+        !('primary' in parsed)
+      ) {
+        throw new Error('Invalid cursor structure');
+      }
+
+      return parsed;
     } catch (error) {
-      throw new Error(`Invalid cursor format: ${cursor}`);
+      throw new Error(
+        `Invalid cursor format: ${cursor}. ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -305,7 +444,9 @@ export class CursorPaginationService {
       primaryField,
       secondaryField,
       encodeCursor: (record: T) => {
+        // eslint-disable-next-line security/detect-object-injection
         const primary = record[primaryField];
+        // eslint-disable-next-line security/detect-object-injection
         const secondary = secondaryField ? record[secondaryField] : undefined;
 
         // For timestamps, use ISO string for better readability
@@ -319,7 +460,10 @@ export class CursorPaginationService {
       },
       decodeCursor: (cursor: string) => {
         const decoded = Buffer.from(cursor, 'base64').toString('utf-8');
-        const data = JSON.parse(decoded);
+        const data = JSON.parse(decoded) as {
+          primary: unknown;
+          secondary?: unknown;
+        };
 
         return {
           primary:

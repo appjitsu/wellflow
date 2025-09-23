@@ -8,7 +8,21 @@ import {
 
 /**
  * Performance Alert Observer
- * Implements Observer Pattern for handling performance alerts
+ * Implements Observer Pattern for ha      // Validate alertKey to prevent object injection
+      if (
+        typeof alertKey === 'string' &&
+        /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(alertKey)
+      ) {
+        Object.defineProperty(stats, alertKey, {
+          value: {
+            count,
+            lastAlert: this.lastAlertTime.get(alertKey)?.toISOString(),
+          },
+          enumerable: true,
+          configurable: true,
+          writable: true,
+        });
+      }formance alerts
  * Follows Single Responsibility Principle - only handles alerting
  */
 @Injectable()
@@ -253,11 +267,13 @@ export class PerformanceAlertObserver implements IQueryPerformanceObserver {
   private sanitizeQuery(query: string): string {
     if (!query) return '';
 
+    const maskedValue = '****';
+
     // Remove potential sensitive data patterns
     return query
-      .replace(/password\s*=\s*'[^']*'/gi, "password='***'")
-      .replace(/token\s*=\s*'[^']*'/gi, "token='***'")
-      .replace(/secret\s*=\s*'[^']*'/gi, "secret='***'")
+      .replace(/password\s*=\s*'[^']*'/gi, `password=${maskedValue}`)
+      .replace(/token\s*=\s*'[^']*'/gi, `token=${maskedValue}`)
+      .replace(/secret\s*=\s*'[^']*'/gi, `secret=${maskedValue}`)
       .substring(0, 500); // Limit length
   }
 
@@ -267,7 +283,7 @@ export class PerformanceAlertObserver implements IQueryPerformanceObserver {
   private sanitizeParameters(parameters?: unknown[]): unknown[] {
     if (!parameters) return [];
 
-    return parameters.map((param, index) => {
+    return parameters.map((param, _index) => {
       // If parameter looks like sensitive data, mask it
       if (typeof param === 'string') {
         if (
@@ -292,10 +308,21 @@ export class PerformanceAlertObserver implements IQueryPerformanceObserver {
     const stats: Record<string, unknown> = {};
 
     for (const [alertKey, count] of this.alertCounts.entries()) {
-      stats[alertKey] = {
-        count,
-        lastAlert: this.lastAlertTime.get(alertKey)?.toISOString(),
-      };
+      // Validate alertKey to prevent object injection
+      if (
+        typeof alertKey === 'string' &&
+        /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(alertKey)
+      ) {
+        Object.defineProperty(stats, alertKey, {
+          value: {
+            count,
+            lastAlert: this.lastAlertTime.get(alertKey)?.toISOString(),
+          },
+          enumerable: true,
+          configurable: true,
+          writable: true,
+        });
+      }
     }
 
     return {

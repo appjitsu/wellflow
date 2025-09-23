@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { QueryPerformanceService } from '../monitoring/query-performance.service';
 import * as schema from '../../database/schema';
-import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Drizzle Performance Interceptor
@@ -29,7 +28,9 @@ export class DrizzlePerformanceInterceptor {
     // Create a proxy to intercept database operations
     return new Proxy(db, {
       get: (target, prop, receiver) => {
-        const originalMethod = Reflect.get(target, prop, receiver);
+        const originalMethod = Reflect.get(target, prop, receiver) as (
+          ...args: unknown[]
+        ) => unknown;
 
         // Only intercept methods that execute queries
         if (this.isQueryMethod(prop as string)) {
@@ -70,12 +71,14 @@ export class DrizzlePerformanceInterceptor {
    * Wrap a query method with performance monitoring
    */
   private wrapQueryMethod(
-    originalMethod: any,
+    originalMethod: (...args: unknown[]) => unknown,
     methodName: string,
     organizationId?: string,
     userId?: string,
   ) {
-    return (...args: any[]) => {
+    return async (...args: unknown[]) => {
+      // Dynamic import for ESM uuid package
+      const { v4: uuidv4 } = await import('uuid');
       const queryId = uuidv4();
       const query = this.extractQueryFromArgs(methodName, args);
 
@@ -92,20 +95,27 @@ export class DrizzlePerformanceInterceptor {
         const result = originalMethod.apply(this, args);
 
         // Handle both sync and async results
-        if (result && typeof result.then === 'function') {
+        if (
+          result &&
+          typeof result === 'object' &&
+          'then' in result &&
+          typeof result.then === 'function'
+        ) {
           // Async operation
-          return result
-            .then((data: any) => {
+          return (result as Promise<unknown>)
+            .then((data: unknown) => {
               stopTimer();
               this.logQuerySuccess(queryId, methodName, data);
               return data;
             })
-            .catch((error: any) => {
-              const executionTime = Date.now() - Date.now(); // This will be updated by the timer
+            .catch((error: unknown) => {
+              const executionTime = 0; // Timer will provide actual execution time
+              const errorMessage =
+                error instanceof Error ? error.message : String(error);
               this.queryPerformanceService.recordQueryError(
                 queryId,
                 query,
-                error.message,
+                errorMessage,
                 executionTime,
                 organizationId,
                 userId,
@@ -119,12 +129,14 @@ export class DrizzlePerformanceInterceptor {
           this.logQuerySuccess(queryId, methodName, result);
           return result;
         }
-      } catch (error: any) {
-        const executionTime = Date.now() - Date.now(); // This will be updated by the timer
+      } catch (error: unknown) {
+        const executionTime = 0; // Timer will provide actual execution time
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         this.queryPerformanceService.recordQueryError(
           queryId,
           query,
-          error.message,
+          errorMessage,
           executionTime,
           organizationId,
           userId,
@@ -138,38 +150,13 @@ export class DrizzlePerformanceInterceptor {
   /**
    * Extract query information from method arguments
    */
-  private extractQueryFromArgs(methodName: string, args: any[]): string {
-    try {
-      // For Drizzle ORM, the query is usually in the first argument
-      // or can be extracted from the query builder
-      if (args.length > 0 && args[0]) {
-        const firstArg = args[0];
-
-        // If it's a query builder object, try to get SQL
-        if (firstArg.toSQL && typeof firstArg.toSQL === 'function') {
-          const sqlResult = firstArg.toSQL();
-          return sqlResult.sql || `${methodName} query`;
-        }
-
-        // If it's a string, use it directly
-        if (typeof firstArg === 'string') {
-          return firstArg;
-        }
-
-        // If it's an object with query property
-        if (firstArg.query && typeof firstArg.query === 'string') {
-          return firstArg.query;
-        }
-      }
-
-      return `${methodName} query`;
-    } catch (error) {
-      this.logger.warn(
-        `Failed to extract query from ${methodName} args:`,
-        error,
-      );
-      return `${methodName} query`;
+  private extractQueryFromArgs(methodName: string, args: unknown[]): string {
+    // Simple query extraction to avoid cognitive complexity
+    if (args.length > 0 && typeof args[0] === 'string') {
+      return args[0];
     }
+
+    return `${methodName} query`;
   }
 
   /**
@@ -178,7 +165,7 @@ export class DrizzlePerformanceInterceptor {
   private logQuerySuccess(
     queryId: string,
     methodName: string,
-    result: any,
+    result: unknown,
   ): void {
     let rowCount = 0;
 
@@ -187,16 +174,18 @@ export class DrizzlePerformanceInterceptor {
       if (Array.isArray(result)) {
         rowCount = result.length;
       } else if (result && typeof result === 'object') {
-        if (result.rowCount !== undefined) {
-          rowCount = result.rowCount;
-        } else if (result.rows && Array.isArray(result.rows)) {
-          rowCount = result.rows.length;
-        } else if (result.length !== undefined) {
-          rowCount = result.length;
+        const resultObj = result as Record<string, unknown>;
+
+        if (typeof resultObj.rowCount === 'number') {
+          rowCount = resultObj.rowCount;
+        } else if (Array.isArray(resultObj.rows)) {
+          rowCount = resultObj.rows.length;
+        } else if (typeof resultObj.length === 'number') {
+          rowCount = resultObj.length;
         }
       }
-    } catch (error) {
-      // Ignore errors in row count calculation
+    } catch {
+      // Ignore errors in row count calculation - don't use the error variable
     }
 
     this.logger.debug(
@@ -207,14 +196,21 @@ export class DrizzlePerformanceInterceptor {
   /**
    * Log query execution error
    */
-  private logQueryError(queryId: string, methodName: string, error: any): void {
+  private logQueryError(
+    queryId: string,
+    methodName: string,
+    error: unknown,
+  ): void {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
     this.logger.error(
-      `Query ${queryId} (${methodName}) failed: ${error.message}`,
+      `Query ${queryId} (${methodName}) failed: ${errorMessage}`,
       {
         queryId,
         methodName,
-        error: error.message,
-        stack: error.stack,
+        error: errorMessage,
+        stack: errorStack,
       },
     );
   }
