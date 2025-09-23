@@ -2,12 +2,17 @@
 
 ## Overview
 
-The WellFlow Queue UI is a web-based dashboard for monitoring and managing BullMQ job queues in the WellFlow oil & gas production management system. Built with Bull Board, it provides real-time visibility into background job processing.
+The WellFlow Queue UI is a web-based dashboard for monitoring and managing
+BullMQ job queues in the WellFlow oil & gas production management system. Built
+with Bull Board, it provides real-time visibility into background job
+processing.
 
 ## Features
 
-- **Real-time Queue Monitoring** - Live updates of job statuses across all queues
-- **Individual Job Inspection** - Detailed view of job data, options, logs, and errors
+- **Real-time Queue Monitoring** - Live updates of job statuses across all
+  queues
+- **Individual Job Inspection** - Detailed view of job data, options, logs, and
+  errors
 - **Status Filtering** - Filter jobs by ACTIVE, WAITING, COMPLETED, FAILED, etc.
 - **JWT Authentication** - Secure access with role-based permissions
 - **Industry-Specific Data** - Tailored for oil & gas operations and compliance
@@ -16,7 +21,7 @@ The WellFlow Queue UI is a web-based dashboard for monitoring and managing BullM
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - Redis server running on localhost:6379
 - WellFlow API service running (for authentication)
 
@@ -60,7 +65,7 @@ The Queue UI requires a valid JWT token with the following claims:
 ```json
 {
   "id": "user-id",
-  "sub": "user-id", 
+  "sub": "user-id",
   "email": "user@wellflow.com",
   "roles": ["ADMIN", "OPERATOR", "MANAGER"],
   "organizationId": "org-id",
@@ -94,7 +99,7 @@ http://localhost:3003/?token=<your-jwt-token>
 The dashboard monitors three primary queues:
 
 1. **data-validation** - Production data validation jobs
-2. **report-generation** - Regulatory and operational reports  
+2. **report-generation** - Regulatory and operational reports
 3. **email-notifications** - Critical alerts and notifications
 
 ### Job States
@@ -111,17 +116,20 @@ The dashboard monitors three primary queues:
 ### Dashboard Views
 
 #### Main Dashboard
+
 - Overview of all queues with job counts
 - Visual progress bars showing job distribution
 - Quick navigation to individual queues
 
 #### Individual Queue View
+
 - Detailed job listings with timestamps
 - Job data inspection with JSON formatting
 - Interactive tabs for Data, Options, Logs, and Errors
 - Status filtering and search capabilities
 
 #### Job Detail View
+
 - Complete job payload in formatted JSON
 - Processing logs and error details
 - Job options and configuration
@@ -137,15 +145,20 @@ Create realistic test data for development:
 node generate-test-jobs.js
 ```
 
-This script creates 39 jobs across all queues with realistic oil & gas industry data:
+This script creates 39 jobs across all queues with realistic oil & gas industry
+data:
 
-- **14 Data Validation Jobs** - Well production data, geographic locations, validation types
-- **15 Email Notification Jobs** - Safety alerts, compliance reminders, operational notifications
-- **10 Report Generation Jobs** - Environmental, production, compliance, and safety reports
+- **14 Data Validation Jobs** - Well production data, geographic locations,
+  validation types
+- **15 Email Notification Jobs** - Safety alerts, compliance reminders,
+  operational notifications
+- **10 Report Generation Jobs** - Environmental, production, compliance, and
+  safety reports
 
 ### Test Job Types
 
 #### Data Validation Jobs
+
 ```json
 {
   "wellId": "WELL-1250",
@@ -159,7 +172,7 @@ This script creates 39 jobs across all queues with realistic oil & gas industry 
   },
   "production": {
     "oil": 518,
-    "gas": 1854, 
+    "gas": 1854,
     "water": 21
   },
   "validationType": "production_data"
@@ -167,6 +180,7 @@ This script creates 39 jobs across all queues with realistic oil & gas industry 
 ```
 
 #### Email Notification Jobs
+
 ```json
 {
   "notificationId": "NOTIF-1758639909793-40",
@@ -179,6 +193,7 @@ This script creates 39 jobs across all queues with realistic oil & gas industry 
 ```
 
 #### Report Generation Jobs
+
 ```json
 {
   "reportId": "RPT-1758639909790-272",
@@ -208,6 +223,7 @@ The Express server is configured with:
 ### Security Configuration
 
 #### Content Security Policy
+
 ```javascript
 {
   directives: {
@@ -221,6 +237,7 @@ The Express server is configured with:
 ```
 
 #### Authentication Middleware
+
 - Validates JWT tokens on all dashboard routes
 - Excludes static assets and health endpoints
 - Supports role-based access control
@@ -241,10 +258,12 @@ const redisConfig = {
 ## API Endpoints
 
 ### Health & Status
+
 - `GET /health` - Application health check
 - `GET /api/info` - API information and version
 
 ### Bull Board Routes
+
 - `GET /` - Main dashboard (requires authentication)
 - `GET /queue/:queueName` - Individual queue view
 - `GET /api/queues` - Queue API endpoints (Bull Board)
@@ -252,6 +271,7 @@ const redisConfig = {
 ## Architecture
 
 ### File Structure
+
 ```
 apps/queue-ui/
 ├── src/
@@ -272,6 +292,7 @@ apps/queue-ui/
 ### Dependencies
 
 #### Core Dependencies
+
 - **@bull-board/express** - Bull Board Express adapter
 - **@bull-board/ui** - Bull Board web interface
 - **bullmq** - Job queue management
@@ -280,6 +301,7 @@ apps/queue-ui/
 - **jsonwebtoken** - JWT authentication
 
 #### Security & Middleware
+
 - **cors** - Cross-origin resource sharing
 - **helmet** - Security headers
 - **dotenv** - Environment configuration
@@ -327,21 +349,29 @@ curl http://localhost:3003/api/info
 ### Common Issues
 
 #### Redis Connection Errors
+
 ```
 Error: Redis connection failed
 ```
-**Solution**: Verify Redis server is running and accessible at the configured URL.
+
+**Solution**: Verify Redis server is running and accessible at the configured
+URL.
 
 #### Authentication Failures
+
 ```
 Error: Invalid or expired token
 ```
-**Solution**: Generate a new JWT token or verify the JWT_SECRET matches the API service.
+
+**Solution**: Generate a new JWT token or verify the JWT_SECRET matches the API
+service.
 
 #### Port Conflicts
+
 ```
 Error: Port 3003 already in use
 ```
+
 **Solution**: Change the PORT environment variable or stop conflicting services.
 
 ### Debug Mode
@@ -356,6 +386,7 @@ DEBUG=queue-ui:*
 ### Log Analysis
 
 The application logs include:
+
 - Authentication attempts and failures
 - Queue connection status
 - Job processing events
@@ -364,16 +395,19 @@ The application logs include:
 ## Performance Considerations
 
 ### Memory Usage
+
 - Bull Board caches job data for performance
 - Large job payloads may impact memory usage
 - Consider job data size limits for optimal performance
 
 ### Network Optimization
+
 - Static assets are served with appropriate caching headers
 - Gzip compression enabled for text resources
 - CDN integration recommended for production
 
 ### Scaling
+
 - Multiple instances can share the same Redis backend
 - Load balancing supported with session affinity
 - Horizontal scaling recommended for high-traffic environments
@@ -381,16 +415,19 @@ The application logs include:
 ## Security Best Practices
 
 ### Authentication
+
 - Use strong JWT secrets in production
 - Implement token rotation policies
 - Monitor authentication failures
 
 ### Network Security
+
 - Use HTTPS in production environments
 - Implement proper firewall rules
 - Restrict Redis access to authorized services
 
 ### Data Protection
+
 - Sanitize sensitive data in job payloads
 - Implement audit logging for compliance
 - Regular security updates and patches
@@ -405,9 +442,11 @@ The Queue UI integrates seamlessly with the main WellFlow API:
 - **Health Monitoring** - Participates in overall system health checks
 
 For complete system integration, ensure both services share the same:
+
 - JWT_SECRET configuration
 - Redis connection settings
 - User role definitions
 - Audit logging standards
 
-This documentation provides comprehensive guidance for using and maintaining the WellFlow Queue UI dashboard.
+This documentation provides comprehensive guidance for using and maintaining the
+WellFlow Queue UI dashboard.

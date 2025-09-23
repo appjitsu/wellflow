@@ -1,18 +1,13 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import { logger } from '../utils/logger';
 
 /**
  * Error Handling Middleware for Queue UI Dashboard
- * 
+ *
  * Provides centralized error handling with proper logging
  * and user-friendly error responses.
  */
-export function errorHandler(
-  error: Error,
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export function errorHandler(error: Error, req: Request, res: Response) {
   // Log the error
   logger.error('Queue UI Error:', {
     message: error.message,
@@ -30,7 +25,7 @@ export function errorHandler(
   // Default error response
   let statusCode = 500;
   let message = 'Internal server error';
-  let details: any = undefined;
+  let details: string | undefined = undefined;
 
   // Handle specific error types
   if (error.name === 'ValidationError') {
@@ -66,7 +61,7 @@ export function errorHandler(
  */
 export function notFoundHandler(req: Request, res: Response) {
   logger.warn(`404 - Route not found: ${req.method} ${req.url} from ${req.ip}`);
-  
+
   res.status(404).json({
     error: 'Route not found',
     message: `The requested route ${req.method} ${req.url} was not found`,

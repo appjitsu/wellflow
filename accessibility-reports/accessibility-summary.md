@@ -1,6 +1,6 @@
 # WellFlow Accessibility Testing Report
 
-**Generated:** 9/20/2025, 5:01:36 PM **Repository:** wellflow **Branch:** local
+**Generated:** 9/23/2025, 1:07:56 PM **Repository:** wellflow **Branch:** local
 **Commit:** local
 
 ## Executive Summary
@@ -15,8 +15,8 @@
 | Tool       | Score   | Status | Standard       |
 | ---------- | ------- | ------ | -------------- |
 | Axe-Core   | 100/100 | ✅     | WCAG 2.1 AA    |
-| Pa11y      | 100/100 | ✅     | WCAG 2.1 AA    |
-| Lighthouse | 96/100  | ❌     | Best Practices |
+| Pa11y      | 97/100  | ✅     | WCAG 2.1 AA    |
+| Lighthouse | 100/100 | ❌     | Best Practices |
 
 ## WCAG 2.1 AA Compliance
 
@@ -52,12 +52,12 @@
 ### Pa11y Analysis
 
 - **Total Errors:** 0
-- **Total Warnings:** 0
+- **Total Warnings:** 1
 - **Total Notices:** 0
 
 ### Lighthouse Analysis
 
-- **Accessibility Score:** 96/100
+- **Accessibility Score:** 100/100
 - **Passed Audits:** 6/12
 - **Failed Audits:** 6/12
 

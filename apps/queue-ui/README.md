@@ -1,13 +1,16 @@
 # WellFlow Queue UI Dashboard
 
-A standalone BullMQ monitoring dashboard for the WellFlow oil & gas production management system.
+A standalone BullMQ monitoring dashboard for the WellFlow oil & gas production
+management system.
 
 ## Overview
 
-This service provides a web-based interface for monitoring background job queues in the WellFlow system. It's designed to be deployed as a separate service on Railway, providing dedicated monitoring capabilities for:
+This service provides a web-based interface for monitoring background job queues
+in the WellFlow system. It's designed to be deployed as a separate service on
+Railway, providing dedicated monitoring capabilities for:
 
 - Data validation jobs
-- Report generation jobs  
+- Report generation jobs
 - Email notification jobs
 
 ## Features
@@ -54,7 +57,8 @@ NODE_ENV=development                         # Environment
 
 ## Authentication
 
-The dashboard requires a valid JWT token from the WellFlow API. You can provide the token in two ways:
+The dashboard requires a valid JWT token from the WellFlow API. You can provide
+the token in two ways:
 
 1. **Authorization Header**: `Authorization: Bearer <token>`
 2. **Query Parameter**: `?token=<token>`
@@ -62,8 +66,9 @@ The dashboard requires a valid JWT token from the WellFlow API. You can provide 
 ### Required Roles
 
 Access requires one of the following roles:
+
 - `ADMIN` - Full access to all queue operations
-- `OPERATOR` - View and basic queue operations  
+- `OPERATOR` - View and basic queue operations
 - `MANAGER` - View and management operations
 
 ## API Endpoints
@@ -86,11 +91,13 @@ This service is configured for Railway deployment with:
 ### Environment Variables (Railway)
 
 Railway will automatically provide:
+
 - `RAILWAY_ENVIRONMENT`
-- `RAILWAY_SERVICE_NAME` 
+- `RAILWAY_SERVICE_NAME`
 - `RAILWAY_PROJECT_NAME`
 
 You need to configure:
+
 - `REDIS_URL` - Connection to Railway Redis service
 - `JWT_SECRET` - Must match main API secret
 - `ALLOWED_ORIGINS` - Your domain origins
@@ -141,6 +148,7 @@ node generate-test-jobs.js
 ```
 
 This creates **39 test jobs** across all queues with realistic data including:
+
 - Well production data with geographic locations (Texas counties)
 - Safety alerts and compliance notifications
 - Environmental, production, and safety reports
@@ -157,15 +165,16 @@ Creates a 24-hour JWT token with ADMIN and OPERATOR roles.
 
 ## Queue Types Monitored
 
-| Queue | Purpose | Example Jobs |
-|-------|---------|--------------|
-| **data-validation** | Production data validation | Well data integrity, compliance checks |
-| **report-generation** | Regulatory & operational reports | Environmental quarterly, production daily |
-| **email-notifications** | Critical alerts & notifications | Safety alerts, permit renewals |
+| Queue                   | Purpose                          | Example Jobs                              |
+| ----------------------- | -------------------------------- | ----------------------------------------- |
+| **data-validation**     | Production data validation       | Well data integrity, compliance checks    |
+| **report-generation**   | Regulatory & operational reports | Environmental quarterly, production daily |
+| **email-notifications** | Critical alerts & notifications  | Safety alerts, permit renewals            |
 
 ## 📚 Complete Documentation
 
 For comprehensive documentation including:
+
 - **Detailed Architecture** - System integration and design patterns
 - **API Reference** - Complete endpoint documentation
 - **Security Guide** - Authentication, authorization, and best practices

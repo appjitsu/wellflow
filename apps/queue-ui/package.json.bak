@@ -1,7 +1,6 @@
 {
   "name": "queue-ui",
   "version": "0.0.1",
-  "type": "module",
   "description": "BullMQ Queue Monitoring Dashboard for WellFlow",
   "main": "dist/index.js",
   "scripts": {
@@ -19,7 +18,7 @@
     "security:audit": "pnpm audit --audit-level moderate",
     "security:check": "pnpm run security:audit && pnpm run lint",
     "security:test": "pnpm run security:audit && pnpm run lint",
-    "accessibility:test": "echo 'Accessibility testing not applicable for queue monitoring service'"
+        "accessibility:test": "echo 'Accessibility testing not applicable for queue monitoring service'"
   },
   "jest": {
     "displayName": "Queue UI",
@@ -72,7 +71,7 @@
     },
     "testEnvironment": "node",
     "setupFilesAfterEnv": [
-      "/Users/jason/projects/wellflow/jest.setup.js"
+      "<rootDir>/../jest.setup.js"
     ],
     "testTimeout": 30000,
     "verbose": true,
@@ -80,7 +79,8 @@
     "restoreMocks": true,
     "forceExit": true,
     "detectOpenHandles": false
-  },
+  }
+},
   "dependencies": {
     "@bull-board/api": "^6.13.0",
     "@bull-board/express": "^6.13.0",

@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-09-20T22:01:36.358Z",
+  "timestamp": "2025-09-23T18:07:56.518Z",
   "repository": "wellflow",
   "branch": "local",
   "commit": "local",
@@ -13,7 +13,7 @@
     "axe": {
       "tool": "axe-core",
       "version": "4.8.0",
-      "timestamp": "2025-09-20T22:01:16.278Z",
+      "timestamp": "2025-09-23T18:07:39.303Z",
       "pages": [
         {
           "url": "http://localhost:3000/api-test",
@@ -59,15 +59,23 @@
     "pa11y": {
       "tool": "pa11y",
       "version": "6.2.3",
-      "timestamp": "2025-09-20T22:01:20.289Z",
+      "timestamp": "2025-09-23T18:07:42.181Z",
       "standard": "WCAG2AA",
       "pages": [
         {
           "url": "http://localhost:3000/api-test",
           "name": "api-test",
           "status": "completed",
-          "issues": [],
-          "score": 100
+          "issues": [
+            {
+              "code": "WCAG2AA.label",
+              "type": "warning",
+              "message": "2 form input(s) missing labels",
+              "context": "<element>",
+              "selector": "element"
+            }
+          ],
+          "score": 90
         },
         {
           "url": "http://localhost:3000/monitoring-test",
@@ -86,25 +94,25 @@
       ],
       "summary": {
         "totalErrors": 0,
-        "totalWarnings": 0,
+        "totalWarnings": 1,
         "totalNotices": 0
       }
     },
     "lighthouse": {
       "tool": "lighthouse",
       "version": "11.0.0",
-      "timestamp": "2025-09-20T22:01:25.725Z",
+      "timestamp": "2025-09-23T18:07:46.670Z",
       "category": "accessibility",
       "pages": [
         {
           "url": "http://localhost:3000/api-test",
           "name": "api-test",
           "status": "completed",
-          "score": 96,
+          "score": 100,
           "audits": {
             "color-contrast": {
-              "score": 0,
-              "displayValue": "Background and foreground colors do not have a sufficient contrast ratio."
+              "score": 1,
+              "displayValue": "Background and foreground colors have a sufficient contrast ratio"
             },
             "image-alt": {
               "score": 0,
@@ -123,7 +131,7 @@
               "displayValue": "Buttons have an accessible name"
             },
             "aria-valid-attr": {
-              "score": 1,
+              "score": 0,
               "displayValue": "`[aria-*]` attributes are valid and not misspelled"
             },
             "heading-order": {
@@ -154,7 +162,7 @@
         }
       ],
       "summary": {
-        "averageScore": 96,
+        "averageScore": 100,
         "totalAudits": 12,
         "passedAudits": 6,
         "failedAudits": 6

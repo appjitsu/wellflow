@@ -1128,7 +1128,7 @@ async function main() {
     }
 
     // Run accessibility tests with discovered pages
-    const axeResults = runAxeTests(pages);
+    const axeResults = await runAxeTests(pages);
     const pa11yResults = runPa11yTests(pages);
     const lighthouseResults = runLighthouseTests(pages);
 

@@ -14,6 +14,30 @@ import {
   JobType,
 } from '../types/job.types';
 
+/**
+ * Queue statistics interface
+ */
+interface QueueStats {
+  waiting: number;
+  active: number;
+  completed: number;
+  failed: number;
+  delayed: number;
+  total: number;
+}
+
+/**
+ * Queue statistics interface
+ */
+interface QueueStats {
+  waiting: number;
+  active: number;
+  completed: number;
+  failed: number;
+  delayed: number;
+  total: number;
+}
+
 describe('Jobs Integration', () => {
   let module: TestingModule;
   let jobQueueService: JobQueueService;
@@ -135,9 +159,9 @@ describe('Jobs Integration', () => {
         },
       ]);
 
-      const stats = await jobQueueService.getQueueStats();
+      const stats = (await jobQueueService.getQueueStats()) as QueueStats[];
       expect(stats).toHaveLength(1);
-      expect(stats[0].waiting).toBe(1);
+      expect(stats[0]!.waiting).toBe(1);
     });
 
     it('should process report generation job end-to-end', async () => {

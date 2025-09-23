@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-09-23T13:44:30.446Z",
+  "timestamp": "2025-09-23T18:08:19.111Z",
   "summary": {
     "totalRoutes": 2,
     "testedRoutes": 2,
@@ -21,12 +21,12 @@
       "status": "completed",
       "score": 99,
       "metrics": {
-        "firstContentfulPaint": 911.1228000000001,
-        "largestContentfulPaint": 2111.1228,
+        "firstContentfulPaint": 911.1442,
+        "largestContentfulPaint": 2111.1442,
         "firstInputDelay": 16,
         "cumulativeLayoutShift": 0,
-        "speedIndex": 911.1228000000001,
-        "timeToInteractive": 2111.1228,
+        "speedIndex": 911.1442,
+        "timeToInteractive": 2111.1442000000006,
         "totalBlockingTime": 0
       },
       "budgetStatus": {
@@ -45,12 +45,12 @@
       "status": "completed",
       "score": 99,
       "metrics": {
-        "firstContentfulPaint": 759.1531,
-        "largestContentfulPaint": 1959.1531,
+        "firstContentfulPaint": 762.7663,
+        "largestContentfulPaint": 1962.7663,
         "firstInputDelay": 16,
         "cumulativeLayoutShift": 0,
-        "speedIndex": 759.1531,
-        "timeToInteractive": 1959.1531000000002,
+        "speedIndex": 762.7663,
+        "timeToInteractive": 1962.7663,
         "totalBlockingTime": 0
       },
       "budgetStatus": {

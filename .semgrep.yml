@@ -3,25 +3,6 @@
 # Focus on OWASP Top 10 and critical infrastructure security patterns
 
 rules:
-  # OWASP Top 10 2021 Coverage
-  - p/owasp-top-ten
-  - p/security-audit
-  - p/javascript
-  - p/typescript
-  - p/react
-  - p/nodejs
-  - p/express
-  - p/docker
-
-  # Additional security rule sets
-  - p/secrets
-  - p/jwt
-  - p/sql-injection
-  - p/xss
-  - p/command-injection
-  - p/path-traversal
-  - p/ssrf
-
   # Custom rules for oil & gas specific patterns
   - id: missing-auth-middleware
     pattern: |

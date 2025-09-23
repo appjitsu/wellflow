@@ -10,6 +10,16 @@ import {
   JobType,
 } from '../../types/job.types';
 
+interface QueueStatsWithName {
+  queueName: string;
+  waiting: number;
+  active: number;
+  completed: number;
+  failed: number;
+  delayed: number;
+  total: number;
+}
+
 describe('JobQueueService', () => {
   let service: JobQueueService;
   let bullMQConfig: jest.Mocked<BullMQConfigService>;
@@ -221,7 +231,7 @@ describe('JobQueueService', () => {
       mockQueue.getFailed.mockResolvedValue([]);
       mockQueue.getDelayed.mockResolvedValue([]);
 
-      const result = await service.getQueueStats();
+      const result = (await service.getQueueStats()) as QueueStatsWithName[];
 
       expect(result).toHaveLength(3); // 3 queue types
       expect(result[0]).toHaveProperty('queueName');
