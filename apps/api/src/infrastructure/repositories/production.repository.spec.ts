@@ -172,6 +172,7 @@ describe('ProductionRepository', () => {
     });
   });
 
+  // eslint-disable-next-line no-secrets/no-secrets
   describe('getWellProductionSummary', () => {
     it('should get well production summary without date range', async () => {
       const mockSummary = [

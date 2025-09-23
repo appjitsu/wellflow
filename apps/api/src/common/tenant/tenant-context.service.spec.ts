@@ -255,7 +255,7 @@ describe('TenantContextService', () => {
         return fn();
       });
 
-      const result = await service.runInContext(context, async () => {
+      const result = await service.runInContext(context, () => {
         return service.getOrganizationId();
       });
 

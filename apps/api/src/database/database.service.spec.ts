@@ -153,12 +153,15 @@ describe('DatabaseService', () => {
 
   describe('Database Connection', () => {
     it('should handle database connection creation', () => {
+      // Test password for database connection - safe in test context
+      // eslint-disable-next-line sonarjs/no-hardcoded-passwords
+      const TEST_DB_PASSWORD = 'test_password';
       const connectionConfig = {
         host: 'localhost',
         port: 5432,
         database: 'wellflow_test',
         user: 'test_user',
-        password: 'test_password',
+        password: TEST_DB_PASSWORD,
         ssl: false,
       };
 
@@ -241,9 +244,9 @@ describe('DatabaseService', () => {
         { text: 'INSERT INTO wells (name) VALUES ($1)', values: ['Well 3'] },
       ];
 
-      for (const _ of batchQueries) {
+      for (let i = 0; i < batchQueries.length; i++) {
         mockConnection.query.mockResolvedValueOnce({
-          rows: [{ id: `well-${Math.random()}` }],
+          rows: [{ id: `well-${i + 1}` }],
           rowCount: 1,
         });
       }
@@ -268,7 +271,7 @@ describe('DatabaseService', () => {
         query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
       };
 
-      mockDrizzle.transaction.mockImplementation(async (callback) => {
+      mockDrizzle.transaction.mockImplementation((callback: any) => {
         return callback(mockTransaction);
       });
 
@@ -291,7 +294,7 @@ describe('DatabaseService', () => {
         query: jest.fn().mockRejectedValue(new Error('Constraint violation')),
       };
 
-      mockDrizzle.transaction.mockImplementation(async (callback) => {
+      mockDrizzle.transaction.mockImplementation(async (callback: any) => {
         try {
           return await callback(mockTransaction);
         } catch (error) {
@@ -318,11 +321,11 @@ describe('DatabaseService', () => {
         query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
       };
 
-      outerTransaction.transaction.mockImplementation(async (callback) => {
+      outerTransaction.transaction.mockImplementation((callback: any) => {
         return callback(innerTransaction);
       });
 
-      mockDrizzle.transaction.mockImplementation(async (callback) => {
+      mockDrizzle.transaction.mockImplementation((callback: any) => {
         return callback(outerTransaction);
       });
 
@@ -407,7 +410,7 @@ describe('DatabaseService', () => {
         try {
           await mockConnection.query('SELECT 1');
           return true;
-        } catch (error) {
+        } catch {
           return false;
         }
       };

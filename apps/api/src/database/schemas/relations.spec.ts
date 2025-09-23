@@ -587,7 +587,7 @@ describe('Database Schema Relations', () => {
         complianceSchedulesRelations,
       ];
 
-      allRelations.forEach((relation, index) => {
+      allRelations.forEach((relation, _index) => {
         expect(relation).toBeDefined();
         expect(typeof relation).toBe('object');
         expect(relation.config).toBeDefined();

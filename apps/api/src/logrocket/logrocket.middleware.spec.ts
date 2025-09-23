@@ -5,9 +5,6 @@
 
 describe('LogRocketMiddleware', () => {
   let mockRequest: any;
-  let mockResponse: any;
-  let mockNext: jest.Mock;
-  let mockLogRocketService: any;
 
   beforeEach(() => {
     // Mock Express request
@@ -16,6 +13,7 @@ describe('LogRocketMiddleware', () => {
       headers: {
         'user-agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        // eslint-disable-next-line sonarjs/no-hardcoded-ip
         'x-forwarded-for': '192.168.1.1',
       },
       url: '/api/wells',
@@ -27,28 +25,6 @@ describe('LogRocketMiddleware', () => {
         role: 'operator',
       },
       sessionID: 'session-789',
-    };
-
-    // Mock Express response
-    mockResponse = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis(),
-      setHeader: jest.fn(),
-      locals: {},
-    };
-
-    // Mock next function
-    mockNext = jest.fn();
-
-    // Mock LogRocket service
-    mockLogRocketService = {
-      identify: jest.fn(),
-      track: jest.fn(),
-      captureException: jest.fn(),
-      addTag: jest.fn(),
-      getSessionURL: jest
-        .fn()
-        .mockReturnValue('https://app.logrocket.com/session/123'),
     };
   });
 
@@ -92,8 +68,8 @@ describe('LogRocketMiddleware', () => {
     });
 
     it('should generate session ID when missing', () => {
-
       const generateSessionId = () => {
+        // eslint-disable-next-line sonarjs/pseudo-random
         return `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       };
 
@@ -158,6 +134,7 @@ describe('LogRocketMiddleware', () => {
       const userWithSensitiveData = {
         id: 'user-123',
         email: 'test@example.com',
+        // eslint-disable-next-line sonarjs/no-hardcoded-passwords
         password: 'secret123',
         apiKey: 'api-key-secret',
         role: 'operator',
@@ -406,7 +383,9 @@ describe('LogRocketMiddleware', () => {
         const filtered = { ...headers };
 
         sensitiveHeaders.forEach((header) => {
+          // eslint-disable-next-line security/detect-object-injection
           if (filtered[header]) {
+            // eslint-disable-next-line security/detect-object-injection
             filtered[header] = '[REDACTED]';
           }
         });
@@ -435,7 +414,9 @@ describe('LogRocketMiddleware', () => {
         const filtered = { ...data };
 
         piiFields.forEach((field) => {
+          // eslint-disable-next-line security/detect-object-injection
           if (filtered[field]) {
+            // eslint-disable-next-line security/detect-object-injection
             filtered[field] = '[PII_REDACTED]';
           }
         });
@@ -447,6 +428,7 @@ describe('LogRocketMiddleware', () => {
         name: 'John Doe',
         email: 'john@example.com',
         ssn: '123-45-6789',
+        // eslint-disable-next-line sonarjs/no-hardcoded-passwords
         password: 'secret123',
       };
 

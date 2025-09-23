@@ -76,10 +76,11 @@ describe('Database Seed Functions', () => {
     (drizzle as jest.Mock).mockReturnValue(mockDb);
 
     // Mock environment variables
+    // eslint-disable-next-line sonarjs/no-hardcoded-passwords
+    process.env.DB_PASSWORD = 'password';
     process.env.DB_HOST = 'localhost';
     process.env.DB_PORT = '5432';
     process.env.DB_USER = 'postgres';
-    process.env.DB_PASSWORD = 'password';
     process.env.DB_NAME = 'wellflow_test';
   });
 
@@ -102,6 +103,7 @@ describe('Database Seed Functions', () => {
           host: 'localhost',
           port: 5432,
           user: 'postgres',
+          // eslint-disable-next-line sonarjs/no-hardcoded-passwords
           password: 'password',
           database: 'wellflow_test',
         });
@@ -290,7 +292,21 @@ describe('Database Seed Functions', () => {
       ];
 
       randomFunctions.forEach((funcName) => {
-        const func = (seedModule as any)[funcName];
+        let func: any;
+        switch (funcName) {
+          case 'generateRandomWellName':
+            func = (seedModule as any).generateRandomWellName;
+            break;
+          case 'generateRandomLocation':
+            func = (seedModule as any).generateRandomLocation;
+            break;
+          case 'generateRandomProductionData':
+            func = (seedModule as any).generateRandomProductionData;
+            break;
+          case 'generateRandomDate':
+            func = (seedModule as any).generateRandomDate;
+            break;
+        }
         if (func && typeof func === 'function') {
           const result = func();
           expect(result).toBeDefined();
@@ -311,7 +327,21 @@ describe('Database Seed Functions', () => {
       ];
 
       validationFunctions.forEach((funcName) => {
-        const func = (seedModule as any)[funcName];
+        let func: any;
+        switch (funcName) {
+          case 'validateOrganizationData':
+            func = (seedModule as any).validateOrganizationData;
+            break;
+          case 'validateUserData':
+            func = (seedModule as any).validateUserData;
+            break;
+          case 'validateWellData':
+            func = (seedModule as any).validateWellData;
+            break;
+          case 'validateLeaseData':
+            func = (seedModule as any).validateLeaseData;
+            break;
+        }
         if (func && typeof func === 'function') {
           // Test with valid data
           const result = func({});
@@ -373,11 +403,9 @@ describe('Database Seed Functions', () => {
       expect(moduleKeys.length).toBeGreaterThanOrEqual(0);
     });
 
-    it('should handle module imports correctly', () => {
+    it('should handle module imports correctly', async () => {
       // Test that all imports work
-      expect(() => {
-        require('./seed');
-      }).not.toThrow();
+      await expect(import('./seed.js')).resolves.toBeDefined();
     });
   });
 });

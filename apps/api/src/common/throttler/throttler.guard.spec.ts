@@ -6,16 +6,19 @@
 describe('ThrottlerGuard', () => {
   let mockRequest: any;
   let mockResponse: any;
-  let mockExecutionContext: any;
-  let mockReflector: any;
+
+  // Test constants for IP addresses - these are safe in test context
+  const TEST_IP = '127.0.0.1';
+
+  const FORWARDED_IP = '192.168.1.1';
 
   beforeEach(() => {
     // Mock Express request
     mockRequest = {
-      ip: '127.0.0.1',
+      ip: TEST_IP,
       headers: {
         'user-agent': 'test-agent',
-        'x-forwarded-for': '192.168.1.1',
+        'x-forwarded-for': FORWARDED_IP,
       },
       url: '/api/wells',
       method: 'GET',
@@ -27,22 +30,6 @@ describe('ThrottlerGuard', () => {
       status: jest.fn().mockReturnThis(),
       json: jest.fn().mockReturnThis(),
       setHeader: jest.fn(),
-    };
-
-    // Mock NestJS ExecutionContext
-    mockExecutionContext = {
-      switchToHttp: jest.fn().mockReturnValue({
-        getRequest: jest.fn().mockReturnValue(mockRequest),
-        getResponse: jest.fn().mockReturnValue(mockResponse),
-      }),
-      getHandler: jest.fn(),
-      getClass: jest.fn(),
-    };
-
-    // Mock Reflector
-    mockReflector = {
-      get: jest.fn(),
-      getAllAndOverride: jest.fn(),
     };
   });
 
@@ -248,27 +235,32 @@ describe('ThrottlerGuard', () => {
 
       const ip = extractIP(mockRequest);
 
-      expect(ip).toBe('192.168.1.1'); // From x-forwarded-for header
+      expect(ip).toBe(FORWARDED_IP); // From x-forwarded-for header
     });
 
     it('should handle missing forwarded headers', () => {
       const requestWithoutHeaders = {
-        ip: '127.0.0.1',
+        ip: TEST_IP,
         headers: {},
       };
 
-      const extractIP = (request: any) => {
-        return (
-          request.headers['x-forwarded-for'] ||
-          request.headers['x-real-ip'] ||
-          request.connection?.remoteAddress ||
-          request.ip
-        );
+      const extractIPFromRequest = (request: any) => {
+        // Check x-forwarded-for first, then fallbacks
+        if (request.headers['x-forwarded-for']) {
+          return request.headers['x-forwarded-for'];
+        }
+        if (request.headers['x-real-ip']) {
+          return request.headers['x-real-ip'];
+        }
+        if (request.connection?.remoteAddress) {
+          return request.connection.remoteAddress;
+        }
+        return request.ip || 'unknown';
       };
 
-      const ip = extractIP(requestWithoutHeaders);
+      const ip = extractIPFromRequest(requestWithoutHeaders);
 
-      expect(ip).toBe('127.0.0.1');
+      expect(ip).toBe(TEST_IP);
     });
 
     it('should handle proxy chains', () => {
@@ -381,7 +373,10 @@ describe('ThrottlerGuard', () => {
 
     it('should handle efficient lookups', () => {
       const requestTracker = new Map();
-      const ip = '127.0.0.1';
+      const ip = TEST_IP;
+
+      // Add some data to the tracker first
+      requestTracker.set(ip, [Date.now()]);
 
       const startTime = Date.now();
 
@@ -395,6 +390,7 @@ describe('ThrottlerGuard', () => {
 
       // Map lookups should be very fast
       expect(lookupTime).toBeLessThan(100);
+      expect(requestTracker.has(ip)).toBe(true);
     });
   });
 });
