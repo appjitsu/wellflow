@@ -6,9 +6,9 @@ services:
     image: timescale/timescaledb:latest-pg14
     container_name: wellflow-postgres
     environment:
-      POSTGRES_DB: wellflow
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${POSTGRES_DB:-wellflow}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_password_change_in_production}
     ports:
       - "5433:5432"
     volumes:

@@ -3,9 +3,9 @@ services:
     image: postgres:15-alpine
     container_name: wellflow-postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: wellflow
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_password_change_in_production}
+      POSTGRES_DB: ${POSTGRES_DB:-wellflow}
     ports:
       - '5433:5432'
     volumes:
