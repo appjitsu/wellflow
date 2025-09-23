@@ -3,8 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { AppConfigService } from './config/app.config';
-import { SentryExceptionFilter } from './common/filters/sentry-exception.filter';
-import { SentryService } from './sentry/sentry.service';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import {
   getHttpsOptions,
   getPort,
@@ -24,9 +23,6 @@ export async function bootstrap() {
   // Get configuration service for environment variables
   const configService = app.get(AppConfigService);
 
-  // Get Sentry service for exception filter
-  const sentryService = app.get(SentryService);
-
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
@@ -36,8 +32,8 @@ export async function bootstrap() {
     }),
   );
 
-  // Global exception filter with Sentry integration
-  app.useGlobalFilters(new SentryExceptionFilter(sentryService));
+  // Global exception filter
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   // Swagger API Documentation
   const config = new DocumentBuilder()

@@ -32,6 +32,7 @@ import {
   createThrottlerConfig,
   WellFlowThrottlerGuard,
 } from './common/throttler';
+import { RequestLoggingMiddleware } from './common/middleware/request-logging.middleware';
 
 @Module({
   imports: [
@@ -51,9 +52,9 @@ import {
     LogRocketModule,
     DatabaseModule,
     RedisModule,
+    AuthorizationModule,
     UsersModule,
     WellsModule,
-    AuthorizationModule,
     MonitoringModule,
     OrganizationsModule,
     LeasesModule,
@@ -87,6 +88,9 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     // Apply security headers to all routes (first for security)
     consumer.apply(SecurityHeadersMiddleware).forRoutes('*');
+
+    // Apply request logging to all routes
+    consumer.apply(RequestLoggingMiddleware).forRoutes('*');
 
     // Apply LogRocket middleware to all routes
     consumer.apply(LogRocketMiddleware).forRoutes('*');
