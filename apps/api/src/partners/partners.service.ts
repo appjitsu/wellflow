@@ -1,8 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { eq, and } from 'drizzle-orm';
-import { DatabaseService } from '../database/database.service';
-import { partners } from '../database/schemas/partners';
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { TenantContextService } from '../common/tenant/tenant-context.service';
+import type { PartnersRepository } from './domain/partners.repository';
 
 export interface AddressDto {
   street: string;
@@ -37,42 +35,35 @@ export interface UpdatePartnerDto {
 @Injectable()
 export class PartnersService {
   constructor(
-    private readonly databaseService: DatabaseService,
+    @Inject('PartnersRepository')
+    private readonly partnersRepository: PartnersRepository,
     private readonly tenantContextService: TenantContextService,
   ) {}
 
   async createPartner(dto: CreatePartnerDto) {
-    const db = this.databaseService.getDb();
     const organizationId = this.tenantContextService.getOrganizationId();
 
-    const [newPartner] = await db
-      .insert(partners)
-      .values({
+    try {
+      const newPartner = await this.partnersRepository.create({
         ...dto,
         organizationId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
+      });
 
-    if (!newPartner) {
+      if (!newPartner) {
+        throw new Error('Failed to create partner');
+      }
+
+      return newPartner;
+    } catch (error) {
+      console.error('Error creating partner:', error);
       throw new Error('Failed to create partner');
     }
-
-    return newPartner;
   }
 
   async getPartnerById(id: string) {
-    const db = this.databaseService.getDb();
     const organizationId = this.tenantContextService.getOrganizationId();
 
-    const [partner] = await db
-      .select()
-      .from(partners)
-      .where(
-        and(eq(partners.id, id), eq(partners.organizationId, organizationId)),
-      )
-      .limit(1);
+    const partner = await this.partnersRepository.findById(id, organizationId);
 
     if (!partner) {
       throw new NotFoundException(`Partner with ID ${id} not found`);
@@ -82,50 +73,45 @@ export class PartnersService {
   }
 
   async getPartners() {
-    const db = this.databaseService.getDb();
     const organizationId = this.tenantContextService.getOrganizationId();
-
-    return db
-      .select()
-      .from(partners)
-      .where(eq(partners.organizationId, organizationId));
+    return this.partnersRepository.findAll(organizationId);
   }
 
   async updatePartner(id: string, dto: UpdatePartnerDto) {
+    // Validate partner exists and belongs to organization
     await this.getPartnerById(id);
 
-    const db = this.databaseService.getDb();
-    const updateData = {
-      ...dto,
-      updatedAt: new Date(),
-    };
+    const organizationId = this.tenantContextService.getOrganizationId();
 
-    const [updatedPartner] = await db
-      .update(partners)
-      .set(updateData)
-      .where(eq(partners.id, id))
-      .returning();
+    try {
+      const updatedPartner = await this.partnersRepository.update(
+        id,
+        dto,
+        organizationId,
+      );
 
-    if (!updatedPartner) {
+      if (!updatedPartner) {
+        throw new Error('Failed to update partner');
+      }
+
+      return updatedPartner;
+    } catch (error) {
+      console.error('Error updating partner:', error);
       throw new Error('Failed to update partner');
     }
-
-    return updatedPartner;
   }
 
   async deletePartner(id: string) {
+    // Validate partner exists and belongs to organization
     await this.getPartnerById(id);
 
-    const db = this.databaseService.getDb();
-    const [deletedPartner] = await db
-      .delete(partners)
-      .where(eq(partners.id, id))
-      .returning();
+    const organizationId = this.tenantContextService.getOrganizationId();
+    const deleted = await this.partnersRepository.delete(id, organizationId);
 
-    if (!deletedPartner) {
+    if (!deleted) {
       throw new Error('Failed to delete partner');
     }
 
-    return deletedPartner;
+    return { success: true };
   }
 }

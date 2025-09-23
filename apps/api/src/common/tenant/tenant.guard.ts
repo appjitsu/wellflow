@@ -2,6 +2,7 @@ import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 import { TenantRlsService } from './tenant-rls.service';
+import { SetTenantContextUseCase } from '../../application/use-cases/set-tenant-context.use-case';
 
 interface AuthenticatedUser {
   id: string;
@@ -17,6 +18,7 @@ interface AuthenticatedRequest extends Request {
 export class TenantGuard implements CanActivate {
   constructor(
     private readonly tenantRlsService: TenantRlsService,
+    private readonly setTenantContextUseCase: SetTenantContextUseCase,
     private readonly reflector: Reflector,
   ) {}
 

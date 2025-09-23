@@ -1,35 +1,69 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
-import { DatabaseService } from '../../database/database.service';
-import { TenantContextService, TenantContext } from './tenant-context.service';
+import { Injectable, Inject } from '@nestjs/common';
+import { TenantContext } from '../../domain/value-objects/tenant-context.vo';
+import {
+  SetTenantContextUseCase,
+  ClearTenantContextUseCase,
+  ValidateTenantAccessUseCase,
+} from '../../application/use-cases/set-tenant-context.use-case';
+import type {
+  ITenantContextManager,
+  ITenantIsolationStrategy,
+} from '../../application/interfaces/tenant-isolation-strategy.interface';
+// Legacy imports for backward compatibility
+import {
+  TenantContextService,
+  TenantContext as LegacyTenantContext,
+} from './tenant-context.service';
 
 /**
  * Service that integrates tenant context with Row Level Security
- * Automatically sets PostgreSQL session variables when tenant context changes
+ * Now follows Clean Architecture and SOLID principles
+ * Acts as a facade for tenant-related operations
  */
 @Injectable()
 export class TenantRlsService {
   constructor(
-    @Inject(forwardRef(() => DatabaseService))
-    private readonly databaseService: DatabaseService,
-    private readonly tenantContextService: TenantContextService,
+    private readonly setTenantContextUseCase: SetTenantContextUseCase,
+    private readonly clearTenantContextUseCase: ClearTenantContextUseCase,
+    private readonly validateTenantAccessUseCase: ValidateTenantAccessUseCase,
+    @Inject('ITenantContextManager')
+    private readonly tenantContextManager: ITenantContextManager,
+    @Inject('ITenantIsolationStrategy')
+    private readonly tenantIsolationStrategy: ITenantIsolationStrategy,
+    // Legacy service for backward compatibility
+    private readonly legacyTenantContextService: TenantContextService,
   ) {}
 
   /**
-   * Set tenant context and corresponding database RLS context
+   * Set tenant context using Clean Architecture approach
    */
-  async setTenantContext(context: TenantContext): Promise<void> {
-    // Set the application-level tenant context
-    this.tenantContextService.setContext(context);
+  async setTenantContext(
+    context: TenantContext | LegacyTenantContext,
+  ): Promise<void> {
+    // Convert legacy context to new value object if needed
+    const tenantContext =
+      context instanceof TenantContext
+        ? context
+        : TenantContext.fromPlainObject(context);
 
-    // Set the database-level RLS context
-    await this.databaseService.setOrganizationContext(context.organizationId);
+    // Use the use case to set context
+    await this.setTenantContextUseCase.execute({
+      organizationId: tenantContext.organizationId,
+      userId: tenantContext.userId,
+      userRole: tenantContext.userRole,
+      permissions: tenantContext.permissions,
+      metadata: tenantContext.metadata,
+    });
+
+    // Also set in legacy service for backward compatibility
+    this.legacyTenantContextService.setContext(context as LegacyTenantContext);
   }
 
   /**
-   * Clear tenant context and database RLS context
+   * Clear tenant context using Clean Architecture approach
    */
   async clearTenantContext(): Promise<void> {
-    await this.databaseService.clearOrganizationContext();
+    await this.clearTenantContextUseCase.execute();
   }
 
   /**
@@ -43,7 +77,10 @@ export class TenantRlsService {
     await this.setTenantContext(context);
 
     try {
-      return await this.tenantContextService.runInContext(context, operation);
+      return await this.legacyTenantContextService.runInContext(
+        context as LegacyTenantContext,
+        operation,
+      );
     } finally {
       // Clean up database context
       await this.clearTenantContext();
@@ -53,29 +90,29 @@ export class TenantRlsService {
   /**
    * Get the current tenant context
    */
-  getTenantContext(): TenantContext | undefined {
-    return this.tenantContextService.getContext();
+  getTenantContext(): LegacyTenantContext | undefined {
+    return this.legacyTenantContextService.getContext();
   }
 
   /**
    * Get the current organization ID
    */
   getOrganizationId(): string {
-    return this.tenantContextService.getOrganizationId();
+    return this.legacyTenantContextService.getOrganizationId();
   }
 
   /**
    * Validate organization access
    */
   validateOrganizationAccess(organizationId: string): void {
-    this.tenantContextService.validateOrganizationAccess(organizationId);
+    this.legacyTenantContextService.validateOrganizationAccess(organizationId);
   }
 
   /**
    * Create a tenant filter for database queries
    */
   createTenantFilter(): { organizationId: string } {
-    return this.tenantContextService.createTenantFilter();
+    return this.legacyTenantContextService.createTenantFilter();
   }
 
   /**
@@ -83,9 +120,15 @@ export class TenantRlsService {
    */
   async validateContextSync(): Promise<boolean> {
     try {
-      const appOrgId = this.tenantContextService.getOrganizationId();
-      const dbOrgId = await this.databaseService.getCurrentOrganizationId();
-      return appOrgId === dbOrgId;
+      const currentContext =
+        await this.tenantIsolationStrategy.getCurrentTenantContext();
+      const legacyContext = this.legacyTenantContextService.getContext();
+
+      if (!currentContext || !legacyContext) {
+        return !currentContext && !legacyContext; // Both null/undefined = synced
+      }
+
+      return currentContext.organizationId === legacyContext.organizationId;
     } catch (error) {
       console.error('Failed to validate context sync:', error);
       return false;
@@ -99,9 +142,9 @@ export class TenantRlsService {
   async syncDatabaseContext(): Promise<void> {
     const context = this.getTenantContext();
     if (context) {
-      await this.databaseService.setOrganizationContext(context.organizationId);
+      await this.setTenantContext(context);
     } else {
-      await this.databaseService.clearOrganizationContext();
+      await this.clearTenantContext();
     }
   }
 }
