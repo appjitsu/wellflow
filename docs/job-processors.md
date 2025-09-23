@@ -2,7 +2,10 @@
 
 ## Overview
 
-Job processors are the core components that handle background job execution in the WellFlow queue system. Each processor is responsible for a specific type of operation and implements industry-specific business logic for oil & gas operations.
+Job processors are the core components that handle background job execution in
+the WellFlow queue system. Each processor is responsible for a specific type of
+operation and implements industry-specific business logic for oil & gas
+operations.
 
 ## Architecture
 
@@ -25,6 +28,7 @@ export class ProcessorName {
 ### Error Handling
 
 Processors implement comprehensive error handling:
+
 - Structured error logging
 - Retry logic with exponential backoff
 - Dead letter queue for failed jobs
@@ -32,16 +36,18 @@ Processors implement comprehensive error handling:
 
 ## Data Validation Processor
 
-**File**: `apps/api/src/jobs/processors/data-validation.processor.ts`
-**Queue**: `data-validation`
+**File**: `apps/api/src/jobs/processors/data-validation.processor.ts` **Queue**:
+`data-validation`
 
 ### Purpose
 
-Validates oil & gas production data for accuracy, completeness, and regulatory compliance.
+Validates oil & gas production data for accuracy, completeness, and regulatory
+compliance.
 
 ### Job Types
 
 #### Production Data Validation
+
 ```typescript
 interface ProductionValidationJob {
   wellId: string;
@@ -54,9 +60,9 @@ interface ProductionValidationJob {
     state: string;
   };
   production: {
-    oil: number;    // barrels per day
-    gas: number;    // MCF per day
-    water: number;  // barrels per day
+    oil: number; // barrels per day
+    gas: number; // MCF per day
+    water: number; // barrels per day
   };
   timestamp: string;
   validationType: 'production_data' | 'historical_data' | 'compliance_check';
@@ -66,6 +72,7 @@ interface ProductionValidationJob {
 ```
 
 #### Well Data Integrity Check
+
 ```typescript
 interface WellIntegrityJob {
   wellId: string;
@@ -128,10 +135,14 @@ Generates regulatory and operational reports for oil & gas operations.
 ### Report Types
 
 #### Production Reports
+
 ```typescript
 interface ProductionReportJob {
   reportId: string;
-  reportType: 'production_daily' | 'production_monthly' | 'production_quarterly';
+  reportType:
+    | 'production_daily'
+    | 'production_monthly'
+    | 'production_quarterly';
   organizationId: string;
   dateRange: {
     start: string;
@@ -147,10 +158,14 @@ interface ProductionReportJob {
 ```
 
 #### Compliance Reports
+
 ```typescript
 interface ComplianceReportJob {
   reportId: string;
-  reportType: 'compliance_monthly' | 'environmental_quarterly' | 'safety_weekly';
+  reportType:
+    | 'compliance_monthly'
+    | 'environmental_quarterly'
+    | 'safety_weekly';
   organizationId: string;
   regulatoryBody: 'EPA' | 'RRC' | 'OSHA' | 'DOT';
   dateRange: DateRange;
@@ -188,11 +203,11 @@ interface ComplianceReportJob {
 
 ### Supported Formats
 
-| Format | Use Case | Features |
-|--------|----------|----------|
-| **PDF** | Regulatory submissions | Professional formatting, charts, signatures |
-| **Excel** | Data analysis | Formulas, pivot tables, multiple sheets |
-| **CSV** | Data export | Raw data, system integration |
+| Format    | Use Case               | Features                                    |
+| --------- | ---------------------- | ------------------------------------------- |
+| **PDF**   | Regulatory submissions | Professional formatting, charts, signatures |
+| **Excel** | Data analysis          | Formulas, pivot tables, multiple sheets     |
+| **CSV**   | Data export            | Raw data, system integration                |
 
 ## Email Notification Processor
 
@@ -201,11 +216,13 @@ interface ComplianceReportJob {
 
 ### Purpose
 
-Sends critical alerts, notifications, and communications for oil & gas operations.
+Sends critical alerts, notifications, and communications for oil & gas
+operations.
 
 ### Notification Types
 
 #### Safety Alerts
+
 ```typescript
 interface SafetyAlertJob {
   notificationId: string;
@@ -222,6 +239,7 @@ interface SafetyAlertJob {
 ```
 
 #### Compliance Notifications
+
 ```typescript
 interface ComplianceNotificationJob {
   notificationId: string;
@@ -235,6 +253,7 @@ interface ComplianceNotificationJob {
 ```
 
 #### Operational Alerts
+
 ```typescript
 interface OperationalAlertJob {
   notificationId: string;
@@ -250,59 +269,62 @@ interface OperationalAlertJob {
 ### Email Templates
 
 #### Safety Alert Template
+
 ```html
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>WellFlow Safety Alert</title>
-</head>
-<body>
+  </head>
+  <body>
     <div class="alert-header critical">
-        <h1>🚨 CRITICAL SAFETY ALERT</h1>
+      <h1>🚨 CRITICAL SAFETY ALERT</h1>
     </div>
     <div class="alert-content">
-        <p><strong>Well ID:</strong> {{wellId}}</p>
-        <p><strong>Location:</strong> {{location}}</p>
-        <p><strong>Alert:</strong> {{message}}</p>
-        <p><strong>Time:</strong> {{timestamp}}</p>
+      <p><strong>Well ID:</strong> {{wellId}}</p>
+      <p><strong>Location:</strong> {{location}}</p>
+      <p><strong>Alert:</strong> {{message}}</p>
+      <p><strong>Time:</strong> {{timestamp}}</p>
     </div>
     <div class="alert-actions">
-        <a href="{{acknowledgeUrl}}" class="btn-acknowledge">
-            Acknowledge Alert
-        </a>
+      <a href="{{acknowledgeUrl}}" class="btn-acknowledge">
+        Acknowledge Alert
+      </a>
     </div>
-</body>
+  </body>
 </html>
 ```
 
 #### Compliance Reminder Template
+
 ```html
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>WellFlow Compliance Reminder</title>
-</head>
-<body>
+  </head>
+  <body>
     <div class="reminder-header">
-        <h1>📋 Compliance Reminder</h1>
+      <h1>📋 Compliance Reminder</h1>
     </div>
     <div class="reminder-content">
-        <p><strong>Due Date:</strong> {{dueDate}}</p>
-        <p><strong>Regulatory Body:</strong> {{regulatoryBody}}</p>
-        <p><strong>Requirements:</strong></p>
-        <ul>
-            {{#each requirements}}
-            <li>{{this}}</li>
-            {{/each}}
-        </ul>
+      <p><strong>Due Date:</strong> {{dueDate}}</p>
+      <p><strong>Regulatory Body:</strong> {{regulatoryBody}}</p>
+      <p><strong>Requirements:</strong></p>
+      <ul>
+        {{#each requirements}}
+        <li>{{this}}</li>
+        {{/each}}
+      </ul>
     </div>
-</body>
+  </body>
 </html>
 ```
 
 ### Notification Routing
 
 Recipients are determined by:
+
 - **Role-based routing**: safety@, compliance@, operations@
 - **Geographic routing**: Regional managers and operators
 - **Escalation rules**: Automatic escalation for critical alerts
@@ -383,11 +405,11 @@ describe('DataValidationProcessor', () => {
   it('should validate production data successfully', async () => {
     const job = createMockJob({
       wellId: 'WELL-123',
-      production: { oil: 500, gas: 1200, water: 100 }
+      production: { oil: 500, gas: 1200, water: 100 },
     });
-    
+
     const result = await processor.processProductionValidation(job);
-    
+
     expect(result.isValid).toBe(true);
     expect(result.errors).toHaveLength(0);
   });
@@ -402,17 +424,17 @@ describe('Report Generation Integration', () => {
     const job = createReportJob({
       reportType: 'production_monthly',
       format: 'pdf',
-      recipients: ['test@wellflow.com']
+      recipients: ['test@wellflow.com'],
     });
-    
+
     await processor.processReportGeneration(job);
-    
+
     expect(emailService.send).toHaveBeenCalledWith({
       to: ['test@wellflow.com'],
       subject: expect.stringContaining('Monthly Production Report'),
       attachments: expect.arrayContaining([
-        expect.objectContaining({ filename: expect.stringMatching(/\.pdf$/) })
-      ])
+        expect.objectContaining({ filename: expect.stringMatching(/\.pdf$/) }),
+      ]),
     });
   });
 });
@@ -441,4 +463,5 @@ describe('Report Generation Integration', () => {
 - Secure inter-service communications
 - Regular security token rotation
 
-This documentation provides comprehensive coverage of the WellFlow job processors, their functionality, and operational considerations.
+This documentation provides comprehensive coverage of the WellFlow job
+processors, their functionality, and operational considerations.

@@ -86,7 +86,7 @@ redis.on('connect', () => {
 });
 
 redis.on('error', (err) => {
-  logger.error('❌ Queue UI Redis connection error:', err);
+  logger.error('❌ Queue UI Redis connection error:', { message: err.message, stack: err.stack });
 });
 
 // Initialize BullMQ queues

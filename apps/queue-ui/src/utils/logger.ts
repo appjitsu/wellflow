@@ -1,6 +1,6 @@
 /**
  * Simple Logger Utility for Queue UI Dashboard
- * 
+ *
  * Provides structured logging with different levels.
  * Designed for production deployment with proper log formatting.
  */
@@ -10,13 +10,17 @@ export interface LogEntry {
   message: string;
   timestamp: string;
   service: string;
-  data?: any;
+  data?: Record<string, unknown>;
 }
 
 class Logger {
   private serviceName = 'queue-ui';
 
-  private formatLog(level: LogEntry['level'], message: string, data?: any): LogEntry {
+  private formatLog(
+    level: LogEntry['level'],
+    message: string,
+    data?: Record<string, unknown>
+  ): LogEntry {
     return {
       level,
       message,
@@ -28,7 +32,7 @@ class Logger {
 
   private output(logEntry: LogEntry) {
     const logString = JSON.stringify(logEntry);
-    
+
     switch (logEntry.level) {
       case 'error':
         console.error(logString);
@@ -46,19 +50,19 @@ class Logger {
     }
   }
 
-  info(message: string, data?: any) {
+  info(message: string, data?: Record<string, unknown>) {
     this.output(this.formatLog('info', message, data));
   }
 
-  warn(message: string, data?: any) {
+  warn(message: string, data?: Record<string, unknown>) {
     this.output(this.formatLog('warn', message, data));
   }
 
-  error(message: string, data?: any) {
+  error(message: string, data?: Record<string, unknown>) {
     this.output(this.formatLog('error', message, data));
   }
 
-  debug(message: string, data?: any) {
+  debug(message: string, data?: Record<string, unknown>) {
     this.output(this.formatLog('debug', message, data));
   }
 }

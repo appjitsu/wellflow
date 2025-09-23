@@ -3,7 +3,12 @@
 
 module.exports = {
   // Project configuration for monorepo
-  projects: ['<rootDir>/apps/api', '<rootDir>/apps/web', '<rootDir>/packages/ui'],
+  projects: [
+    '<rootDir>/apps/api',
+    '<rootDir>/apps/web',
+    '<rootDir>/apps/queue-ui',
+    '<rootDir>/packages/ui',
+  ],
 
   // Global coverage configuration
   collectCoverage: true,
@@ -25,6 +30,12 @@ module.exports = {
       statements: 80,
     },
     './apps/web/**/*.{ts,tsx}': {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+    './apps/queue-ui/src/**/*.ts': {
       branches: 80,
       functions: 80,
       lines: 80,

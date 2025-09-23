@@ -76,8 +76,16 @@ afterAll(() => {
   /**
    * Generate a mock user ID
    */
+
+  /**
+   * Generate a mock user ID
+   */
   // eslint-disable-next-line sonarjs/pseudo-random
   mockUserId: () => `user-${Math.random().toString(36).substring(2, 8)}`,
+
+  /**
+   * Generate a mock job ID
+   */
 
   /**
    * Generate a mock job ID

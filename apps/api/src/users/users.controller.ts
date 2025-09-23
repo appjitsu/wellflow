@@ -32,6 +32,7 @@ import {
   CanDeleteUser,
 } from '../authorization/abilities.decorator';
 import { AuditLog } from '../presentation/decorators/audit-log.decorator';
+import { UserRecord } from './domain/users.repository';
 
 // Zod validation schemas
 const createUserSchema = z.object({
@@ -130,7 +131,7 @@ export class UsersController {
     status: HttpStatus.NOT_FOUND,
     description: USER_NOT_FOUND,
   })
-  async getUserById(@Param('id') id: string) {
+  async getUserById(@Param('id') id: string): Promise<UserRecord> {
     const user = await this.usersService.getUserById(id);
     if (!user) {
       throw new HttpException(USER_NOT_FOUND, HttpStatus.NOT_FOUND);
@@ -150,7 +151,7 @@ export class UsersController {
     status: HttpStatus.NOT_FOUND,
     description: USER_NOT_FOUND,
   })
-  async getUserByEmail(@Param('email') email: string) {
+  async getUserByEmail(@Param('email') email: string): Promise<UserRecord> {
     const user = await this.usersService.getUserByEmail(email);
     if (!user) {
       throw new HttpException(USER_NOT_FOUND, HttpStatus.NOT_FOUND);

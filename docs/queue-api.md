@@ -2,7 +2,10 @@
 
 ## Overview
 
-The WellFlow Queue System API provides comprehensive endpoints for managing background job processing, monitoring queue health, and scheduling recurring tasks. All endpoints require proper authentication and follow RESTful conventions.
+The WellFlow Queue System API provides comprehensive endpoints for managing
+background job processing, monitoring queue health, and scheduling recurring
+tasks. All endpoints require proper authentication and follow RESTful
+conventions.
 
 ## Base URL
 
@@ -36,6 +39,7 @@ GET /api/jobs/queues
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -50,7 +54,7 @@ GET /api/jobs/queues
       "paused": false
     },
     {
-      "name": "report-generation", 
+      "name": "report-generation",
       "waiting": 3,
       "active": 1,
       "completed": 890,
@@ -80,9 +84,12 @@ GET /api/jobs/queues/{queueName}
 ```
 
 **Parameters:**
-- `queueName` (string): Name of the queue (data-validation, report-generation, email-notifications)
+
+- `queueName` (string): Name of the queue (data-validation, report-generation,
+  email-notifications)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -112,12 +119,15 @@ GET /api/jobs/queues/{queueName}/jobs
 ```
 
 **Query Parameters:**
-- `status` (string): Filter by job status (waiting, active, completed, failed, delayed)
+
+- `status` (string): Filter by job status (waiting, active, completed, failed,
+  delayed)
 - `limit` (number): Maximum number of jobs to return (default: 20, max: 100)
 - `offset` (number): Number of jobs to skip (default: 0)
 - `order` (string): Sort order (asc, desc) (default: desc)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -161,6 +171,7 @@ POST /api/jobs/queues/{queueName}/jobs
 ```
 
 **Request Body:**
+
 ```json
 {
   "name": "validate-well-data",
@@ -192,6 +203,7 @@ POST /api/jobs/queues/{queueName}/jobs
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -211,6 +223,7 @@ DELETE /api/jobs/queues/{queueName}/jobs/{jobId}
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -227,6 +240,7 @@ POST /api/jobs/queues/{queueName}/jobs/{jobId}/retry
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -245,6 +259,7 @@ GET /api/jobs/schedules
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -271,6 +286,7 @@ POST /api/jobs/schedules
 ```
 
 **Request Body:**
+
 ```json
 {
   "name": "weekly-compliance-report",
@@ -289,6 +305,7 @@ POST /api/jobs/schedules
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -308,6 +325,7 @@ PUT /api/jobs/schedules/{scheduleName}
 ```
 
 **Request Body:**
+
 ```json
 {
   "cron": "0 7 * * 0",
@@ -317,6 +335,7 @@ PUT /api/jobs/schedules/{scheduleName}
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -333,6 +352,7 @@ DELETE /api/jobs/schedules/{scheduleName}
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -351,6 +371,7 @@ GET /api/jobs/health
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -363,7 +384,7 @@ GET /api/jobs/health
     },
     "queues": {
       "data-validation": "healthy",
-      "report-generation": "healthy", 
+      "report-generation": "healthy",
       "email-notifications": "healthy"
     },
     "workers": {
@@ -383,10 +404,12 @@ GET /api/jobs/metrics
 ```
 
 **Query Parameters:**
+
 - `queue` (string): Specific queue name (optional)
 - `timeframe` (string): Time period (1h, 24h, 7d, 30d) (default: 24h)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -428,6 +451,7 @@ GET /api/jobs/stats
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -460,24 +484,30 @@ POST /api/jobs/bulk
 ```
 
 **Request Body:**
+
 ```json
 {
   "jobs": [
     {
       "queue": "data-validation",
       "name": "validate-well-data-1",
-      "data": { /* job data */ }
+      "data": {
+        /* job data */
+      }
     },
     {
-      "queue": "email-notifications", 
+      "queue": "email-notifications",
       "name": "send-alert-1",
-      "data": { /* job data */ }
+      "data": {
+        /* job data */
+      }
     }
   ]
 }
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -498,6 +528,7 @@ POST /api/jobs/status
 ```
 
 **Request Body:**
+
 ```json
 {
   "jobIds": ["123", "456", "789"]
@@ -505,6 +536,7 @@ POST /api/jobs/status
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -513,10 +545,12 @@ POST /api/jobs/status
       "jobId": "123",
       "status": "completed",
       "progress": 100,
-      "result": { /* job result */ }
+      "result": {
+        /* job result */
+      }
     },
     {
-      "jobId": "456", 
+      "jobId": "456",
       "status": "failed",
       "progress": 0,
       "error": "Validation failed"
@@ -597,7 +631,9 @@ Configure webhooks to receive notifications about job events.
     "jobId": "123",
     "queue": "data-validation",
     "name": "validate-well-data",
-    "result": { /* job result */ }
+    "result": {
+      /* job result */
+    }
   }
 }
 ```
@@ -611,7 +647,7 @@ const WellFlowAPI = require('@wellflow/api-client');
 
 const client = new WellFlowAPI({
   baseURL: 'https://api.wellflow.com',
-  token: 'your-jwt-token'
+  token: 'your-jwt-token',
 });
 
 // Add a job
@@ -619,8 +655,8 @@ const job = await client.jobs.add('data-validation', {
   name: 'validate-well-data',
   data: {
     wellId: 'WELL-123',
-    validationType: 'production_data'
-  }
+    validationType: 'production_data',
+  },
 });
 
 // Get queue status
@@ -650,4 +686,5 @@ job = client.jobs.add('data-validation', {
 metrics = client.jobs.get_metrics(timeframe='24h')
 ```
 
-This API documentation provides comprehensive coverage of all available endpoints for managing the WellFlow queue system.
+This API documentation provides comprehensive coverage of all available
+endpoints for managing the WellFlow queue system.

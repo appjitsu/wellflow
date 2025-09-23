@@ -1,8 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
-import { DatabaseService } from '../database/database.service';
-import { organizations } from '../database/schemas/organizations';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { TenantContextService } from '../common/tenant/tenant-context.service';
+import type { OrganizationsRepository } from './domain/organizations.repository';
 
 export interface CreateOrganizationDto {
   name: string;
@@ -21,7 +19,8 @@ export interface UpdateOrganizationDto {
 @Injectable()
 export class OrganizationsService {
   constructor(
-    private readonly databaseService: DatabaseService,
+    @Inject('OrganizationsRepository')
+    private readonly organizationsRepository: OrganizationsRepository,
     private readonly tenantContextService: TenantContextService,
   ) {}
 
@@ -31,16 +30,7 @@ export class OrganizationsService {
   async createOrganization(dto: CreateOrganizationDto) {
     // Note: In a real implementation, this would be called by a super-admin
     // For now, we'll allow creation but this should be restricted
-    const db = this.databaseService.getDb();
-
-    const [newOrg] = await db
-      .insert(organizations)
-      .values({
-        ...dto,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
+    const newOrg = await this.organizationsRepository.create(dto);
 
     if (!newOrg) {
       throw new Error('Failed to create organization');
@@ -55,12 +45,7 @@ export class OrganizationsService {
   async getOrganizationById(id: string) {
     this.tenantContextService.validateOrganizationAccess(id);
 
-    const db = this.databaseService.getDb();
-    const [organization] = await db
-      .select()
-      .from(organizations)
-      .where(eq(organizations.id, id))
-      .limit(1);
+    const organization = await this.organizationsRepository.findById(id);
 
     if (!organization) {
       throw new NotFoundException(`Organization with ID ${id} not found`);
@@ -86,17 +71,7 @@ export class OrganizationsService {
     // Validate organization exists
     await this.getOrganizationById(id);
 
-    const db = this.databaseService.getDb();
-    const updateData = {
-      ...dto,
-      updatedAt: new Date(),
-    };
-
-    const [updatedOrg] = await db
-      .update(organizations)
-      .set(updateData)
-      .where(eq(organizations.id, id))
-      .returning();
+    const updatedOrg = await this.organizationsRepository.update(id, dto);
 
     if (!updatedOrg) {
       throw new Error('Failed to update organization');
@@ -116,11 +91,7 @@ export class OrganizationsService {
     // Validate organization exists
     await this.getOrganizationById(id);
 
-    const db = this.databaseService.getDb();
-    const [deletedOrg] = await db
-      .delete(organizations)
-      .where(eq(organizations.id, id))
-      .returning();
+    const deletedOrg = await this.organizationsRepository.delete(id);
 
     if (!deletedOrg) {
       throw new Error('Failed to delete organization');

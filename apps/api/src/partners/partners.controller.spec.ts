@@ -241,7 +241,7 @@ describe('PartnersController', () => {
   describe('deletePartner', () => {
     it('should delete partner successfully', async () => {
       mockValidationService.validate.mockReturnValue('partner-123');
-      mockPartnersService.deletePartner.mockResolvedValue(mockPartner);
+      mockPartnersService.deletePartner.mockResolvedValue({ success: true });
 
       const result = await controller.deletePartner('partner-123');
 
@@ -252,7 +252,7 @@ describe('PartnersController', () => {
       expect(mockPartnersService.deletePartner).toHaveBeenCalledWith(
         'partner-123',
       );
-      expect(result).toEqual(mockPartner);
+      expect(result).toEqual({ success: true });
     });
 
     it('should throw validation error for invalid id', async () => {

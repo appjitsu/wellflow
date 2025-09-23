@@ -418,12 +418,48 @@ graph LR
 
 **Security Features:**
 
-- Multi-tenant data isolation with PostgreSQL RLS
-- Role-based access control (RBAC) with CASL
-- JWT authentication with refresh tokens
-- API rate limiting and DDoS protection
-- Data encryption at rest and in transit
-- Comprehensive audit logging
+- **Multi-tenant data isolation with PostgreSQL RLS** - Complete tenant
+  separation at database level
+- **Role-based access control (RBAC) with CASL** - Granular permissions system
+- **JWT authentication with refresh tokens** - Secure session management
+- **API rate limiting and DDoS protection** - Infrastructure security
+- **Data encryption at rest and in transit** - Comprehensive data protection
+- **Comprehensive audit logging** - Full compliance trail
+
+### Multi-Tenant Row Level Security (RLS)
+
+WellFlow implements PostgreSQL Row Level Security for complete data isolation:
+
+**Implementation Details:**
+
+- RLS policies on all tenant-specific tables (26+ tables)
+- Automatic role switching to `application_role` for policy enforcement
+- Session-based organization context via `app.current_organization_id`
+- Subquery-based policies for indirect relationships
+
+**Key Components:**
+
+- `DatabaseService` - Enhanced with organization context management
+- `TenantRlsService` - Integration layer for tenant context
+- `TenantGuard` - Automatic context setting from JWT tokens
+
+**Security Guarantees:**
+
+- Complete data isolation between organizations
+- Automatic query filtering without manual WHERE clauses
+- Cross-tenant update/delete prevention
+- Superuser-only bypass for administrative operations
+
+**Performance Optimizations:**
+
+- Organization ID indexes on all tenant tables
+- Composite indexes for common query patterns
+- Connection pooling to reduce role switching overhead
+- Query plan monitoring for RLS impact assessment
+
+For detailed implementation guide, see
+[Multi-Tenant RLS Implementation](./multi-tenant-rls-implementation.md).
+
 - Input validation with class-validator
 - SOC 2 Type II compliance preparation
 

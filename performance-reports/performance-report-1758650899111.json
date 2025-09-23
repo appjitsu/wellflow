@@ -1,0 +1,68 @@
+{
+  "timestamp": "2025-09-23T18:08:19.111Z",
+  "summary": {
+    "totalRoutes": 2,
+    "testedRoutes": 2,
+    "completedTests": 2,
+    "failedTests": 0,
+    "averageScore": 99,
+    "budgetViolations": 0
+  },
+  "compliance": {
+    "coreWebVitals": true,
+    "performanceBudget": true,
+    "industryStandards": true
+  },
+  "results": [
+    {
+      "url": "http://localhost:3000/api-test",
+      "name": "api-test",
+      "path": "/api-test",
+      "status": "completed",
+      "score": 99,
+      "metrics": {
+        "firstContentfulPaint": 911.1442,
+        "largestContentfulPaint": 2111.1442,
+        "firstInputDelay": 16,
+        "cumulativeLayoutShift": 0,
+        "speedIndex": 911.1442,
+        "timeToInteractive": 2111.1442000000006,
+        "totalBlockingTime": 0
+      },
+      "budgetStatus": {
+        "firstContentfulPaint": true,
+        "largestContentfulPaint": true,
+        "firstInputDelay": true,
+        "cumulativeLayoutShift": true,
+        "speedIndex": true,
+        "timeToInteractive": true
+      }
+    },
+    {
+      "url": "http://localhost:3000/monitoring-test",
+      "name": "monitoring-test",
+      "path": "/monitoring-test",
+      "status": "completed",
+      "score": 99,
+      "metrics": {
+        "firstContentfulPaint": 762.7663,
+        "largestContentfulPaint": 1962.7663,
+        "firstInputDelay": 16,
+        "cumulativeLayoutShift": 0,
+        "speedIndex": 762.7663,
+        "timeToInteractive": 1962.7663,
+        "totalBlockingTime": 0
+      },
+      "budgetStatus": {
+        "firstContentfulPaint": true,
+        "largestContentfulPaint": true,
+        "firstInputDelay": true,
+        "cumulativeLayoutShift": true,
+        "speedIndex": true,
+        "timeToInteractive": true
+      }
+    }
+  ],
+  "budgetViolations": [],
+  "recommendations": []
+}

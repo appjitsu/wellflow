@@ -2,7 +2,10 @@
 
 ## Overview
 
-The WellFlow Queue System is a comprehensive background job processing infrastructure built on BullMQ and Redis. It handles critical oil & gas industry operations including data validation, report generation, and compliance notifications.
+The WellFlow Queue System is a comprehensive background job processing
+infrastructure built on BullMQ and Redis. It handles critical oil & gas industry
+operations including data validation, report generation, and compliance
+notifications.
 
 ## Architecture
 
@@ -13,7 +16,8 @@ The WellFlow Queue System is a comprehensive background job processing infrastru
    - Job creation, scheduling, and monitoring
    - Queue health checks and metrics
 
-2. **Job Scheduler Service** (`apps/api/src/jobs/services/job-scheduler.service.ts`)
+2. **Job Scheduler Service**
+   (`apps/api/src/jobs/services/job-scheduler.service.ts`)
    - Cron-based recurring job scheduling
    - Timezone-aware scheduling (Central Time for oil & gas operations)
    - Default industry-specific schedules
@@ -35,16 +39,18 @@ The WellFlow Queue System is a comprehensive background job processing infrastru
 **Purpose**: Validates oil & gas production data for accuracy and compliance
 
 **Job Types**:
+
 - Production data validation
 - Well data integrity checks
 - Historical data verification
 - Regulatory compliance validation
 
 **Example Job Data**:
+
 ```json
 {
   "wellId": "WELL-1250",
-  "leaseId": "LEASE-211", 
+  "leaseId": "LEASE-211",
   "operatorId": "OP-9",
   "location": {
     "latitude": 32.164755413290436,
@@ -68,6 +74,7 @@ The WellFlow Queue System is a comprehensive background job processing infrastru
 **Purpose**: Generates regulatory and operational reports
 
 **Report Types**:
+
 - `production_daily` - Daily production summaries
 - `production_monthly` - Monthly production reports
 - `compliance_monthly` - Monthly compliance reports
@@ -77,6 +84,7 @@ The WellFlow Queue System is a comprehensive background job processing infrastru
 **Supported Formats**: PDF, Excel, CSV
 
 **Example Job Data**:
+
 ```json
 {
   "reportId": "RPT-1758639909790-272",
@@ -102,6 +110,7 @@ The WellFlow Queue System is a comprehensive background job processing infrastru
 **Purpose**: Sends critical alerts and notifications
 
 **Notification Types**:
+
 - `alert` - Immediate operational alerts
 - `compliance_due` - Compliance deadline reminders
 - `maintenance_required` - Equipment maintenance alerts
@@ -111,15 +120,13 @@ The WellFlow Queue System is a comprehensive background job processing infrastru
 **Priority Levels**: urgent, high, medium, low
 
 **Example Job Data**:
+
 ```json
 {
   "notificationId": "NOTIF-1758639909793-40",
   "type": "report_ready",
   "message": "Safety inspection overdue",
-  "recipients": [
-    "safety@wellflow.com",
-    "field@wellflow.com"
-  ],
+  "recipients": ["safety@wellflow.com", "field@wellflow.com"],
   "priority": "urgent",
   "wellId": "WELL-5012",
   "organizationId": "ORG-4"
@@ -131,6 +138,7 @@ The WellFlow Queue System is a comprehensive background job processing infrastru
 The system includes default scheduled jobs for regular operations:
 
 ### Daily Jobs
+
 - **Production Data Validation** (2:00 AM CT)
   - Validates previous day's production data
   - Ensures compliance with regulatory requirements
@@ -140,11 +148,13 @@ The system includes default scheduled jobs for regular operations:
   - Sends renewal reminders
 
 ### Weekly Jobs
+
 - **Compliance Report Generation** (Sunday 6:00 AM CT)
   - Generates weekly compliance reports
   - Prepares for regulatory submission
 
 ### Monthly Jobs
+
 - **Production Summary Report** (1st of month, 8:00 AM CT)
   - Comprehensive monthly production analysis
   - Stakeholder distribution
@@ -154,6 +164,7 @@ The system includes default scheduled jobs for regular operations:
 ### Environment Variables
 
 **API Service** (`.env`):
+
 ```env
 REDIS_URL=redis://localhost:6379
 BULLMQ_DEFAULT_JOB_OPTIONS_DELAY=0
@@ -163,6 +174,7 @@ BULLMQ_DEFAULT_JOB_OPTIONS_BACKOFF_DELAY=2000
 ```
 
 **Queue UI** (`apps/queue-ui/.env`):
+
 ```env
 PORT=3003
 REDIS_URL=redis://localhost:6379
@@ -192,6 +204,7 @@ const defaultJobOptions = {
 **Access**: `http://localhost:3003/?token=<JWT_TOKEN>`
 
 **Features**:
+
 - Real-time job monitoring
 - Queue status overview
 - Individual job inspection
@@ -199,6 +212,7 @@ const defaultJobOptions = {
 - Performance metrics
 
 **Authentication**:
+
 - JWT-based security
 - Role-based access (ADMIN, OPERATOR, MANAGER)
 - Token generation: `node apps/queue-ui/generate-test-token.js`
@@ -225,7 +239,8 @@ cd apps/queue-ui
 node generate-test-jobs.js
 ```
 
-This creates 39 test jobs across all queues with realistic oil & gas industry data.
+This creates 39 test jobs across all queues with realistic oil & gas industry
+data.
 
 ### Running the Queue UI
 
@@ -262,16 +277,19 @@ export class JobsModule {}
 ## Error Handling & Resilience
 
 ### Retry Strategy
+
 - **Default Attempts**: 3 retries
 - **Backoff**: Exponential with 2-second base delay
 - **Dead Letter Queue**: Failed jobs retained for analysis
 
 ### Circuit Breaker Pattern
+
 - Automatic failure detection
 - Service degradation handling
 - Recovery monitoring
 
 ### Monitoring & Alerts
+
 - Job failure notifications
 - Queue health monitoring
 - Performance metrics tracking
@@ -280,16 +298,19 @@ export class JobsModule {}
 ## Security
 
 ### Authentication
+
 - JWT-based API authentication
 - Role-based access control
 - Secure token generation and validation
 
 ### Data Protection
+
 - Sensitive data sanitization
 - Audit trail logging
 - Compliance with industry regulations
 
 ### Network Security
+
 - Redis connection security
 - CORS configuration
 - Content Security Policy (CSP)
@@ -297,11 +318,13 @@ export class JobsModule {}
 ## Performance Optimization
 
 ### Queue Management
+
 - Job deduplication
 - Automatic cleanup of completed jobs
 - Memory-efficient job storage
 
 ### Scaling Considerations
+
 - Horizontal scaling support
 - Load balancing across workers
 - Redis cluster compatibility
@@ -335,17 +358,20 @@ export class JobsModule {}
 ## API Endpoints
 
 ### Job Management
+
 - `GET /api/jobs/queues` - List all queues
 - `GET /api/jobs/queues/:name/jobs` - Get jobs in queue
 - `POST /api/jobs/queues/:name/jobs` - Add job to queue
 - `DELETE /api/jobs/queues/:name/jobs/:id` - Remove job
 
 ### Monitoring
+
 - `GET /api/jobs/health` - System health check
 - `GET /api/jobs/metrics` - Queue metrics
 - `GET /api/jobs/stats` - Performance statistics
 
 ### Scheduling
+
 - `GET /api/jobs/schedules` - List scheduled jobs
 - `POST /api/jobs/schedules` - Create scheduled job
 - `PUT /api/jobs/schedules/:name` - Update schedule
@@ -354,27 +380,33 @@ export class JobsModule {}
 ## Best Practices
 
 ### Job Design
+
 - Keep jobs idempotent
 - Use appropriate job priorities
 - Include comprehensive error handling
 - Log important job events
 
 ### Queue Management
+
 - Monitor queue sizes regularly
 - Set appropriate retry limits
 - Clean up old jobs periodically
 - Use job deduplication when needed
 
 ### Performance
+
 - Batch similar operations
 - Use appropriate concurrency limits
 - Monitor memory usage
 - Optimize job data size
 
 ### Security
+
 - Validate all job inputs
 - Sanitize sensitive data
 - Use secure authentication
 - Audit job execution
 
-This documentation provides a comprehensive overview of the WellFlow Queue System. For specific implementation details, refer to the source code and inline documentation.
+This documentation provides a comprehensive overview of the WellFlow Queue
+System. For specific implementation details, refer to the source code and inline
+documentation.

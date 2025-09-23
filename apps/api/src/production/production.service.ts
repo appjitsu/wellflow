@@ -1,7 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { eq, and, desc } from 'drizzle-orm';
-import { DatabaseService } from '../database/database.service';
-import { productionRecords } from '../database/schemas/production-records';
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
+import type { ProductionRepository } from '../domain/repositories/production.repository.interface';
 import { TenantContextService } from '../common/tenant/tenant-context.service';
 
 export interface CreateProductionRecordDto {
@@ -10,20 +8,27 @@ export interface CreateProductionRecordDto {
   oilVolume?: string;
   gasVolume?: string;
   waterVolume?: string;
-  notes?: string;
+  oilPrice?: string;
+  gasPrice?: string;
+  runTicket?: string;
+  comments?: string;
 }
 
 export interface UpdateProductionRecordDto {
   oilVolume?: string;
   gasVolume?: string;
   waterVolume?: string;
-  notes?: string;
+  oilPrice?: string;
+  gasPrice?: string;
+  runTicket?: string;
+  comments?: string;
 }
 
 @Injectable()
 export class ProductionService {
   constructor(
-    private readonly databaseService: DatabaseService,
+    @Inject('ProductionRepository')
+    private readonly productionRepository: ProductionRepository,
     private readonly tenantContextService: TenantContextService,
   ) {}
 
@@ -31,43 +36,19 @@ export class ProductionService {
    * Create a new production record
    */
   async createProductionRecord(dto: CreateProductionRecordDto) {
-    const db = this.databaseService.getDb();
     const organizationId = this.tenantContextService.getOrganizationId();
 
-    const [newRecord] = await db
-      .insert(productionRecords)
-      .values({
-        ...dto,
-        organizationId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
-
-    if (!newRecord) {
-      throw new Error('Failed to create production record');
-    }
-
-    return newRecord;
+    return await this.productionRepository.create({
+      ...dto,
+      organizationId,
+    });
   }
 
   /**
    * Get production record by ID
    */
   async getProductionRecordById(id: string) {
-    const db = this.databaseService.getDb();
-    const organizationId = this.tenantContextService.getOrganizationId();
-
-    const [record] = await db
-      .select()
-      .from(productionRecords)
-      .where(
-        and(
-          eq(productionRecords.id, id),
-          eq(productionRecords.organizationId, organizationId),
-        ),
-      )
-      .limit(1);
+    const record = await this.productionRepository.findById(id);
 
     if (!record) {
       throw new NotFoundException(`Production record with ID ${id} not found`);
@@ -80,19 +61,7 @@ export class ProductionService {
    * Get production records for a well
    */
   async getProductionRecordsByWell(wellId: string) {
-    const db = this.databaseService.getDb();
-    const organizationId = this.tenantContextService.getOrganizationId();
-
-    return db
-      .select()
-      .from(productionRecords)
-      .where(
-        and(
-          eq(productionRecords.wellId, wellId),
-          eq(productionRecords.organizationId, organizationId),
-        ),
-      )
-      .orderBy(desc(productionRecords.productionDate));
+    return this.productionRepository.findByWellId(wellId);
   }
 
   /**
@@ -101,17 +70,7 @@ export class ProductionService {
   async updateProductionRecord(id: string, dto: UpdateProductionRecordDto) {
     await this.getProductionRecordById(id);
 
-    const db = this.databaseService.getDb();
-    const updateData = {
-      ...dto,
-      updatedAt: new Date(),
-    };
-
-    const [updatedRecord] = await db
-      .update(productionRecords)
-      .set(updateData)
-      .where(eq(productionRecords.id, id))
-      .returning();
+    const updatedRecord = await this.productionRepository.update(id, dto);
 
     if (!updatedRecord) {
       throw new Error('Failed to update production record');
@@ -126,16 +85,12 @@ export class ProductionService {
   async deleteProductionRecord(id: string) {
     await this.getProductionRecordById(id);
 
-    const db = this.databaseService.getDb();
-    const [deletedRecord] = await db
-      .delete(productionRecords)
-      .where(eq(productionRecords.id, id))
-      .returning();
+    const deleted = await this.productionRepository.delete(id);
 
-    if (!deletedRecord) {
+    if (!deleted) {
       throw new Error('Failed to delete production record');
     }
 
-    return deletedRecord;
+    return { success: true };
   }
 }

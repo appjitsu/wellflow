@@ -1,7 +1,8 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
-import { TenantContextService } from './tenant-context.service';
+import { TenantRlsService } from './tenant-rls.service';
+import { SetTenantContextUseCase } from '../../application/use-cases/set-tenant-context.use-case';
 
 interface AuthenticatedUser {
   id: string;
@@ -16,11 +17,12 @@ interface AuthenticatedRequest extends Request {
 @Injectable()
 export class TenantGuard implements CanActivate {
   constructor(
-    private readonly tenantContextService: TenantContextService,
+    private readonly tenantRlsService: TenantRlsService,
+    private readonly setTenantContextUseCase: SetTenantContextUseCase,
     private readonly reflector: Reflector,
   ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const user: AuthenticatedUser | undefined = request.user;
 
@@ -28,13 +30,18 @@ export class TenantGuard implements CanActivate {
       return false;
     }
 
-    // Set tenant context from authenticated user
-    this.tenantContextService.setContext({
-      organizationId: user.organizationId,
-      userId: user.id,
-      userRole: user.role,
-    });
+    try {
+      // Set tenant context with RLS integration
+      await this.tenantRlsService.setTenantContext({
+        organizationId: user.organizationId,
+        userId: user.id,
+        userRole: user.role,
+      });
 
-    return true;
+      return true;
+    } catch (error) {
+      console.error('Failed to set tenant context:', error);
+      return false;
+    }
   }
 }

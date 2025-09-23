@@ -13,10 +13,10 @@ interface AuthenticatedRequest extends Request {
 
 /**
  * Authentication Middleware for Queue UI Dashboard
- * 
+ *
  * Validates JWT tokens from the main WellFlow API.
  * Only allows access to users with appropriate permissions.
- * 
+ *
  * Security Features:
  * - JWT token validation
  * - Role-based access control
@@ -24,18 +24,20 @@ interface AuthenticatedRequest extends Request {
  */
 export function authMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   // Skip authentication for health check, API info endpoints, static assets, and Bull Board API
-  if (req.path === '/health' ||
-      req.path === '/api/info' ||
-      req.path.startsWith('/static/') ||
-      req.path.startsWith('/api/queues') ||
-      req.path.startsWith('/api/redis/') ||
-      req.path.startsWith('/api/jobs/')) {
+  if (
+    req.path === '/health' ||
+    req.path === '/api/info' ||
+    req.path.startsWith('/static/') ||
+    req.path.startsWith('/api/queues') ||
+    req.path.startsWith('/api/redis/') ||
+    req.path.startsWith('/api/jobs/')
+  ) {
     return next();
   }
 
   // Extract token from Authorization header or query parameter
   let token: string | undefined;
-  
+
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith('Bearer ')) {
     token = authHeader.substring(7);
@@ -47,7 +49,8 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
     logger.warn(`Unauthorized access attempt to ${req.path} from ${req.ip}`);
     return res.status(401).json({
       error: 'Authentication required',
-      message: 'Please provide a valid JWT token via Authorization header or ?token= query parameter',
+      message:
+        'Please provide a valid JWT token via Authorization header or ?token= query parameter',
       timestamp: new Date().toISOString(),
     });
   }
@@ -55,7 +58,14 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
   try {
     // Verify JWT token
     const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const decoded = jwt.verify(token, JWT_SECRET) as {
+      id?: string;
+      sub?: string;
+      email?: string;
+      roles: string[];
+      organizationId?: string;
+      [key: string]: unknown;
+    };
 
     // Check if user has required permissions
     if (!decoded.roles || !Array.isArray(decoded.roles)) {
@@ -83,15 +93,29 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
     }
 
     // Attach user info to request
+    const userId = decoded.id || decoded.sub;
+    const userEmail = decoded.email;
+
+    if (!userId || !userEmail) {
+      logger.warn(`Invalid token structure from ${req.ip}: missing required user fields`);
+      return res.status(403).json({
+        error: 'Invalid token',
+        message: 'Token does not contain required user information',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     req.user = {
-      id: decoded.id || decoded.sub,
-      email: decoded.email,
+      id: userId,
+      email: userEmail,
       roles: decoded.roles,
       organizationId: decoded.organizationId,
     };
 
     // Log successful authentication
-    logger.info(`Authenticated user ${req.user.email} (${req.user.roles.join(', ')}) accessing ${req.path}`);
+    logger.info(
+      `Authenticated user ${req.user.email} (${req.user.roles.join(', ')}) accessing ${req.path}`
+    );
 
     next();
   } catch (error) {
@@ -110,7 +134,11 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
         timestamp: new Date().toISOString(),
       });
     } else {
-      logger.error('Authentication error:', error);
+      const errorDetails =
+        error instanceof Error
+          ? { message: error.message, stack: error.stack }
+          : { message: String(error) };
+      logger.error('Authentication error:', errorDetails);
       return res.status(500).json({
         error: 'Authentication error',
         message: 'An error occurred while validating your token',
@@ -132,10 +160,12 @@ export function requireRole(roles: string[]) {
       });
     }
 
-    const hasRole = roles.some(role => req.user!.roles.includes(role));
-    
+    const hasRole = roles.some((role) => req.user!.roles.includes(role));
+
     if (!hasRole) {
-      logger.warn(`Role check failed for user ${req.user.email}: required ${roles.join(' or ')}, has ${req.user.roles.join(', ')}`);
+      logger.warn(
+        `Role check failed for user ${req.user.email}: required ${roles.join(' or ')}, has ${req.user.roles.join(', ')}`
+      );
       return res.status(403).json({
         error: 'Insufficient permissions',
         message: `This action requires one of the following roles: ${roles.join(', ')}`,

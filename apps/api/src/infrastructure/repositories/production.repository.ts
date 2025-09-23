@@ -4,20 +4,77 @@ import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { BaseRepository } from './base.repository';
 import { productionRecords } from '../../database/schema';
 import * as schema from '../../database/schema';
+import {
+  ProductionRepository as IProductionRepository,
+  CreateProductionRecordDto,
+  UpdateProductionRecordDto,
+  ProductionRecord,
+} from '../../domain/repositories/production.repository.interface';
 
 /**
  * Production Repository Implementation
  * Handles production data with advanced analytics and reporting
  */
 @Injectable()
-export class ProductionRepository extends BaseRepository<
-  typeof productionRecords
-> {
+export class ProductionRepository
+  extends BaseRepository<typeof productionRecords>
+  implements IProductionRepository
+{
   constructor(
     @Inject('DATABASE_CONNECTION')
     db: NodePgDatabase<typeof schema>,
   ) {
     super(db, productionRecords);
+  }
+
+  /**
+   * Find production records by well ID
+   */
+  async findByWellId(wellId: string): Promise<ProductionRecord[]> {
+    return this.db
+      .select()
+      .from(productionRecords)
+      .where(eq(productionRecords.wellId, wellId))
+      .orderBy(desc(productionRecords.productionDate));
+  }
+
+  /**
+   * Create a new production record
+   */
+  override async create(
+    data: CreateProductionRecordDto,
+  ): Promise<ProductionRecord> {
+    const result = await this.db
+      .insert(productionRecords)
+      .values({
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    return result[0] as ProductionRecord;
+  }
+
+  /**
+   * Update production record
+   */
+  override async update(
+    id: string,
+    data: UpdateProductionRecordDto,
+  ): Promise<ProductionRecord | null> {
+    const updateData = {
+      ...data,
+      updatedAt: new Date(),
+    };
+
+    const result = await this.db
+      .update(productionRecords)
+      .set(updateData)
+      .where(eq(productionRecords.id, id))
+      .returning();
+
+    return (result[0] as ProductionRecord) || null;
   }
 
   /**

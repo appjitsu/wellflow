@@ -1,32 +1,24 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
-import { DatabaseService } from '../database/database.service';
+import {
+  OrganizationRecord,
+  OrganizationsRepository,
+} from './domain/organizations.repository';
 import { TenantContextService } from '../common/tenant/tenant-context.service';
 
 describe('OrganizationsService', () => {
   let service: OrganizationsService;
-  let mockDatabaseService: jest.Mocked<DatabaseService>;
+  let organizationsRepository: jest.Mocked<OrganizationsRepository>;
   let mockTenantContextService: jest.Mocked<TenantContextService>;
-  let mockDb: any;
 
   beforeEach(async () => {
-    mockDb = {
-      insert: jest.fn().mockReturnThis(),
-      values: jest.fn().mockReturnThis(),
-      returning: jest.fn(),
-      select: jest.fn().mockReturnThis(),
-      from: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis(),
-      set: jest.fn().mockReturnThis(),
-      delete: jest.fn().mockReturnThis(),
+    const mockOrganizationsRepository = {
+      create: jest.fn(),
+      findById: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
     };
-
-    mockDatabaseService = {
-      getDb: jest.fn().mockReturnValue(mockDb),
-    } as any;
 
     mockTenantContextService = {
       getOrganizationId: jest.fn().mockReturnValue('org-123'),
@@ -37,8 +29,8 @@ describe('OrganizationsService', () => {
       providers: [
         OrganizationsService,
         {
-          provide: DatabaseService,
-          useValue: mockDatabaseService,
+          provide: 'OrganizationsRepository',
+          useValue: mockOrganizationsRepository,
         },
         {
           provide: TenantContextService,
@@ -48,6 +40,7 @@ describe('OrganizationsService', () => {
     }).compile();
 
     service = module.get<OrganizationsService>(OrganizationsService);
+    organizationsRepository = module.get('OrganizationsRepository');
   });
 
   it('should be defined', () => {
@@ -64,16 +57,21 @@ describe('OrganizationsService', () => {
 
       const mockOrg = {
         id: 'org-123',
-        ...dto,
+        name: 'Test Organization',
+        taxId: null,
+        address: null,
+        phone: 'test@example.com',
+        email: 'test@example.com',
+        settings: {},
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      mockDb.returning.mockResolvedValue([mockOrg]);
+      organizationsRepository.create.mockResolvedValue(mockOrg);
 
       const result = await service.createOrganization(dto);
 
-      expect(mockDatabaseService.getDb).toHaveBeenCalled();
+      expect(organizationsRepository.create).toHaveBeenCalledWith(dto);
       expect(result).toEqual(mockOrg);
     });
 
@@ -82,11 +80,12 @@ describe('OrganizationsService', () => {
         name: 'Test Organization',
       };
 
-      mockDb.returning.mockResolvedValue([]);
+      organizationsRepository.create.mockResolvedValue(undefined as any);
 
       await expect(service.createOrganization(dto)).rejects.toThrow(
         'Failed to create organization',
       );
+      expect(organizationsRepository.create).toHaveBeenCalledWith(dto);
     });
   });
 
@@ -95,24 +94,33 @@ describe('OrganizationsService', () => {
       const mockOrg = {
         id: 'org-123',
         name: 'Test Organization',
+        taxId: null,
+        address: null,
+        phone: null,
+        email: null,
+        settings: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
-      mockDb.limit.mockResolvedValue([mockOrg]);
+      organizationsRepository.findById.mockResolvedValue(mockOrg);
 
       const result = await service.getOrganizationById('org-123');
 
       expect(
         mockTenantContextService.validateOrganizationAccess,
       ).toHaveBeenCalledWith('org-123');
+      expect(organizationsRepository.findById).toHaveBeenCalledWith('org-123');
       expect(result).toEqual(mockOrg);
     });
 
     it('should throw NotFoundException when organization not found', async () => {
-      mockDb.limit.mockResolvedValue([]);
+      organizationsRepository.findById.mockResolvedValue(null);
 
       await expect(service.getOrganizationById('org-123')).rejects.toThrow(
         NotFoundException,
       );
+      expect(organizationsRepository.findById).toHaveBeenCalledWith('org-123');
     });
   });
 
@@ -121,9 +129,16 @@ describe('OrganizationsService', () => {
       const mockOrg = {
         id: 'org-123',
         name: 'Current Organization',
+        taxId: null,
+        address: null,
+        phone: null,
+        email: null,
+        settings: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
-      mockDb.limit.mockResolvedValue([mockOrg]);
+      organizationsRepository.findById.mockResolvedValue(mockOrg);
 
       const result = await service.getCurrentOrganization();
 
@@ -131,13 +146,24 @@ describe('OrganizationsService', () => {
       expect(
         mockTenantContextService.validateOrganizationAccess,
       ).toHaveBeenCalledWith('org-123');
+      expect(organizationsRepository.findById).toHaveBeenCalledWith('org-123');
       expect(result).toEqual(mockOrg);
     });
   });
 
   describe('updateOrganization', () => {
     it('should update organization successfully', async () => {
-      const existingOrg = { id: 'org-123', name: 'Old Name' };
+      const existingOrg = {
+        id: 'org-123',
+        name: 'Old Name',
+        taxId: null,
+        address: null,
+        phone: null,
+        email: null,
+        settings: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
       const updateDto = { name: 'New Name' };
       const updatedOrg = {
         ...existingOrg,
@@ -146,25 +172,40 @@ describe('OrganizationsService', () => {
       };
 
       // Mock getOrganizationById
-      mockDb.limit.mockResolvedValueOnce([existingOrg]);
+      organizationsRepository.findById.mockResolvedValue(existingOrg);
       // Mock update
-      mockDb.returning.mockResolvedValue([updatedOrg]);
+      organizationsRepository.update.mockResolvedValue(updatedOrg);
 
       const result = await service.updateOrganization('org-123', updateDto);
 
       expect(
         mockTenantContextService.validateOrganizationAccess,
       ).toHaveBeenCalledWith('org-123');
+      expect(organizationsRepository.findById).toHaveBeenCalledWith('org-123');
+      expect(organizationsRepository.update).toHaveBeenCalledWith(
+        'org-123',
+        updateDto,
+      );
       expect(result).toEqual(updatedOrg);
     });
 
     it('should throw error when update fails', async () => {
-      const existingOrg = { id: 'org-123', name: 'Old Name' };
+      const existingOrg = {
+        id: 'org-123',
+        name: 'Old Name',
+        taxId: null,
+        address: null,
+        phone: null,
+        email: null,
+        settings: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
 
       // Mock getOrganizationById
-      mockDb.limit.mockResolvedValueOnce([existingOrg]);
+      organizationsRepository.findById.mockResolvedValue(existingOrg);
       // Mock update failure
-      mockDb.returning.mockResolvedValue([]);
+      organizationsRepository.update.mockResolvedValue(undefined as any);
 
       await expect(
         service.updateOrganization('org-123', { name: 'New Name' }),
@@ -174,28 +215,50 @@ describe('OrganizationsService', () => {
 
   describe('deleteOrganization', () => {
     it('should delete organization successfully', async () => {
-      const existingOrg = { id: 'org-123', name: 'Test Organization' };
+      const existingOrg = {
+        id: 'org-123',
+        name: 'Test Organization',
+        taxId: null,
+        address: null,
+        phone: null,
+        email: null,
+        settings: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
 
       // Mock getOrganizationById
-      mockDb.limit.mockResolvedValueOnce([existingOrg]);
+      organizationsRepository.findById.mockResolvedValue(existingOrg);
       // Mock delete
-      mockDb.returning.mockResolvedValue([existingOrg]);
+      organizationsRepository.delete.mockResolvedValue(existingOrg);
 
       const result = await service.deleteOrganization('org-123');
 
       expect(
         mockTenantContextService.validateOrganizationAccess,
       ).toHaveBeenCalledWith('org-123');
+      expect(organizationsRepository.findById).toHaveBeenCalledWith('org-123');
+      expect(organizationsRepository.delete).toHaveBeenCalledWith('org-123');
       expect(result).toEqual(existingOrg);
     });
 
     it('should throw error when delete fails', async () => {
-      const existingOrg = { id: 'org-123', name: 'Test Organization' };
+      const existingOrg = {
+        id: 'org-123',
+        name: 'Test Organization',
+        taxId: null,
+        address: null,
+        phone: null,
+        email: null,
+        settings: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
 
       // Mock getOrganizationById
-      mockDb.limit.mockResolvedValueOnce([existingOrg]);
+      organizationsRepository.findById.mockResolvedValue(existingOrg);
       // Mock delete failure
-      mockDb.returning.mockResolvedValue([]);
+      organizationsRepository.delete.mockResolvedValue(undefined as any);
 
       await expect(service.deleteOrganization('org-123')).rejects.toThrow(
         'Failed to delete organization',
@@ -205,18 +268,27 @@ describe('OrganizationsService', () => {
 
   describe('getOrganizationStats', () => {
     it('should return organization stats', async () => {
-      const mockOrg = {
+      const mockOrg: OrganizationRecord = {
         id: 'org-123',
         name: 'Test Organization',
+        taxId: null,
+        address: null,
+        phone: null,
+        email: null,
+        settings: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
-      mockDb.limit.mockResolvedValue([mockOrg]);
+      // Mock getOrganizationById via repository
+      organizationsRepository.findById.mockResolvedValue(mockOrg);
 
       const result = await service.getOrganizationStats('org-123');
 
       expect(
         mockTenantContextService.validateOrganizationAccess,
       ).toHaveBeenCalledWith('org-123');
+      expect(organizationsRepository.findById).toHaveBeenCalledWith('org-123');
       expect(result).toEqual({
         organization: mockOrg,
         stats: {

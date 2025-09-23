@@ -4,6 +4,13 @@ import { Job } from 'bullmq';
 import { JobMetricsService } from '../job-metrics.service';
 import { JobType } from '../../types/job.types';
 
+interface SanitizedResult {
+  password: string;
+  apiKey: string;
+  token: string;
+  data: string;
+}
+
 describe('JobMetricsService', () => {
   let service: JobMetricsService;
 
@@ -275,10 +282,11 @@ describe('JobMetricsService', () => {
       service.recordJobComplete(job, result);
 
       const metrics = service.getJobMetrics('test-job-123')!;
-      expect(metrics.metadata?.result.password).toBe('[REDACTED]');
-      expect(metrics.metadata?.result.apiKey).toBe('[REDACTED]');
-      expect(metrics.metadata?.result.token).toBe('[REDACTED]');
-      expect(metrics.metadata?.result.data).toBe('test-result');
+      const sanitizedResult = metrics.metadata?.result as SanitizedResult;
+      expect(sanitizedResult.password).toBe('[REDACTED]');
+      expect(sanitizedResult.apiKey).toBe('[REDACTED]');
+      expect(sanitizedResult.token).toBe('[REDACTED]');
+      expect(sanitizedResult.data).toBe('test-result');
     });
   });
 
