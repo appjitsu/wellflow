@@ -72,8 +72,8 @@ export const wells = pgTable(
     ),
     leaseIdx: index('wells_lease_id_idx').on(table.leaseId),
     // Business rule constraints
-    apiNumberFormatCheck: check(
-      'wells_api_number_format_check',
+    wellsApiNumberFormatCheck: check(
+      'api_format',
       sql`LENGTH(api_number) = 14 AND api_number ~ '^[0-9]+$'`,
     ),
     totalDepthPositiveCheck: check(

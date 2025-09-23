@@ -15,7 +15,6 @@ const mockDatabaseService = {
 
 describe('BusinessRulesService', () => {
   let service: BusinessRulesService;
-  let databaseService: jest.Mocked<DatabaseService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -35,7 +34,6 @@ describe('BusinessRulesService', () => {
     }).compile();
 
     service = module.get<BusinessRulesService>(BusinessRulesService);
-    databaseService = module.get(DatabaseService);
   });
 
   afterEach(() => {

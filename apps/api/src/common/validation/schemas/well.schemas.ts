@@ -97,10 +97,11 @@ export const wellSchemas = {
     .refine(
       (data) => {
         // Business rule: completion date must be after spud date
-        if (data.spudDate && data.completionDate) {
-          return new Date(data.completionDate) >= new Date(data.spudDate);
-        }
-        return true;
+        return (
+          !data.spudDate ||
+          !data.completionDate ||
+          new Date(data.completionDate) >= new Date(data.spudDate)
+        );
       },
       {
         message: 'Completion date must be after spud date',
@@ -110,13 +111,10 @@ export const wellSchemas = {
     .refine(
       (data) => {
         // Business rule: both latitude and longitude must be provided together
-        if (
+        return !(
           (data.latitude && !data.longitude) ||
           (!data.latitude && data.longitude)
-        ) {
-          return false;
-        }
-        return true;
+        );
       },
       {
         message: 'Both latitude and longitude must be provided together',
@@ -144,10 +142,11 @@ export const wellSchemas = {
     .refine(
       (data) => {
         // Business rule: completion date must be after spud date
-        if (data.spudDate && data.completionDate) {
-          return new Date(data.completionDate) >= new Date(data.spudDate);
-        }
-        return true;
+        return (
+          !data.spudDate ||
+          !data.completionDate ||
+          new Date(data.completionDate) >= new Date(data.spudDate)
+        );
       },
       {
         message: 'Completion date must be after spud date',
@@ -157,13 +156,10 @@ export const wellSchemas = {
     .refine(
       (data) => {
         // Business rule: both latitude and longitude must be provided together
-        if (
+        return !(
           (data.latitude && !data.longitude) ||
           (!data.latitude && data.longitude)
-        ) {
-          return false;
-        }
-        return true;
+        );
       },
       {
         message: 'Both latitude and longitude must be provided together',

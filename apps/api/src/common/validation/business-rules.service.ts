@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
 import { eq, and, sql } from 'drizzle-orm';
 import {
@@ -129,6 +129,7 @@ export class BusinessRulesService {
         result.errors.push('API number already exists in this organization');
       }
     } catch (error) {
+      console.warn('Could not verify API number uniqueness:', error);
       result.warnings.push('Could not verify API number uniqueness');
     }
 
@@ -150,7 +151,25 @@ export class BusinessRulesService {
       warnings: [],
     };
 
-    // Check if well exists and is active
+    await this.validateWellExistenceAndStatus(context, result);
+    if (!result.isValid) return result;
+
+    await this.validateDuplicateProductionRecords(context, result);
+    if (!result.isValid) return result;
+
+    this.validateProductionDate(context, result);
+    this.validateProductionVolumes(context, result);
+
+    return result;
+  }
+
+  /**
+   * Validates well existence and status for production data
+   */
+  private async validateWellExistenceAndStatus(
+    context: ProductionValidationContext,
+    result: ValidationResult,
+  ): Promise<void> {
     try {
       const well = await this.db.db
         .select({ status: wells.status, wellType: wells.wellType })
@@ -166,50 +185,85 @@ export class BusinessRulesService {
       if (well.length === 0) {
         result.isValid = false;
         result.errors.push('Well not found or not accessible');
-        return result;
+        return;
       }
 
       const wellData = well[0];
-
-      // Check if well is active
-      if (wellData.status !== 'active') {
-        result.warnings.push(
-          `Well status is ${wellData.status}, production data may not be accurate`,
-        );
+      if (!wellData) {
+        result.isValid = false;
+        result.errors.push('Well data is invalid');
+        return;
       }
 
-      // Validate production volumes based on well type
-      if (
-        wellData.wellType === 'OIL' &&
-        context.gasVolume &&
-        context.gasVolume > (context.oilVolume || 0) * 10
-      ) {
-        result.warnings.push('Gas volume seems high for an oil well');
-      }
-
-      if (
-        wellData.wellType === 'GAS' &&
-        context.oilVolume &&
-        context.oilVolume > 0
-      ) {
-        result.warnings.push('Oil volume reported for a gas well');
-      }
+      this.validateWellStatus(wellData, result);
+      this.validateWellTypeProductionVolumes(wellData, context, result);
     } catch (error) {
+      console.warn('Could not validate well information:', error);
       result.warnings.push('Could not validate well information');
     }
+  }
 
-    // Check for duplicate production records
+  /**
+   * Validates well status for production
+   */
+  private validateWellStatus(
+    wellData: { status: string; wellType: string },
+    result: ValidationResult,
+  ): void {
+    if (wellData.status !== 'active') {
+      result.warnings.push(
+        `Well status is ${wellData.status}, production data may not be accurate`,
+      );
+    }
+  }
+
+  /**
+   * Validates production volumes based on well type
+   */
+  private validateWellTypeProductionVolumes(
+    wellData: { status: string; wellType: string },
+    context: ProductionValidationContext,
+    result: ValidationResult,
+  ): void {
+    if (
+      wellData.wellType === 'OIL' &&
+      context.gasVolume &&
+      context.gasVolume > (context.oilVolume || 0) * 10
+    ) {
+      result.warnings.push('Gas volume seems high for an oil well');
+    }
+
+    if (
+      wellData.wellType === 'GAS' &&
+      context.oilVolume &&
+      context.oilVolume > 0
+    ) {
+      result.warnings.push('Oil volume reported for a gas well');
+    }
+  }
+
+  /**
+   * Validates for duplicate production records
+   */
+  private async validateDuplicateProductionRecords(
+    context: ProductionValidationContext,
+    result: ValidationResult,
+  ): Promise<void> {
     try {
+      const productionDateString = context.productionDate
+        .toISOString()
+        .split('T')[0];
+      if (!productionDateString) {
+        throw new Error('Invalid production date');
+      }
+
       const existingRecord = await this.db.db
         .select({ id: productionRecords.id })
         .from(productionRecords)
         .where(
           and(
             eq(productionRecords.wellId, context.wellId),
-            eq(
-              productionRecords.productionDate,
-              context.productionDate.toISOString().split('T')[0],
-            ),
+            eq(productionRecords.productionDate, productionDateString),
           ),
         )
         .limit(1);
@@ -221,10 +275,18 @@ export class BusinessRulesService {
         );
       }
     } catch (error) {
+      console.warn('Could not check for duplicate production records:', error);
       result.warnings.push('Could not check for duplicate production records');
     }
+  }
 
-    // Validate production date is not too far in the past or future
+  /**
+   * Validates production date constraints
+   */
+  private validateProductionDate(
+    context: ProductionValidationContext,
+    result: ValidationResult,
+  ): void {
     const today = new Date();
     const oneYearAgo = new Date();
     oneYearAgo.setFullYear(today.getFullYear() - 1);
@@ -237,8 +299,15 @@ export class BusinessRulesService {
     if (context.productionDate < oneYearAgo) {
       result.warnings.push('Production date is more than one year old');
     }
+  }
 
-    // Validate volume reasonableness
+  /**
+   * Validates production volume reasonableness
+   */
+  private validateProductionVolumes(
+    context: ProductionValidationContext,
+    result: ValidationResult,
+  ): void {
     const maxOilVolume = 10000; // barrels per day
     const maxGasVolume = 100000; // MCF per day
     const maxWaterVolume = 50000; // barrels per day
@@ -260,8 +329,6 @@ export class BusinessRulesService {
         `Water volume (${context.waterVolume}) exceeds typical maximum (${maxWaterVolume} barrels)`,
       );
     }
-
-    return result;
   }
 
   /**
@@ -325,6 +392,10 @@ export class BusinessRulesService {
         result.warnings.push('Total working interest is exactly 100%');
       }
     } catch (error) {
+      console.warn(
+        'Could not validate total working interest percentages:',
+        error,
+      );
       result.warnings.push(
         'Could not validate total working interest percentages',
       );
@@ -368,12 +439,20 @@ export class BusinessRulesService {
         return result;
       }
 
-      if (lease[0].status === 'expired') {
+      const leaseData = lease[0];
+      if (!leaseData) {
+        result.isValid = false;
+        result.errors.push('Lease data is invalid');
+        return result;
+      }
+
+      if (leaseData.status === 'expired') {
         result.warnings.push('Lease has expired');
-      } else if (lease[0].status === 'terminated') {
+      } else if (leaseData.status === 'terminated') {
         result.warnings.push('Lease has been terminated');
       }
     } catch (error) {
+      console.warn('Could not validate lease access:', error);
       result.isValid = false;
       result.errors.push('Could not validate lease access');
     }

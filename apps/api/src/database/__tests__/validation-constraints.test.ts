@@ -6,13 +6,14 @@ import {
   afterAll,
   beforeEach,
 } from '@jest/globals';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Client } from 'pg';
 import * as schema from '../schema';
 import { TEST_DB_CONFIG } from './env';
+import { eq } from 'drizzle-orm';
 
 // Test database connection
-const testDb = postgres({
+const testDb = new Client({
   host: TEST_DB_CONFIG.host,
   port: TEST_DB_CONFIG.port,
   user: TEST_DB_CONFIG.user,
@@ -38,7 +39,7 @@ describe('Database Validation Constraints', () => {
     // Clean up test data
     await db
       .delete(schema.organizations)
-      .where(schema.organizations.id === testOrgId);
+      .where(eq(schema.organizations.id, testOrgId));
     await testDb.end();
   });
 
