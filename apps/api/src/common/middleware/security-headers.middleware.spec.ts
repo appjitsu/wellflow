@@ -13,7 +13,7 @@ describe('SecurityHeadersMiddleware', () => {
   beforeEach(async () => {
     mockConfigService = {
       nodeEnv: 'development',
-    } as any;
+    } as jest.Mocked<AppConfigService>;
 
     mockRequest = {};
     mockResponse = {
@@ -123,7 +123,10 @@ describe('SecurityHeadersMiddleware', () => {
     });
 
     it('should not set Strict-Transport-Security header in development', () => {
-      mockConfigService.nodeEnv = 'development';
+      Object.defineProperty(mockConfigService, 'nodeEnv', {
+        get: jest.fn(() => 'development'),
+        configurable: true,
+      });
 
       middleware.use(
         mockRequest as Request,
