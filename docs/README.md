@@ -33,6 +33,13 @@ documentation for the WellFlow oil & gas production monitoring platform.
 - **[SCADA Integration Architecture](scada-integration-architecture.md)** -
   Industrial control system integration
 
+### Queue System & Background Processing
+
+- **[Queue System Overview](queue-system.md)** - Complete background job processing system with BullMQ and Redis
+- **[Job Processors Documentation](job-processors.md)** - Data validation, report generation, and notification processors
+- **[Queue API Reference](queue-api.md)** - Comprehensive API documentation for queue management
+- **[Queue UI Dashboard](../apps/queue-ui/DOCUMENTATION.md)** - Bull Board monitoring dashboard guide
+
 ### Development Patterns
 
 - **[Software Development Patterns](software-development-patterns.md)** - SOLID,
@@ -165,6 +172,8 @@ documentation for the WellFlow oil & gas production monitoring platform.
 ### For Developers
 
 - Start with [Technical Architecture](wellflow-technical-architecture.md)
+- Review [Queue System Overview](queue-system.md) for background job processing
+- Check [Job Processors Documentation](job-processors.md) for implementation details
 - Review [Security Scanning Framework](security-scanning-framework.md)
 - Check [Quality Gates Documentation](README_QUALITY_GATES.md)
 
@@ -177,6 +186,8 @@ documentation for the WellFlow oil & gas production monitoring platform.
 
 ### For Operations Teams
 
+- **[Queue System Overview](queue-system.md)** - Background job processing system
+- **[Queue UI Dashboard](../apps/queue-ui/DOCUMENTATION.md)** - Job monitoring and management
 - **[Railway Deployment Guide](railway-deployment-guide.md)** - Production
   deployment
 - **[Monitoring Setup](monitoring-setup.md)** - Operational monitoring

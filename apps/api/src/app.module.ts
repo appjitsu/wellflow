@@ -25,6 +25,7 @@ import { OrganizationsModule } from './organizations/organizations.module';
 import { LeasesModule } from './leases/leases.module';
 import { ProductionModule } from './production/production.module';
 import { PartnersModule } from './partners/partners.module';
+import { JobsModule } from './jobs/jobs.module';
 // import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
 import { AbilitiesGuard } from './authorization/abilities.guard';
 import { AuditLogInterceptor } from './presentation/interceptors/audit-log.interceptor';
@@ -60,6 +61,7 @@ import { RequestLoggingMiddleware } from './common/middleware/request-logging.mi
     LeasesModule,
     ProductionModule,
     PartnersModule,
+    JobsModule,
   ],
   controllers: [AppController, OperatorsController],
   providers: [
