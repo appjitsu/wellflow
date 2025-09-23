@@ -241,7 +241,7 @@ describe('DatabaseService', () => {
         { text: 'INSERT INTO wells (name) VALUES ($1)', values: ['Well 3'] },
       ];
 
-      for (const query of batchQueries) {
+      for (const _ of batchQueries) {
         mockConnection.query.mockResolvedValueOnce({
           rows: [{ id: `well-${Math.random()}` }],
           rowCount: 1,
