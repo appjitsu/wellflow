@@ -69,4 +69,87 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   getQueryUtils() {
     return this.queryUtils;
   }
+
+  /**
+   * Set the current organization context for Row Level Security
+   * This sets the PostgreSQL session variable that RLS policies use
+   * and switches to the application_role to enable RLS
+   */
+  async setOrganizationContext(organizationId: string): Promise<void> {
+    try {
+      // Switch to application_role to enable RLS policies
+      await this.pool.query('SET ROLE application_role');
+
+      // Set the organization context
+      await this.pool.query('SELECT set_config($1, $2, false)', [
+        'app.current_organization_id',
+        organizationId,
+      ]);
+    } catch (error) {
+      console.error('Failed to set organization context:', error);
+      throw new Error('Failed to set organization context for RLS');
+    }
+  }
+
+  /**
+   * Clear the current organization context and reset to default role
+   */
+  async clearOrganizationContext(): Promise<void> {
+    try {
+      // Clear the organization context
+      await this.pool.query('SELECT set_config($1, $2, false)', [
+        'app.current_organization_id',
+        '',
+      ]);
+
+      // Reset to default role (postgres)
+      await this.pool.query('RESET ROLE');
+    } catch (error) {
+      console.error('Failed to clear organization context:', error);
+      throw new Error('Failed to clear organization context');
+    }
+  }
+
+  /**
+   * Get the current organization context from session
+   */
+  async getCurrentOrganizationId(): Promise<string | null> {
+    try {
+      const result = await this.pool.query(
+        'SELECT current_setting($1, true) as org_id',
+        ['app.current_organization_id'],
+      );
+      return result.rows[0]?.org_id || null;
+    } catch (error) {
+      console.error('Failed to get current organization context:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Execute a function within a specific organization context
+   * This ensures RLS policies are applied correctly for the duration of the operation
+   */
+  async withOrganizationContext<T>(
+    organizationId: string,
+    operation: () => Promise<T>,
+  ): Promise<T> {
+    await this.setOrganizationContext(organizationId);
+    try {
+      return await operation();
+    } finally {
+      await this.clearOrganizationContext();
+    }
+  }
+
+  /**
+   * Get a database connection with organization context pre-set
+   * Useful for operations that need to maintain context across multiple queries
+   */
+  async getContextualDb(
+    organizationId: string,
+  ): Promise<NodePgDatabase<typeof schema>> {
+    await this.setOrganizationContext(organizationId);
+    return this.db;
+  }
 }
