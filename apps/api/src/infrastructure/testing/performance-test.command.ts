@@ -51,12 +51,6 @@ interface PerformanceTestOptions {
   name: 'performance-test',
   description:
     'Run KAN-33 performance test suite to validate database and API performance requirements',
-  examples: [
-    'performance-test',
-    'performance-test --iterations 100 --concurrent 10',
-    'performance-test --output performance-results.json --verbose',
-    'performance-test --config custom-config.json',
-  ],
 })
 export class PerformanceTestCommand extends CommandRunner {
   private readonly logger = new Logger(PerformanceTestCommand.name);

@@ -45,10 +45,14 @@ export interface CursorPaginationResponse<T> {
  * Defines how to extract cursor values from records
  */
 export interface CursorConfig<T> {
-  // Primary cursor field (usually id or timestamp)
-  primaryField: keyof T;
-  // Secondary cursor field for tie-breaking (optional)
-  secondaryField?: keyof T;
+  // Primary cursor column reference for SQL operations
+  primaryField: AnyPgColumn;
+  // Primary cursor field name for record access
+  primaryFieldName: keyof T;
+  // Secondary cursor column reference for SQL operations (optional)
+  secondaryField?: AnyPgColumn;
+  // Secondary cursor field name for record access (optional)
+  secondaryFieldName?: keyof T;
   // Custom cursor encoder/decoder
   encodeCursor?: (record: T) => string;
   decodeCursor?: (cursor: string) => { primary: unknown; secondary?: unknown };
@@ -80,10 +84,8 @@ export class CursorPaginationService {
     const { cursor, direction, sortOrder, limit } = request;
 
     // Get column references
-    const primaryColumn = table[config.primaryField as string] as AnyPgColumn;
-    const secondaryColumn = config.secondaryField
-      ? (table[config.secondaryField as string] as AnyPgColumn)
-      : null;
+    const primaryColumn = config.primaryField;
+    const secondaryColumn = config.secondaryField || null;
 
     // Add cursor conditions if cursor is provided
     if (cursor) {
@@ -174,15 +176,17 @@ export class CursorPaginationService {
     cursorData: { primary: unknown; secondary?: unknown },
   ): void {
     if (secondaryColumn && cursorData.secondary !== undefined) {
-      conditions.push(
-        or(
-          lt(primaryColumn, cursorData.primary),
-          and(
-            eq(primaryColumn, cursorData.primary),
-            lt(secondaryColumn, cursorData.secondary),
-          ),
+      const secondary = secondaryColumn; // TypeScript now knows it's not null
+      const condition = or(
+        lt(primaryColumn, cursorData.primary),
+        and(
+          eq(primaryColumn, cursorData.primary),
+          lt(secondary, cursorData.secondary),
         ),
       );
+      if (condition) {
+        conditions.push(condition);
+      }
     } else {
       conditions.push(lt(primaryColumn, cursorData.primary));
     }
@@ -364,6 +368,8 @@ export class CursorPaginationService {
 
     const record = position === 'next' ? data[data.length - 1] : data[0];
 
+    if (!record) return null;
+
     if (config.encodeCursor) {
       return config.encodeCursor(record);
     }
@@ -377,11 +383,11 @@ export class CursorPaginationService {
    */
   private encodeCursor<T>(record: T, config: CursorConfig<T>): string {
     const cursorData: { primary: unknown; secondary?: unknown } = {
-      primary: record[config.primaryField],
+      primary: record[config.primaryFieldName],
     };
 
-    if (config.secondaryField) {
-      cursorData.secondary = record[config.secondaryField];
+    if (config.secondaryFieldName) {
+      cursorData.secondary = record[config.secondaryFieldName];
     }
 
     return Buffer.from(JSON.stringify(cursorData)).toString('base64');
@@ -437,17 +443,24 @@ export class CursorPaginationService {
    * Create optimized cursor configuration for common use cases
    */
   createTimestampCursorConfig<T>(
-    primaryField: keyof T,
-    secondaryField?: keyof T,
+    primaryFieldName: keyof T,
+    secondaryFieldName: keyof T | undefined,
+    primaryColumn: AnyPgColumn,
+    secondaryColumn?: AnyPgColumn,
   ): CursorConfig<T> {
     return {
-      primaryField,
-      secondaryField,
+      primaryField: primaryColumn,
+      primaryFieldName,
+      secondaryField: secondaryColumn,
+      secondaryFieldName,
       encodeCursor: (record: T) => {
         // eslint-disable-next-line security/detect-object-injection
-        const primary = record[primaryField];
-        // eslint-disable-next-line security/detect-object-injection
-        const secondary = secondaryField ? record[secondaryField] : undefined;
+        const primary = record[primaryFieldName];
+
+        const secondary = secondaryFieldName
+          ? // eslint-disable-next-line security/detect-object-injection
+            record[secondaryFieldName]
+          : undefined;
 
         // For timestamps, use ISO string for better readability
         const cursorData = {
@@ -485,12 +498,16 @@ export class CursorPaginationService {
    * Create cursor configuration for UUID-based pagination
    */
   createUuidCursorConfig<T>(
-    primaryField: keyof T,
-    secondaryField?: keyof T,
+    primaryFieldName: keyof T,
+    secondaryFieldName: keyof T | undefined,
+    primaryColumn: AnyPgColumn,
+    secondaryColumn?: AnyPgColumn,
   ): CursorConfig<T> {
     return {
-      primaryField,
-      secondaryField,
+      primaryField: primaryColumn,
+      primaryFieldName,
+      secondaryField: secondaryColumn,
+      secondaryFieldName,
     };
   }
 }

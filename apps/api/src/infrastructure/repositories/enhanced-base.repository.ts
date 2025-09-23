@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, security/detect-object-injection */
 import { Injectable, Inject } from '@nestjs/common';
-import { eq, and, SQL } from 'drizzle-orm';
+import { eq, and, sql, SQL } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { AnyPgColumn, PgTable, TableConfig } from 'drizzle-orm/pg-core';
 import * as schema from '../../database/schema';
@@ -110,7 +110,7 @@ export abstract class EnhancedBaseRepository<T extends PgTable<TableConfig>> {
       : filterConditions;
 
     const result = await this.db
-      .select({ count: SQL`count(*)` })
+      .select({ count: sql`count(*)` })
       .from(this.table as any)
       .where(and(...allFilters));
 
@@ -121,24 +121,17 @@ export abstract class EnhancedBaseRepository<T extends PgTable<TableConfig>> {
    * Create default cursor configuration for timestamp-based pagination
    * Uses created_at as primary field and id as secondary for tie-breaking
    */
-  protected createDefaultTimestampCursorConfig(): CursorConfig<
+  protected abstract createDefaultTimestampCursorConfig(): CursorConfig<
     T['$inferSelect']
-  > {
-    return this.paginationService.createTimestampCursorConfig(
-      'createdAt' as keyof T['$inferSelect'],
-      'id' as keyof T['$inferSelect'],
-    );
-  }
+  >;
 
   /**
    * Create cursor configuration for ID-based pagination
    * Uses id as primary field for simple UUID-based pagination
    */
-  protected createDefaultIdCursorConfig(): CursorConfig<T['$inferSelect']> {
-    return this.paginationService.createUuidCursorConfig(
-      'id' as keyof T['$inferSelect'],
-    );
-  }
+  protected abstract createDefaultIdCursorConfig(): CursorConfig<
+    T['$inferSelect']
+  >;
 
   /**
    * Build filter conditions from key-value pairs
@@ -195,7 +188,7 @@ export abstract class EnhancedBaseRepository<T extends PgTable<TableConfig>> {
       .where(eq((this.table as Record<string, unknown>).id as AnyPgColumn, id))
       .returning();
 
-    return (result[0] as T['$inferSelect']) || null;
+    return (result as unknown as T['$inferSelect'][])[0] || null;
   }
 
   /**
