@@ -92,10 +92,6 @@ describe('LogRocketMiddleware', () => {
     });
 
     it('should generate session ID when missing', () => {
-      const requestWithoutSession = {
-        ...mockRequest,
-        sessionID: undefined,
-      };
 
       const generateSessionId = () => {
         return `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
