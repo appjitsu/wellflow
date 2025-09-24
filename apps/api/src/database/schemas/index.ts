@@ -31,8 +31,20 @@ export { revenueDistributions } from './revenue-distributions';
 export { leaseOperatingStatements } from './lease-operating-statements';
 
 // Vendor management
-export { vendors } from './vendors';
-export { vendorContacts } from './vendor-contacts';
+export {
+  vendors,
+  vendorStatusEnum,
+  vendorTypeEnum,
+  vendorRatingEnum,
+} from './vendors';
+export { vendorContacts, contactTypeEnum } from './vendor-contacts';
+export {
+  vendorContracts,
+  vendorPerformanceReviews,
+  vendorQualifications,
+  contractStatusEnum,
+  contractTypeEnum,
+} from './vendor-contracts';
 
 // Title management
 export { titleOpinions } from './title-opinions';

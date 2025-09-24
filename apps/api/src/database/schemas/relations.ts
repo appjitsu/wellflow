@@ -22,6 +22,9 @@ import {
   leaseOperatingStatements,
   vendors,
   vendorContacts,
+  vendorContracts,
+  vendorPerformanceReviews,
+  vendorQualifications,
   titleOpinions,
   curativeItems,
   environmentalIncidents,
@@ -298,22 +301,6 @@ export const leaseOperatingStatementsRelations = relations(
   }),
 );
 
-export const vendorsRelations = relations(vendors, ({ one, many }) => ({
-  organization: one(organizations, {
-    fields: [vendors.organizationId],
-    references: [organizations.id],
-  }),
-  contacts: many(vendorContacts),
-  afeLineItems: many(afeLineItems),
-}));
-
-export const vendorContactsRelations = relations(vendorContacts, ({ one }) => ({
-  vendor: one(vendors, {
-    fields: [vendorContacts.vendorId],
-    references: [vendors.id],
-  }),
-}));
-
 export const titleOpinionsRelations = relations(
   titleOpinions,
   ({ one, many }) => ({
@@ -390,6 +377,71 @@ export const complianceSchedulesRelations = relations(
     well: one(wells, {
       fields: [complianceSchedules.wellId],
       references: [wells.id],
+    }),
+  }),
+);
+
+// =============================================================================
+// VENDOR MANAGEMENT RELATIONS
+// =============================================================================
+
+export const vendorsRelations = relations(vendors, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [vendors.organizationId],
+    references: [organizations.id],
+  }),
+  contacts: many(vendorContacts),
+  contracts: many(vendorContracts),
+  performanceReviews: many(vendorPerformanceReviews),
+  qualifications: many(vendorQualifications),
+}));
+
+export const vendorContactsRelations = relations(vendorContacts, ({ one }) => ({
+  vendor: one(vendors, {
+    fields: [vendorContacts.vendorId],
+    references: [vendors.id],
+  }),
+}));
+
+export const vendorContractsRelations = relations(
+  vendorContracts,
+  ({ one, many }) => ({
+    organization: one(organizations, {
+      fields: [vendorContracts.organizationId],
+      references: [organizations.id],
+    }),
+    vendor: one(vendors, {
+      fields: [vendorContracts.vendorId],
+      references: [vendors.id],
+    }),
+    performanceReviews: many(vendorPerformanceReviews),
+  }),
+);
+
+export const vendorPerformanceReviewsRelations = relations(
+  vendorPerformanceReviews,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [vendorPerformanceReviews.organizationId],
+      references: [organizations.id],
+    }),
+    vendor: one(vendors, {
+      fields: [vendorPerformanceReviews.vendorId],
+      references: [vendors.id],
+    }),
+    contract: one(vendorContracts, {
+      fields: [vendorPerformanceReviews.contractId],
+      references: [vendorContracts.id],
+    }),
+  }),
+);
+
+export const vendorQualificationsRelations = relations(
+  vendorQualifications,
+  ({ one }) => ({
+    vendor: one(vendors, {
+      fields: [vendorQualifications.vendorId],
+      references: [vendors.id],
     }),
   }),
 );
