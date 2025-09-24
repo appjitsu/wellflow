@@ -44,7 +44,12 @@ export class TenantRlsService {
     const tenantContext =
       context instanceof TenantContext
         ? context
-        : TenantContext.fromPlainObject(context);
+        : TenantContext.fromPlainObject({
+            organizationId: context.organizationId || '',
+            userId: context.userId,
+            userRole: context.userRole,
+            metadata: context.metadata,
+          });
 
     // Use the use case to set context
     await this.setTenantContextUseCase.execute({

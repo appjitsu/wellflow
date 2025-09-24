@@ -90,22 +90,26 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   // JSON operations
-  async setJSON(key: string, value: any): Promise<void> {
+  async setJSON(key: string, value: unknown): Promise<void> {
     await this.client.set(key, JSON.stringify(value));
   }
 
-  async getJSON<T = any>(key: string): Promise<T | null> {
+  async getJSON<T = unknown>(key: string): Promise<T | null> {
     const result = await this.client.get(key);
     if (!result || typeof result !== 'string') return null;
 
     try {
-      return JSON.parse(result);
+      return JSON.parse(result) as T;
     } catch {
       return null;
     }
   }
 
-  async setJSONWithExpiry(key: string, value: any, ttl: number): Promise<void> {
+  async setJSONWithExpiry(
+    key: string,
+    value: unknown,
+    ttl: number,
+  ): Promise<void> {
     await this.client.setEx(key, ttl, JSON.stringify(value));
   }
 

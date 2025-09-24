@@ -32,16 +32,24 @@ describe('DrizzleDatabaseService', () => {
   describe('Database Configuration', () => {
     it('should configure database connection with environment variables', () => {
       mockConfigService.get.mockImplementation((key: string) => {
-        const config = {
-          DATABASE_URL: 'postgresql://user:pass@localhost:5432/wellflow',
-          DATABASE_HOST: 'localhost',
-          DATABASE_PORT: '5432',
-          DATABASE_NAME: 'wellflow',
-          DATABASE_USER: 'user',
-          DATABASE_PASSWORD: 'password',
-          DATABASE_SSL: 'false',
-        };
-        return config[key];
+        switch (key) {
+          case 'DATABASE_URL':
+            return 'postgresql://user:pass@localhost:5432/wellflow';
+          case 'DATABASE_HOST':
+            return 'localhost';
+          case 'DATABASE_PORT':
+            return '5432';
+          case 'DATABASE_NAME':
+            return 'wellflow';
+          case 'DATABASE_USER':
+            return 'user';
+          case 'DATABASE_PASSWORD':
+            return 'password';
+          case 'DATABASE_SSL':
+            return 'false';
+          default:
+            return undefined;
+        }
       });
 
       // Test that service can access configuration
@@ -61,13 +69,18 @@ describe('DrizzleDatabaseService', () => {
 
     it('should handle connection pool configuration', () => {
       mockConfigService.get.mockImplementation((key: string) => {
-        const config = {
-          DATABASE_POOL_MIN: '2',
-          DATABASE_POOL_MAX: '10',
-          DATABASE_POOL_IDLE_TIMEOUT: '30000',
-          DATABASE_POOL_CONNECTION_TIMEOUT: '60000',
-        };
-        return config[key];
+        switch (key) {
+          case 'DATABASE_POOL_MIN':
+            return '2';
+          case 'DATABASE_POOL_MAX':
+            return '10';
+          case 'DATABASE_POOL_IDLE_TIMEOUT':
+            return '30000';
+          case 'DATABASE_POOL_CONNECTION_TIMEOUT':
+            return '60000';
+          default:
+            return undefined;
+        }
       });
 
       expect(mockConfigService.get('DATABASE_POOL_MIN')).toBe('2');
@@ -76,27 +89,30 @@ describe('DrizzleDatabaseService', () => {
   });
 
   describe('Connection Management', () => {
-    it('should handle connection initialization', async () => {
+    it('should handle connection initialization', () => {
       mockConfigService.get.mockReturnValue('postgresql://localhost:5432/test');
 
       // Test connection initialization logic
       expect(service).toBeDefined();
     });
 
-    it('should handle connection errors gracefully', async () => {
+    it('should handle connection errors gracefully', () => {
       mockConfigService.get.mockReturnValue('invalid-connection-string');
 
       // Service should still be defined even with invalid config
       expect(service).toBeDefined();
     });
 
-    it('should support connection retry logic', async () => {
+    it('should support connection retry logic', () => {
       mockConfigService.get.mockImplementation((key: string) => {
-        const config = {
-          DATABASE_RETRY_ATTEMPTS: '3',
-          DATABASE_RETRY_DELAY: '1000',
-        };
-        return config[key];
+        switch (key) {
+          case 'DATABASE_RETRY_ATTEMPTS':
+            return '3';
+          case 'DATABASE_RETRY_DELAY':
+            return '1000';
+          default:
+            return undefined;
+        }
       });
 
       expect(mockConfigService.get('DATABASE_RETRY_ATTEMPTS')).toBe('3');
@@ -130,12 +146,16 @@ describe('DrizzleDatabaseService', () => {
   describe('Performance Optimization', () => {
     it('should configure connection pooling', () => {
       mockConfigService.get.mockImplementation((key: string) => {
-        const config = {
-          DATABASE_POOL_SIZE: '20',
-          DATABASE_POOL_OVERFLOW: '10',
-          DATABASE_POOL_RECYCLE: '3600',
-        };
-        return config[key];
+        switch (key) {
+          case 'DATABASE_POOL_SIZE':
+            return '20';
+          case 'DATABASE_POOL_OVERFLOW':
+            return '10';
+          case 'DATABASE_POOL_RECYCLE':
+            return '3600';
+          default:
+            return undefined;
+        }
       });
 
       expect(mockConfigService.get('DATABASE_POOL_SIZE')).toBe('20');
@@ -185,12 +205,16 @@ describe('DrizzleDatabaseService', () => {
   describe('Security Configuration', () => {
     it('should handle SSL certificate configuration', () => {
       mockConfigService.get.mockImplementation((key: string) => {
-        const config = {
-          DATABASE_SSL_CERT: '/path/to/cert.pem',
-          DATABASE_SSL_KEY: '/path/to/key.pem',
-          DATABASE_SSL_CA: '/path/to/ca.pem',
-        };
-        return config[key];
+        switch (key) {
+          case 'DATABASE_SSL_CERT':
+            return '/path/to/cert.pem';
+          case 'DATABASE_SSL_KEY':
+            return '/path/to/key.pem';
+          case 'DATABASE_SSL_CA':
+            return '/path/to/ca.pem';
+          default:
+            return undefined;
+        }
       });
 
       expect(mockConfigService.get('DATABASE_SSL_CERT')).toBe(
@@ -210,11 +234,14 @@ describe('DrizzleDatabaseService', () => {
 
     it('should handle authentication configuration', () => {
       mockConfigService.get.mockImplementation((key: string) => {
-        const config = {
-          DATABASE_AUTH_METHOD: 'md5',
-          DATABASE_CONNECT_TIMEOUT: '10',
-        };
-        return config[key];
+        switch (key) {
+          case 'DATABASE_AUTH_METHOD':
+            return 'md5';
+          case 'DATABASE_CONNECT_TIMEOUT':
+            return '10';
+          default:
+            return undefined;
+        }
       });
 
       expect(mockConfigService.get('DATABASE_AUTH_METHOD')).toBe('md5');

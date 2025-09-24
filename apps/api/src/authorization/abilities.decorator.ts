@@ -10,6 +10,7 @@ export interface RequiredRule {
     | 'Lease'
     | 'Production'
     | 'Partner'
+    | 'Afe'
     | 'all';
 }
 
@@ -54,6 +55,34 @@ export const CanCreateUser = () =>
 
 export const CanReadUser = () =>
   CheckAbilities({ action: 'read', subject: 'User' });
+
+// AFE permissions
+export const CanCreateAfe = () =>
+  CheckAbilities({ action: 'create', subject: 'Afe' });
+
+export const CanReadAfe = () =>
+  CheckAbilities({ action: 'read', subject: 'Afe' });
+
+export const CanUpdateAfe = () =>
+  CheckAbilities({ action: 'update', subject: 'Afe' });
+
+export const CanDeleteAfe = () =>
+  CheckAbilities({ action: 'delete', subject: 'Afe' });
+
+export const CanSubmitAfe = () =>
+  CheckAbilities({ action: 'submit', subject: 'Afe' });
+
+export const CanApproveAfe = () =>
+  CheckAbilities({ action: 'approve', subject: 'Afe' });
+
+export const CanRejectAfe = () =>
+  CheckAbilities({ action: 'reject', subject: 'Afe' });
+
+export const CanExportAfes = () =>
+  CheckAbilities({ action: 'export', subject: 'Afe' });
+
+export const CanAuditAfes = () =>
+  CheckAbilities({ action: 'audit', subject: 'Afe' });
 
 export const CanUpdateUser = () =>
   CheckAbilities({ action: 'update', subject: 'User' });

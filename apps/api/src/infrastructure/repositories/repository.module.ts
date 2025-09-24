@@ -6,7 +6,9 @@ import type * as schema from '../../database/schema';
 // Repository Implementations
 import { OrganizationRepository } from './organization.repository';
 import { WellRepositoryImpl } from './well.repository';
-import { AfeRepository } from './afe.repository';
+import { AfeDomainRepository } from './afe-domain.repository';
+import { AfeApprovalDomainRepository } from './afe-approval-domain.repository';
+import { LeaseRepository } from './lease.repository';
 import { ProductionRepository } from './production.repository';
 
 /**
@@ -31,7 +33,14 @@ import { ProductionRepository } from './production.repository';
     {
       provide: 'AfeRepository',
       useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
-        return new AfeRepository(databaseConnection);
+        return new AfeDomainRepository(databaseConnection);
+      },
+      inject: ['DATABASE_CONNECTION'],
+    },
+    {
+      provide: 'AfeApprovalRepository',
+      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
+        return new AfeApprovalDomainRepository(databaseConnection);
       },
       inject: ['DATABASE_CONNECTION'],
     },
@@ -44,19 +53,20 @@ import { ProductionRepository } from './production.repository';
     },
 
     // Additional repositories can be added here as needed
-    // Example:
-    // {
-    //   provide: 'LeaseRepository',
-    //   useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
-    //     return new LeaseRepository(databaseConnection);
-    //   },
-    //   inject: ['DATABASE_CONNECTION'],
-    // },
+    {
+      provide: 'LeaseRepository',
+      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
+        return new LeaseRepository(databaseConnection);
+      },
+      inject: ['DATABASE_CONNECTION'],
+    },
   ],
   exports: [
     'OrganizationRepository',
     'WellRepository',
     'AfeRepository',
+    'AfeApprovalRepository',
+    'LeaseRepository',
     'ProductionRepository',
   ],
 })

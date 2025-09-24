@@ -54,7 +54,7 @@ export class PerformanceTestCommand extends CommandRunner {
     private readonly db: NodePgDatabase<typeof schema>,
   ) {
     // Call parent constructor - CommandRunner has no constructor parameters
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+
     super();
   }
 

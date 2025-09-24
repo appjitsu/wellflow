@@ -11,10 +11,16 @@ export interface TenantContext {
   metadata?: Record<string, unknown>;
 }
 
+export interface TenantContextChangeEvent {
+  field: string;
+  oldValue: unknown;
+  newValue: unknown;
+}
+
 @Injectable({ scope: Scope.REQUEST })
 export class TenantContextService {
   private static als = new AsyncLocalStorage<TenantContext>();
-  private eventListeners: ((event: any) => void)[] = [];
+  private eventListeners: ((event: TenantContextChangeEvent) => void)[] = [];
 
   /**
    * Set the tenant context for the current request
@@ -204,7 +210,7 @@ export class TenantContextService {
   /**
    * Emit an event to all listeners
    */
-  private emitEvent(event: any): void {
+  private emitEvent(event: TenantContextChangeEvent): void {
     this.eventListeners.forEach((listener) => listener(event));
   }
 
@@ -307,8 +313,27 @@ export class TenantContextService {
     if (!context) return false;
 
     return requiredFields.every((field) => {
-      const value = context[field];
-      return value !== undefined && value !== null && value !== '';
+      // Type-safe access to context properties
+      switch (field) {
+        case 'organizationId':
+          return (
+            context.organizationId != null && context.organizationId !== ''
+          );
+        case 'userId':
+          return context.userId != null && context.userId !== '';
+        case 'userRole':
+          return context.userRole != null && context.userRole !== '';
+        case 'userRoles':
+          return context.userRoles != null && context.userRoles.length > 0;
+        case 'requestId':
+          return context.requestId != null && context.requestId !== '';
+        case 'correlationId':
+          return context.correlationId != null && context.correlationId !== '';
+        case 'metadata':
+          return context.metadata != null;
+        default:
+          return false;
+      }
     });
   }
 
@@ -331,14 +356,18 @@ export class TenantContextService {
       const context = JSON.parse(serializedContext) as TenantContext;
       this.setContext(context);
     } catch (error) {
-      throw new Error('Invalid serialized context format');
+      throw new Error(
+        `Invalid serialized context format: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
   /**
    * Subscribe to context changes (for testing purposes)
    */
-  onContextChange(callback: (event: any) => void): () => void {
+  onContextChange(
+    callback: (event: TenantContextChangeEvent) => void,
+  ): () => void {
     // Clear context for testing purposes to ensure clean state
     TenantContextService.als.enterWith({} as TenantContext);
     this.eventListeners.push(callback);
