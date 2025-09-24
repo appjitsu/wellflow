@@ -20,6 +20,9 @@ import {
   leaseOperatingStatements,
   vendors,
   vendorContacts,
+  vendorContracts,
+  vendorPerformanceReviews,
+  vendorQualifications,
   titleOpinions,
   curativeItems,
   environmentalIncidents,
@@ -110,6 +113,17 @@ export type NewVendor = typeof vendors.$inferInsert;
 
 export type VendorContact = typeof vendorContacts.$inferSelect;
 export type NewVendorContact = typeof vendorContacts.$inferInsert;
+
+export type VendorContract = typeof vendorContracts.$inferSelect;
+export type NewVendorContract = typeof vendorContracts.$inferInsert;
+
+export type VendorPerformanceReview =
+  typeof vendorPerformanceReviews.$inferSelect;
+export type NewVendorPerformanceReview =
+  typeof vendorPerformanceReviews.$inferInsert;
+
+export type VendorQualification = typeof vendorQualifications.$inferSelect;
+export type NewVendorQualification = typeof vendorQualifications.$inferInsert;
 
 // Title Management types
 export type TitleOpinion = typeof titleOpinions.$inferSelect;
