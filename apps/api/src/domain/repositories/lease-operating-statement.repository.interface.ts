@@ -1,6 +1,22 @@
 import { LeaseOperatingStatement } from '../entities/lease-operating-statement.entity';
 import { StatementMonth } from '../value-objects/statement-month';
-import { LosStatus } from '../enums/los-status.enum';
+import {
+  ExpenseCategory,
+  ExpenseType,
+  LosStatus,
+} from '../enums/los-status.enum';
+
+export type ExpenseLineItemData = {
+  id: string;
+  description: string;
+  category: ExpenseCategory;
+  type: ExpenseType;
+  amount: { amount: number; currency: string };
+  vendorName?: string;
+  invoiceNumber?: string;
+  invoiceDate?: string;
+  notes?: string;
+};
 
 /**
  * Lease Operating Statement Repository Interface
@@ -188,7 +204,7 @@ export interface LosRecord {
   createdAt: Date;
   updatedAt: Date;
   version: number;
-  expenseBreakdown: any;
+  expenseBreakdown: ExpenseLineItemData[];
 }
 
 export interface LosListItem {

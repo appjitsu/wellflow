@@ -15,33 +15,35 @@ import {
   ExpenseCategory,
   ExpenseType,
 } from '../../domain/enums/los-status.enum';
+import { LeaseOperatingStatement } from '../../domain/entities/lease-operating-statement.entity';
+import { ExpenseLineItem } from '../../domain/value-objects/expense-line-item';
 
 /**
  * Lease Operating Statement DTO
  * Data Transfer Object for LOS responses
  */
 export class LosDto {
-  id: string;
-  organizationId: string;
-  leaseId: string;
+  id!: string;
+  organizationId!: string;
+  leaseId!: string;
   leaseName?: string;
-  statementMonth: string;
-  displayMonth: string;
-  totalExpenses: number;
-  operatingExpenses: number;
-  capitalExpenses: number;
-  status: LosStatus;
+  statementMonth!: string;
+  displayMonth!: string;
+  totalExpenses!: number;
+  operatingExpenses!: number;
+  capitalExpenses!: number;
+  status!: LosStatus;
   notes?: string;
-  expenseLineItems: ExpenseLineItemDto[];
-  createdAt: Date;
-  updatedAt: Date;
-  version: number;
+  expenseLineItems!: ExpenseLineItemDto[];
+  createdAt!: Date;
+  updatedAt!: Date;
+  version!: number;
 
   constructor(data: Partial<LosDto>) {
     Object.assign(this, data);
   }
 
-  static fromDomain(los: any, leaseName?: string): LosDto {
+  static fromDomain(los: LeaseOperatingStatement, leaseName?: string): LosDto {
     return new LosDto({
       id: los.getId(),
       organizationId: los.getOrganizationId(),
@@ -49,14 +51,14 @@ export class LosDto {
       leaseName,
       statementMonth: los.getStatementMonth().toString(),
       displayMonth: los.getStatementMonth().toDisplayString(),
-      totalExpenses: los.getTotalExpenses().getAmount(),
-      operatingExpenses: los.getOperatingExpenses().getAmount(),
-      capitalExpenses: los.getCapitalExpenses().getAmount(),
+      totalExpenses: los.getTotalExpenses(),
+      operatingExpenses: los.getOperatingExpenses(),
+      capitalExpenses: los.getCapitalExpenses(),
       status: los.getStatus(),
       notes: los.getNotes(),
       expenseLineItems: los
         .getExpenseLineItems()
-        .map((item: any) => ExpenseLineItemDto.fromDomain(item)),
+        .map((item) => ExpenseLineItemDto.fromDomain(item)),
       createdAt: los.getCreatedAt(),
       updatedAt: los.getUpdatedAt(),
       version: los.getVersion(),
@@ -69,12 +71,12 @@ export class LosDto {
  * Data Transfer Object for expense line items
  */
 export class ExpenseLineItemDto {
-  id: string;
-  description: string;
-  category: ExpenseCategory;
-  type: ExpenseType;
-  amount: number;
-  currency: string;
+  id!: string;
+  description!: string;
+  category!: ExpenseCategory;
+  type!: ExpenseType;
+  amount!: number;
+  currency!: string;
   vendorName?: string;
   invoiceNumber?: string;
   invoiceDate?: Date;
@@ -84,7 +86,7 @@ export class ExpenseLineItemDto {
     Object.assign(this, data);
   }
 
-  static fromDomain(item: any): ExpenseLineItemDto {
+  static fromDomain(item: ExpenseLineItem): ExpenseLineItemDto {
     return new ExpenseLineItemDto({
       id: item.getId(),
       description: item.getDescription(),
@@ -105,32 +107,35 @@ export class ExpenseLineItemDto {
  * Simplified DTO for list views
  */
 export class LosListItemDto {
-  id: string;
-  leaseId: string;
+  id!: string;
+  leaseId!: string;
   leaseName?: string;
-  statementMonth: string;
-  displayMonth: string;
-  totalExpenses: number;
-  operatingExpenses: number;
-  capitalExpenses: number;
-  status: LosStatus;
-  createdAt: Date;
-  updatedAt: Date;
+  statementMonth!: string;
+  displayMonth!: string;
+  totalExpenses!: number;
+  operatingExpenses!: number;
+  capitalExpenses!: number;
+  status!: LosStatus;
+  createdAt!: Date;
+  updatedAt!: Date;
 
   constructor(data: Partial<LosListItemDto>) {
     Object.assign(this, data);
   }
 
-  static fromDomain(los: any, leaseName?: string): LosListItemDto {
+  static fromDomain(
+    los: LeaseOperatingStatement,
+    leaseName?: string,
+  ): LosListItemDto {
     return new LosListItemDto({
       id: los.getId(),
       leaseId: los.getLeaseId(),
       leaseName,
       statementMonth: los.getStatementMonth().toString(),
       displayMonth: los.getStatementMonth().toDisplayString(),
-      totalExpenses: los.getTotalExpenses().getAmount(),
-      operatingExpenses: los.getOperatingExpenses().getAmount(),
-      capitalExpenses: los.getCapitalExpenses().getAmount(),
+      totalExpenses: los.getTotalExpenses(),
+      operatingExpenses: los.getOperatingExpenses(),
+      capitalExpenses: los.getCapitalExpenses(),
       status: los.getStatus(),
       createdAt: los.getCreatedAt(),
       updatedAt: los.getUpdatedAt(),
@@ -143,12 +148,12 @@ export class LosListItemDto {
  * Summary of expenses across leases
  */
 export class LosExpenseSummaryDto {
-  leaseId: string;
+  leaseId!: string;
   leaseName?: string;
-  totalOperatingExpenses: number;
-  totalCapitalExpenses: number;
-  totalExpenses: number;
-  statementCount: number;
+  totalOperatingExpenses!: number;
+  totalCapitalExpenses!: number;
+  totalExpenses!: number;
+  statementCount!: number;
 
   constructor(data: Partial<LosExpenseSummaryDto>) {
     Object.assign(this, data);

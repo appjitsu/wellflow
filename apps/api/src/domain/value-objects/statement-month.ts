@@ -38,6 +38,20 @@ export class StatementMonth {
   }
 
   /**
+   * Get the first day of the statement month (alias for getStartDate)
+   */
+  getFirstDayOfMonth(): Date {
+    return this.getStartDate();
+  }
+
+  /**
+   * Get the last day of the statement month (alias for getEndDate)
+   */
+  getLastDayOfMonth(): Date {
+    return this.getEndDate();
+  }
+
+  /**
    * Format as YYYY-MM string
    */
   toString(): string {
@@ -63,6 +77,27 @@ export class StatementMonth {
       'December',
     ];
     return `${monthNames[this.month - 1]} ${this.year}`;
+  }
+
+  /**
+   * Format as short human-readable string (e.g., "Mar 2024")
+   */
+  toShortDisplayString(): string {
+    const shortMonthNames = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return `${shortMonthNames[this.month - 1]} ${this.year}`;
   }
 
   /**
@@ -151,13 +186,14 @@ export class StatementMonth {
       throw new Error('Value must be a valid string');
     }
 
-    const match = value.match(/^(\d{4})-(\d{2})$/);
+    const regex = /^(\d{4})-(\d{2})$/;
+    const match = regex.exec(value);
     if (!match) {
       throw new Error('Value must be in YYYY-MM format');
     }
 
-    const year = parseInt(match[1], 10);
-    const month = parseInt(match[2], 10);
+    const year = parseInt(match[1] as string, 10);
+    const month = parseInt(match[2] as string, 10);
 
     return new StatementMonth(year, month);
   }

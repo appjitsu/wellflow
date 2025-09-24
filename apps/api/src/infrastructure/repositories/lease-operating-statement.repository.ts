@@ -1,14 +1,20 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { eq, and, gte, lte, desc, count, sql } from 'drizzle-orm';
+import {
+  eq,
+  and,
+  gte,
+  lte,
+  desc,
+  count,
+  sql,
+  type InferSelectModel,
+} from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { BaseRepository } from './base.repository';
-import { leaseOperatingStatements, leases } from '../../database/schema';
+import { leaseOperatingStatements } from '../../database/schema';
 import * as schema from '../../database/schema';
 import {
   ILosRepository,
-  LosRecord,
-  LosListItem,
-  LosExpenseSummary,
+  ExpenseLineItemData,
 } from '../../domain/repositories/lease-operating-statement.repository.interface';
 import { LeaseOperatingStatement } from '../../domain/entities/lease-operating-statement.entity';
 import { StatementMonth } from '../../domain/value-objects/statement-month';
@@ -19,16 +25,11 @@ import { LosStatus } from '../../domain/enums/los-status.enum';
  * Handles LOS data access with advanced querying and reporting
  */
 @Injectable()
-export class LosRepository
-  extends BaseRepository<typeof leaseOperatingStatements>
-  implements ILosRepository
-{
+export class LosRepository implements ILosRepository {
   constructor(
     @Inject('DATABASE_CONNECTION')
-    db: NodePgDatabase<typeof schema>,
-  ) {
-    super(db, leaseOperatingStatements);
-  }
+    private readonly db: NodePgDatabase<typeof schema>,
+  ) {}
 
   /**
    * Save a lease operating statement entity
@@ -50,7 +51,6 @@ export class LosRepository
           status: persistenceData.status,
           notes: persistenceData.notes,
           updatedAt: persistenceData.updatedAt,
-          version: persistenceData.version,
           expenseBreakdown: persistenceData.expenseBreakdown,
         })
         .where(eq(leaseOperatingStatements.id, los.getId()));
@@ -60,7 +60,7 @@ export class LosRepository
         id: persistenceData.id,
         organizationId: persistenceData.organizationId,
         leaseId: persistenceData.leaseId,
-        statementMonth: new Date(persistenceData.statementMonth + '-01'),
+        statementMonth: persistenceData.statementMonth,
         totalExpenses: persistenceData.totalExpenses,
         operatingExpenses: persistenceData.operatingExpenses,
         capitalExpenses: persistenceData.capitalExpenses,
@@ -103,28 +103,27 @@ export class LosRepository
       status?: LosStatus;
     },
   ): Promise<LeaseOperatingStatement[]> {
-    let query = this.db
-      .select()
-      .from(leaseOperatingStatements)
-      .where(eq(leaseOperatingStatements.organizationId, organizationId));
+    const whereConditions = [
+      eq(leaseOperatingStatements.organizationId, organizationId),
+    ];
 
     if (options?.status) {
-      query = query.where(
-        and(
-          eq(leaseOperatingStatements.organizationId, organizationId),
-          eq(leaseOperatingStatements.status, options.status),
-        ),
-      );
+      whereConditions.push(eq(leaseOperatingStatements.status, options.status));
     }
 
-    query = query.orderBy(desc(leaseOperatingStatements.statementMonth));
+    const query = this.db
+      .select()
+      .from(leaseOperatingStatements)
+      .where(and(...whereConditions))
+      .orderBy(desc(leaseOperatingStatements.statementMonth));
 
     if (options?.limit) {
-      query = query.limit(options.limit);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+      (query as any).limit(options.limit);
     }
-
     if (options?.offset) {
-      query = query.offset(options.offset);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+      (query as any).offset(options.offset);
     }
 
     const results = await query;
@@ -142,29 +141,27 @@ export class LosRepository
       status?: LosStatus;
     },
   ): Promise<LeaseOperatingStatement[]> {
-    let query = this.db
-      .select()
-      .from(leaseOperatingStatements)
-      .where(eq(leaseOperatingStatements.leaseId, leaseId));
+    const whereConditions = [eq(leaseOperatingStatements.leaseId, leaseId)];
 
     if (options?.status) {
-      query = query.where(
-        and(
-          eq(leaseOperatingStatements.leaseId, leaseId),
-          eq(leaseOperatingStatements.status, options.status),
-        ),
-      );
+      whereConditions.push(eq(leaseOperatingStatements.status, options.status));
     }
 
-    query = query.orderBy(desc(leaseOperatingStatements.statementMonth));
+    const query = this.db
+      .select()
+      .from(leaseOperatingStatements)
+      .where(and(...whereConditions))
+      .$dynamic();
 
     if (options?.limit) {
-      query = query.limit(options.limit);
+      query.limit(options.limit);
     }
 
     if (options?.offset) {
-      query = query.offset(options.offset);
+      query.offset(options.offset);
     }
+
+    query.orderBy(desc(leaseOperatingStatements.statementMonth));
 
     const results = await query;
     return results.map((result) => this.mapToEntity(result));
@@ -177,15 +174,16 @@ export class LosRepository
     leaseId: string,
     statementMonth: StatementMonth,
   ): Promise<LeaseOperatingStatement | null> {
-    const monthDate = new Date(statementMonth.toString() + '-01');
-
     const result = await this.db
       .select()
       .from(leaseOperatingStatements)
       .where(
         and(
           eq(leaseOperatingStatements.leaseId, leaseId),
-          eq(leaseOperatingStatements.statementMonth, monthDate),
+          eq(
+            leaseOperatingStatements.statementMonth,
+            statementMonth.toString(),
+          ),
         ),
       )
       .limit(1);
@@ -208,7 +206,7 @@ export class LosRepository
       offset?: number;
     },
   ): Promise<LeaseOperatingStatement[]> {
-    let query = this.db
+    const query = this.db
       .select()
       .from(leaseOperatingStatements)
       .where(
@@ -217,15 +215,17 @@ export class LosRepository
           eq(leaseOperatingStatements.status, status),
         ),
       )
-      .orderBy(desc(leaseOperatingStatements.statementMonth));
+      .$dynamic();
 
     if (options?.limit) {
-      query = query.limit(options.limit);
+      query.limit(options.limit);
     }
 
     if (options?.offset) {
-      query = query.offset(options.offset);
+      query.offset(options.offset);
     }
+
+    query.orderBy(desc(leaseOperatingStatements.statementMonth));
 
     const results = await query;
     return results.map((result) => this.mapToEntity(result));
@@ -245,13 +245,13 @@ export class LosRepository
       offset?: number;
     },
   ): Promise<LeaseOperatingStatement[]> {
-    const startDate = new Date(startMonth.toString() + '-01');
-    const endDate = new Date(endMonth.toString() + '-01');
-
     const conditions = [
       eq(leaseOperatingStatements.organizationId, organizationId),
-      gte(leaseOperatingStatements.statementMonth, startDate),
-      lte(leaseOperatingStatements.statementMonth, endDate),
+      gte(
+        leaseOperatingStatements.statementMonth,
+        `${startMonth.toString()}-01`,
+      ),
+      lte(leaseOperatingStatements.statementMonth, `${endMonth.toString()}-01`),
     ];
 
     if (options?.leaseId) {
@@ -262,19 +262,21 @@ export class LosRepository
       conditions.push(eq(leaseOperatingStatements.status, options.status));
     }
 
-    let query = this.db
+    const query = this.db
       .select()
       .from(leaseOperatingStatements)
       .where(and(...conditions))
-      .orderBy(desc(leaseOperatingStatements.statementMonth));
+      .$dynamic();
 
     if (options?.limit) {
-      query = query.limit(options.limit);
+      query.limit(options.limit);
     }
 
     if (options?.offset) {
-      query = query.offset(options.offset);
+      query.offset(options.offset);
     }
+
+    query.orderBy(desc(leaseOperatingStatements.statementMonth));
 
     const results = await query;
     return results.map((result) => this.mapToEntity(result));
@@ -334,19 +336,20 @@ export class LosRepository
     leaseId: string,
     statementMonth: StatementMonth,
   ): Promise<boolean> {
-    const monthDate = new Date(statementMonth.toString() + '-01');
-
     const result = await this.db
       .select({ count: count() })
       .from(leaseOperatingStatements)
       .where(
         and(
           eq(leaseOperatingStatements.leaseId, leaseId),
-          eq(leaseOperatingStatements.statementMonth, monthDate),
+          eq(
+            leaseOperatingStatements.statementMonth,
+            statementMonth.toString(),
+          ),
         ),
       );
 
-    return result[0]?.count > 0;
+    return (result[0]?.count ?? 0) > 0;
   }
 
   /**
@@ -365,9 +368,6 @@ export class LosRepository
       statementCount: number;
     }[]
   > {
-    const startDate = new Date(startMonth.toString() + '-01');
-    const endDate = new Date(endMonth.toString() + '-01');
-
     return await this.db
       .select({
         leaseId: leaseOperatingStatements.leaseId,
@@ -380,8 +380,14 @@ export class LosRepository
       .where(
         and(
           eq(leaseOperatingStatements.organizationId, organizationId),
-          gte(leaseOperatingStatements.statementMonth, startDate),
-          lte(leaseOperatingStatements.statementMonth, endDate),
+          gte(
+            leaseOperatingStatements.statementMonth,
+            `${startMonth.toString()}-01`,
+          ),
+          lte(
+            leaseOperatingStatements.statementMonth,
+            `${endMonth.toString()}-01`,
+          ),
         ),
       )
       .groupBy(leaseOperatingStatements.leaseId);
@@ -417,7 +423,10 @@ export class LosRepository
       .where(
         and(
           eq(leaseOperatingStatements.organizationId, organizationId),
-          gte(leaseOperatingStatements.statementMonth, startDate),
+          gte(
+            leaseOperatingStatements.statementMonth,
+            startDate.toISOString().substring(0, 10),
+          ),
         ),
       )
       .groupBy(
@@ -479,23 +488,27 @@ export class LosRepository
   /**
    * Map database record to domain entity
    */
-  private mapToEntity(record: any): LeaseOperatingStatement {
-    const statementMonth = record.statementMonth.toISOString().substring(0, 7); // YYYY-MM format
+  private mapToEntity(
+    record: InferSelectModel<typeof leaseOperatingStatements>,
+  ): LeaseOperatingStatement {
+    const statementMonth = record.statementMonth; // Already in YYYY-MM-DD format from database
 
     return LeaseOperatingStatement.fromPersistence({
       id: record.id,
       organizationId: record.organizationId,
       leaseId: record.leaseId,
       statementMonth,
-      totalExpenses: record.totalExpenses,
-      operatingExpenses: record.operatingExpenses,
-      capitalExpenses: record.capitalExpenses,
-      status: record.status,
-      notes: record.notes,
+      totalExpenses: record.totalExpenses || undefined,
+      operatingExpenses: record.operatingExpenses || undefined,
+      capitalExpenses: record.capitalExpenses || undefined,
+      status: record.status as LosStatus,
+      notes: record.notes || undefined,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
       version: 1, // Default version for now
-      expenseBreakdown: record.expenseBreakdown,
+      expenseBreakdown: record.expenseBreakdown as
+        | ExpenseLineItemData[]
+        | undefined,
     });
   }
 }

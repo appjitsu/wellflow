@@ -129,6 +129,8 @@ describe('LeaseOperatingStatementsController', () => {
           statementMonth: '2024-03',
           displayMonth: 'March 2024',
           totalExpenses: 1000,
+          operatingExpenses: 700,
+          capitalExpenses: 300,
           status: LosStatus.DRAFT,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -200,6 +202,7 @@ describe('LeaseOperatingStatementsController', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         expenseLineItems: [],
+        version: 1,
       };
       mockQueryBus.execute.mockResolvedValue(mockLos);
 

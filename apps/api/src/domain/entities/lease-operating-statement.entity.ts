@@ -1,5 +1,4 @@
 import { IEvent } from '@nestjs/cqrs';
-import { Money } from '../value-objects/money';
 import { StatementMonth } from '../value-objects/statement-month';
 import { ExpenseLineItem } from '../value-objects/expense-line-item';
 import { LosStatus, ExpenseType } from '../enums/los-status.enum';
@@ -7,6 +6,7 @@ import { LosCreatedEvent } from '../events/los-created.event';
 import { LosFinalizedEvent } from '../events/los-finalized.event';
 import { LosDistributedEvent } from '../events/los-distributed.event';
 import { LosExpenseAddedEvent } from '../events/los-expense-added.event';
+import type { ExpenseLineItemData } from '../repositories/lease-operating-statement.repository.interface';
 
 interface LosPersistenceData {
   id: string;
@@ -21,7 +21,7 @@ interface LosPersistenceData {
   createdAt: Date;
   updatedAt: Date;
   version: number;
-  expenseBreakdown?: any; // JSON data
+  expenseBreakdown?: string | ExpenseLineItemData[]; // JSON string or parsed data
 }
 
 /**
@@ -324,14 +324,19 @@ export class LeaseOperatingStatement {
   }
 
   private isValidStatusTransition(from: LosStatus, to: LosStatus): boolean {
-    const validTransitions: Record<LosStatus, LosStatus[]> = {
-      [LosStatus.DRAFT]: [LosStatus.FINALIZED],
-      [LosStatus.FINALIZED]: [LosStatus.DISTRIBUTED, LosStatus.DRAFT], // Allow back to draft for corrections
-      [LosStatus.DISTRIBUTED]: [LosStatus.ARCHIVED],
-      [LosStatus.ARCHIVED]: [], // Terminal state
-    };
-
-    return validTransitions[from]?.includes(to) || false;
+    // Use switch statement to avoid object injection vulnerability
+    switch (from) {
+      case LosStatus.DRAFT:
+        return to === LosStatus.FINALIZED;
+      case LosStatus.FINALIZED:
+        return to === LosStatus.DISTRIBUTED || to === LosStatus.DRAFT;
+      case LosStatus.DISTRIBUTED:
+        return to === LosStatus.ARCHIVED;
+      case LosStatus.ARCHIVED:
+        return false; // Terminal state
+      default:
+        return false; // Invalid status
+    }
   }
 
   // Factory method for persistence
@@ -355,13 +360,16 @@ export class LeaseOperatingStatement {
     // Restore expense line items from breakdown
     if (data.expenseBreakdown) {
       try {
-        const expenseData =
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const parsedData =
           typeof data.expenseBreakdown === 'string'
             ? JSON.parse(data.expenseBreakdown)
             : data.expenseBreakdown;
 
-        if (Array.isArray(expenseData)) {
-          expenseData.forEach((itemData: any) => {
+        // Type guard to ensure we have the correct structure
+        if (Array.isArray(parsedData)) {
+          const expenseData = parsedData as unknown as ExpenseLineItemData[];
+          expenseData.forEach((itemData) => {
             const lineItem = ExpenseLineItem.fromJSON(itemData);
             los.expenseLineItems.set(lineItem.getId(), lineItem);
           });

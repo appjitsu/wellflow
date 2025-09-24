@@ -30,8 +30,8 @@ export class DistributeLosHandler
       // Distribute the LOS
       los.distribute(
         command.distributedBy,
-        command.method,
-        command.retryAttempts,
+        command.distributionMethod,
+        command.recipientCount,
       );
 
       // Save LOS

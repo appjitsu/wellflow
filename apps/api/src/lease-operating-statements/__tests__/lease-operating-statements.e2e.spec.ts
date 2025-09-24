@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { LeaseOperatingStatementsModule } from '../lease-operating-statements.module';
 import { DatabaseModule } from '../../database/database.module';
 import { AuthorizationModule } from '../../authorization/authorization.module';
@@ -13,7 +13,6 @@ import {
 describe('LeaseOperatingStatements (e2e)', () => {
   let app: INestApplication;
   let authToken: string;
-  let organizationId: string;
   let leaseId: string;
   let losId: string;
 
@@ -31,7 +30,6 @@ describe('LeaseOperatingStatements (e2e)', () => {
     await app.init();
 
     // Setup test data
-    organizationId = 'test-org-123';
     leaseId = 'test-lease-456';
     authToken = 'Bearer test-token'; // In real tests, this would be a valid JWT
   });

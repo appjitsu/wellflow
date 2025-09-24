@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Put,
-  Delete,
   Param,
   Body,
   Query,
@@ -49,6 +48,11 @@ interface AuthenticatedRequest extends Request {
     organizationId: string;
   };
 }
+
+/**
+ * Error messages for LOS operations
+ */
+const LOS_NOT_FOUND_MESSAGE = 'LOS not found';
 
 /**
  * Lease Operating Statements Controller
@@ -104,9 +108,11 @@ export class LeaseOperatingStatementsController {
       req.user.id,
     );
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const losId = await this.commandBus.execute(command);
 
     return {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       id: losId,
       message: 'Lease Operating Statement created successfully',
     };
@@ -202,7 +208,7 @@ export class LeaseOperatingStatementsController {
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: 'LOS not found',
+    description: LOS_NOT_FOUND_MESSAGE,
   })
   async getLosById(@Param('id') id: string): Promise<LosDto> {
     const query = new GetLosByIdQuery(id);
@@ -226,7 +232,7 @@ export class LeaseOperatingStatementsController {
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: 'LOS not found',
+    description: LOS_NOT_FOUND_MESSAGE,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
@@ -252,9 +258,11 @@ export class LeaseOperatingStatementsController {
       req.user.id,
     );
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const expenseId = await this.commandBus.execute(command);
 
     return {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       expenseId,
       message: 'Expense added successfully',
     };
@@ -276,7 +284,7 @@ export class LeaseOperatingStatementsController {
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: 'LOS not found',
+    description: LOS_NOT_FOUND_MESSAGE,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
@@ -310,7 +318,7 @@ export class LeaseOperatingStatementsController {
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: 'LOS not found',
+    description: LOS_NOT_FOUND_MESSAGE,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,

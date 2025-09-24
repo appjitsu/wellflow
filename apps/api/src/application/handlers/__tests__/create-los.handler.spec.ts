@@ -119,14 +119,14 @@ describe('CreateLosHandler', () => {
     it('should create LOS with correct parameters', async () => {
       // Arrange
       mockLosRepository.findByLeaseIdAndMonth.mockResolvedValue(null);
-      mockLosRepository.save.mockImplementation(async (los) => {
+      mockLosRepository.save.mockImplementation((los) => {
         // Verify the LOS was created with correct parameters
         expect(los.getOrganizationId()).toBe('org-123');
         expect(los.getLeaseId()).toBe('lease-456');
         expect(los.getStatementMonth().getYear()).toBe(2024);
         expect(los.getStatementMonth().getMonth()).toBe(3);
         expect(los.getNotes()).toBe('Test notes');
-        return los;
+        return Promise.resolve(los);
       });
 
       // Act
@@ -161,9 +161,9 @@ describe('CreateLosHandler', () => {
         'user-789',
       );
       mockLosRepository.findByLeaseIdAndMonth.mockResolvedValue(null);
-      mockLosRepository.save.mockImplementation(async (los) => {
+      mockLosRepository.save.mockImplementation((los) => {
         expect(los.getNotes()).toBeUndefined();
-        return los;
+        return Promise.resolve(los);
       });
 
       // Act
@@ -194,9 +194,9 @@ describe('CreateLosHandler', () => {
       // Arrange
       mockLosRepository.findByLeaseIdAndMonth.mockResolvedValue(null);
       let savedLos: LeaseOperatingStatement;
-      mockLosRepository.save.mockImplementation(async (los) => {
+      mockLosRepository.save.mockImplementation((los) => {
         savedLos = los;
-        return los;
+        return Promise.resolve(los);
       });
 
       // Act

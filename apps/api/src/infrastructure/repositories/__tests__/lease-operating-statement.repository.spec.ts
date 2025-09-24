@@ -10,32 +10,29 @@ import {
   ExpenseType,
 } from '../../../domain/enums/los-status.enum';
 
+// Create a mock query builder that supports chaining and promise resolution
+const mockQuery = jest.fn() as any;
+mockQuery.mockReturnValue(mockQuery); // Support chaining
+mockQuery.mockResolvedValue([]); // Default resolved value
+
+// Add mock methods to the function object
+mockQuery.from = jest.fn().mockReturnValue(mockQuery);
+mockQuery.where = jest.fn().mockReturnValue(mockQuery);
+mockQuery.orderBy = jest.fn().mockReturnValue(mockQuery);
+mockQuery.limit = jest.fn().mockReturnValue(mockQuery);
+mockQuery.offset = jest.fn().mockReturnValue(mockQuery);
+mockQuery.groupBy = jest.fn().mockReturnValue(mockQuery);
+mockQuery.set = jest.fn().mockReturnValue(mockQuery);
+mockQuery.values = jest.fn().mockReturnValue(mockQuery);
+mockQuery.returning = jest.fn().mockReturnValue(mockQuery);
+
 // Mock database connection
 const mockDb = {
-  select: jest.fn(),
-  insert: jest.fn(),
-  update: jest.fn(),
-  delete: jest.fn(),
+  select: jest.fn(() => mockQuery),
+  insert: jest.fn(() => mockQuery),
+  update: jest.fn(() => mockQuery),
+  delete: jest.fn(() => mockQuery),
 };
-
-// Mock query builder
-const mockQuery = {
-  from: jest.fn().mockReturnThis(),
-  where: jest.fn().mockReturnThis(),
-  orderBy: jest.fn().mockReturnThis(),
-  limit: jest.fn().mockReturnThis(),
-  offset: jest.fn().mockReturnThis(),
-  groupBy: jest.fn().mockReturnThis(),
-  set: jest.fn().mockReturnThis(),
-  values: jest.fn().mockReturnThis(),
-  returning: jest.fn().mockReturnThis(),
-};
-
-// Setup mock implementations
-mockDb.select.mockReturnValue(mockQuery);
-mockDb.insert.mockReturnValue(mockQuery);
-mockDb.update.mockReturnValue(mockQuery);
-mockDb.delete.mockReturnValue(mockQuery);
 
 describe('LosRepository', () => {
   let repository: LosRepository;
@@ -340,10 +337,10 @@ describe('LosRepository', () => {
 
       // Assert
       expect(result).toHaveLength(2);
-      expect(result[0].leaseId).toBe('lease-1');
-      expect(result[0].totalExpenses).toBe(7000);
-      expect(result[1].leaseId).toBe('lease-2');
-      expect(result[1].totalExpenses).toBe(4000);
+      expect(result[0]!.leaseId).toBe('lease-1');
+      expect(result[0]!.totalExpenses).toBe(7000);
+      expect(result[1]!.leaseId).toBe('lease-2');
+      expect(result[1]!.totalExpenses).toBe(4000);
     });
   });
 
