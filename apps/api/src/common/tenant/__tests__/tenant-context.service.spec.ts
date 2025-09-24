@@ -127,7 +127,7 @@ describe('TenantContextService', () => {
       const partialUpdate = { userRole: 'operator' };
       service.setContext(partialUpdate);
 
-      const context = service.getContext();
+      const context = service.getContext()!;
       expect(context.organizationId).toBe('org-123');
       expect(context.userId).toBe('user-456');
       expect(context.userRole).toBe('operator');
@@ -271,7 +271,7 @@ describe('TenantContextService', () => {
 
   describe('Performance and Memory Management', () => {
     it('should handle large context objects efficiently', () => {
-      const largeMetadata = {};
+      const largeMetadata: Record<string, string> = {};
       for (let i = 0; i < 1000; i++) {
         largeMetadata[`key${i}`] = `value${i}`;
       }

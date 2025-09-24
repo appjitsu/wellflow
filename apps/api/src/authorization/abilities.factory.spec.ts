@@ -64,6 +64,17 @@ describe('AbilitiesFactory', () => {
       // Admin can manage users
       expect(ability.can('create', 'User')).toBe(true);
       expect(ability.can('read', 'User')).toBe(true);
+
+      // Admin can manage AFEs
+      expect(ability.can('create', 'Afe')).toBe(true);
+      expect(ability.can('read', 'Afe')).toBe(true);
+      expect(ability.can('update', 'Afe')).toBe(true);
+      expect(ability.can('submit', 'Afe')).toBe(true);
+      expect(ability.can('approve', 'Afe')).toBe(true);
+      expect(ability.can('reject', 'Afe')).toBe(true);
+      expect(ability.can('delete', 'Afe')).toBe(true);
+      expect(ability.can('export', 'Afe')).toBe(true);
+      expect(ability.can('audit', 'Afe')).toBe(true);
       expect(ability.can('update', 'User')).toBe(true);
       expect(ability.can('delete', 'User')).toBe(true);
 
@@ -99,6 +110,19 @@ describe('AbilitiesFactory', () => {
 
       // Operator can read their own profile
       expect(ability.can('read', 'User')).toBe(true);
+
+      // Operator AFE permissions
+      expect(ability.can('create', 'Afe')).toBe(true);
+      expect(ability.can('read', 'Afe')).toBe(true);
+      expect(ability.can('update', 'Afe')).toBe(true);
+      expect(ability.can('submit', 'Afe')).toBe(true);
+      expect(ability.can('export', 'Afe')).toBe(true);
+
+      // Operator AFE restrictions
+      expect(ability.can('approve', 'Afe')).toBe(false);
+      expect(ability.can('reject', 'Afe')).toBe(false);
+      expect(ability.can('delete', 'Afe')).toBe(false);
+      expect(ability.can('audit', 'Afe')).toBe(false);
     });
 
     it('should create abilities for viewer user', () => {
@@ -124,6 +148,19 @@ describe('AbilitiesFactory', () => {
 
       // Viewer can read their own profile
       expect(ability.can('read', 'User')).toBe(true);
+
+      // Viewer AFE permissions - read only
+      expect(ability.can('read', 'Afe')).toBe(true);
+
+      // Viewer AFE restrictions
+      expect(ability.can('create', 'Afe')).toBe(false);
+      expect(ability.can('update', 'Afe')).toBe(false);
+      expect(ability.can('delete', 'Afe')).toBe(false);
+      expect(ability.can('submit', 'Afe')).toBe(false);
+      expect(ability.can('approve', 'Afe')).toBe(false);
+      expect(ability.can('reject', 'Afe')).toBe(false);
+      expect(ability.can('export', 'Afe')).toBe(false);
+      expect(ability.can('audit', 'Afe')).toBe(false);
     });
 
     it('should handle multi-tenant permissions for wells', () => {

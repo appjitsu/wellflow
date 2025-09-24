@@ -20,6 +20,7 @@ type Subjects =
       | 'Lease'
       | 'Production'
       | 'Partner'
+      | 'Afe'
     >
   | 'all';
 
@@ -34,7 +35,10 @@ export type Actions =
   | 'submitReport' // Can submit regulatory reports
   | 'viewSensitive' // Can view sensitive data
   | 'export' // Can export data
-  | 'audit'; // Can view audit logs
+  | 'audit' // Can view audit logs
+  | 'submit' // Can submit AFEs for approval
+  | 'approve' // Can approve AFEs
+  | 'reject'; // Can reject AFEs
 
 export type AppAbility = MongoAbility<[Actions, Subjects]>;
 
@@ -103,6 +107,19 @@ export class AbilitiesFactory {
 
       // Can read User information (for their own profile)
       can('read', 'User');
+
+      // AFE permissions for operators
+      can('create', 'Afe');
+      can('read', 'Afe');
+      can('update', 'Afe');
+      can('submit', 'Afe');
+      can('export', 'Afe');
+
+      // Cannot approve/reject AFEs (requires higher authority)
+      cannot('approve', 'Afe');
+      cannot('reject', 'Afe');
+      cannot('delete', 'Afe');
+      cannot('audit', 'Afe');
     }
 
     // Viewer permissions - read-only access
@@ -121,6 +138,53 @@ export class AbilitiesFactory {
 
       // Can read User information (for their own profile)
       can('read', 'User');
+
+      // AFE permissions for viewers - read-only
+      can('read', 'Afe');
+
+      // Cannot modify AFEs
+      cannot('create', 'Afe');
+      cannot('update', 'Afe');
+      cannot('delete', 'Afe');
+      cannot('submit', 'Afe');
+      cannot('approve', 'Afe');
+      cannot('reject', 'Afe');
+      cannot('export', 'Afe');
+      cannot('audit', 'Afe');
+    }
+
+    // Manager permissions - can approve AFEs and manage operations
+    if (user.roles.includes('MANAGER')) {
+      // Can read and update wells
+      can('read', 'Well');
+      can('update', 'Well');
+      can('updateStatus', 'Well');
+
+      // Can submit reports
+      can('submitReport', 'Well');
+
+      // Can export data
+      can('export', 'Well');
+
+      // Cannot create or delete wells (requires operator role)
+      cannot('create', 'Well');
+      cannot('delete', 'Well');
+
+      // Can read User information
+      can('read', 'User');
+
+      // AFE permissions for managers - can approve/reject
+      can('read', 'Afe');
+      can('update', 'Afe');
+      can('submit', 'Afe');
+      can('approve', 'Afe');
+      can('reject', 'Afe');
+      can('export', 'Afe');
+      can('audit', 'Afe');
+
+      // Cannot create or delete AFEs (requires operator role)
+      cannot('create', 'Afe');
+      cannot('delete', 'Afe');
     }
 
     // Regulator permissions - can view all wells in their jurisdiction
@@ -139,6 +203,19 @@ export class AbilitiesFactory {
       cannot('update', 'Well');
       cannot('delete', 'Well');
       cannot('updateStatus', 'Well');
+
+      // AFE permissions for regulators - read-only for compliance
+      can('read', 'Afe');
+      can('audit', 'Afe');
+
+      // Cannot modify AFEs
+      cannot('create', 'Afe');
+      cannot('update', 'Afe');
+      cannot('delete', 'Afe');
+      cannot('submit', 'Afe');
+      cannot('approve', 'Afe');
+      cannot('reject', 'Afe');
+      cannot('export', 'Afe');
     }
 
     // Auditor permissions - read-only access to audit trails
@@ -152,6 +229,19 @@ export class AbilitiesFactory {
       cannot('delete', 'Well');
       cannot('updateStatus', 'Well');
       cannot('submitReport', 'Well');
+
+      // AFE permissions for auditors - read and audit only
+      can('read', 'Afe');
+      can('audit', 'Afe');
+
+      // Cannot modify AFEs
+      cannot('create', 'Afe');
+      cannot('update', 'Afe');
+      cannot('delete', 'Afe');
+      cannot('submit', 'Afe');
+      cannot('approve', 'Afe');
+      cannot('reject', 'Afe');
+      cannot('export', 'Afe');
     }
 
     return createMongoAbility(rules, {
