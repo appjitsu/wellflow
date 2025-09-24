@@ -60,7 +60,7 @@ export class DivisionOrderDto {
         .getFormattedPercentage(),
       effectiveDate: divisionOrder.getEffectiveDate(),
       endDate: divisionOrder.getEndDate(),
-      isActive: divisionOrder.isActive(),
+      isActive: divisionOrder.getIsActive(),
       createdAt: divisionOrder.getCreatedAt(),
       updatedAt: divisionOrder.getUpdatedAt(),
       version: divisionOrder.getVersion(),

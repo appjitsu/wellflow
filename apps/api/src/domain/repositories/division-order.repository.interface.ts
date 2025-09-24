@@ -141,7 +141,7 @@ export interface IDivisionOrderRepository {
    */
   findExpiringSoon(
     organizationId: string,
-    daysAhead: number = 30,
+    daysAhead: number,
   ): Promise<DivisionOrder[]>;
 
   /**

@@ -121,9 +121,9 @@ export class RevenueAmount {
    */
   getFormattedSummary(): string {
     return [
-      `Gross Revenue: ${this.grossRevenue.getFormattedAmount()}`,
-      `Deductions: ${this.deductions.getFormattedAmount()}`,
-      `Net Revenue: ${this.netRevenue.getFormattedAmount()}`,
+      `Gross Revenue: ${this.grossRevenue.format()}`,
+      `Deductions: ${this.deductions.format()}`,
+      `Net Revenue: ${this.netRevenue.format()}`,
     ].join('\n');
   }
 
@@ -138,7 +138,7 @@ export class RevenueAmount {
   }
 
   toString(): string {
-    return `Revenue(Gross: ${this.grossRevenue.getFormattedAmount()}, Net: ${this.netRevenue.getFormattedAmount()})`;
+    return `Revenue(Gross: ${this.grossRevenue.format()}, Net: ${this.netRevenue.format()})`;
   }
 
   private validateInputs(grossRevenue: Money, deductions: Money): void {

@@ -3,6 +3,7 @@ import { Inject } from '@nestjs/common';
 import { GetDecimalInterestSummaryQuery } from '../queries/get-decimal-interest-summary.query';
 import { DecimalInterestSummaryDto } from '../dtos/division-order.dto';
 import type { IDivisionOrderRepository } from '../../domain/repositories/division-order.repository.interface';
+import { DecimalInterest } from '../../domain/value-objects/decimal-interest';
 
 /**
  * Get Decimal Interest Summary Query Handler
@@ -32,9 +33,7 @@ export class GetDecimalInterestSummaryHandler
       wellId: query.wellId,
       totalInterest: summary.totalInterest.getFormattedDecimal(),
       totalInterestPercentage: summary.totalInterest.getFormattedPercentage(),
-      isValid: summary.totalInterest.equals(
-        summary.totalInterest.constructor.full(),
-      ),
+      isValid: summary.totalInterest.equals(DecimalInterest.full()),
       effectiveDate,
       partnerInterests: summary.partnerInterests.map((interest) => ({
         partnerId: interest.partnerId,

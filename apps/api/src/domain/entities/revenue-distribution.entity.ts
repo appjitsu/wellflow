@@ -1,7 +1,6 @@
 import { IEvent } from '@nestjs/cqrs';
 import { Money } from '../value-objects/money';
 import { ProductionMonth } from '../value-objects/production-month';
-import { RevenueAmount } from '../value-objects/revenue-amount';
 import { RevenueDistributionCreatedEvent } from '../events/revenue-distribution-created.event';
 import { RevenueDistributionCalculatedEvent } from '../events/revenue-distribution-calculated.event';
 import { RevenueDistributionPaidEvent } from '../events/revenue-distribution-paid.event';

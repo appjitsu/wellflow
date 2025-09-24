@@ -181,13 +181,13 @@ export class ProductionMonth {
    * Create from string (YYYY-MM format)
    */
   static fromString(dateString: string): ProductionMonth {
-    const match = dateString.match(/^(\d{4})-(\d{2})$/);
+    const match = /^(\d{4})-(\d{2})$/.exec(dateString);
     if (!match) {
       throw new Error('Invalid date string format. Expected YYYY-MM');
     }
 
-    const year = parseInt(match[1], 10);
-    const month = parseInt(match[2], 10);
+    const year = parseInt(match[1] as string, 10);
+    const month = parseInt(match[2] as string, 10);
     return new ProductionMonth(year, month);
   }
 
@@ -239,10 +239,10 @@ export class ProductionMonth {
   static fromDatabaseDate(dbDate: Date | string): ProductionMonth {
     if (typeof dbDate === 'string') {
       // Handle string dates like '2024-03-01' by parsing year and month directly
-      const match = dbDate.match(/^(\d{4})-(\d{2})-\d{2}$/);
+      const match = /^(\d{4})-(\d{2})-\d{2}$/.exec(dbDate);
       if (match) {
-        const year = parseInt(match[1], 10);
-        const month = parseInt(match[2], 10);
+        const year = parseInt(match[1] as string, 10);
+        const month = parseInt(match[2] as string, 10);
         return new ProductionMonth(year, month);
       }
       // Fallback to Date parsing

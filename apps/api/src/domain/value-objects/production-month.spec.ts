@@ -209,9 +209,9 @@ describe('ProductionMonth Value Object', () => {
       const range = ProductionMonth.range(start, end);
 
       expect(range).toHaveLength(3);
-      expect(range[0].equals(new ProductionMonth(2024, 1))).toBe(true);
-      expect(range[1].equals(new ProductionMonth(2024, 2))).toBe(true);
-      expect(range[2].equals(new ProductionMonth(2024, 3))).toBe(true);
+      expect(range[0]!.equals(new ProductionMonth(2024, 1))).toBe(true);
+      expect(range[1]!.equals(new ProductionMonth(2024, 2))).toBe(true);
+      expect(range[2]!.equals(new ProductionMonth(2024, 3))).toBe(true);
     });
 
     it('should throw error if start is after end', () => {
@@ -228,7 +228,7 @@ describe('ProductionMonth Value Object', () => {
       const range = ProductionMonth.range(month, month);
 
       expect(range).toHaveLength(1);
-      expect(range[0].equals(month)).toBe(true);
+      expect(range[0]!.equals(month)).toBe(true);
     });
   });
 

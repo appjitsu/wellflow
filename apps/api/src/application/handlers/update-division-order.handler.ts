@@ -55,9 +55,7 @@ export class UpdateDivisionOrderHandler
       // Update decimal interest (domain logic handles validation and events)
       divisionOrder.updateDecimalInterest(
         newDecimalInterest,
-        command.effectiveDate,
         command.updatedBy,
-        command.reason,
       );
 
       // Save division order
