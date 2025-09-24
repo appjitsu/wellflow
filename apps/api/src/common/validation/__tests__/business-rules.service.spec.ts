@@ -3,13 +3,17 @@ import { BusinessRulesService } from '../business-rules.service';
 import { DatabaseService } from '../../../database/database.service';
 import { ConfigService } from '@nestjs/config';
 
-// Mock database service
+// Mock database service with comprehensive query chain support
 const mockDatabaseService = {
   db: {
     select: jest.fn(),
     from: jest.fn(),
     where: jest.fn(),
     limit: jest.fn(),
+    insert: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    transaction: jest.fn(),
   },
 };
 
@@ -408,6 +412,211 @@ describe('BusinessRulesService', () => {
 
       expect(result.isValid).toBe(true);
       expect(result.warnings).toContain('Lease has expired');
+    });
+
+    it('should warn about terminated lease', async () => {
+      // Mock terminated lease
+      mockDatabaseService.db.select.mockReturnValue({
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            limit: jest.fn().mockResolvedValue([{ status: 'terminated' }]),
+          }),
+        }),
+      });
+
+      const result = await service.validateLeaseAccess('lease-id', 'org-id');
+
+      expect(result.isValid).toBe(true);
+      expect(result.warnings).toContain('Lease has been terminated');
+    });
+
+    it('should handle database errors gracefully', async () => {
+      // Mock database error
+      mockDatabaseService.db.select.mockReturnValue({
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            limit: jest.fn().mockRejectedValue(new Error('Database error')),
+          }),
+        }),
+      });
+
+      const result = await service.validateLeaseAccess('lease-id', 'org-id');
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Could not validate lease access');
+    });
+
+    it('should handle null lease data', async () => {
+      // Mock null lease data
+      mockDatabaseService.db.select.mockReturnValue({
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            limit: jest.fn().mockResolvedValue([null]),
+          }),
+        }),
+      });
+
+      const result = await service.validateLeaseAccess('lease-id', 'org-id');
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Lease data is invalid');
+    });
+  });
+
+  describe('Edge Cases and Error Handling', () => {
+    it('should handle empty organization ID', async () => {
+      const result = await service.validateApiNumber('4212345678901', ''); // 13 digits instead of 14
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('API number must be exactly 14 digits');
+    });
+
+    it('should handle null production date', async () => {
+      const invalidContext = {
+        wellId: 'well-id',
+        productionDate: null as any,
+        organizationId: 'org-id',
+      };
+
+      // Mock well exists
+      mockDatabaseService.db.select.mockReturnValueOnce({
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            limit: jest
+              .fn()
+              .mockResolvedValue([{ status: 'active', wellType: 'OIL' }]),
+          }),
+        }),
+      });
+
+      const result = await service.validateProductionData(invalidContext);
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Production date is required');
+    });
+
+    it('should handle negative working interest percentage', async () => {
+      const invalidContext = {
+        leaseId: 'lease-id',
+        partnerId: 'partner-id',
+        workingInterestPercent: -0.1, // Negative percentage
+        royaltyInterestPercent: 0.125,
+        netRevenueInterestPercent: 0.4,
+        effectiveDate: new Date('2024-01-01'),
+        organizationId: 'org-id',
+      };
+
+      const result =
+        await service.validateLeasePartnerOwnership(invalidContext);
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain(
+        'Working interest percentage must be greater than or equal to net revenue interest percentage',
+      );
+    });
+
+    it('should handle very old production dates', async () => {
+      const oldContext = {
+        wellId: 'well-id',
+        productionDate: new Date('1990-01-01'), // Very old date
+        organizationId: 'org-id',
+      };
+
+      // Mock well exists
+      mockDatabaseService.db.select.mockReturnValueOnce({
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            limit: jest
+              .fn()
+              .mockResolvedValue([{ status: 'active', wellType: 'OIL' }]),
+          }),
+        }),
+      });
+
+      // Mock no duplicate records
+      mockDatabaseService.db.select.mockReturnValueOnce({
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            limit: jest.fn().mockResolvedValue([]),
+          }),
+        }),
+      });
+
+      const result = await service.validateProductionData(oldContext);
+
+      expect(result.warnings).toContain(
+        'Production date is more than one year old',
+      );
+    });
+  });
+
+  describe('Performance and Stress Testing', () => {
+    it('should handle multiple concurrent validations', async () => {
+      const promises = [];
+
+      // Mock database responses
+      mockDatabaseService.db.select.mockReturnValue({
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            limit: jest.fn().mockResolvedValue([]),
+          }),
+        }),
+      });
+
+      // Create 10 concurrent API number validations
+      for (let i = 0; i < 10; i++) {
+        promises.push(service.validateApiNumber(`4212345678901${i}`, 'org-id'));
+      }
+
+      const results = await Promise.all(promises);
+
+      expect(results).toHaveLength(10);
+      results.forEach((result) => {
+        expect(result.isValid).toBe(true);
+      });
+    });
+
+    it('should handle large volume production data validation', async () => {
+      const largeVolumeContext = {
+        wellId: 'well-id',
+        productionDate: new Date('2024-01-15'),
+        oilVolume: 50000, // Very high volume
+        gasVolume: 200000, // Very high volume
+        waterVolume: 100000, // Very high volume
+        organizationId: 'org-id',
+      };
+
+      // Mock well exists
+      mockDatabaseService.db.select.mockReturnValueOnce({
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            limit: jest
+              .fn()
+              .mockResolvedValue([{ status: 'active', wellType: 'OIL' }]),
+          }),
+        }),
+      });
+
+      // Mock no duplicate records
+      mockDatabaseService.db.select.mockReturnValueOnce({
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            limit: jest.fn().mockResolvedValue([]),
+          }),
+        }),
+      });
+
+      const result = await service.validateProductionData(largeVolumeContext);
+
+      expect(result.warnings).toContain(
+        'Oil volume (50000) exceeds typical maximum (10000 barrels)',
+      );
+      expect(result.warnings).toContain(
+        'Gas volume (200000) exceeds typical maximum (100000 MCF)',
+      );
+      expect(result.warnings).toContain(
+        'Water volume (100000) exceeds typical maximum (50000 barrels)',
+      );
     });
   });
 });
