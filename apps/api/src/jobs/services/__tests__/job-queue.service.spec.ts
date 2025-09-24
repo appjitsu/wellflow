@@ -337,4 +337,118 @@ describe('JobQueueService', () => {
       expect(result).toEqual(mockJob);
     });
   });
+
+  describe('Performance and Stress Testing', () => {
+    it('should handle high-volume job enqueueing', async () => {
+      const jobPromises = [];
+
+      for (let i = 0; i < 100; i++) {
+        const jobData: LeaseDataValidationJobData = {
+          leaseId: `lease-${i}`,
+          validationType: 'production_data',
+          organizationId: 'org-123',
+          timestamp: new Date(),
+        };
+
+        mockQueue.add.mockResolvedValue({ id: `job-${i}` } as any);
+        jobPromises.push(service.enqueueDataValidation(jobData));
+      }
+
+      const results = await Promise.all(jobPromises);
+      expect(results).toHaveLength(100);
+      expect(mockQueue.add).toHaveBeenCalledTimes(100);
+    });
+
+    it('should handle concurrent job operations', async () => {
+      mockQueue.add.mockResolvedValue({ id: 'concurrent-job' } as any);
+
+      const dataValidationJob = service.enqueueDataValidation({
+        leaseId: 'lease-1',
+        validationType: 'production_data',
+        organizationId: 'org-123',
+        timestamp: new Date(),
+      });
+
+      const emailJob = service.enqueueEmailNotification({
+        message: 'Test notification',
+        recipientEmails: ['test@example.com'],
+        priority: 'normal',
+        organizationId: 'org-123',
+        timestamp: new Date(),
+      });
+
+      const reportJob = service.enqueueReportGeneration({
+        organizationId: 'org-123',
+        reportType: 'monthly_compliance',
+        dateRange: {
+          startDate: new Date(),
+          endDate: new Date(),
+        },
+        format: 'pdf',
+        recipients: ['test@example.com'],
+        timestamp: new Date(),
+      });
+
+      const results = await Promise.all([
+        dataValidationJob,
+        emailJob,
+        reportJob,
+      ]);
+      expect(results).toHaveLength(3);
+    });
+
+    it('should handle job priority and scheduling', async () => {
+      const highPriorityJob: LeaseDataValidationJobData = {
+        leaseId: 'critical-lease',
+        validationType: 'production_data',
+        organizationId: 'org-123',
+        timestamp: new Date(),
+      };
+
+      mockQueue.add.mockResolvedValue({ id: 'priority-job' } as any);
+
+      await service.enqueueDataValidation(highPriorityJob, { priority: 1 });
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        'lease-data-validation',
+        highPriorityJob,
+        expect.objectContaining({ priority: 1 }),
+      );
+    });
+  });
+
+  describe('Multi-tenant Job Isolation', () => {
+    it('should isolate jobs by organization', async () => {
+      const org1Job: LeaseDataValidationJobData = {
+        leaseId: 'lease-org1',
+        validationType: 'production_data',
+        organizationId: 'org-123',
+        timestamp: new Date(),
+      };
+
+      const org2Job: LeaseDataValidationJobData = {
+        leaseId: 'lease-org2',
+        validationType: 'production_data',
+        organizationId: 'org-456',
+        timestamp: new Date(),
+      };
+
+      mockQueue.add.mockResolvedValue({ id: 'isolated-job' } as any);
+
+      await service.enqueueDataValidation(org1Job);
+      await service.enqueueDataValidation(org2Job);
+
+      // Verify jobs are tagged with organization ID
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        'lease-data-validation',
+        expect.objectContaining({ organizationId: 'org-123' }),
+        expect.any(Object),
+      );
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        'lease-data-validation',
+        expect.objectContaining({ organizationId: 'org-456' }),
+        expect.any(Object),
+      );
+    });
+  });
 });

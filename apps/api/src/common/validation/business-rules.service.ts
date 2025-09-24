@@ -151,6 +151,13 @@ export class BusinessRulesService {
       warnings: [],
     };
 
+    // Validate required fields
+    if (!context.productionDate) {
+      result.isValid = false;
+      result.errors.push('Production date is required');
+      return result;
+    }
+
     await this.validateWellExistenceAndStatus(context, result);
     if (!result.isValid) return result;
 
