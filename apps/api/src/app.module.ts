@@ -38,6 +38,7 @@ import {
 } from './common/throttler';
 import { RequestLoggingMiddleware } from './common/middleware/request-logging.middleware';
 
+import { RegulatoryReportingModule } from './regulatory-reporting/regulatory-reporting.module';
 @Module({
   imports: [
     NestConfigModule.forRoot({
@@ -67,6 +68,7 @@ import { RequestLoggingMiddleware } from './common/middleware/request-logging.mi
     JobsModule,
     LeaseOperatingStatementsModule,
     TitleManagementModule,
+    RegulatoryReportingModule,
     IncidentsModule,
   ],
   controllers: [AppController, OperatorsController],
