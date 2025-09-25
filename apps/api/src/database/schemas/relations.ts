@@ -31,6 +31,9 @@ import {
   spillReports,
   regulatoryFilings,
   complianceSchedules,
+  chainOfTitleEntries,
+  titleOpinionDocuments,
+  curativeActivities,
 } from './index';
 
 // =============================================================================
@@ -51,6 +54,7 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   leaseOperatingStatements: many(leaseOperatingStatements),
   vendors: many(vendors),
   titleOpinions: many(titleOpinions),
+  chainOfTitleEntries: many(chainOfTitleEntries),
   environmentalIncidents: many(environmentalIncidents),
   regulatoryFilings: many(regulatoryFilings),
   complianceSchedules: many(complianceSchedules),
@@ -81,6 +85,7 @@ export const leasesRelations = relations(leases, ({ one, many }) => ({
   afes: many(afes),
   leaseOperatingStatements: many(leaseOperatingStatements),
   titleOpinions: many(titleOpinions),
+  chainOfTitleEntries: many(chainOfTitleEntries),
 }));
 
 export const wellsRelations = relations(wells, ({ one, many }) => ({
@@ -313,15 +318,58 @@ export const titleOpinionsRelations = relations(
       references: [leases.id],
     }),
     curativeItems: many(curativeItems),
+    titleOpinionDocuments: many(titleOpinionDocuments),
   }),
 );
 
-export const curativeItemsRelations = relations(curativeItems, ({ one }) => ({
-  titleOpinion: one(titleOpinions, {
-    fields: [curativeItems.titleOpinionId],
-    references: [titleOpinions.id],
+export const curativeItemsRelations = relations(
+  curativeItems,
+  ({ one, many }) => ({
+    titleOpinion: one(titleOpinions, {
+      fields: [curativeItems.titleOpinionId],
+      references: [titleOpinions.id],
+    }),
+    activities: many(curativeActivities),
   }),
-}));
+);
+
+export const chainOfTitleEntriesRelations = relations(
+  chainOfTitleEntries,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [chainOfTitleEntries.organizationId],
+      references: [organizations.id],
+    }),
+    lease: one(leases, {
+      fields: [chainOfTitleEntries.leaseId],
+      references: [leases.id],
+    }),
+  }),
+);
+
+export const titleOpinionDocumentsRelations = relations(
+  titleOpinionDocuments,
+  ({ one }) => ({
+    titleOpinion: one(titleOpinions, {
+      fields: [titleOpinionDocuments.titleOpinionId],
+      references: [titleOpinions.id],
+    }),
+    document: one(documents, {
+      fields: [titleOpinionDocuments.documentId],
+      references: [documents.id],
+    }),
+  }),
+);
+
+export const curativeActivitiesRelations = relations(
+  curativeActivities,
+  ({ one }) => ({
+    curativeItem: one(curativeItems, {
+      fields: [curativeActivities.curativeItemId],
+      references: [curativeItems.id],
+    }),
+  }),
+);
 
 export const environmentalIncidentsRelations = relations(
   environmentalIncidents,

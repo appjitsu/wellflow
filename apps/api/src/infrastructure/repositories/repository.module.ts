@@ -10,6 +10,12 @@ import { AfeDomainRepository } from './afe-domain.repository';
 import { AfeApprovalDomainRepository } from './afe-approval-domain.repository';
 import { LeaseRepository } from './lease.repository';
 import { ProductionRepository } from './production.repository';
+import { TitleOpinionRepositoryImpl } from './title-opinion.repository';
+import { CurativeItemRepositoryImpl } from './curative-item.repository';
+import { ChainOfTitleRepositoryImpl } from './chain-of-title.repository';
+import { TitleOpinionDocumentRepositoryImpl } from './title-opinion-document.repository';
+import { CurativeItemDocumentRepositoryImpl } from './curative-item-document.repository';
+import { LosRepository } from './lease-operating-statement.repository';
 
 /**
  * Repository Module
@@ -60,6 +66,50 @@ import { ProductionRepository } from './production.repository';
       },
       inject: ['DATABASE_CONNECTION'],
     },
+
+    // Title Management Repositories
+    {
+      provide: 'TitleOpinionRepository',
+      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
+        return new TitleOpinionRepositoryImpl(databaseConnection);
+      },
+      inject: ['DATABASE_CONNECTION'],
+    },
+    {
+      provide: 'CurativeItemRepository',
+      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
+        return new CurativeItemRepositoryImpl(databaseConnection);
+      },
+      inject: ['DATABASE_CONNECTION'],
+    },
+    {
+      provide: 'ChainOfTitleRepository',
+      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
+        return new ChainOfTitleRepositoryImpl(databaseConnection);
+      },
+      inject: ['DATABASE_CONNECTION'],
+    },
+    {
+      provide: 'TitleOpinionDocumentRepository',
+      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
+        return new TitleOpinionDocumentRepositoryImpl(databaseConnection);
+      },
+      inject: ['DATABASE_CONNECTION'],
+    },
+    {
+      provide: 'CurativeItemDocumentRepository',
+      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
+        return new CurativeItemDocumentRepositoryImpl(databaseConnection);
+      },
+      inject: ['DATABASE_CONNECTION'],
+    },
+    {
+      provide: 'LosRepository',
+      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
+        return new LosRepository(databaseConnection);
+      },
+      inject: ['DATABASE_CONNECTION'],
+    },
   ],
   exports: [
     'OrganizationRepository',
@@ -68,6 +118,12 @@ import { ProductionRepository } from './production.repository';
     'AfeApprovalRepository',
     'LeaseRepository',
     'ProductionRepository',
+    'TitleOpinionRepository',
+    'CurativeItemRepository',
+    'ChainOfTitleRepository',
+    'TitleOpinionDocumentRepository',
+    'CurativeItemDocumentRepository',
+    'LosRepository',
   ],
 })
 export class RepositoryModule {

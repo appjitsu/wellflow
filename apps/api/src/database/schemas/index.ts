@@ -49,6 +49,10 @@ export {
 // Title management
 export { titleOpinions } from './title-opinions';
 export { curativeItems } from './curative-items';
+export { chainOfTitleEntries } from './chain-of-title';
+export { titleOpinionDocuments } from './title-opinion-documents';
+export { curativeItemDocuments } from './curative-item-documents';
+export { curativeActivities } from './curative-activities';
 
 // Environmental incident tracking
 export { environmentalIncidents } from './environmental-incidents';
