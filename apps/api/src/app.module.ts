@@ -39,6 +39,7 @@ import {
 import { RequestLoggingMiddleware } from './common/middleware/request-logging.middleware';
 
 import { RegulatoryReportingModule } from './regulatory-reporting/regulatory-reporting.module';
+import { OperationsModule } from './operations/operations.module';
 @Module({
   imports: [
     NestConfigModule.forRoot({
@@ -70,6 +71,7 @@ import { RegulatoryReportingModule } from './regulatory-reporting/regulatory-rep
     TitleManagementModule,
     RegulatoryReportingModule,
     IncidentsModule,
+    OperationsModule,
   ],
   controllers: [AppController, OperatorsController],
   providers: [

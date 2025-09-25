@@ -76,6 +76,10 @@ describe('Database Schema Tests', () => {
         'environmental_incidents',
         'spill_reports',
         // Phase 2: Operational Foundation
+        'drilling_programs',
+        'daily_drilling_reports',
+        'workovers',
+        'maintenance_schedules',
         'regulatory_filings',
         'compliance_schedules',
       ];

@@ -18,6 +18,19 @@ export { documents } from './documents';
 export { equipment } from './equipment';
 export { wellTests } from './well-tests';
 
+// Operational management entities
+export {
+  drillingPrograms,
+  drillingProgramStatusEnum,
+} from './drilling-programs';
+export { dailyDrillingReports } from './daily-drilling-reports';
+export { workovers, workoverStatusEnum } from './workovers';
+export {
+  maintenanceSchedules,
+  maintenanceTypeEnum,
+  maintenanceStatusEnum,
+} from './maintenance-schedules';
+
 // AFE management
 export { afes } from './afes';
 export { afeLineItems } from './afe-line-items';
@@ -61,6 +74,9 @@ export { spillReports } from './spill-reports';
 // Regulatory compliance
 export { regulatoryFilings } from './regulatory-filings';
 export { complianceSchedules } from './compliance-schedules';
+
+// Messaging / Outbox
+export { outboxEvents } from './outbox-events';
 
 // Relations
 export * from './relations';

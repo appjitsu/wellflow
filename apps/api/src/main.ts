@@ -46,6 +46,14 @@ export async function bootstrap() {
     .addTag('Title Management', 'Title opinion and curative item management')
     .addTag('AFEs', 'Authorization for Expenditure management')
     .addTag('Lease Operating Statements', 'Lease operating expense tracking')
+    .addTag(
+      'Daily Drilling Reports',
+      'Daily drilling reporting and submission operations',
+    )
+    .addTag(
+      'Maintenance Schedules',
+      'Equipment maintenance scheduling and completion',
+    )
     .addTag('Operators', 'Operator-specific operations')
     .addTag('Health', 'Health check endpoints')
     .addServer(configService.apiUrl || getBaseUrl(), 'API Server')

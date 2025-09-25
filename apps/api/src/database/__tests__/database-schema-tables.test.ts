@@ -186,6 +186,10 @@ describe('Database Schema - Table Definitions', () => {
       expect(schema.spillReports).toBeDefined();
 
       // Phase 2 Operational tables
+      expect(schema.drillingPrograms).toBeDefined();
+      expect(schema.dailyDrillingReports).toBeDefined();
+      expect(schema.workovers).toBeDefined();
+      expect(schema.maintenanceSchedules).toBeDefined();
       expect(schema.regulatoryFilings).toBeDefined();
       expect(schema.complianceSchedules).toBeDefined();
     });
