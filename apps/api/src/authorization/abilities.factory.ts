@@ -24,6 +24,7 @@ type Subjects =
       | 'Production'
       | 'Partner'
       | 'Afe'
+      | 'ComplianceReport'
     >
   | 'all';
 

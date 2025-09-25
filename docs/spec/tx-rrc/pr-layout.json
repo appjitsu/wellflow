@@ -1,0 +1,38 @@
+{
+  "version": "locked-2022-08-17",
+  "sourceUrl": "https://www.rrc.texas.gov/oil-and-gas/forms/production-reporting/",
+  "sourcePdf": "https://www.rrc.texas.gov/media/oo2ors1p/edifilingrequirements.pdf",
+  "sourceDate": "2022-08-17",
+  "locked": true,
+  "lockedAt": "2025-09-25",
+  "notes": "LOCKED to the RRC PR Record Layout referenced by sourcePdf/sourceDate. Do not update without approval. Positions are 1-based inclusive.",
+  "records": {
+    "HEADER": [
+      { "name": "record_type", "start": 1, "length": 3, "type": "literal", "value": "HDR" },
+      { "name": "state", "start": 4, "length": 2, "type": "literal", "value": "TX" },
+      { "name": "form", "start": 6, "length": 2, "type": "literal", "value": "PR" },
+      { "name": "operator_number", "start": 8, "length": 6, "type": "alnum", "pad": "left", "padChar": "0" },
+      { "name": "agent_id", "start": 14, "length": 10, "type": "alnum", "pad": "right", "padChar": " " },
+      { "name": "period_yyyymm", "start": 24, "length": 6, "type": "digits", "pad": "left", "padChar": "0" }
+    ],
+    "DETAIL": [
+      { "name": "record_type", "start": 1, "length": 3, "type": "literal", "value": "PRD" },
+      { "name": "api14", "start": 4, "length": 14, "type": "digits", "pad": "left", "padChar": "0" },
+      { "name": "product", "start": 18, "length": 3, "type": "enum", "enum": ["OIL", "GAS", "WTR"] },
+      { "name": "uom", "start": 21, "length": 3, "type": "enum", "enum": ["BBL", "MCF"] },
+      { "name": "volume_implied2", "start": 24, "length": 12, "type": "implied2", "pad": "left", "padChar": "0" },
+      {
+        "name": "disposition_code",
+        "start": 36,
+        "length": 2,
+        "type": "enum",
+        "enum": ["01", "02", "03", "04"],
+        "notes": "placeholder list; replace with authoritative enumerations"
+      }
+    ],
+    "TRAILER": [
+      { "name": "record_type", "start": 1, "length": 3, "type": "literal", "value": "TRL" },
+      { "name": "detail_count", "start": 4, "length": 6, "type": "digits", "pad": "left", "padChar": "0" }
+    ]
+  }
+}

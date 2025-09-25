@@ -12,6 +12,7 @@ export interface RequiredRule {
     | 'Partner'
     | 'Afe'
     | 'Incident'
+    | 'ComplianceReport'
     | 'all';
 }
 
