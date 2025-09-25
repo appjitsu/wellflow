@@ -20,6 +20,8 @@ import {
   ExpenseCategory,
   ExpenseType,
 } from '../../../domain/enums/los-status.enum';
+import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
+import { AbilitiesGuard } from '../../../authorization/abilities.guard';
 
 describe('LeaseOperatingStatementsController', () => {
   let controller: LeaseOperatingStatementsController;
@@ -57,7 +59,16 @@ describe('LeaseOperatingStatementsController', () => {
           useValue: mockQuery,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue({
+        canActivate: jest.fn(() => true),
+      })
+      .overrideGuard(AbilitiesGuard)
+      .useValue({
+        canActivate: jest.fn(() => true),
+      })
+      .compile();
 
     controller = module.get<LeaseOperatingStatementsController>(
       LeaseOperatingStatementsController,
@@ -343,8 +354,8 @@ describe('LeaseOperatingStatementsController', () => {
         expect.objectContaining({
           losId: 'los-123',
           distributedBy: 'user-123',
-          method: 'email',
-          retryAttempts: 1,
+          distributionMethod: 'email',
+          recipientCount: 1,
         }),
       );
     });

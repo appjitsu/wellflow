@@ -19,9 +19,6 @@ import { GetLosByOrganizationHandler } from '../application/handlers/get-los-by-
 import { GetLosByLeaseHandler } from '../application/handlers/get-los-by-lease.handler';
 import { GetLosExpenseSummaryHandler } from '../application/handlers/get-los-expense-summary.handler';
 
-// Repository Implementation
-import { LosRepository } from '../infrastructure/repositories/lease-operating-statement.repository';
-
 const CommandHandlers = [
   CreateLosHandler,
   AddLosExpenseHandler,
@@ -48,14 +45,7 @@ const QueryHandlers = [
 @Module({
   imports: [CqrsModule, DatabaseModule, AuthorizationModule, RepositoryModule],
   controllers: [LeaseOperatingStatementsController],
-  providers: [
-    ...CommandHandlers,
-    ...QueryHandlers,
-    {
-      provide: 'LosRepository',
-      useClass: LosRepository,
-    },
-  ],
+  providers: [...CommandHandlers, ...QueryHandlers],
   exports: [],
 })
 export class LeaseOperatingStatementsModule {

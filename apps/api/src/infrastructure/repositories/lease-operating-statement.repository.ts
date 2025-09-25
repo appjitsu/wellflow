@@ -491,16 +491,32 @@ export class LosRepository implements ILosRepository {
   private mapToEntity(
     record: InferSelectModel<typeof leaseOperatingStatements>,
   ): LeaseOperatingStatement {
-    const statementMonth = record.statementMonth; // Already in YYYY-MM-DD format from database
+    // Convert Date to YYYY-MM format string
+    let statementMonth: string;
+    const stmtMonthValue = record.statementMonth as unknown;
+    if (stmtMonthValue instanceof Date) {
+      statementMonth = `${stmtMonthValue.getFullYear()}-${String(stmtMonthValue.getMonth() + 1).padStart(2, '0')}`;
+    } else if (typeof stmtMonthValue === 'string') {
+      // If it's already a string, assume it's in YYYY-MM-DD format and extract YYYY-MM
+      statementMonth = stmtMonthValue.substring(0, 7);
+    } else {
+      throw new Error('Invalid statementMonth format');
+    }
 
     return LeaseOperatingStatement.fromPersistence({
       id: record.id,
       organizationId: record.organizationId,
       leaseId: record.leaseId,
       statementMonth,
-      totalExpenses: record.totalExpenses || undefined,
-      operatingExpenses: record.operatingExpenses || undefined,
-      capitalExpenses: record.capitalExpenses || undefined,
+      totalExpenses: record.totalExpenses
+        ? String(record.totalExpenses)
+        : undefined,
+      operatingExpenses: record.operatingExpenses
+        ? String(record.operatingExpenses)
+        : undefined,
+      capitalExpenses: record.capitalExpenses
+        ? String(record.capitalExpenses)
+        : undefined,
       status: record.status as LosStatus,
       notes: record.notes || undefined,
       createdAt: record.createdAt,

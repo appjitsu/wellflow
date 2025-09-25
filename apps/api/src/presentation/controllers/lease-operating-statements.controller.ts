@@ -10,6 +10,7 @@ import {
   HttpCode,
   UseGuards,
   Request,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
@@ -182,10 +183,10 @@ export class LeaseOperatingStatementsController {
   })
   async getExpenseSummary(
     @Request() req: AuthenticatedRequest,
-    @Query('startYear') startYear: number,
-    @Query('startMonth') startMonth: number,
-    @Query('endYear') endYear: number,
-    @Query('endMonth') endMonth: number,
+    @Query('startYear', ParseIntPipe) startYear: number,
+    @Query('startMonth', ParseIntPipe) startMonth: number,
+    @Query('endYear', ParseIntPipe) endYear: number,
+    @Query('endMonth', ParseIntPipe) endMonth: number,
   ): Promise<LosExpenseSummaryDto[]> {
     const query = new GetLosExpenseSummaryQuery(
       req.user.organizationId,
