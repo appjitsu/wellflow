@@ -11,6 +11,7 @@ export interface RequiredRule {
     | 'Production'
     | 'Partner'
     | 'Afe'
+    | 'Incident'
     | 'all';
 }
 
@@ -137,3 +138,25 @@ export const CanUpdatePartner = () =>
 
 export const CanDeletePartner = () =>
   CheckAbilities({ action: 'delete', subject: 'Partner' });
+
+// Incident permissions
+export const CanCreateIncident = () =>
+  CheckAbilities({ action: 'create', subject: 'Incident' });
+
+export const CanReadIncident = () =>
+  CheckAbilities({ action: 'read', subject: 'Incident' });
+
+export const CanUpdateIncident = () =>
+  CheckAbilities({ action: 'update', subject: 'Incident' });
+
+export const CanDeleteIncident = () =>
+  CheckAbilities({ action: 'delete', subject: 'Incident' });
+
+export const CanExportIncidents = () =>
+  CheckAbilities({ action: 'export', subject: 'Incident' });
+
+export const CanAuditIncidents = () =>
+  CheckAbilities({ action: 'audit', subject: 'Incident' });
+
+export const CanUpdateIncidentStatus = () =>
+  CheckAbilities({ action: 'updateStatus', subject: 'Incident' });

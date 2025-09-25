@@ -1,0 +1,93 @@
+import { IncidentsController } from './incidents.controller';
+    expect(service.listIncidents).toHaveBeenCalled();
+    const mockCall = service.listIncidents.mock.calls[0];
+    expect(mockCall).toBeDefined();
+    const filters = mockCall[0];
+    expect(filters).toBeDefined();
+    expect(filters.organizationId).toBe('org-1');rt { IncidentsService } from './incidents.service';
+import {
+  IncidentSeverity,
+  IncidentStatus,
+  IncidentType,
+} from '../domain/enums/environmental-incident.enums';
+import type { EnvironmentalIncidentFilters } from '../domain/repositories/environmental-incident.repository.interface';
+import { from } from 'rxjs';
+import { IncidentsService } from './incidents.service';
+
+describe('IncidentsController', () => {
+  let controller: IncidentsController;
+  let service: jest.Mocked<IncidentsService>;
+
+  beforeEach(() => {
+    service = {
+      createIncident: jest.fn((_input) => ({ id: 'new-id' })),
+      getIncidentById: jest.fn(),
+      listIncidents: jest.fn(() => ({ items: [], total: 0 })),
+      updateIncidentStatus: jest.fn((id, status, _reason) =>
+        Promise.resolve({
+          id,
+          status,
+        }),
+      ),
+    } as unknown as jest.Mocked<IncidentsService>;
+    controller = new IncidentsController(service);
+  });
+
+  it('creates incident with validated enums', async () => {
+    const result = await controller.create({
+      organizationId: '123e4567-e89b-42d3-a456-426614174000',
+      reportedByUserId: '123e4567-e89b-42d3-a456-426614174001',
+      incidentNumber: 'INC-1',
+      incidentType: 'spill',
+      incidentDate: new Date('2024-01-01'),
+      discoveryDate: new Date('2024-01-01'),
+      location: 'Pad',
+      description: 'desc',
+      severity: 'low',
+    });
+    expect(service.createIncident).toHaveBeenCalled();
+    const arg = service.createIncident.mock.calls[0]![0] as {
+      incidentType: IncidentType;
+      severity: IncidentSeverity;
+    };
+    expect(arg.incidentType).toBe(IncidentType.SPILL);
+    expect(arg.severity).toBe(IncidentSeverity.LOW);
+    expect(result).toEqual({ id: 'new-id' });
+  });
+
+  it('lists incidents with parsed filters', async () => {
+    const res = await controller.list({
+      organizationId: 'org-1',
+      incidentType: 'spill,leak,invalid',
+      severity: 'low,critical',
+      status: 'open,closed',
+      fromDate: '2024-01-01',
+      toDate: '2024-01-31',
+      regulatoryNotified: 'true',
+      limit: '10',
+      offset: '5',
+    });
+    expect(service.listIncidents).toHaveBeenCalled();
+    const filters = service.listIncidents.mock.calls[0][0];
+    expect(filters).toBeDefined();
+    expect(filters.organizationId).toBe('org-1');
+    expect(filters.incidentType).toEqual([
+      IncidentType.SPILL,
+      IncidentType.LEAK,
+    ]);
+    expect(filters.severity).toEqual([
+      IncidentSeverity.LOW,
+      IncidentSeverity.CRITICAL,
+    ]);
+    expect(filters.status).toEqual([
+      IncidentStatus.OPEN,
+      IncidentStatus.CLOSED,
+    ]);
+    expect(filters.fromDate).toEqual(new Date('2024-01-01'));
+    expect(filters.toDate).toEqual(new Date('2024-01-31'));
+    expect(filters.regulatoryNotified).toBe(true);
+    expect(filters.limit).toBe(10);
+    expect(filters.offset).toBe(5);
+    expect(res).toEqual({ items: [], total: 0 });
+  });
+});

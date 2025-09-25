@@ -47,6 +47,8 @@
     "accessibility:report": "mkdir -p accessibility-reports && pnpm run accessibility:test",
     "license:check": "node scripts/license-check.js",
     "license:report": "mkdir -p license-reports && pnpm run license:check",
+    "format:check:source": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml,css,scss,html}\" --ignore-path .prettierignore",
+    "quality:check": "pnpm run build && pnpm run lint && pnpm run check-types && pnpm run format:check:source && pnpm run security:check && pnpm run sast:check && pnpm run secrets:check && pnpm run performance:test && pnpm run accessibility:test && pnpm run license:check && pnpm run test:coverage",
     "security:api": "node scripts/api-security-test.js",
     "security:api:report": "mkdir -p security-reports && pnpm run security:api",
     "security:infrastructure": "node scripts/infrastructure-security-scan.js",

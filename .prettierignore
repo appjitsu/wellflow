@@ -206,6 +206,13 @@ scratch/
 playground/
 experiments/
 
+# Generated reports (should not be formatted)
+accessibility-reports/
+license-reports/
+performance-reports/
+security-reports/
+apps/*/security-audit.json
+
 # GitHub Actions workflows with complex shell scripts in heredocs
 .github/workflows/performance-monitoring.yml
 .github/workflows/accessibility-testing.yml
