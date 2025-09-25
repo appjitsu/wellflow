@@ -16,6 +16,10 @@ import { ChainOfTitleRepositoryImpl } from './chain-of-title.repository';
 import { TitleOpinionDocumentRepositoryImpl } from './title-opinion-document.repository';
 import { CurativeItemDocumentRepositoryImpl } from './curative-item-document.repository';
 import { LosRepository } from './lease-operating-statement.repository';
+import { DrillingProgramRepository } from './drilling-program.repository';
+import { WorkoverRepository } from './workover.repository';
+import { DailyDrillingReportRepository } from './daily-drilling-report.repository';
+import { MaintenanceScheduleRepository } from './maintenance-schedule.repository';
 
 /**
  * Repository Module
@@ -110,6 +114,35 @@ import { LosRepository } from './lease-operating-statement.repository';
       },
       inject: ['DATABASE_CONNECTION'],
     },
+    // Operational Entities Repositories
+    {
+      provide: 'DrillingProgramRepository',
+      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
+        return new DrillingProgramRepository(databaseConnection);
+      },
+      inject: ['DATABASE_CONNECTION'],
+    },
+    {
+      provide: 'WorkoverRepository',
+      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
+        return new WorkoverRepository(databaseConnection);
+      },
+      inject: ['DATABASE_CONNECTION'],
+    },
+    {
+      provide: 'DailyDrillingReportRepository',
+      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
+        return new DailyDrillingReportRepository(databaseConnection);
+      },
+      inject: ['DATABASE_CONNECTION'],
+    },
+    {
+      provide: 'MaintenanceScheduleRepository',
+      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
+        return new MaintenanceScheduleRepository(databaseConnection);
+      },
+      inject: ['DATABASE_CONNECTION'],
+    },
   ],
   exports: [
     'OrganizationRepository',
@@ -124,6 +157,10 @@ import { LosRepository } from './lease-operating-statement.repository';
     'TitleOpinionDocumentRepository',
     'CurativeItemDocumentRepository',
     'LosRepository',
+    'DrillingProgramRepository',
+    'WorkoverRepository',
+    'DailyDrillingReportRepository',
+    'MaintenanceScheduleRepository',
   ],
 })
 export class RepositoryModule {

@@ -13,6 +13,8 @@ export interface RequiredRule {
     | 'Afe'
     | 'Incident'
     | 'ComplianceReport'
+    | 'DrillingProgram'
+    | 'Workover'
     | 'all';
 }
 
@@ -161,3 +163,35 @@ export const CanAuditIncidents = () =>
 
 export const CanUpdateIncidentStatus = () =>
   CheckAbilities({ action: 'updateStatus', subject: 'Incident' });
+
+// Drilling Program permissions
+export const CanCreateDrillingProgram = () =>
+  CheckAbilities({ action: 'create', subject: 'DrillingProgram' });
+
+export const CanReadDrillingProgram = () =>
+  CheckAbilities({ action: 'read', subject: 'DrillingProgram' });
+
+export const CanUpdateDrillingProgram = () =>
+  CheckAbilities({ action: 'update', subject: 'DrillingProgram' });
+
+export const CanExportDrillingPrograms = () =>
+  CheckAbilities({ action: 'export', subject: 'DrillingProgram' });
+
+export const CanAuditDrillingPrograms = () =>
+  CheckAbilities({ action: 'audit', subject: 'DrillingProgram' });
+
+// Workover permissions
+export const CanCreateWorkover = () =>
+  CheckAbilities({ action: 'create', subject: 'Workover' });
+
+export const CanReadWorkover = () =>
+  CheckAbilities({ action: 'read', subject: 'Workover' });
+
+export const CanUpdateWorkover = () =>
+  CheckAbilities({ action: 'update', subject: 'Workover' });
+
+export const CanExportWorkovers = () =>
+  CheckAbilities({ action: 'export', subject: 'Workover' });
+
+export const CanAuditWorkovers = () =>
+  CheckAbilities({ action: 'audit', subject: 'Workover' });

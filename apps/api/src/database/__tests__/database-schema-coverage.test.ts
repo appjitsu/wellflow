@@ -218,6 +218,11 @@ describe('Database Schema Coverage Tests', () => {
         'curativeItems',
         'environmentalIncidents',
         'spillReports',
+        // Phase 2B Operational tables
+        'drillingPrograms',
+        'dailyDrillingReports',
+        'workovers',
+        'maintenanceSchedules',
         'regulatoryFilings',
         'complianceSchedules',
       ];

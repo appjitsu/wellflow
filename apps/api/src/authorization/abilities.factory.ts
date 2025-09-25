@@ -25,6 +25,10 @@ type Subjects =
       | 'Partner'
       | 'Afe'
       | 'ComplianceReport'
+      | 'DrillingProgram'
+      | 'Workover'
+      | 'DailyDrillingReport'
+      | 'MaintenanceSchedule'
     >
   | 'all';
 
@@ -127,6 +131,31 @@ export class AbilitiesFactory {
       cannot('delete', 'Incident');
       cannot('audit', 'Incident');
 
+      // Operational entity permissions
+      can('create', 'DrillingProgram');
+      can('read', 'DrillingProgram');
+      can('update', 'DrillingProgram');
+      can('export', 'DrillingProgram');
+      cannot('delete', 'DrillingProgram');
+
+      can('create', 'Workover');
+      can('read', 'Workover');
+      can('update', 'Workover');
+      can('export', 'Workover');
+      cannot('delete', 'Workover');
+
+      can('create', 'DailyDrillingReport');
+      can('read', 'DailyDrillingReport');
+      can('update', 'DailyDrillingReport');
+      can('export', 'DailyDrillingReport');
+      cannot('delete', 'DailyDrillingReport');
+
+      can('create', 'MaintenanceSchedule');
+      can('read', 'MaintenanceSchedule');
+      can('update', 'MaintenanceSchedule');
+      can('export', 'MaintenanceSchedule');
+      cannot('delete', 'MaintenanceSchedule');
+
       // Cannot approve/reject AFEs (requires higher authority)
       cannot('approve', 'Afe');
       cannot('reject', 'Afe');
@@ -148,6 +177,12 @@ export class AbilitiesFactory {
 
       // Incident permissions for viewers - read-only
       can('read', 'Incident');
+
+      // Operational entities - read-only
+      can('read', 'DrillingProgram');
+      can('read', 'Workover');
+      can('read', 'DailyDrillingReport');
+      can('read', 'MaintenanceSchedule');
 
       cannot('export', 'Well');
       cannot('audit', 'Well');
@@ -206,6 +241,20 @@ export class AbilitiesFactory {
       can('export', 'Afe');
       can('audit', 'Afe');
 
+      // Operational entities for managers
+      can('read', 'DrillingProgram');
+      can('update', 'DrillingProgram');
+      can('export', 'DrillingProgram');
+      can('read', 'Workover');
+      can('update', 'Workover');
+      can('export', 'Workover');
+      can('read', 'DailyDrillingReport');
+      can('update', 'DailyDrillingReport');
+      can('export', 'DailyDrillingReport');
+      can('read', 'MaintenanceSchedule');
+      can('update', 'MaintenanceSchedule');
+      can('export', 'MaintenanceSchedule');
+
       // Incident permissions for managers
       can('read', 'Incident');
       can('update', 'Incident');
@@ -249,6 +298,16 @@ export class AbilitiesFactory {
       // AFE permissions for regulators - read-only for compliance
       can('read', 'Afe');
       can('audit', 'Afe');
+
+      // Operational entities for regulators - read/audit only
+      can('read', 'DrillingProgram');
+      can('audit', 'DrillingProgram');
+      can('read', 'Workover');
+      can('audit', 'Workover');
+      can('read', 'DailyDrillingReport');
+      can('audit', 'DailyDrillingReport');
+      can('read', 'MaintenanceSchedule');
+      can('audit', 'MaintenanceSchedule');
 
       // Cannot modify AFEs
       cannot('create', 'Afe');

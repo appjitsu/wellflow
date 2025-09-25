@@ -34,6 +34,11 @@ import {
   chainOfTitleEntries,
   titleOpinionDocuments,
   curativeActivities,
+  // Operational management
+  drillingPrograms,
+  dailyDrillingReports,
+  workovers,
+  maintenanceSchedules,
 } from './index';
 
 // =============================================================================
@@ -430,6 +435,74 @@ export const complianceSchedulesRelations = relations(
 );
 
 // =============================================================================
+// OPERATIONAL MANAGEMENT RELATIONS
+// =============================================================================
+
+export const drillingProgramsRelations = relations(
+  drillingPrograms,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [drillingPrograms.organizationId],
+      references: [organizations.id],
+    }),
+    well: one(wells, {
+      fields: [drillingPrograms.wellId],
+      references: [wells.id],
+    }),
+    afe: one(afes, {
+      fields: [drillingPrograms.afeId],
+      references: [afes.id],
+    }),
+  }),
+);
+
+export const dailyDrillingReportsRelations = relations(
+  dailyDrillingReports,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [dailyDrillingReports.organizationId],
+      references: [organizations.id],
+    }),
+    well: one(wells, {
+      fields: [dailyDrillingReports.wellId],
+      references: [wells.id],
+    }),
+  }),
+);
+
+export const workoversRelations = relations(workovers, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [workovers.organizationId],
+    references: [organizations.id],
+  }),
+  well: one(wells, {
+    fields: [workovers.wellId],
+    references: [wells.id],
+  }),
+  afe: one(afes, {
+    fields: [workovers.afeId],
+    references: [afes.id],
+  }),
+}));
+
+export const maintenanceSchedulesRelations = relations(
+  maintenanceSchedules,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [maintenanceSchedules.organizationId],
+      references: [organizations.id],
+    }),
+    equipment: one(equipment, {
+      fields: [maintenanceSchedules.equipmentId],
+      references: [equipment.id],
+    }),
+    vendor: one(vendors, {
+      fields: [maintenanceSchedules.vendorId],
+      references: [vendors.id],
+    }),
+  }),
+);
+
 // VENDOR MANAGEMENT RELATIONS
 // =============================================================================
 

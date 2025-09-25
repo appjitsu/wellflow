@@ -64,6 +64,20 @@
       "when": 1758758887339,
       "tag": "0008_fluffy_sheva_callister",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1758801325542,
+      "tag": "0009_woozy_bushwacker",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1758804919586,
+      "tag": "0010_lumpy_husk",
+      "breakpoints": true
     }
   ]
 }
