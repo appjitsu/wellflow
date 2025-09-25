@@ -106,7 +106,7 @@ importers:
         version: 0.14.2
       drizzle-orm:
         specifier: 0.44.5
-        version: 0.44.5(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(pg@8.16.3)
+        version: 0.44.5(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(pg@8.16.3)(postgres@3.4.7)
       ioredis:
         specifier: 5.8.0
         version: 5.8.0
@@ -125,6 +125,9 @@ importers:
       pg:
         specifier: ^8.16.3
         version: 8.16.3
+      postgres:
+        specifier: 3.4.7
+        version: 3.4.7
       redis:
         specifier: ^5.8.2
         version: 5.8.2
@@ -4005,8 +4008,8 @@ packages:
     resolution: {integrity: sha512-rNjApaLzuwaOTjCiT8lSDdGN1APCiqkChLMJxJPWLunPAt5fy8xgU9/jNOchV84wfIxrA0lRQB7oCT8jrn/wrQ==}
     engines: {node: '>=6.0'}
 
-  chromedriver@140.0.3:
-    resolution: {integrity: sha512-2UdIHhkGy8U5hODjIitUnm6coDJiEpcWAiDCSG8bwTHnK3hivHetW/KAvApXEMdCGdGZVCBwhycJG3HVFTxKpA==}
+  chromedriver@140.0.4:
+    resolution: {integrity: sha512-/NUoxYBNkJeoNj1B5ux3KxGShITlxJctkbApgVAa3ZC8EvCLKaBclwU3/IEj5MJHnBJzqOVDxs/eTyaF9k2fOg==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -6839,6 +6842,10 @@ packages:
     resolution: {integrity: sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ==}
     engines: {node: '>=0.10.0'}
 
+  postgres@3.4.7:
+    resolution: {integrity: sha512-Jtc2612XINuBjIl/QTWsV5UvE8UHuNblcO3vVADSrKsrc6RqGX6lOW1cEo3CM2v0XG4Nat8nI+YM7/f26VxXLw==}
+    engines: {node: '>=12'}
+
   prelude-ls@1.1.2:
     resolution: {integrity: sha512-ESF23V4SKG6lVSGZgYNpbsiaAkdab6ZgOxe52p7+Kid3W3u3bxR4Vfd/o21dmN7jSt0IwgZ4v5MUd26FEtXE9w==}
     engines: {node: '>= 0.8.0'}
@@ -8244,7 +8251,7 @@ snapshots:
     dependencies:
       '@axe-core/webdriverjs': 4.10.2(selenium-webdriver@4.22.0)
       axe-core: 4.10.3
-      chromedriver: 140.0.3
+      chromedriver: 140.0.4
       colors: 1.4.0
       commander: 9.5.0
       dotenv: 16.4.7
@@ -12198,7 +12205,7 @@ snapshots:
 
   chrome-trace-event@1.0.4: {}
 
-  chromedriver@140.0.3:
+  chromedriver@140.0.4:
     dependencies:
       '@testim/chrome-version': 1.1.4
       axios: 1.12.2
@@ -12642,11 +12649,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.44.5(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(pg@8.16.3):
+  drizzle-orm@0.44.5(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(pg@8.16.3)(postgres@3.4.7):
     optionalDependencies:
       '@opentelemetry/api': 1.9.0
       '@types/pg': 8.15.5
       pg: 8.16.3
+      postgres: 3.4.7
 
   dunder-proto@1.0.1:
     dependencies:
@@ -15707,6 +15715,8 @@ snapshots:
   postgres-interval@1.2.0:
     dependencies:
       xtend: 4.0.2
+
+  postgres@3.4.7: {}
 
   prelude-ls@1.1.2: {}
 

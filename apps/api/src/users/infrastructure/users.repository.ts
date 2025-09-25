@@ -33,7 +33,7 @@ export class UsersRepositoryImpl implements UsersRepository {
       .where(eq(users.id, id))
       .limit(1);
 
-    return (result[0] as UserRecord) || null;
+    return result?.[0] ? (result[0] as UserRecord) : null;
   }
 
   async findByEmail(email: string): Promise<UserRecord | null> {
@@ -43,7 +43,7 @@ export class UsersRepositoryImpl implements UsersRepository {
       .where(eq(users.email, email))
       .limit(1);
 
-    return (result[0] as UserRecord) || null;
+    return result?.[0] ? (result[0] as UserRecord) : null;
   }
 
   async findAll(): Promise<UserRecord[]> {
@@ -60,7 +60,7 @@ export class UsersRepositoryImpl implements UsersRepository {
       .where(eq(users.id, id))
       .returning();
 
-    return (result[0] as UserRecord) || null;
+    return result?.[0] ? (result[0] as UserRecord) : null;
   }
 
   async delete(id: string): Promise<boolean> {

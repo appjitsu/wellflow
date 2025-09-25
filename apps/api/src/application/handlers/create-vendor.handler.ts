@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler, EventBus } from '@nestjs/cqrs';
-import { Inject, Logger } from '@nestjs/common';
+import { Inject, Logger, ConflictException } from '@nestjs/common';
 import { CreateVendorCommand } from '../commands/create-vendor.command';
 import { Vendor } from '../../domain/entities/vendor.entity';
 import type { VendorRepository } from '../../domain/repositories/vendor.repository.interface';
@@ -35,7 +35,7 @@ export class CreateVendorHandler
       );
 
       if (existingVendor) {
-        throw new Error(
+        throw new ConflictException(
           `Vendor code ${command.vendorCode} already exists in organization`,
         );
       }

@@ -18,10 +18,19 @@ const { execSync } = require('child_process'); // eslint-disable-line @typescrip
 // Test database configuration
 const TEST_DB_CONFIG = {
   host: process.env.TEST_DB_HOST || 'localhost',
-  port: parseInt(process.env.TEST_DB_PORT || '5432'),
-  user: process.env.TEST_DB_USER || 'jason',
-  password: process.env.TEST_DB_PASSWORD || 'password',
+  port: parseInt(process.env.TEST_DB_PORT || '5433'),
+  user: process.env.TEST_DB_USER || 'postgres',
+  password: process.env.TEST_DB_PASSWORD || 'please_set_secure_password',
   database: process.env.TEST_DB_NAME || 'wellflow_test',
+};
+
+// Admin database configuration for creating/dropping databases
+const ADMIN_DB_CONFIG = {
+  host: process.env.TEST_DB_HOST || 'localhost',
+  port: parseInt(process.env.TEST_DB_PORT || '5433'),
+  user: process.env.DB_USER || 'postgres', // Use main DB user for admin operations
+  password: process.env.DB_PASSWORD || 'please_set_secure_password',
+  database: 'postgres', // Connect to default database for admin operations
 };
 
 /**
@@ -29,10 +38,7 @@ const TEST_DB_CONFIG = {
  * Creates test database and runs migrations
  */
 async function setupTestDatabase() {
-  const adminPool = new Pool({
-    ...TEST_DB_CONFIG,
-    database: 'postgres', // Connect to default database to create test db
-  });
+  const adminPool = new Pool(ADMIN_DB_CONFIG);
 
   try {
     // Drop test database if exists
@@ -43,7 +49,32 @@ async function setupTestDatabase() {
     // Create test database
     await adminPool.query(`CREATE DATABASE "${TEST_DB_CONFIG.database}"`);
 
-    console.log(`✅ Created test database: ${TEST_DB_CONFIG.database}`);
+    // Create test user in the test database (ignore if already exists)
+    try {
+      await adminPool.query(
+        `CREATE USER "${TEST_DB_CONFIG.user}" WITH PASSWORD '${TEST_DB_CONFIG.password}'`,
+      );
+    } catch (error: unknown) {
+      // Ignore if user already exists
+      const err = error as { message?: string };
+      if (!err.message?.includes('already exists')) {
+        throw error;
+      }
+    }
+
+    // Grant permissions on the test database
+    await adminPool.query(
+      `GRANT ALL PRIVILEGES ON DATABASE "${TEST_DB_CONFIG.database}" TO "${TEST_DB_CONFIG.user}"`,
+    );
+
+    // Also grant connect privilege explicitly
+    await adminPool.query(
+      `GRANT CONNECT ON DATABASE "${TEST_DB_CONFIG.database}" TO "${TEST_DB_CONFIG.user}"`,
+    );
+
+    console.log(
+      `✅ Created test database: ${TEST_DB_CONFIG.database} and user: ${TEST_DB_CONFIG.user}`,
+    );
   } catch (error) {
     console.error('❌ Failed to setup test database:', error);
     throw error;
@@ -67,6 +98,20 @@ async function setupTestDatabase() {
     });
 
     console.log('✅ Applied migrations to test database');
+
+    // Grant permissions to test user on all tables
+    const testPool = new Pool(TEST_DB_CONFIG);
+    try {
+      await testPool.query(
+        `GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO "${TEST_DB_CONFIG.user}"`,
+      );
+      await testPool.query(
+        `GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO "${TEST_DB_CONFIG.user}"`,
+      );
+      console.log(`✅ Granted permissions to user: ${TEST_DB_CONFIG.user}`);
+    } finally {
+      await testPool.end();
+    }
   } catch (error) {
     console.error('❌ Failed to run migrations:', error);
     throw error;
@@ -78,10 +123,7 @@ async function setupTestDatabase() {
  * Drops the test database
  */
 async function teardownTestDatabase() {
-  const adminPool = new Pool({
-    ...TEST_DB_CONFIG,
-    database: 'postgres',
-  });
+  const adminPool = new Pool(ADMIN_DB_CONFIG);
 
   // Add error event listener to prevent unhandled errors during teardown
   adminPool.on('error', (err: unknown) => {
@@ -148,10 +190,7 @@ async function teardownTestDatabase() {
  * Check if PostgreSQL is running and accessible
  */
 async function checkDatabaseConnection() {
-  const pool = new Pool({
-    ...TEST_DB_CONFIG,
-    database: 'postgres',
-  });
+  const pool = new Pool(ADMIN_DB_CONFIG);
 
   try {
     await pool.query('SELECT 1');

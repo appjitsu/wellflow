@@ -24,7 +24,10 @@
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch --passWithNoTests",
     "test:cov": "jest --coverage --passWithNoTests",
-    "test:coverage": "jest --coverage --passWithNoTests"
+    "test:coverage": "jest --coverage --passWithNoTests",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug"
   },
   "dependencies": {
     "@casl/ability": "^6.7.3",

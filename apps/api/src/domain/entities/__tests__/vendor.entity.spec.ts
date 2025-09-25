@@ -131,18 +131,27 @@ describe('Vendor Entity', () => {
   });
 
   describe('Insurance Management', () => {
+    const futureDate = new Date();
+    futureDate.setFullYear(futureDate.getFullYear() + 1); // One year from now
+
     const mockInsurance = {
       generalLiability: {
         carrier: 'State Farm',
         policyNumber: 'GL-123456',
-        coverageAmount: 1000000,
-        expirationDate: new Date('2024-12-31'),
+        coverageAmount: 5000000, // Meet minimum requirement
+        expirationDate: futureDate,
       },
       workersCompensation: {
         carrier: 'Workers Comp Inc',
         policyNumber: 'WC-789012',
         coverageAmount: 500000,
-        expirationDate: new Date('2024-12-31'),
+        expirationDate: futureDate,
+      },
+      environmentalLiability: {
+        carrier: 'Environmental Insurance Co',
+        policyNumber: 'ENV-789012',
+        coverageAmount: 1000000,
+        expirationDate: futureDate,
       },
     };
 
@@ -154,10 +163,11 @@ describe('Vendor Entity', () => {
       vendor.updateInsurance(mockInsurance);
 
       const insurance = vendor.getInsurance();
-      expect(insurance.generalLiability).toEqual(
+      expect(insurance).toBeDefined();
+      expect(insurance!.generalLiability).toEqual(
         mockInsurance.generalLiability,
       );
-      expect(insurance.workersCompensation).toEqual(
+      expect(insurance!.workersCompensation).toEqual(
         mockInsurance.workersCompensation,
       );
     });
@@ -168,13 +178,13 @@ describe('Vendor Entity', () => {
           carrier: 'State Farm',
           policyNumber: 'GL-123456',
           coverageAmount: 100000, // Below minimum
-          expirationDate: new Date('2024-12-31'),
+          expirationDate: futureDate,
         },
       };
 
       expect(() => {
         vendor.updateInsurance(insufficientInsurance);
-      }).toThrow('General liability coverage must be at least $500,000');
+      }).toThrow('General liability coverage must be at least $5,000,000');
     });
 
     it('should check for expired insurance', () => {
@@ -198,7 +208,7 @@ describe('Vendor Entity', () => {
         'org-id-456',
         'DRILL-001',
         'Drilling Corp',
-        VendorType.DRILLING_CONTRACTOR,
+        VendorType.CONTRACTOR,
         mockAddress,
         'Net 30',
       );
@@ -207,8 +217,8 @@ describe('Vendor Entity', () => {
         generalLiability: {
           carrier: 'State Farm',
           policyNumber: 'GL-123456',
-          coverageAmount: 1000000,
-          expirationDate: new Date('2024-12-31'),
+          coverageAmount: 5000000, // Meet minimum requirement
+          expirationDate: futureDate,
         },
       };
 
@@ -218,6 +228,21 @@ describe('Vendor Entity', () => {
       }).toThrow(
         'Drilling contractors must have environmental liability insurance',
       );
+
+      // Now test with environmental liability - should pass
+      const completeInsurance = {
+        ...basicInsurance,
+        environmentalLiability: {
+          carrier: 'Environmental Insurance Co',
+          policyNumber: 'ENV-123456',
+          coverageAmount: 1000000,
+          expirationDate: futureDate,
+        },
+      };
+
+      expect(() => {
+        drillingVendor.updateInsurance(completeInsurance);
+      }).not.toThrow();
     });
   });
 
@@ -233,6 +258,7 @@ describe('Vendor Entity', () => {
         VendorRating.EXCELLENT,
         VendorRating.GOOD,
         VendorRating.EXCELLENT,
+        'John Doe',
       );
 
       const metrics = vendor.getPerformanceMetrics();
@@ -247,13 +273,16 @@ describe('Vendor Entity', () => {
       vendor.updatePerformanceRating(
         VendorRating.EXCELLENT, // 5
         VendorRating.GOOD, // 4
-        VendorRating.AVERAGE, // 3
+        VendorRating.SATISFACTORY, // 3
         VendorRating.GOOD, // 4
         VendorRating.EXCELLENT, // 5
+        'Jane Smith',
       );
 
       const averageRating = vendor.calculateAveragePerformanceRating();
-      expect(averageRating).toBe(4.2); // (5+4+3+4+5)/5 = 4.2
+      // This uses weighted average: safety(40%) + quality(25%) + timeliness(20%) + cost(15%)
+      // (4*0.4) + (3*0.25) + (4*0.2) + (5*0.15) = 1.6 + 0.75 + 0.8 + 0.75 = 3.9
+      expect(averageRating).toBe(3.9);
     });
 
     it('should track job completion metrics', () => {
@@ -274,18 +303,40 @@ describe('Vendor Entity', () => {
         VendorRating.EXCELLENT,
         VendorRating.EXCELLENT,
         VendorRating.EXCELLENT,
+        'Performance Evaluator',
       );
 
       // Add valid insurance
+      const futureDate = new Date();
+      futureDate.setFullYear(futureDate.getFullYear() + 1);
+
       const validInsurance = {
         generalLiability: {
           carrier: 'State Farm',
           policyNumber: 'GL-123456',
+          coverageAmount: 5000000,
+          expirationDate: futureDate,
+        },
+        environmentalLiability: {
+          carrier: 'Environmental Insurance Co',
+          policyNumber: 'ENV-789012',
           coverageAmount: 1000000,
-          expirationDate: new Date('2024-12-31'),
+          expirationDate: futureDate,
         },
       };
       vendor.updateInsurance(validInsurance);
+
+      // Add required safety certification for SERVICE vendors
+      const safetyCertification = {
+        id: 'safety-cert-123',
+        name: 'OSHA 30 Hour',
+        issuingBody: 'OSHA',
+        certificationNumber: 'OSHA-30-2024',
+        issueDate: new Date('2024-01-01'),
+        expirationDate: futureDate,
+        isActive: true,
+      };
+      vendor.addCertification(safetyCertification);
 
       // Should now be qualified
       expect(vendor.isQualified()).toBe(true);
@@ -299,11 +350,13 @@ describe('Vendor Entity', () => {
 
     it('should add certifications', () => {
       const certification = {
+        id: 'cert-123',
         name: 'ISO 9001',
         issuingBody: 'ISO',
         certificationNumber: 'ISO-9001-2023',
         issueDate: new Date('2023-01-01'),
         expirationDate: new Date('2026-01-01'),
+        isActive: true,
       };
 
       vendor.addCertification(certification);
@@ -315,11 +368,13 @@ describe('Vendor Entity', () => {
 
     it('should prevent duplicate certifications', () => {
       const certification = {
+        id: 'cert-456',
         name: 'ISO 9001',
         issuingBody: 'ISO',
         certificationNumber: 'ISO-9001-2023',
         issueDate: new Date('2023-01-01'),
         expirationDate: new Date('2026-01-01'),
+        isActive: true,
       };
 
       vendor.addCertification(certification);
@@ -331,11 +386,13 @@ describe('Vendor Entity', () => {
 
     it('should validate certification expiration dates', () => {
       const expiredCertification = {
+        id: 'cert-expired',
         name: 'ISO 9001',
         issuingBody: 'ISO',
         certificationNumber: 'ISO-9001-2020',
         issueDate: new Date('2020-01-01'),
         expirationDate: new Date('2023-01-01'), // Expired
+        isActive: false,
       };
 
       expect(() => {
@@ -345,18 +402,20 @@ describe('Vendor Entity', () => {
 
     it('should identify expiring certifications', () => {
       const soonToExpire = {
+        id: 'cert-soon-expire',
         name: 'ISO 9001',
         issuingBody: 'ISO',
         certificationNumber: 'ISO-9001-2024',
         issueDate: new Date('2023-01-01'),
         expirationDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000), // 20 days from now
+        isActive: true,
       };
 
       vendor.addCertification(soonToExpire);
 
       const expiringCerts = vendor.getExpiringCertifications(30); // Within 30 days
       expect(expiringCerts).toHaveLength(1);
-      expect(expiringCerts[0].name).toBe('ISO 9001');
+      expect(expiringCerts[0]!.name).toBe('ISO 9001');
     });
   });
 
@@ -431,6 +490,7 @@ describe('Vendor Entity', () => {
         VendorRating.EXCELLENT,
         VendorRating.GOOD,
         VendorRating.EXCELLENT,
+        'Event Tester',
       );
 
       const events = vendor.getDomainEvents();
