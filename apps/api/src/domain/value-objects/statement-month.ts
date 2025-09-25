@@ -150,10 +150,17 @@ export class StatementMonth {
   /**
    * Convert to JSON representation
    */
-  toJSON(): { year: number; month: number } {
+  toJSON(): {
+    year: number;
+    month: number;
+    displayString: string;
+    isoString: string;
+  } {
     return {
       year: this.year,
       month: this.month,
+      displayString: this.toDisplayString(),
+      isoString: this.toString(),
     };
   }
 
@@ -162,9 +169,8 @@ export class StatementMonth {
       throw new Error('Year must be a valid integer');
     }
 
-    const currentYear = new Date().getFullYear();
-    if (year < 1900 || year > currentYear + 10) {
-      throw new Error(`Year must be between 1900 and ${currentYear + 10}`);
+    if (year < 2000 || year > 2100) {
+      throw new Error('Year must be between 2000 and 2100');
     }
   }
 
@@ -189,7 +195,7 @@ export class StatementMonth {
     const regex = /^(\d{4})-(\d{2})$/;
     const match = regex.exec(value);
     if (!match) {
-      throw new Error('Value must be in YYYY-MM format');
+      throw new Error('Invalid date string format');
     }
 
     const year = parseInt(match[1] as string, 10);

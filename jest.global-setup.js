@@ -40,6 +40,13 @@ module.exports = async () => {
     process.env.TEST_DATABASE_URL || 'postgresql://test:test@localhost:5432/wellflow_test';
   process.env.REDIS_URL = process.env.TEST_REDIS_URL || 'redis://localhost:6379/1';
 
+  // Individual database environment variables for DatabaseService
+  process.env.DB_HOST = process.env.TEST_DB_HOST || 'localhost';
+  process.env.DB_PORT = process.env.TEST_DB_PORT || '5433';
+  process.env.DB_USER = process.env.TEST_DB_USER || 'postgres';
+  process.env.DB_PASSWORD = process.env.TEST_DB_PASSWORD || 'please_set_secure_password';
+  process.env.DB_NAME = process.env.TEST_DB_NAME || 'wellflow_test';
+
   // Security test configuration
   process.env.JWT_SECRET = 'test-jwt-secret-for-testing-only-do-not-use-in-production';
   process.env.ENCRYPTION_KEY = 'test-encryption-key-32-characters-long';

@@ -3,8 +3,8 @@
  * Tests for production records schema, business logic, and validation
  */
 
-import * as schema from '../../schema';
-import { productionRecords, organizations, wells, leases } from '../../schema';
+import * as schema from '../../schemas';
+import { productionRecords, organizations, wells, leases } from '../../schemas';
 import { eq, and, gte, lte } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
@@ -13,9 +13,9 @@ import { cleanupAllData } from '../test-utils';
 // Use test database connection
 const pool = new Pool({
   host: process.env.TEST_DB_HOST || 'localhost',
-  port: parseInt(process.env.TEST_DB_PORT || '5432'),
-  user: process.env.TEST_DB_USER || 'jason',
-  password: process.env.TEST_DB_PASSWORD || 'password',
+  port: parseInt(process.env.TEST_DB_PORT || '5433'),
+  user: process.env.TEST_DB_USER || 'postgres',
+  password: process.env.TEST_DB_PASSWORD || 'please_set_secure_password',
   database: process.env.TEST_DB_NAME || 'wellflow_test',
 });
 const db = drizzle(pool, { schema });
@@ -184,13 +184,11 @@ describe('Production Records Model', () => {
         waterVolume: '150.00',
       };
 
-      // Note: This assumes database-level constraints for non-negative values
-      // If not implemented, this test will need to be updated
-      const result = await db
-        .insert(productionRecords)
-        .values(invalidRecord)
-        .returning();
-      expect(result[0]!.oilVolume).toBe('-100.00');
+      // Note: Database-level constraints prevent negative values
+      // This test verifies that the constraint is properly enforced
+      await expect(
+        db.insert(productionRecords).values(invalidRecord).returning(),
+      ).rejects.toThrow(/Failed query/);
     });
 
     it('should validate production data integrity', async () => {

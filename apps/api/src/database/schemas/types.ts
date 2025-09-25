@@ -29,6 +29,9 @@ import {
   spillReports,
   regulatoryFilings,
   complianceSchedules,
+  chainOfTitleEntries,
+  titleOpinionDocuments,
+  curativeActivities,
 } from './index';
 
 // =============================================================================
@@ -143,6 +146,18 @@ export type NewSpillReport = typeof spillReports.$inferInsert;
 // Regulatory types
 export type RegulatoryFiling = typeof regulatoryFilings.$inferSelect;
 export type NewRegulatoryFiling = typeof regulatoryFilings.$inferInsert;
+
+// Chain of Title types
+export type ChainOfTitleEntry = typeof chainOfTitleEntries.$inferSelect;
+export type NewChainOfTitleEntry = typeof chainOfTitleEntries.$inferInsert;
+
+// Title Opinion Document link types
+export type TitleOpinionDocument = typeof titleOpinionDocuments.$inferSelect;
+export type NewTitleOpinionDocument = typeof titleOpinionDocuments.$inferInsert;
+
+// Curative Activity types
+export type CurativeActivity = typeof curativeActivities.$inferSelect;
+export type NewCurativeActivity = typeof curativeActivities.$inferInsert;
 
 export type ComplianceSchedule = typeof complianceSchedules.$inferSelect;
 export type NewComplianceSchedule = typeof complianceSchedules.$inferInsert;

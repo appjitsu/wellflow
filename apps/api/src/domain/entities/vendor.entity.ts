@@ -36,6 +36,12 @@ export interface VendorInsurance {
     coverageAmount: number;
     expirationDate: Date;
   };
+  environmentalLiability?: {
+    carrier: string;
+    policyNumber: string;
+    coverageAmount: number;
+    expirationDate: Date;
+  };
 }
 
 export interface VendorCertification {
@@ -217,8 +223,9 @@ export class Vendor {
 
   isActive(): boolean {
     return (
-      this.status === VendorStatus.APPROVED ||
-      this.status === VendorStatus.PREQUALIFIED
+      this.status !== VendorStatus.REJECTED &&
+      this.status !== VendorStatus.SUSPENDED &&
+      this.status !== VendorStatus.INACTIVE
     );
   }
 
@@ -287,6 +294,11 @@ export class Vendor {
         certification.name,
       ),
     );
+
+    // Check for auto-prequalification after adding certification
+    if (this.status === VendorStatus.PENDING) {
+      this.checkForAutoApproval();
+    }
   }
 
   updatePerformanceRating(
@@ -436,6 +448,8 @@ export class Vendor {
     const validTransitions: Record<VendorStatus, VendorStatus[]> = {
       [VendorStatus.PENDING]: [
         VendorStatus.UNDER_REVIEW,
+        VendorStatus.PREQUALIFIED,
+        VendorStatus.APPROVED,
         VendorStatus.REJECTED,
       ],
       [VendorStatus.UNDER_REVIEW]: [
@@ -483,6 +497,12 @@ export class Vendor {
       throw new Error('General liability insurance is required');
     }
 
+    // Check expiration first - expired insurance is more critical than coverage amount
+    const now = new Date();
+    if (insurance.generalLiability.expirationDate <= now) {
+      throw new Error('Insurance policy has expired');
+    }
+
     // Industry-specific minimum coverage requirements
     const minimumCoverage = this.getMinimumInsuranceCoverage();
     if (insurance.generalLiability.coverageAmount < minimumCoverage) {
@@ -491,15 +511,24 @@ export class Vendor {
       );
     }
 
-    // Allow insurance that expires within 30 days for renewal processing
-    const thirtyDaysFromNow = new Date();
-    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+    // Check for vendor type specific requirements
+    this.validateVendorTypeSpecificInsurance(insurance);
+  }
 
-    if (insurance.generalLiability.expirationDate <= thirtyDaysFromNow) {
-      // Don't throw error, but mark for renewal tracking
-      console.warn(
-        `Insurance expires soon: ${insurance.generalLiability.expirationDate.toISOString()}`,
-      );
+  private validateVendorTypeSpecificInsurance(
+    insurance: VendorInsurance,
+  ): void {
+    // Drilling contractors need environmental liability
+    if (
+      this.vendorType === VendorType.SERVICE ||
+      this.vendorType === VendorType.CONTRACTOR
+    ) {
+      // For drilling operations, environmental liability is critical
+      if (!insurance.environmentalLiability) {
+        throw new Error(
+          'Drilling contractors must have environmental liability insurance',
+        );
+      }
     }
   }
 

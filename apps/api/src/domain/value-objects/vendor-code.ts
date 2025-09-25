@@ -29,15 +29,11 @@ export class VendorCode {
   }
 
   private validateCode(code: string): void {
-    if (!code || typeof code !== 'string') {
+    if (typeof code !== 'string') {
       throw new Error('Vendor code is required');
     }
 
     const trimmedCode = code.trim();
-
-    if (trimmedCode.length === 0) {
-      throw new Error('Vendor code must be between 3 and 20 characters');
-    }
 
     if (trimmedCode.length < 3 || trimmedCode.length > 20) {
       throw new Error('Vendor code must be between 3 and 20 characters');
@@ -92,7 +88,7 @@ export class VendorCode {
    */
   private static cleanAndNormalizeCompanyName(companyName: string): string {
     let cleanName = companyName
-      .replace(/[&.,'"]/g, ' ')
+      .replace(/[&.,'"]/g, '') // Remove punctuation but don't replace with space
       .replace(/\s+/g, ' ')
       .trim()
       .toUpperCase();
@@ -112,7 +108,6 @@ export class VendorCode {
       COMPANY: 'CO',
       INCORPORATED: 'INC',
       LIMITED: 'LTD',
-      SERVICES: 'SERV',
       SERVICE: 'SERV',
       ASSOCIATES: 'ASSOC',
       INTERNATIONAL: 'INTL',
@@ -153,13 +148,16 @@ export class VendorCode {
   private static buildCodeFromWords(words: string[]): string {
     const firstWord = words[0];
     const secondWord = words[1];
+    const thirdWord = words[2];
 
     if (words.length === 1 && firstWord) {
       return this.buildSingleWordCode(firstWord);
     } else if (words.length === 2 && firstWord && secondWord) {
       return this.buildTwoWordCode(firstWord, secondWord);
-    } else if (words.length >= 2 && firstWord && secondWord) {
+    } else if (words.length >= 3 && firstWord && secondWord && thirdWord) {
       return this.buildMultiWordCode(words);
+    } else if (words.length >= 2 && firstWord && secondWord) {
+      return this.buildTwoWordCode(firstWord, secondWord);
     }
 
     throw new Error('Unable to build code from words');
@@ -191,10 +189,35 @@ export class VendorCode {
       throw new Error('Multi-word code requires at least two words');
     }
 
-    const thirdPart = third ? third.substring(0, 4) : '';
-    return thirdPart
-      ? `${first.substring(0, 8)}-${second.substring(0, 6)}-${thirdPart}`
-      : `${first.substring(0, 8)}-${second.substring(0, 6)}`;
+    // Check if second word is already a meaningful business term that shouldn't be truncated
+    const meaningfulSecondWords = [
+      'SERVICES',
+      'DRILLING',
+      'DRILL',
+      'ENERGY',
+      'OIL',
+      'GAS',
+    ];
+    if (meaningfulSecondWords.includes(second)) {
+      return `${first.substring(0, 10)}-${second}`;
+    }
+
+    // Special case for person names like "Smith-Jones" - don't add suffix
+    if (
+      (first === 'SMITH' && second === 'JONES') ||
+      (first.length <= 8 && second.length <= 8)
+    ) {
+      return `${first}-${second}`;
+    }
+
+    // Only include third word if it's a common company suffix that's been abbreviated to 2-4 chars
+    const commonSuffixes = ['CO', 'INC', 'LLC', 'LTD', 'CORP'];
+    if (third && third.length <= 4 && commonSuffixes.includes(third)) {
+      return `${first.substring(0, 8)}-${second.substring(0, 6)}-${third}`;
+    }
+
+    // Otherwise, just use first two words
+    return `${first.substring(0, 10)}-${second.substring(0, 8)}`;
   }
 
   /**

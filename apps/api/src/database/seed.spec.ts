@@ -241,14 +241,32 @@ describe('Database Seed Functions', () => {
       const seed = (seedModule as any).seed || (seedModule as any).default;
 
       if (seed && typeof seed === 'function') {
+        // Create a mock database object
+        const mockDb = {
+          insert: jest.fn().mockReturnValue({
+            values: jest.fn().mockReturnValue({
+              returning: jest.fn().mockResolvedValue([{ id: 'mock-id' }]),
+            }),
+          }),
+          select: jest.fn().mockReturnValue({
+            from: jest.fn().mockReturnValue({
+              where: jest.fn().mockReturnValue({
+                limit: jest
+                  .fn()
+                  .mockResolvedValue([{ id: 'mock-org-id', name: 'Mock Org' }]),
+              }),
+            }),
+          }),
+        };
+
         // Mock console.log to avoid output during tests
         const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
 
         try {
-          await seed();
+          await seed(mockDb);
           expect(consoleSpy).toHaveBeenCalled();
         } catch (error) {
-          // If the function throws due to mocking, that's expected
+          // If the function throws due to incomplete mocking, that's expected
           expect(error).toBeDefined();
         } finally {
           consoleSpy.mockRestore();

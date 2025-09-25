@@ -47,6 +47,11 @@ const customJestConfig = {
     '**/__tests__/**/*.(js|jsx|ts|tsx)',
     '**/*.(test|spec).(js|jsx|ts|tsx)',
   ],
+  testPathIgnorePatterns: [
+    '<rootDir>/e2e/',
+    '<rootDir>/node_modules/',
+    '<rootDir>/.next/',
+  ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },

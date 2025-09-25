@@ -42,6 +42,11 @@ export async function bootstrap() {
     .setVersion('1.0')
     .addBearerAuth()
     .addTag('Wells', 'Well management operations')
+    .addTag('Vendors', 'Vendor management and qualification')
+    .addTag('Title Management', 'Title opinion and curative item management')
+    .addTag('AFEs', 'Authorization for Expenditure management')
+    .addTag('Lease Operating Statements', 'Lease operating expense tracking')
+    .addTag('Operators', 'Operator-specific operations')
     .addTag('Health', 'Health check endpoints')
     .addServer(configService.apiUrl || getBaseUrl(), 'API Server')
     .build();
