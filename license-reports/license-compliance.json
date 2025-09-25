@@ -28,27 +28,41 @@
       "workspace": "apps/web"
     },
     {
+      "name": "@swc/helpers@0.5.17",
+      "license": "Apache-2.0",
+      "path": "/Users/jason/projects/wellflow/apps/web/node_modules/@swc/helpers",
+      "repository": "https://github.com/swc-project/swc",
+      "workspace": "apps/web"
+    },
+    {
+      "name": "logrocket-react@6.0.3",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/web/node_modules/logrocket-react",
+      "repository": "https://github.com/LogRocket/logrocket-react",
+      "workspace": "apps/web"
+    },
+    {
       "name": "logrocket@10.1.0",
       "license": "MIT",
       "path": "/Users/jason/projects/wellflow/apps/web/node_modules/logrocket",
       "workspace": "apps/web"
     },
     {
-      "name": "next@15.5.0",
+      "name": "next@15.5.3",
       "license": "MIT",
       "path": "/Users/jason/projects/wellflow/apps/web/node_modules/next",
       "repository": "https://github.com/vercel/next.js",
       "workspace": "apps/web"
     },
     {
-      "name": "react-dom@19.1.0",
+      "name": "react-dom@19.1.1",
       "license": "MIT",
       "path": "/Users/jason/projects/wellflow/apps/web/node_modules/react-dom",
       "repository": "https://github.com/facebook/react",
       "workspace": "apps/web"
     },
     {
-      "name": "react@19.1.0",
+      "name": "react@19.1.1",
       "license": "MIT",
       "path": "/Users/jason/projects/wellflow/apps/web/node_modules/react",
       "repository": "https://github.com/facebook/react",
@@ -59,6 +73,20 @@
       "license": "UNLICENSED",
       "path": "/Users/jason/projects/wellflow/apps/web",
       "workspace": "apps/web"
+    },
+    {
+      "name": "@bull-board/api@6.13.0",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/@bull-board/api",
+      "repository": "https://github.com/felixmosh/bull-board",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "@bull-board/express@6.13.0",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/@bull-board/express",
+      "repository": "https://github.com/felixmosh/bull-board",
+      "workspace": "apps/api"
     },
     {
       "name": "@casl/ability@6.7.3",
@@ -131,6 +159,13 @@
       "workspace": "apps/api"
     },
     {
+      "name": "@nestjs/throttler@6.4.0",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/@nestjs/throttler",
+      "repository": "https://github.com/nestjs/throttler",
+      "workspace": "apps/api"
+    },
+    {
       "name": "@sentry/nestjs@10.12.0",
       "license": "MIT",
       "path": "/Users/jason/projects/wellflow/apps/api/node_modules/@sentry/nestjs",
@@ -145,9 +180,23 @@
       "workspace": "apps/api"
     },
     {
+      "name": "@swc/helpers@0.5.17",
+      "license": "Apache-2.0",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/@swc/helpers",
+      "repository": "https://github.com/swc-project/swc",
+      "workspace": "apps/api"
+    },
+    {
       "name": "api@0.0.2",
       "license": "UNLICENSED",
       "path": "/Users/jason/projects/wellflow/apps/api",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "bullmq@5.58.7",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/bullmq",
+      "repository": "https://github.com/taskforcesh/bullmq",
       "workspace": "apps/api"
     },
     {
@@ -172,9 +221,23 @@
       "workspace": "apps/api"
     },
     {
+      "name": "ioredis@5.8.0",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/ioredis",
+      "repository": "https://github.com/luin/ioredis",
+      "workspace": "apps/api"
+    },
+    {
       "name": "logrocket@10.1.0",
       "license": "MIT",
       "path": "/Users/jason/projects/wellflow/apps/api/node_modules/logrocket",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "nest-commander@3.20.0",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/nest-commander",
+      "repository": "https://github.com/jmcdo29/nest-commander",
       "workspace": "apps/api"
     },
     {
@@ -196,6 +259,13 @@
       "license": "MIT",
       "path": "/Users/jason/projects/wellflow/apps/api/node_modules/pg",
       "repository": "https://github.com/brianc/node-postgres",
+      "workspace": "apps/api"
+    },
+    {
+      "name": "postgres@3.4.7",
+      "license": "Unlicense",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/postgres",
+      "repository": "https://github.com/porsager/postgres",
       "workspace": "apps/api"
     },
     {
@@ -234,9 +304,23 @@
       "workspace": "apps/api"
     },
     {
+      "name": "zod@4.1.11",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/api/node_modules/zod",
+      "repository": "https://github.com/colinhacks/zod",
+      "workspace": "apps/api"
+    },
+    {
       "name": "@repo/ui@0.0.0",
       "license": "UNLICENSED",
       "path": "/Users/jason/projects/wellflow/apps/docs/node_modules/@repo/ui",
+      "workspace": "apps/docs"
+    },
+    {
+      "name": "@swc/helpers@0.5.17",
+      "license": "Apache-2.0",
+      "path": "/Users/jason/projects/wellflow/apps/docs/node_modules/@swc/helpers",
+      "repository": "https://github.com/swc-project/swc",
       "workspace": "apps/docs"
     },
     {
@@ -260,9 +344,23 @@
       "workspace": "apps/docs"
     },
     {
+      "name": "react-dom@19.1.1",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/docs/node_modules/@repo/ui/node_modules/react-dom",
+      "repository": "https://github.com/facebook/react",
+      "workspace": "apps/docs"
+    },
+    {
       "name": "react@19.1.0",
       "license": "MIT",
       "path": "/Users/jason/projects/wellflow/apps/docs/node_modules/react",
+      "repository": "https://github.com/facebook/react",
+      "workspace": "apps/docs"
+    },
+    {
+      "name": "react@19.1.1",
+      "license": "MIT",
+      "path": "/Users/jason/projects/wellflow/apps/docs/node_modules/@repo/ui/node_modules/react",
       "repository": "https://github.com/facebook/react",
       "workspace": "apps/docs"
     }
@@ -271,8 +369,8 @@
   "reviewRequired": [],
   "unknown": [],
   "summary": {
-    "totalPackages": 39,
-    "compliantPackages": 39,
+    "totalPackages": 53,
+    "compliantPackages": 53,
     "violationPackages": 0,
     "reviewPackages": 0,
     "unknownPackages": 0

@@ -7,13 +7,16 @@ import {
   MongoAbility,
 } from '@casl/ability';
 import { Well } from '../domain/entities/well.entity';
+import { EnvironmentalIncident } from '../domain/entities/environmental-incident.entity';
 import { WellStatus } from '../domain/enums/well-status.enum';
 
 // Define all subjects that can be used in permissions
 type Subjects =
   | InferSubjects<
       | typeof Well
+      | typeof EnvironmentalIncident
       | 'Well'
+      | 'Incident'
       | 'User'
       | 'Operator'
       | 'Organization'
@@ -57,13 +60,12 @@ export interface User {
  */
 @Injectable()
 export class AbilitiesFactory {
-  // Subject type detector - currently only supports 'Well' entities
-  // This function intentionally returns the same type as we only have one subject type
+  // Subject type detector for CASL
   // eslint-disable-next-line sonarjs/function-return-type
-  private detectSubjectType(_item: unknown): ExtractSubjectType<Subjects> {
-    // For now, we only support Well entities in our authorization system
-    // Future enhancement: Add support for other entity types (User, Production, etc.)
-    // All entities are treated as 'Well' for now
+  private detectSubjectType(item: unknown): ExtractSubjectType<Subjects> {
+    if (item instanceof EnvironmentalIncident) return 'Incident' as const;
+    if (item instanceof Well) return 'Well' as const;
+    // Default to string subjects provided in decorators; fall back to 'Well' for unknowns
     return 'Well' as const;
   }
   createForUser(user: User): AppAbility {
@@ -115,6 +117,15 @@ export class AbilitiesFactory {
       can('submit', 'Afe');
       can('export', 'Afe');
 
+      // Incident permissions for operators
+      can('create', 'Incident');
+      can('read', 'Incident');
+      can('update', 'Incident');
+      can('updateStatus', 'Incident');
+      can('export', 'Incident');
+      cannot('delete', 'Incident');
+      cannot('audit', 'Incident');
+
       // Cannot approve/reject AFEs (requires higher authority)
       cannot('approve', 'Afe');
       cannot('reject', 'Afe');
@@ -133,11 +144,23 @@ export class AbilitiesFactory {
       cannot('delete', 'Well');
       cannot('updateStatus', 'Well');
       cannot('submitReport', 'Well');
+
+      // Incident permissions for viewers - read-only
+      can('read', 'Incident');
+
       cannot('export', 'Well');
       cannot('audit', 'Well');
 
       // Can read User information (for their own profile)
       can('read', 'User');
+
+      // Incident restrictions for viewers
+      cannot('create', 'Incident');
+      cannot('update', 'Incident');
+      cannot('updateStatus', 'Incident');
+      cannot('delete', 'Incident');
+      cannot('export', 'Incident');
+      cannot('audit', 'Incident');
 
       // AFE permissions for viewers - read-only
       can('read', 'Afe');
@@ -182,6 +205,14 @@ export class AbilitiesFactory {
       can('export', 'Afe');
       can('audit', 'Afe');
 
+      // Incident permissions for managers
+      can('read', 'Incident');
+      can('update', 'Incident');
+      can('updateStatus', 'Incident');
+      can('export', 'Incident');
+      cannot('create', 'Incident');
+      cannot('delete', 'Incident');
+
       // Cannot create or delete AFEs (requires operator role)
       cannot('create', 'Afe');
       cannot('delete', 'Afe');
@@ -196,6 +227,16 @@ export class AbilitiesFactory {
       can('viewSensitive', 'Well');
 
       // Can view audit logs for compliance
+
+      // Incident permissions for regulators - read/audit only
+      can('read', 'Incident');
+      can('viewSensitive', 'Incident');
+      can('audit', 'Incident');
+      cannot('create', 'Incident');
+      cannot('update', 'Incident');
+      cannot('updateStatus', 'Incident');
+      cannot('delete', 'Incident');
+
       can('audit', 'Well');
 
       // Cannot modify wells (regulatory independence)
@@ -229,6 +270,14 @@ export class AbilitiesFactory {
       cannot('delete', 'Well');
       cannot('updateStatus', 'Well');
       cannot('submitReport', 'Well');
+
+      // Incident permissions for auditors - read/audit only
+      can('read', 'Incident');
+      can('audit', 'Incident');
+      cannot('create', 'Incident');
+      cannot('update', 'Incident');
+      cannot('updateStatus', 'Incident');
+      cannot('delete', 'Incident');
 
       // AFE permissions for auditors - read and audit only
       can('read', 'Afe');
