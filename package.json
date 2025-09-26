@@ -72,6 +72,8 @@
   "devDependencies": {
     "@axe-core/cli": "4.10.2",
     "@lhci/cli": "^0.15.1",
+    "@types/bcrypt": "6.0.0",
+    "@types/passport-local": "1.0.38",
     "axe-core": "4.10.3",
     "glob": "11.0.3",
     "husky": "^9.1.7",
@@ -95,5 +97,9 @@
     "*.{js,jsx,ts,tsx,json,md,yml,yaml,css,scss,html}": [
       "prettier --write"
     ]
+  },
+  "dependencies": {
+    "bcrypt": "6.0.0",
+    "passport-local": "1.0.0"
   }
 }

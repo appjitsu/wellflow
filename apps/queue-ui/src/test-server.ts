@@ -4,7 +4,7 @@ import { createBullBoard } from '@bull-board/api';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { ExpressAdapter } from '@bull-board/express';
 import { Queue } from 'bullmq';
-import Redis from 'ioredis';
+import { Redis } from 'ioredis';
 
 /**
  * Simple test server for BullMQ UI without authentication
@@ -28,7 +28,7 @@ redis.on('connect', () => {
   console.log('✅ Queue UI Redis connected successfully');
 });
 
-redis.on('error', (err) => {
+redis.on('error', (err: Error) => {
   console.error('❌ Queue UI Redis connection error:', err);
 });
 

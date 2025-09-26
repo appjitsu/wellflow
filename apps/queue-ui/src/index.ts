@@ -7,7 +7,7 @@ import { createBullBoard } from '@bull-board/api';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { ExpressAdapter } from '@bull-board/express';
 import { Queue } from 'bullmq';
-import Redis from 'ioredis';
+import { Redis } from 'ioredis';
 import { authMiddleware } from './middleware/auth.middleware';
 import { errorHandler } from './middleware/error.middleware';
 import { logger } from './utils/logger';
@@ -85,7 +85,7 @@ redis.on('connect', () => {
   logger.info('✅ Queue UI Redis connected successfully');
 });
 
-redis.on('error', (err) => {
+redis.on('error', (err: Error) => {
   logger.error('❌ Queue UI Redis connection error:', { message: err.message, stack: err.stack });
 });
 
@@ -133,7 +133,7 @@ app.get('/api/info', (req, res) => {
 });
 
 // Authentication middleware for dashboard access
-app.use('/', authMiddleware);
+app.use('/', authMiddleware as express.RequestHandler);
 
 // Mount Bull-Board
 app.use('/', serverAdapter.getRouter());
