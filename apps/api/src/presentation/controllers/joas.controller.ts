@@ -7,6 +7,8 @@ import { CreateJoaCommand } from '../../application/commands/create-joa.command'
 import { GetJoaByIdQuery } from '../../application/queries/get-joa-by-id.query';
 import type { JoaProps } from '../../domain/entities/joint-operating-agreement.entity';
 
+import { CurrentOrganization } from '../decorators/current-organization.decorator';
+
 function assertValidJoaPayload(value: unknown): asserts value is JoaProps {
   if (!value || typeof value !== 'object') {
     throw new TypeError('JOA query returned invalid payload');
@@ -57,8 +59,10 @@ export class JoasController {
 
   @Get(':id')
   @CheckAbilities({ action: 'read', subject: 'JointOperatingAgreement' })
-  async getById(@Param('id') id: string): Promise<JoaProps> {
-    const organizationId = 'org-placeholder';
+  async getById(
+    @Param('id') id: string,
+    @CurrentOrganization() organizationId: string,
+  ): Promise<JoaProps> {
     const payload: unknown = await this.queryBus.execute(
       new GetJoaByIdQuery(organizationId, id),
     );

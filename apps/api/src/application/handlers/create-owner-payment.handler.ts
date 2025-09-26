@@ -6,7 +6,7 @@ import type { IOwnerPaymentRepository } from '../../domain/repositories/owner-pa
 import { OwnerPayment } from '../../domain/entities/owner-payment.entity';
 import { OutboxService } from '../../infrastructure/events/outbox.service';
 
-const TWO_DECIMAL_PATTERN = /^-?\d+\.\d{2}$/;
+const TWO_DECIMAL_PATTERN = /^\d+\.\d{2}$/;
 
 @CommandHandler(CreateOwnerPaymentCommand)
 export class CreateOwnerPaymentHandler

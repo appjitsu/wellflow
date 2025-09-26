@@ -9,6 +9,7 @@ import { GetCashCallByIdQuery } from '../../application/queries/get-cash-call-by
 import { ApproveCashCallCommand } from '../../application/commands/approve-cash-call.command';
 import { RecordCashCallConsentCommand } from '../../application/commands/record-cash-call-consent.command';
 import type { CashCallProps } from '../../domain/entities/cash-call.entity';
+import { CurrentOrganization } from '../decorators/current-organization.decorator';
 
 function assertValidCashCallPayload(
   value: unknown,
@@ -68,8 +69,10 @@ export class CashCallsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get cash call by id' })
   @CheckAbilities({ action: 'read', subject: 'CashCall' })
-  async getById(@Param('id') id: string): Promise<CashCallProps> {
-    const organizationId = 'org-placeholder';
+  async getById(
+    @Param('id') id: string,
+    @CurrentOrganization() organizationId: string,
+  ): Promise<CashCallProps> {
     const payload: unknown = await this.queryBus.execute(
       new GetCashCallByIdQuery(organizationId, id),
     );
@@ -80,8 +83,10 @@ export class CashCallsController {
   @Put(':id/approve')
   @ApiOperation({ summary: 'Approve a cash call' })
   @CheckAbilities({ action: 'update', subject: 'CashCall' })
-  async approve(@Param('id') id: string): Promise<{ id: string }> {
-    const organizationId = 'org-placeholder';
+  async approve(
+    @Param('id') id: string,
+    @CurrentOrganization() organizationId: string,
+  ): Promise<{ id: string }> {
     const resId: unknown = await this.commandBus.execute(
       new ApproveCashCallCommand(organizationId, id),
     );

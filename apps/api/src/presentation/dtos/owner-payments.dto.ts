@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID, IsIn, IsOptional, IsString, Matches } from 'class-validator';
 
-const TWO_DECIMAL_PATTERN = /^-?\d+\.\d{2}$/;
+const TWO_DECIMAL_PATTERN = /^\d+\.\d{2}$/;
 
 export class CreateOwnerPaymentDto {
   @ApiProperty()

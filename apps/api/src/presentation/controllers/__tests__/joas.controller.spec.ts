@@ -7,7 +7,15 @@ class CommandBusMock {
   execute = jest.fn(() => Promise.resolve('new-joa-id'));
 }
 class QueryBusMock {
-  execute = jest.fn(() => Promise.resolve({ id: 'id-1' }));
+  execute = jest.fn(() =>
+    Promise.resolve({
+      id: 'id-1',
+      organizationId: 'org-1',
+      agreementNumber: 'AG-100',
+      effectiveDate: '2025-01-01',
+      status: 'ACTIVE',
+    }),
+  );
 }
 
 describe('JoasController', () => {
@@ -42,7 +50,7 @@ describe('JoasController', () => {
   });
 
   it('gets by id', async () => {
-    const res = await controller.getById('id-1');
+    const res = await controller.getById('id-1', 'org-1');
     expect(res.id).toBe('id-1');
     expect(queryBus.execute).toHaveBeenCalled();
   });
