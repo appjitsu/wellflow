@@ -147,7 +147,7 @@ describe('WellRepositoryImpl', () => {
       const result = await repository.findById('well-123');
 
       expect(result).toBeInstanceOf(Well);
-      expect(result?.getId()).toBe('well-123');
+      expect(result?.getId().getValue()).toBe('well-123');
       expect(mockDb.select).toHaveBeenCalled();
       expect(mockDb.where).toHaveBeenCalled();
       expect(mockDb.limit).toHaveBeenCalledWith(1);
@@ -371,7 +371,7 @@ describe('WellRepositoryImpl', () => {
       const result = await repository.findById('well-123');
 
       expect(result).toBeInstanceOf(Well);
-      expect(result?.getId()).toBe(mockWellData.id);
+      expect(result?.getId().getValue()).toBe(mockWellData.id);
       expect(result?.getName()).toBe(mockWellData.wellName);
       expect(result?.getApiNumber().getValue()).toBe('42-123-45678'); // ApiNumber formats the input
       expect(result?.getOperatorId()).toBe(mockWellData.organizationId);

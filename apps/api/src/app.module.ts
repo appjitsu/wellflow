@@ -29,7 +29,7 @@ import { JobsModule } from './jobs/jobs.module';
 import { LeaseOperatingStatementsModule } from './lease-operating-statements/lease-operating-statements.module';
 import { TitleManagementModule } from './modules/title-management.module';
 import { IncidentsModule } from './incidents/incidents.module';
-// import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
+import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
 import { AbilitiesGuard } from './authorization/abilities.guard';
 import { AuditLogInterceptor } from './presentation/interceptors/audit-log.interceptor';
 import {
@@ -37,9 +37,12 @@ import {
   WellFlowThrottlerGuard,
 } from './common/throttler';
 import { RequestLoggingMiddleware } from './common/middleware/request-logging.middleware';
+import { CircuitBreakerService } from './common/resilience/circuit-breaker.service';
+import { RetryService } from './common/resilience/retry.service';
 
 import { RegulatoryReportingModule } from './regulatory-reporting/regulatory-reporting.module';
 import { OperationsModule } from './operations/operations.module';
+import { FinancialModule } from './financial/financial.module';
 @Module({
   imports: [
     NestConfigModule.forRoot({
@@ -72,20 +75,25 @@ import { OperationsModule } from './operations/operations.module';
     RegulatoryReportingModule,
     IncidentsModule,
     OperationsModule,
+    FinancialModule,
   ],
   controllers: [AppController, OperatorsController],
   providers: [
     AppService,
+    // Resilience services for external API calls
+    CircuitBreakerService,
+    RetryService,
     // Rate limiting guard - applied globally for security
     {
       provide: APP_GUARD,
       useClass: WellFlowThrottlerGuard,
     },
-    // NOTE: JWT authentication will be re-enabled after implementing JWT strategy
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: JwtAuthGuard,
-    // },
+    // JWT authentication guard - ensure JWT strategy configured in auth module
+    {
+      provide: APP_GUARD,
+
+      useClass: JwtAuthGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: AbilitiesGuard,

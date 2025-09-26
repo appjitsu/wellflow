@@ -3,6 +3,8 @@ import { eq, and, sql, count, desc, asc } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { AnyPgColumn, PgTable, TableConfig } from 'drizzle-orm/pg-core';
 import * as schema from '../../database/schema';
+import type { UnitOfWorkTransaction } from './unit-of-work';
+import type { Specification } from '../../domain/specifications/specification.interface';
 
 /**
  * Base Repository Implementation
@@ -21,6 +23,23 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
    */
   async create(data: Partial<T['$inferInsert']>): Promise<T['$inferSelect']> {
     const result = await this.db
+      .insert(this.table)
+      .values(data as T['$inferInsert'])
+      .returning();
+
+    return result[0] as T['$inferSelect'];
+  }
+
+  /**
+   * Create a new record within a transaction
+   */
+  async createWithinTransaction(
+    data: Partial<T['$inferInsert']>,
+    unitOfWork: UnitOfWorkTransaction,
+  ): Promise<T['$inferSelect']> {
+    const result = await (
+      unitOfWork.getTransaction() as NodePgDatabase<typeof schema>
+    )
       .insert(this.table)
       .values(data as T['$inferInsert'])
       .returning();
@@ -143,10 +162,48 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
   }
 
   /**
+   * Update record by ID within a transaction
+   */
+  async updateWithinTransaction(
+    id: string,
+    data: Partial<T['$inferInsert']>,
+    unitOfWork: UnitOfWorkTransaction,
+  ): Promise<T['$inferSelect'] | null> {
+    const result = await (
+      unitOfWork.getTransaction() as NodePgDatabase<typeof schema>
+    )
+      .update(this.table)
+      .set(data)
+      .where(eq((this.table as Record<string, unknown>).id as AnyPgColumn, id))
+      .returning();
+
+    return (result as any)[0] || null; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+  }
+
+  /**
    * Delete record by ID
    */
   async delete(id: string): Promise<boolean> {
     const result = await this.db
+      .delete(this.table)
+      .where(eq((this.table as Record<string, unknown>).id as AnyPgColumn, id))
+      .returning({
+        id: (this.table as Record<string, unknown>).id as AnyPgColumn,
+      });
+
+    return result.length > 0;
+  }
+
+  /**
+   * Delete record by ID within a transaction
+   */
+  async deleteWithinTransaction(
+    id: string,
+    unitOfWork: UnitOfWorkTransaction,
+  ): Promise<boolean> {
+    const result = await (
+      unitOfWork.getTransaction() as NodePgDatabase<typeof schema>
+    )
       .delete(this.table)
       .where(eq((this.table as Record<string, unknown>).id as AnyPgColumn, id))
       .returning({
@@ -226,5 +283,89 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
   async executeRaw<R = unknown>(query: string): Promise<R[]> {
     const result = await this.db.execute(sql.raw(query));
     return result.rows as R[];
+  }
+
+  /**
+   * Find records by specification
+   */
+  async findBySpecification<TEntity>(
+    specification: Specification<TEntity>,
+  ): Promise<T['$inferSelect'][]> {
+    const sqlClause = specification.toSqlClause();
+
+    return this.db
+      .select()
+      .from(this.table as PgTable<TableConfig>)
+      .where(sqlClause);
+  }
+
+  /**
+   * Find records by specification with pagination
+   */
+  async findBySpecificationWithPagination<TEntity>(
+    specification: Specification<TEntity>,
+    offset: number,
+    limit: number,
+    orderBy?: { field: string; direction: 'asc' | 'desc' },
+  ): Promise<{ data: T['$inferSelect'][]; total: number }> {
+    const sqlClause = specification.toSqlClause();
+
+    // Build order by clause
+    let orderByClause: ReturnType<typeof desc> | undefined;
+    if (orderBy) {
+      const field = (this.table as Record<string, unknown>)[
+        orderBy.field
+      ] as AnyPgColumn;
+      orderByClause = orderBy.direction === 'desc' ? desc(field) : asc(field);
+    }
+
+    // Execute queries
+    let dataQuery = this.db
+      .select()
+      .from(this.table as PgTable<TableConfig>)
+      .where(sqlClause);
+    const countQuery = this.db
+      .select({ count: count() })
+      .from(this.table as PgTable<TableConfig>)
+      .where(sqlClause);
+
+    if (orderByClause) {
+      dataQuery = dataQuery.orderBy(orderByClause) as any; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+    }
+
+    dataQuery = dataQuery.offset(offset).limit(limit) as any; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+
+    const [data, totalResult] = await Promise.all([dataQuery, countQuery]);
+
+    return {
+      data,
+      total: totalResult[0]?.count || 0,
+    };
+  }
+
+  /**
+   * Count records by specification
+   */
+  async countBySpecification<TEntity>(
+    specification: Specification<TEntity>,
+  ): Promise<number> {
+    const sqlClause = specification.toSqlClause();
+
+    const result = await this.db
+      .select({ count: count() })
+      .from(this.table as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+      .where(sqlClause);
+
+    return result[0]?.count || 0;
+  }
+
+  /**
+   * Check if any records satisfy the specification
+   */
+  async existsBySpecification<TEntity>(
+    specification: Specification<TEntity>,
+  ): Promise<boolean> {
+    const count = await this.countBySpecification(specification);
+    return count > 0;
   }
 }

@@ -12,6 +12,8 @@ import { organizations } from './organizations';
 import { partners } from './partners';
 import { leases } from './leases';
 
+import { cashCalls } from './cash-calls';
+
 /**
  * JIB Statements table - Joint Interest Billing statements for partners
  */
@@ -49,6 +51,18 @@ export const jibStatements = pgTable(
     status: varchar('status', { length: 20 }).notNull().default('draft'), // draft|sent|paid
     sentAt: timestamp('sent_at'),
     paidAt: timestamp('paid_at'),
+    // Balances and due date
+    previousBalance: decimal('previous_balance', { precision: 12, scale: 2 })
+      .notNull()
+      .default('0'),
+    currentBalance: decimal('current_balance', { precision: 12, scale: 2 })
+      .notNull()
+      .default('0'),
+    dueDate: date('due_date'),
+
+    // Optional link to cash call
+    cashCallId: uuid('cash_call_id').references(() => cashCalls.id),
+
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -67,5 +81,7 @@ export const jibStatements = pgTable(
       table.partnerId,
       table.statementPeriodStart,
     ),
+    dueDateIdx: index('jib_statements_due_date_idx').on(table.dueDate),
+    cashCallIdx: index('jib_statements_cash_call_idx').on(table.cashCallId),
   }),
 );

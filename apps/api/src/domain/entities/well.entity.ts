@@ -83,8 +83,10 @@ export class Well {
   }
 
   // Getters
-  getId(): string {
-    return this.id;
+  getId(): { getValue(): string } {
+    return {
+      getValue: () => this.id,
+    };
   }
 
   getApiNumber(): ApiNumber {
@@ -137,6 +139,10 @@ export class Well {
 
   getVersion(): number {
     return this.version;
+  }
+
+  incrementVersion(): void {
+    this.version++;
   }
 
   // Business methods

@@ -32,6 +32,9 @@ import {
   chainOfTitleEntries,
   titleOpinionDocuments,
   curativeActivities,
+  ownerPayments,
+  cashCalls,
+  jointOperatingAgreements,
 } from './index';
 
 // =============================================================================
@@ -158,6 +161,18 @@ export type NewTitleOpinionDocument = typeof titleOpinionDocuments.$inferInsert;
 // Curative Activity types
 export type CurativeActivity = typeof curativeActivities.$inferSelect;
 export type NewCurativeActivity = typeof curativeActivities.$inferInsert;
+
+// Financial enhancement types
+export type OwnerPayment = typeof ownerPayments.$inferSelect;
+export type NewOwnerPayment = typeof ownerPayments.$inferInsert;
+
+export type CashCall = typeof cashCalls.$inferSelect;
+export type NewCashCall = typeof cashCalls.$inferInsert;
+
+export type JointOperatingAgreement =
+  typeof jointOperatingAgreements.$inferSelect;
+export type NewJointOperatingAgreement =
+  typeof jointOperatingAgreements.$inferInsert;
 
 export type ComplianceSchedule = typeof complianceSchedules.$inferSelect;
 export type NewComplianceSchedule = typeof complianceSchedules.$inferInsert;

@@ -40,6 +40,7 @@ import {
   workovers,
   maintenanceSchedules,
 } from './index';
+import { ownerPayments, cashCalls, jointOperatingAgreements } from './index';
 
 // =============================================================================
 // DRIZZLE RELATIONS
@@ -62,6 +63,10 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   chainOfTitleEntries: many(chainOfTitleEntries),
   environmentalIncidents: many(environmentalIncidents),
   regulatoryFilings: many(regulatoryFilings),
+  ownerPayments: many(ownerPayments),
+  cashCalls: many(cashCalls),
+  jointOperatingAgreements: many(jointOperatingAgreements),
+
   complianceSchedules: many(complianceSchedules),
 }));
 
@@ -84,6 +89,8 @@ export const leasesRelations = relations(leases, ({ one, many }) => ({
     references: [organizations.id],
   }),
   wells: many(wells),
+  cashCalls: many(cashCalls),
+
   leasePartners: many(leasePartners),
   jibStatements: many(jibStatements),
   documents: many(documents),
@@ -133,6 +140,9 @@ export const partnersRelations = relations(partners, ({ one, many }) => ({
     fields: [partners.organizationId],
     references: [organizations.id],
   }),
+  ownerPayments: many(ownerPayments),
+  cashCalls: many(cashCalls),
+
   leasePartners: many(leasePartners),
   jibStatements: many(jibStatements),
   afeApprovals: many(afeApprovals),
@@ -177,6 +187,10 @@ export const jibStatementsRelations = relations(jibStatements, ({ one }) => ({
   lease: one(leases, {
     fields: [jibStatements.leaseId],
     references: [leases.id],
+  }),
+  cashCall: one(cashCalls, {
+    fields: [jibStatements.cashCallId],
+    references: [cashCalls.id],
   }),
 }));
 
@@ -293,6 +307,46 @@ export const revenueDistributionsRelations = relations(
     divisionOrder: one(divisionOrders, {
       fields: [revenueDistributions.divisionOrderId],
       references: [divisionOrders.id],
+    }),
+  }),
+);
+
+export const ownerPaymentsRelations = relations(ownerPayments, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [ownerPayments.organizationId],
+    references: [organizations.id],
+  }),
+  partner: one(partners, {
+    fields: [ownerPayments.partnerId],
+    references: [partners.id],
+  }),
+  revenueDistribution: one(revenueDistributions, {
+    fields: [ownerPayments.revenueDistributionId],
+    references: [revenueDistributions.id],
+  }),
+}));
+
+export const cashCallsRelations = relations(cashCalls, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [cashCalls.organizationId],
+    references: [organizations.id],
+  }),
+  lease: one(leases, {
+    fields: [cashCalls.leaseId],
+    references: [leases.id],
+  }),
+  partner: one(partners, {
+    fields: [cashCalls.partnerId],
+    references: [partners.id],
+  }),
+}));
+
+export const jointOperatingAgreementsRelations = relations(
+  jointOperatingAgreements,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [jointOperatingAgreements.organizationId],
+      references: [organizations.id],
     }),
   }),
 );

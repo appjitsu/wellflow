@@ -143,7 +143,9 @@ describe('WellDto', () => {
   describe('fromEntity static method', () => {
     it('should create WellDto from Well entity', () => {
       // Mock the Well entity methods
-      jest.spyOn(mockWell, 'getId').mockReturnValue('well-123');
+      jest
+        .spyOn(mockWell, 'getId')
+        .mockReturnValue({ getValue: () => 'well-123' });
       jest
         .spyOn(mockWell, 'getApiNumber')
         .mockReturnValue(new ApiNumber('4212345678'));
@@ -195,7 +197,9 @@ describe('WellDto', () => {
     });
 
     it('should handle entity with null optional fields', () => {
-      jest.spyOn(mockWell, 'getId').mockReturnValue('well-minimal');
+      jest
+        .spyOn(mockWell, 'getId')
+        .mockReturnValue({ getValue: () => 'well-minimal' });
       jest
         .spyOn(mockWell, 'getApiNumber')
         .mockReturnValue(new ApiNumber('4212345679'));

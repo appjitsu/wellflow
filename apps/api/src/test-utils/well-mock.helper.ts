@@ -58,7 +58,7 @@ export function createMockWell(
   const mockData = { ...defaults, ...overrides };
 
   return {
-    getId: jest.fn().mockReturnValue(mockData.id),
+    getId: jest.fn().mockReturnValue({ getValue: () => mockData.id }),
     getApiNumber: jest.fn().mockReturnValue(new ApiNumber(mockData.apiNumber)),
     getName: jest.fn().mockReturnValue(mockData.name),
     getOperatorId: jest.fn().mockReturnValue(mockData.operatorId),
@@ -116,7 +116,7 @@ export function createMinimalMockWell(
   const mockData = { ...defaults, ...overrides };
 
   return {
-    getId: jest.fn().mockReturnValue(mockData.id),
+    getId: jest.fn().mockReturnValue({ getValue: () => mockData.id }),
     getApiNumber: jest.fn().mockReturnValue(new ApiNumber(mockData.apiNumber)),
     getName: jest.fn().mockReturnValue(mockData.name),
     getOperatorId: jest.fn().mockReturnValue(mockData.operatorId),

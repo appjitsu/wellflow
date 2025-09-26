@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { Logger } from '@nestjs/common';
 import { AppConfigService } from './config/app.config';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import {
@@ -68,16 +69,9 @@ export async function bootstrap() {
     },
   });
 
-  // Enable CORS for web app with HTTPS support
+  // Enable CORS for web app with HTTPS support (config-driven)
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'https://localhost:3000',
-      'http://localhost:3001',
-      'https://localhost:3001',
-      'https://web-production-79cf2.up.railway.app',
-      'https://web-wellflow-pr-1.up.railway.app',
-    ],
+    origin: configService.corsOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true,
   });
@@ -88,16 +82,14 @@ export async function bootstrap() {
 
   await app.listen(port);
 
-  console.log(`🚀 API server running on ${baseUrl}`);
-  console.log(`📚 API documentation available at ${baseUrl}/api/docs`);
+  const logger = new Logger('Bootstrap');
+  logger.log(`API server running on ${baseUrl}`);
+  logger.log(`API documentation available at ${baseUrl}/api/docs`);
 
   if (protocol === 'https') {
-    console.log('🔒 HTTPS enabled - secure connection established');
-    console.log(
-      '✅ Oil & Gas critical infrastructure security compliance active',
-    );
+    logger.log('HTTPS enabled - secure connection established');
   } else {
-    console.log('⚠️ Running in HTTP mode - configure HTTPS for production');
+    logger.warn('Running in HTTP mode - configure HTTPS for production');
   }
 }
 

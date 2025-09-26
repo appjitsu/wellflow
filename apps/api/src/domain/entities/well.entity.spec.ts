@@ -26,7 +26,7 @@ describe('Well', () => {
         validLocation,
       );
 
-      expect(well.getId()).toBe('test-id');
+      expect(well.getId().getValue()).toBe('test-id');
       expect(well.getApiNumber()).toBe(validApiNumber);
       expect(well.getName()).toBe('Test Well');
       expect(well.getOperatorId()).toBe('operator-123');
@@ -417,7 +417,7 @@ describe('Well', () => {
 
       const well = Well.fromPersistence(persistenceData);
 
-      expect(well.getId()).toBe('persisted-id');
+      expect(well.getId().getValue()).toBe('persisted-id');
       expect(well.getApiNumber().getValue()).toBe('42-123-45678');
       expect(well.getName()).toBe('Persisted Well');
       expect(well.getOperatorId()).toBe('operator-456');

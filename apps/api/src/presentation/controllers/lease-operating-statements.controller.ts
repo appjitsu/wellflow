@@ -109,11 +109,11 @@ export class LeaseOperatingStatementsController {
       req.user.id,
     );
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const losId = await this.commandBus.execute(command);
+    const losId = await this.commandBus.execute<CreateLosCommand, string>(
+      command,
+    );
 
     return {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       id: losId,
       message: 'Lease Operating Statement created successfully',
     };
@@ -259,11 +259,12 @@ export class LeaseOperatingStatementsController {
       req.user.id,
     );
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const expenseId = await this.commandBus.execute(command);
+    const expenseId = await this.commandBus.execute<
+      AddLosExpenseCommand,
+      string
+    >(command);
 
     return {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       expenseId,
       message: 'Expense added successfully',
     };
