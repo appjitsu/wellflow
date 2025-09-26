@@ -1,0 +1,9 @@
+// Event exports for domain module
+export { PermitCreatedEvent } from './permit-created.event';
+export { PermitStatusChangedEvent } from './permit-status-changed.event';
+export { PermitExpiredEvent } from './permit-expired.event';
+export { IncidentReportedEvent } from './incident-reported.event';
+export { IncidentSeverityChangedEvent } from './incident-severity-changed.event';
+export { ReportOverdueEvent } from './report-overdue.event';
+export { MonitoringDataRecordedEvent } from './monitoring-data-recorded.event';
+export { ComplianceLimitExceededEvent } from './compliance-limit-exceeded.event';

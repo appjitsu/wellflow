@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, security/detect-object-injection */
 import { Injectable, Inject } from '@nestjs/common';
 import { eq, and, sql, SQL } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
@@ -24,6 +23,19 @@ export abstract class EnhancedBaseRepository<T extends PgTable<TableConfig>> {
     protected readonly table: T,
     protected readonly paginationService: CursorPaginationService,
   ) {}
+
+  /**
+   * Safely access a column by key name
+   * This method provides type-safe access to table columns while avoiding object injection warnings
+   */
+  protected getColumn(key: string): AnyPgColumn {
+    // eslint-disable-next-line security/detect-object-injection
+    const column = (this.table as Record<string, unknown>)[key];
+    if (!column) {
+      throw new Error(`Column '${key}' not found in table`);
+    }
+    return column as AnyPgColumn;
+  }
 
   /**
    * Find records with cursor-based pagination
@@ -57,7 +69,7 @@ export abstract class EnhancedBaseRepository<T extends PgTable<TableConfig>> {
     // Execute query
     const query = this.db
       .select()
-      .from(this.table as any)
+      .from(this.table as PgTable)
       .where(and(...conditions))
       .orderBy(...orderBy)
       .limit(limit);
@@ -83,7 +95,7 @@ export abstract class EnhancedBaseRepository<T extends PgTable<TableConfig>> {
     additionalFilters?: Record<string, unknown>,
   ): Promise<CursorPaginationResponse<T['$inferSelect']>> {
     const organizationFilter = eq(
-      (this.table as Record<string, unknown>).organizationId as AnyPgColumn,
+      this.getColumn('organizationId'),
       organizationId,
     );
 
@@ -111,7 +123,7 @@ export abstract class EnhancedBaseRepository<T extends PgTable<TableConfig>> {
 
     const result = await this.db
       .select({ count: sql`count(*)` })
-      .from(this.table as any)
+      .from(this.table as PgTable)
       .where(and(...allFilters));
 
     return Number(result[0]?.count || 0);
@@ -141,9 +153,7 @@ export abstract class EnhancedBaseRepository<T extends PgTable<TableConfig>> {
 
     return Object.entries(filters)
       .filter(([_, value]) => value !== undefined && value !== null)
-      .map(([key, value]) =>
-        eq((this.table as Record<string, unknown>)[key] as AnyPgColumn, value),
-      );
+      .map(([key, value]) => eq(this.getColumn(key), value));
   }
 
   /**
@@ -168,8 +178,8 @@ export abstract class EnhancedBaseRepository<T extends PgTable<TableConfig>> {
   async findById(id: string): Promise<T['$inferSelect'] | null> {
     const result = await this.db
       .select()
-      .from(this.table as any)
-      .where(eq((this.table as Record<string, unknown>).id as AnyPgColumn, id))
+      .from(this.table as PgTable<TableConfig>)
+      .where(eq(this.getColumn('id'), id))
       .limit(1);
 
     return (result[0] as T['$inferSelect']) || null;
@@ -185,7 +195,7 @@ export abstract class EnhancedBaseRepository<T extends PgTable<TableConfig>> {
     const result = await this.db
       .update(this.table)
       .set(data)
-      .where(eq((this.table as Record<string, unknown>).id as AnyPgColumn, id))
+      .where(eq(this.getColumn('id'), id))
       .returning();
 
     return (result as unknown as T['$inferSelect'][])[0] || null;
@@ -197,7 +207,7 @@ export abstract class EnhancedBaseRepository<T extends PgTable<TableConfig>> {
   async delete(id: string): Promise<boolean> {
     const result = await this.db
       .delete(this.table)
-      .where(eq((this.table as Record<string, unknown>).id as AnyPgColumn, id))
+      .where(eq(this.getColumn('id'), id))
       .returning();
 
     return result.length > 0;
@@ -208,9 +218,9 @@ export abstract class EnhancedBaseRepository<T extends PgTable<TableConfig>> {
    */
   async exists(id: string): Promise<boolean> {
     const result = await this.db
-      .select({ id: (this.table as Record<string, unknown>).id as AnyPgColumn })
-      .from(this.table as any)
-      .where(eq((this.table as Record<string, unknown>).id as AnyPgColumn, id))
+      .select({ id: this.getColumn('id') })
+      .from(this.table as PgTable<TableConfig>)
+      .where(eq(this.getColumn('id'), id))
       .limit(1);
 
     return result.length > 0;
@@ -234,16 +244,11 @@ export abstract class EnhancedBaseRepository<T extends PgTable<TableConfig>> {
   ): Promise<T['$inferSelect'][]> {
     let query = this.db
       .select()
-      .from(this.table as any)
-      .where(
-        eq(
-          (this.table as Record<string, unknown>).organizationId as AnyPgColumn,
-          organizationId,
-        ),
-      );
+      .from(this.table as PgTable<TableConfig>)
+      .where(eq(this.getColumn('organizationId'), organizationId));
 
     if (limit) {
-      query = query.limit(limit) as any;
+      query = query.limit(limit) as typeof query;
     }
 
     return query;

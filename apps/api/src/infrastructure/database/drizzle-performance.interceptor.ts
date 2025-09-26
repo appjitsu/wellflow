@@ -112,7 +112,7 @@ export class DrizzlePerformanceInterceptor {
               const executionTime = 0; // Timer will provide actual execution time
               const errorMessage =
                 error instanceof Error ? error.message : String(error);
-              this.queryPerformanceService.recordQueryError(
+              void this.queryPerformanceService.recordQueryError(
                 queryId,
                 query,
                 errorMessage,
@@ -133,7 +133,7 @@ export class DrizzlePerformanceInterceptor {
         const executionTime = 0; // Timer will provide actual execution time
         const errorMessage =
           error instanceof Error ? error.message : String(error);
-        this.queryPerformanceService.recordQueryError(
+        void this.queryPerformanceService.recordQueryError(
           queryId,
           query,
           errorMessage,

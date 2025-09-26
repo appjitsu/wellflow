@@ -1,11 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { Redis } from 'ioredis';
-import {
-  ICache,
-  CacheEntry,
-  CacheOptions,
-  CacheStats,
-} from './cache.interface';
+import { ICache, CacheOptions, CacheStats } from './cache.interface';
 
 @Injectable()
 export class RedisCacheService implements ICache {
@@ -188,7 +183,19 @@ export class RedisCacheService implements ICache {
   }
 
   private parseRedisStat(info: string, key: string): number {
-    const match = info.match(new RegExp(`${key}:([^\r\n]+)`));
-    return match ? parseInt(match[1]) || 0 : 0;
+    // Use indexOf instead of regex to avoid security issues
+    const searchKey = key + ':';
+    const startIndex = info.indexOf(searchKey);
+    if (startIndex === -1) return 0;
+
+    const valueStart = startIndex + searchKey.length;
+    const lineEnd = info.indexOf('\r', valueStart);
+    const actualEnd = lineEnd === -1 ? info.indexOf('\n', valueStart) : lineEnd;
+
+    if (actualEnd === -1) {
+      return parseInt(info.substring(valueStart)) || 0;
+    }
+
+    return parseInt(info.substring(valueStart, actualEnd)) || 0;
   }
 }

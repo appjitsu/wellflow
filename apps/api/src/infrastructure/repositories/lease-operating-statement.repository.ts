@@ -111,19 +111,17 @@ export class LosRepository implements ILosRepository {
       whereConditions.push(eq(leaseOperatingStatements.status, options.status));
     }
 
-    const query = this.db
+    let query = this.db
       .select()
       .from(leaseOperatingStatements)
       .where(and(...whereConditions))
       .orderBy(desc(leaseOperatingStatements.statementMonth));
 
     if (options?.limit) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-      (query as any).limit(options.limit);
+      query = query.limit(options.limit) as typeof query;
     }
     if (options?.offset) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-      (query as any).offset(options.offset);
+      query = query.offset(options.offset) as typeof query;
     }
 
     const results = await query;

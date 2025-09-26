@@ -4,10 +4,10 @@ import {
   OnModuleInit,
   OnModuleDestroy,
 } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import { EventBus, IEvent, IEventHandler } from '@nestjs/cqrs';
 import { Subject, Observable, Subscription } from 'rxjs';
 import { filter, bufferTime, map } from 'rxjs/operators';
+import { randomUUID } from 'crypto';
 
 export interface EventMetadata {
   eventId: string;
@@ -41,7 +41,7 @@ export class EnhancedEventBusService
     event: IEvent;
     metadata: EventMetadata;
   }>();
-  private subscriptions: Subscription[] = [];
+  protected override subscriptions: Subscription[] = [];
   private eventHandlers = new Map<string, EventHandlerRegistration[]>();
   private eventMetrics = new Map<
     string,
@@ -54,16 +54,12 @@ export class EnhancedEventBusService
     }
   >();
 
-  constructor(private readonly moduleRef: ModuleRef) {
-    super(moduleRef);
-  }
-
   onModuleInit() {
     this.setupEventStreamProcessing();
     this.setupMetricsCollection();
   }
 
-  onModuleDestroy() {
+  override onModuleDestroy() {
     this.subscriptions.forEach((sub) => sub.unsubscribe());
     this.eventStream$.complete();
   }
@@ -112,15 +108,18 @@ export class EnhancedEventBusService
       this.eventHandlers.set(eventType, []);
     }
 
-    this.eventHandlers.get(eventType)!.push({
-      eventType,
-      handler,
-      priority,
-      filter,
-    });
+    const handlers = this.eventHandlers.get(eventType);
+    if (handlers) {
+      handlers.push({
+        eventType,
+        handler,
+        priority,
+        filter,
+      });
 
-    // Sort by priority (higher priority first)
-    this.eventHandlers.get(eventType)!.sort((a, b) => b.priority - a.priority);
+      // Sort by priority (higher priority first)
+      handlers.sort((a, b) => b.priority - a.priority);
+    }
   }
 
   /**
@@ -134,7 +133,7 @@ export class EnhancedEventBusService
    * Get events of specific type
    */
   getEventsOfType<T extends IEvent>(
-    eventType: new (...args: any[]) => T,
+    eventType: new (...args: unknown[]) => T,
   ): Observable<{ event: T; metadata: EventMetadata }> {
     return this.eventStream$.pipe(
       filter(({ event }) => event instanceof eventType),
@@ -145,14 +144,22 @@ export class EnhancedEventBusService
   /**
    * Get event metrics
    */
-  getEventMetrics(): Record<string, any> {
-    const metrics: Record<string, any> = {};
+  getEventMetrics(): Record<string, unknown> {
+    const metrics = new Map<string, unknown>();
 
     for (const [eventType, metric] of this.eventMetrics) {
-      metrics[eventType] = { ...metric };
+      const safeEventType = String(eventType);
+      if (
+        safeEventType &&
+        typeof safeEventType === 'string' &&
+        safeEventType.length > 0
+      ) {
+        const sanitizedKey = safeEventType.replace(/[^a-zA-Z0-9_-]/g, '_');
+        metrics.set(sanitizedKey, { ...metric });
+      }
     }
 
-    return metrics;
+    return Object.fromEntries(metrics);
   }
 
   /**
@@ -161,13 +168,15 @@ export class EnhancedEventBusService
   async replayEvents(
     fromTimestamp: Date,
     eventTypes?: string[],
-    handler?: (event: IEvent, metadata: EventMetadata) => Promise<void>,
+    _handler?: (event: IEvent, metadata: EventMetadata) => Promise<void>,
   ): Promise<void> {
     // In a real implementation, this would replay from event store
     // For now, we'll just log the request
+    const eventTypesStr = eventTypes?.join(', ') || 'all';
     this.logger.log(
-      `Event replay requested from ${fromTimestamp.toISOString()} for types: ${eventTypes?.join(', ') || 'all'}`,
+      `Event replay requested from ${fromTimestamp.toISOString()} for types: ${eventTypesStr}`,
     );
+    return Promise.resolve();
   }
 
   /**
@@ -184,7 +193,7 @@ export class EnhancedEventBusService
   /**
    * Override the standard publish method to add metadata
    */
-  async publish<T extends IEvent>(event: T): Promise<void> {
+  override async publish<T extends IEvent>(event: T): Promise<void> {
     await this.publishEnhanced(event);
   }
 
@@ -240,7 +249,8 @@ export class EnhancedEventBusService
   }
 
   private generateEventId(): string {
-    return `evt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const randomPart = randomUUID().substring(0, 8);
+    return `evt_${Date.now()}_${randomPart}`;
   }
 
   private shouldLogEvent(event: IEvent): boolean {
@@ -269,7 +279,8 @@ export class EnhancedEventBusService
       });
     }
 
-    const metrics = this.eventMetrics.get(eventType)!;
+    const metrics = this.eventMetrics.get(eventType);
+    if (!metrics) return;
 
     switch (action) {
       case 'published':

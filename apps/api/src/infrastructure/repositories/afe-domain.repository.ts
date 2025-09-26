@@ -1,9 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { eq, and, desc, like, sql } from 'drizzle-orm';
 import { IAfeRepository } from '../../domain/repositories/afe.repository.interface';
 import { Afe } from '../../domain/entities/afe.entity';
 import { AfeStatus, AfeType } from '../../domain/enums/afe-status.enum';
 import { AfeRepository } from './afe.repository';
+import { afes } from '../../database/schema';
 import * as schema from '../../database/schema';
 
 /**
@@ -17,9 +19,9 @@ export class AfeDomainRepository implements IAfeRepository {
 
   constructor(
     @Inject('DATABASE_CONNECTION')
-    db: NodePgDatabase<typeof schema>,
+    private readonly db: NodePgDatabase<typeof schema>,
   ) {
-    this.afeRepository = new AfeRepository(db);
+    this.afeRepository = new AfeRepository(this.db);
   }
 
   /**
@@ -220,10 +222,38 @@ export class AfeDomainRepository implements IAfeRepository {
   /**
    * Get next AFE number for organization and year
    */
-  getNextAfeNumber(organizationId: string, year: number): Promise<string> {
-    // Simple implementation - in production this would be more sophisticated
+  async getNextAfeNumber(
+    organizationId: string,
+    year: number,
+  ): Promise<string> {
+    // Find the highest sequential number for this organization and year
     const yearPrefix = `AFE-${year}-`;
-    return Promise.resolve(`${yearPrefix}0001`);
+    const results = await this.db
+      .select({ afeNumber: afes.afeNumber })
+      .from(afes)
+      .where(
+        and(
+          eq(afes.organizationId, organizationId),
+          like(afes.afeNumber, `${yearPrefix}%`),
+        ),
+      )
+      .orderBy(desc(afes.afeNumber))
+      .limit(1);
+
+    let nextSequential = 1;
+    if (results.length > 0 && results[0]?.afeNumber) {
+      // Extract the sequential number from the AFE number
+      const afeNumber = results[0].afeNumber;
+      const sequentialPart = afeNumber.split('-')[2];
+      if (sequentialPart) {
+        const currentSequential = parseInt(sequentialPart, 10);
+        if (!isNaN(currentSequential)) {
+          nextSequential = currentSequential + 1;
+        }
+      }
+    }
+
+    return `AFE-${year}-${nextSequential.toString().padStart(4, '0')}`;
   }
 
   /**
@@ -258,13 +288,30 @@ export class AfeDomainRepository implements IAfeRepository {
       leaseId?: string;
     },
   ): Promise<number> {
-    // Simplified implementation
-    const afes = await this.findByOrganizationId(organizationId, {
-      status: criteria?.status,
-      afeType: criteria?.afeType,
-    });
+    const conditions = [eq(afes.organizationId, organizationId)];
 
-    return afes.length;
+    if (criteria?.status) {
+      conditions.push(eq(afes.status, criteria.status));
+    }
+
+    if (criteria?.afeType) {
+      conditions.push(eq(afes.afeType, criteria.afeType));
+    }
+
+    if (criteria?.wellId) {
+      conditions.push(eq(afes.wellId, criteria.wellId));
+    }
+
+    if (criteria?.leaseId) {
+      conditions.push(eq(afes.leaseId, criteria.leaseId));
+    }
+
+    const result = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(afes)
+      .where(and(...conditions));
+
+    return result[0]?.count || 0;
   }
 
   /**

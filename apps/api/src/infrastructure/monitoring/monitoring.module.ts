@@ -2,6 +2,7 @@ import { Module, OnModuleInit } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { QueryPerformanceService } from './query-performance.service';
 import { PerformanceAlertObserver } from './performance-alert.observer';
+import { AlertService } from './alert.service';
 
 /**
  * Monitoring Module
@@ -10,8 +11,15 @@ import { PerformanceAlertObserver } from './performance-alert.observer';
  */
 @Module({
   imports: [ConfigModule],
-  providers: [QueryPerformanceService, PerformanceAlertObserver],
-  exports: [QueryPerformanceService, PerformanceAlertObserver],
+  providers: [
+    QueryPerformanceService,
+    PerformanceAlertObserver,
+    {
+      provide: AlertService,
+      useClass: AlertService,
+    },
+  ],
+  exports: [QueryPerformanceService, PerformanceAlertObserver, AlertService],
 })
 export class MonitoringModule implements OnModuleInit {
   constructor(

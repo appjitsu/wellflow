@@ -59,7 +59,7 @@ export class UnitOfWork implements IUnitOfWork {
 
   constructor(
     @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
+    protected readonly db: NodePgDatabase<typeof schema>,
   ) {}
 
   /**

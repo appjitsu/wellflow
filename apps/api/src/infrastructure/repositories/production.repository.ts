@@ -328,6 +328,7 @@ export class ProductionRepository
 
     result.forEach((record) => {
       const month = new Date(record.month).getMonth() + 1;
+      // Month is validated to be 1-12, safe for object access
       // eslint-disable-next-line security/detect-object-injection
       if (!monthlyData[month]) {
         // eslint-disable-next-line security/detect-object-injection
@@ -340,10 +341,15 @@ export class ProductionRepository
         };
       }
 
-      monthlyData[month].totalOil += Number(record.totalOil || 0); // eslint-disable-line security/detect-object-injection
-      monthlyData[month].totalGas += Number(record.totalGas || 0); // eslint-disable-line security/detect-object-injection
-      monthlyData[month].totalWater += Number(record.totalWater || 0); // eslint-disable-line security/detect-object-injection
-      monthlyData[month].recordCount += Number(record.recordCount || 0); // eslint-disable-line security/detect-object-injection
+      // Month is validated to be 1-12, safe for object access
+      // eslint-disable-next-line security/detect-object-injection
+      monthlyData[month].totalOil += Number(record.totalOil || 0);
+      // eslint-disable-next-line security/detect-object-injection
+      monthlyData[month].totalGas += Number(record.totalGas || 0);
+      // eslint-disable-next-line security/detect-object-injection
+      monthlyData[month].totalWater += Number(record.totalWater || 0);
+      // eslint-disable-next-line security/detect-object-injection
+      monthlyData[month].recordCount += Number(record.recordCount || 0);
     });
 
     return Object.values(monthlyData);

@@ -6,7 +6,17 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Observable, tap, catchError } from 'rxjs';
+import { Request } from 'express';
 import { DatabasePerformanceService } from './database-performance.service';
+
+/**
+ * Extended Request interface with route information
+ */
+interface RequestWithRoute extends Request {
+  user?: {
+    id: string;
+  };
+}
 
 @Injectable()
 export class DatabasePerformanceInterceptor implements NestInterceptor {
@@ -16,8 +26,8 @@ export class DatabasePerformanceInterceptor implements NestInterceptor {
     private readonly performanceService: DatabasePerformanceService,
   ) {}
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const request = context.switchToHttp().getRequest();
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    const request = context.switchToHttp().getRequest<RequestWithRoute>();
     const handler = context.getHandler();
     const className = context.getClass().name;
     const methodName = handler.name;
@@ -30,15 +40,15 @@ export class DatabasePerformanceInterceptor implements NestInterceptor {
     const startTime = Date.now();
 
     return next.handle().pipe(
-      tap(async (data) => {
+      tap((_data) => {
         const executionTime = Date.now() - startTime;
 
         // Record query performance
-        await this.performanceService.recordQueryExecution(
+        void this.performanceService.recordQueryExecution(
           `${className}.${methodName}`,
           executionTime,
           {
-            userId: (request as any)?.user?.id,
+            userId: request?.user?.id,
             applicationName: className,
             clientAddress: request?.ip,
           },
@@ -53,8 +63,8 @@ export class DatabasePerformanceInterceptor implements NestInterceptor {
               className,
               methodName,
               executionTime,
-              userId: (request as any)?.user?.id,
-              endpoint: request?.route?.path,
+              userId: request?.user?.id,
+              endpoint: (request?.route as { path?: string })?.path,
               timestamp: new Date().toISOString(),
             },
           );
@@ -68,7 +78,7 @@ export class DatabasePerformanceInterceptor implements NestInterceptor {
           `${className}.${methodName} (FAILED)`,
           executionTime,
           {
-            userId: (request as any)?.user?.id,
+            userId: request?.user?.id,
             applicationName: className,
             clientAddress: request?.ip,
           },

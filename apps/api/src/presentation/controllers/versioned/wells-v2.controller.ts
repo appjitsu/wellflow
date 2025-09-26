@@ -7,21 +7,13 @@ import {
   Query,
   UseGuards,
   ParseUUIDPipe,
-  ValidationPipe,
-  Version,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { AbilitiesGuard } from '../../../authorization/abilities.guard';
 import { CheckAbilities } from '../../../authorization/abilities.decorator';
 import { Action } from '../../../authorization/action.enum';
 import {
-  ApiVersion,
   ApiVersionDocs,
   ApiDeprecated,
 } from '../../../common/versioning/api-version.decorator';
@@ -54,7 +46,7 @@ export class WellsV2Controller {
     },
   })
   @CheckAbilities({ action: Action.Read, subject: 'Well' })
-  async getWellsV2(
+  getWellsV2(
     @Query()
     filters: {
       status?: string;
@@ -88,7 +80,7 @@ export class WellsV2Controller {
       'Create a new well with comprehensive validation and audit logging',
   })
   @CheckAbilities({ action: Action.Create, subject: 'Well' })
-  async createWellV2(@Body() createWellDto: any) {
+  createWellV2(@Body() _createWellDto: Record<string, unknown>) {
     // V2 implementation with enhanced validation
     return {
       version: 'v2',
@@ -108,7 +100,7 @@ export class WellsV2Controller {
       'Retrieve a specific well with all related data (production, permits, etc.)',
   })
   @CheckAbilities({ action: Action.Read, subject: 'Well' })
-  async getWellByIdV2(@Param('id', ParseUUIDPipe) id: string) {
+  getWellByIdV2(@Param('id', ParseUUIDPipe) id: string) {
     // V2 implementation with relationships
     return {
       version: 'v2',
@@ -134,7 +126,7 @@ export class WellsV1Controller {
     deprecatedMessage: 'Use V2 API with enhanced filtering capabilities',
   })
   @ApiDeprecated('This endpoint is deprecated. Use /v2/wells instead.')
-  async getWellsV1() {
+  getWellsV1() {
     return {
       version: 'v1',
       message: 'This endpoint is deprecated. Please upgrade to V2.',

@@ -90,7 +90,7 @@ export class MemoryCacheService implements ICache {
         if (!this.tagIndex.has(tag)) {
           this.tagIndex.set(tag, new Set());
         }
-        this.tagIndex.get(tag)!.add(key);
+        this.tagIndex.get(tag)?.add(key);
       });
     }
   }
@@ -108,13 +108,14 @@ export class MemoryCacheService implements ICache {
         }
       });
     }
-    return existed;
+    return Promise.resolve(existed);
   }
 
   async clear(): Promise<void> {
     this.cache.clear();
     this.tagIndex.clear();
     this.stats = { hits: 0, misses: 0, sets: 0, deletes: 0, evictions: 0 };
+    return Promise.resolve();
   }
 
   async has(key: string): Promise<boolean> {
@@ -139,12 +140,12 @@ export class MemoryCacheService implements ICache {
       totalSize += entry.metadata?.size || 0;
     });
 
-    return {
+    return Promise.resolve({
       ...this.stats,
       hitRate,
       totalSize,
       entryCount: this.cache.size,
-    };
+    });
   }
 
   async invalidateByTag(tag: string): Promise<number> {
@@ -163,18 +164,33 @@ export class MemoryCacheService implements ICache {
   }
 
   async invalidateByPattern(pattern: string): Promise<number> {
-    const regex = new RegExp(pattern.replace(/\*/g, '.*'));
+    // Use simple string matching instead of regex to avoid security issues
     let deletedCount = 0;
-
     for (const [key] of this.cache) {
-      if (regex.test(key)) {
+      if (this.matchesPattern(key, pattern)) {
         if (await this.delete(key)) {
           deletedCount++;
         }
       }
     }
-
     return deletedCount;
+  }
+
+  private matchesPattern(key: string, pattern: string): boolean {
+    // Simple pattern matching: support * as wildcard
+    const patternParts = pattern.split('*');
+    let lastIndex = 0;
+
+    for (const part of patternParts) {
+      if (part === '') continue;
+      const index = key.indexOf(part, lastIndex);
+      if (index === -1) {
+        return false;
+      }
+      lastIndex = index + part.length;
+    }
+
+    return true;
   }
 
   private async evictEntries(): Promise<void> {
@@ -191,10 +207,15 @@ export class MemoryCacheService implements ICache {
     // Remove oldest entries until we're under the limit
     const toRemove = Math.max(1, this.cache.size - this.maxSize + 100); // Remove 100 extra for buffer
 
-    for (let i = 0; i < toRemove && i < entries.length; i++) {
-      const [key] = entries[i];
-      await this.delete(key);
-      this.stats.evictions++;
+    const entriesToRemove = entries.slice(0, toRemove);
+    for (const entry of entriesToRemove) {
+      if (entry && Array.isArray(entry) && entry.length > 0) {
+        const keyValue = entry[0];
+        if (typeof keyValue === 'string') {
+          await this.delete(keyValue);
+          this.stats.evictions++;
+        }
+      }
     }
 
     this.logger.debug(`Evicted ${toRemove} entries from memory cache`);
@@ -217,7 +238,7 @@ export class MemoryCacheService implements ICache {
     }
   }
 
-  private calculateSize(value: any): number {
+  private calculateSize(value: unknown): number {
     try {
       // Rough estimation of memory usage
       const jsonString = JSON.stringify(value);

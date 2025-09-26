@@ -32,17 +32,13 @@ import { IncidentsModule } from './incidents/incidents.module';
 import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
 import { AbilitiesGuard } from './authorization/abilities.guard';
 import { AuditLogInterceptor } from './presentation/interceptors/audit-log.interceptor';
-import {
-  createThrottlerConfig,
-  WellFlowThrottlerGuard,
-} from './common/throttler';
+import { createThrottlerConfig } from './common/throttler';
 import { RequestLoggingMiddleware } from './common/middleware/request-logging.middleware';
 import { CircuitBreakerService } from './common/resilience/circuit-breaker.service';
 import { RetryService } from './common/resilience/retry.service';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 import { AuditLogService } from './application/services/audit-log.service';
 import { AuditLogRepositoryImpl } from './infrastructure/repositories/audit-log.repository';
-import { AuditLogRepository } from './domain/repositories/audit-log.repository.interface';
 
 import { RegulatoryReportingModule } from './regulatory-reporting/regulatory-reporting.module';
 import { OperationsModule } from './operations/operations.module';

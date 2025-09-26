@@ -4,11 +4,13 @@ import {
   ArgumentMetadata,
   BadRequestException,
   Logger,
-  Inject,
   Optional,
 } from '@nestjs/common';
 import { AuditLogService } from '../../application/services/audit-log.service';
-import { AuditResourceType } from '../../domain/entities/audit-log.entity';
+import {
+  AuditResourceType,
+  AuditAction,
+} from '../../domain/entities/audit-log.entity';
 
 interface SecurityViolation {
   type:
@@ -19,7 +21,7 @@ interface SecurityViolation {
     | 'malformed_data';
   severity: 'low' | 'medium' | 'high' | 'critical';
   field?: string;
-  value?: any;
+  value?: unknown;
   pattern: string;
   description: string;
 }
@@ -29,7 +31,7 @@ interface SecurityViolation {
  * Specialized pipe for detecting and preventing security threats
  */
 @Injectable()
-export class SecurityValidationPipe implements PipeTransform<any> {
+export class SecurityValidationPipe implements PipeTransform<unknown> {
   private readonly logger = new Logger(SecurityValidationPipe.name);
 
   // Security patterns to detect
@@ -40,27 +42,27 @@ export class SecurityValidationPipe implements PipeTransform<any> {
       severity: 'high' as const,
     },
     { pattern: /(-{2}|\/\*|\*\/|;)/, severity: 'high' as const }, // SQL comments and statements
-    { pattern: /(\bOR\b|\bAND\b).*(\=|\<|\>)/i, severity: 'medium' as const }, // Logic operators
-    { pattern: /('|(\\x27)|(\\x2D))/, severity: 'medium' as const }, // Quotes
+    { pattern: /(\bOR\b|\bAND\b).*[=<>]/i, severity: 'medium' as const }, // Logic operators
+    { pattern: /['\x2D]/, severity: 'medium' as const }, // Quotes
   ];
 
   private readonly xssPatterns = [
     {
-      pattern: /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+      pattern: /<script[^>]*>[\s\S]*?<\/script>/gi,
       severity: 'critical' as const,
     },
     { pattern: /javascript:/gi, severity: 'high' as const },
     { pattern: /on\w+\s*=/gi, severity: 'high' as const },
     {
-      pattern: /<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi,
+      pattern: /<iframe[^>]*>[\s\S]*?<\/iframe>/gi,
       severity: 'high' as const,
     },
     {
-      pattern: /<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi,
+      pattern: /<object[^>]*>[\s\S]*?<\/object>/gi,
       severity: 'high' as const,
     },
     {
-      pattern: /<embed\b[^<]*(?:(?!<\/embed>)<[^<]*)*<\/embed>/gi,
+      pattern: /<embed[^>]*>[\s\S]*?<\/embed>/gi,
       severity: 'high' as const,
     },
     { pattern: /vbscript:/gi, severity: 'high' as const },
@@ -68,7 +70,7 @@ export class SecurityValidationPipe implements PipeTransform<any> {
   ];
 
   private readonly commandInjectionPatterns = [
-    { pattern: /(\||&|;|\$\(|\`)/, severity: 'critical' as const }, // Shell operators
+    { pattern: /(\||&|;|\$\(|`)/, severity: 'critical' as const }, // Shell operators
     {
       pattern: /\b(rm|del|format|shutdown|reboot|halt)\b/i,
       severity: 'critical' as const,
@@ -77,32 +79,36 @@ export class SecurityValidationPipe implements PipeTransform<any> {
   ];
 
   private readonly pathTraversalPatterns = [
-    { pattern: /\.\.[\/\\]/, severity: 'critical' as const }, // Directory traversal
-    { pattern: /[\/\\]\.\./, severity: 'critical' as const },
+    { pattern: /\.\.[/\\]/, severity: 'critical' as const }, // Directory traversal
+    { pattern: /[/\\]\.\./, severity: 'critical' as const },
     { pattern: /\.\.%2f/i, severity: 'critical' as const }, // URL encoded
     { pattern: /%2e%2e%2f/i, severity: 'critical' as const },
   ];
 
   private readonly malformedDataPatterns = [
     { pattern: /.{10000,}/, severity: 'medium' as const }, // Extremely long strings
-    { pattern: /\u0000/, severity: 'high' as const }, // Null bytes
+    { pattern: /\0/, severity: 'high' as const }, // Null bytes
     {
-      pattern: /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/,
+      // eslint-disable-next-line no-control-regex, sonarjs/no-control-regex
+      pattern: /[\x00-\x1F\x7F]/,
       severity: 'medium' as const,
     }, // Control characters
   ];
 
   constructor(@Optional() private readonly auditLogService?: AuditLogService) {}
 
-  async transform(value: any, metadata: ArgumentMetadata): Promise<any> {
+  async transform(
+    value: unknown,
+    _metadata: ArgumentMetadata,
+  ): Promise<unknown> {
     if (!value || typeof value !== 'object') {
       return value;
     }
 
-    const violations = await this.detectSecurityViolations(value, metadata);
+    const violations = this.detectSecurityViolations(value, _metadata);
 
     if (violations.length > 0) {
-      await this.handleSecurityViolations(violations, value, metadata);
+      await this.handleSecurityViolations(violations, value, _metadata);
 
       const criticalViolations = violations.filter(
         (v) => v.severity === 'critical',
@@ -125,10 +131,10 @@ export class SecurityValidationPipe implements PipeTransform<any> {
     return this.sanitizeData(value);
   }
 
-  private async detectSecurityViolations(
-    value: any,
-    metadata: ArgumentMetadata,
-  ): Promise<SecurityViolation[]> {
+  private detectSecurityViolations(
+    value: unknown,
+    _metadata: ArgumentMetadata,
+  ): SecurityViolation[] {
     const violations: SecurityViolation[] = [];
     const dataString = JSON.stringify(value);
 
@@ -187,13 +193,13 @@ export class SecurityValidationPipe implements PipeTransform<any> {
   }
 
   private traverseObject(
-    obj: any,
-    callback: (path: string, value: any) => void,
+    obj: unknown,
+    callback: (path: string, value: unknown) => void,
     path = '',
   ): void {
     if (typeof obj !== 'object' || obj === null) return;
 
-    for (const [key, value] of Object.entries(obj)) {
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
       const currentPath = path ? `${path}.${key}` : key;
       callback(currentPath, value);
 
@@ -205,10 +211,10 @@ export class SecurityValidationPipe implements PipeTransform<any> {
 
   private async handleSecurityViolations(
     violations: SecurityViolation[],
-    originalData: any,
-    metadata: ArgumentMetadata,
+    originalData: unknown,
+    _metadata: ArgumentMetadata,
   ): Promise<void> {
-    const className = metadata.metatype?.name || 'Unknown';
+    const className = _metadata.metatype?.name || 'Unknown';
 
     // Log security violations
     if (this.auditLogService) {
@@ -218,22 +224,24 @@ export class SecurityValidationPipe implements PipeTransform<any> {
 
       if (highSeverityViolations.length > 0) {
         await this.auditLogService.logAction(
-          'EXECUTE',
+          AuditAction.EXECUTE,
           AuditResourceType.SYSTEM,
           `security-violation-${className}`,
           false,
           `Security violations detected: ${highSeverityViolations.length} high/critical violations`,
           {},
           {
-            violations: highSeverityViolations.map((v) => ({
-              type: v.type,
-              severity: v.severity,
-              field: v.field,
-              pattern: v.pattern,
-              description: v.description,
-            })),
-            className,
-            dataSize: JSON.stringify(originalData).length,
+            technicalContext: {
+              violations: highSeverityViolations.map((v) => ({
+                type: v.type,
+                severity: v.severity,
+                field: v.field,
+                pattern: v.pattern,
+                description: v.description,
+              })),
+              className,
+              dataSize: JSON.stringify(originalData).length,
+            },
           },
         );
       }
@@ -241,32 +249,55 @@ export class SecurityValidationPipe implements PipeTransform<any> {
 
     // Log to application logger
     violations.forEach((violation) => {
-      const logLevel =
-        violation.severity === 'critical'
-          ? 'error'
-          : violation.severity === 'high'
-            ? 'warn'
-            : 'debug';
-
-      this.logger[logLevel](
-        `Security violation detected: ${violation.description}`,
-        {
-          type: violation.type,
-          severity: violation.severity,
-          field: violation.field,
-          className,
-        },
-      );
+      if (violation.severity === 'critical') {
+        this.logger.error(
+          `Security violation detected: ${violation.description}`,
+          {
+            type: violation.type,
+            severity: violation.severity,
+            field: violation.field,
+            className,
+          },
+        );
+      } else if (violation.severity === 'high') {
+        this.logger.warn(
+          `Security violation detected: ${violation.description}`,
+          {
+            type: violation.type,
+            severity: violation.severity,
+            field: violation.field,
+            className,
+          },
+        );
+      } else {
+        this.logger.debug(
+          `Security violation detected: ${violation.description}`,
+          {
+            type: violation.type,
+            severity: violation.severity,
+            field: violation.field,
+            className,
+          },
+        );
+      }
     });
   }
 
-  private sanitizeData(data: any): any {
-    const sanitized = { ...data };
+  private sanitizeData(data: unknown): unknown {
+    if (typeof data !== 'object' || data === null) {
+      return data;
+    }
+
+    const sanitized = { ...data } as Record<string, unknown>;
 
     // Recursively sanitize all string values
     this.traverseObject(sanitized, (path, value) => {
       if (typeof value === 'string') {
-        sanitized[path.split('.').pop()!] = this.sanitizeString(value);
+        const lastKey = path.split('.').pop();
+        if (lastKey) {
+          // eslint-disable-next-line security/detect-object-injection
+          sanitized[lastKey] = this.sanitizeString(value);
+        }
       }
     });
 
@@ -277,9 +308,9 @@ export class SecurityValidationPipe implements PipeTransform<any> {
     return (
       str
         // Remove script tags
-        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
         // Remove iframe tags
-        .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+        .replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '')
         // Remove javascript: protocols
         .replace(/javascript:/gi, '')
         // Remove vbscript: protocols
@@ -287,9 +318,10 @@ export class SecurityValidationPipe implements PipeTransform<any> {
         // Remove data: URLs that might contain scripts
         .replace(/data:text\/html/gi, '')
         // Remove null bytes
-        .replace(/\u0000/g, '')
+        .replace(/\0/g, '')
         // Remove control characters (except tabs and newlines)
-        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+        // eslint-disable-next-line no-control-regex, sonarjs/no-control-regex
+        .replace(/[\x00-\x1F\x7F]/g, '')
         // Trim excessive whitespace
         .replace(/\s{3,}/g, ' ')
         .trim()

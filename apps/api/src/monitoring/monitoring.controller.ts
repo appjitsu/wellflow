@@ -5,6 +5,9 @@ import {
   Body,
   HttpException,
   HttpStatus,
+  Query,
+  Param,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SentryService } from '../sentry/sentry.service';
@@ -14,6 +17,7 @@ import { CircuitBreakerService } from '../common/resilience/circuit-breaker.serv
 import { RetryService } from '../common/resilience/retry.service';
 import { EnhancedEventBusService } from '../common/events/enhanced-event-bus.service';
 import { DatabasePerformanceService } from '../infrastructure/database/database-performance.service';
+import { AlertService } from '../infrastructure/monitoring/alert.service';
 
 @ApiTags('Monitoring')
 @Controller('monitoring')
@@ -26,6 +30,7 @@ export class MonitoringController {
     private readonly retryService: RetryService,
     private readonly eventBus: EnhancedEventBusService,
     private readonly databasePerformanceService: DatabasePerformanceService,
+    private readonly alertService: AlertService,
   ) {}
 
   @Get('health')
@@ -157,13 +162,13 @@ export class MonitoringController {
   @ApiOperation({ summary: 'Get comprehensive system metrics' })
   @ApiResponse({ status: 200, description: 'System metrics' })
   async getMetrics() {
-    return await this.metricsService.getSystemMetrics();
+    return this.metricsService.getSystemMetrics();
   }
 
   @Get('metrics/circuit-breakers')
   @ApiOperation({ summary: 'Get circuit breaker metrics' })
   @ApiResponse({ status: 200, description: 'Circuit breaker metrics' })
-  async getCircuitBreakerMetrics() {
+  getCircuitBreakerMetrics() {
     return {
       timestamp: new Date().toISOString(),
       circuitBreakers: this.circuitBreakerService.getAllMetrics(),
@@ -173,7 +178,7 @@ export class MonitoringController {
   @Get('metrics/events')
   @ApiOperation({ summary: 'Get event processing metrics' })
   @ApiResponse({ status: 200, description: 'Event processing metrics' })
-  async getEventMetrics() {
+  getEventMetrics() {
     return {
       timestamp: new Date().toISOString(),
       events: this.eventBus.getEventMetrics(),
@@ -185,7 +190,8 @@ export class MonitoringController {
     summary: 'Get resilience metrics (circuit breakers, retries)',
   })
   @ApiResponse({ status: 200, description: 'Resilience metrics' })
-  async getResilienceMetrics() {
+  // eslint-disable-next-line sonarjs/no-identical-functions
+  getResilienceMetrics() {
     return {
       timestamp: new Date().toISOString(),
       circuitBreakers: this.circuitBreakerService.getAllMetrics(),
@@ -228,7 +234,7 @@ export class MonitoringController {
   @Get('metrics/database/slow-queries')
   @ApiOperation({ summary: 'Get slow database queries' })
   @ApiResponse({ status: 200, description: 'Slow database queries' })
-  async getSlowQueries(
+  getSlowQueries(
     @Query('threshold', ParseIntPipe) threshold: number = 1000,
     @Query('hours', ParseIntPipe) hours: number = 1,
   ) {
@@ -247,10 +253,76 @@ export class MonitoringController {
   @Get('metrics/database/locks')
   @ApiOperation({ summary: 'Get database lock information' })
   @ApiResponse({ status: 200, description: 'Database lock information' })
-  async getDatabaseLocks() {
+  getDatabaseLocks() {
     return {
       timestamp: new Date().toISOString(),
-      locks: await this.databasePerformanceService.getLockInfo(),
+      locks: this.databasePerformanceService.getLockInfo(),
+    };
+  }
+
+  @Get('alerts')
+  @ApiOperation({ summary: 'Get active alerts' })
+  @ApiResponse({ status: 200, description: 'Active alerts' })
+  getActiveAlerts() {
+    return {
+      timestamp: new Date().toISOString(),
+      alerts: this.alertService.getActiveAlerts(),
+    };
+  }
+
+  @Get('alerts/history')
+  @ApiOperation({ summary: 'Get alert history' })
+  @ApiResponse({ status: 200, description: 'Alert history' })
+  getAlertHistory(@Query('limit', ParseIntPipe) limit?: number) {
+    return {
+      timestamp: new Date().toISOString(),
+      alerts: this.alertService.getAlertHistory(limit),
+    };
+  }
+
+  @Post('alerts/:alertId/resolve')
+  @ApiOperation({ summary: 'Resolve an alert' })
+  @ApiResponse({ status: 200, description: 'Alert resolved' })
+  async resolveAlert(@Param('alertId') alertId: string) {
+    const resolved = await this.alertService.resolveAlert(alertId);
+
+    if (resolved) {
+      return {
+        success: true,
+        message: `Alert ${alertId} resolved successfully`,
+      };
+    } else {
+      throw new HttpException(
+        `Alert ${alertId} not found`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+  }
+
+  @Post('alerts/test')
+  @ApiOperation({ summary: 'Create a test alert' })
+  @ApiResponse({ status: 200, description: 'Test alert created' })
+  async createTestAlert(
+    @Body()
+    body?: {
+      message?: string;
+      severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+    },
+  ) {
+    const alert = await this.alertService.createAlert({
+      type: 'SYSTEM',
+      severity: body?.severity || 'LOW',
+      title: 'Test Alert',
+      message:
+        body?.message ||
+        'This is a test alert to verify the alerting system is working',
+      metadata: { test: true, source: 'monitoring-controller' },
+    });
+
+    return {
+      success: true,
+      message: 'Test alert created successfully',
+      alertId: alert.id,
     };
   }
 }

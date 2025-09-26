@@ -1,4 +1,6 @@
 import { applyDecorators } from '@nestjs/common';
+
+type ApiParamType = StringConstructor | NumberConstructor | BooleanConstructor;
 import {
   ApiTags,
   ApiBearerAuth,
@@ -11,11 +13,6 @@ import {
   ApiConsumes,
   ApiProduces,
 } from '@nestjs/swagger';
-import {
-  EnhancedApiOperation,
-  CommonApiExamples,
-  WellApiExamples,
-} from './api-examples.decorator';
 
 export interface EnhancedApiDocsOptions {
   // Basic info
@@ -35,39 +32,39 @@ export interface EnhancedApiDocsOptions {
   params?: {
     path?: Array<{
       name: string;
-      type: any;
+      type: ApiParamType;
       description?: string;
-      example?: any;
+      example?: unknown;
     }>;
     query?: Array<{
       name: string;
-      type: any;
+      type: ApiParamType;
       description?: string;
       required?: boolean;
-      example?: any;
+      example?: unknown;
     }>;
     headers?: Array<{
       name: string;
-      type: any;
+      type: ApiParamType;
       description?: string;
       required?: boolean;
-      example?: any;
+      example?: unknown;
     }>;
   };
 
   // Request/Response
   requestBody?: {
-    type: any;
+    type: string | (() => unknown) | [() => unknown];
     description?: string;
     required?: boolean;
-    examples?: any[];
+    examples?: unknown[];
   };
 
   responses?: {
     [statusCode: number]: {
-      type?: any;
+      type?: string | (() => unknown) | [() => unknown];
       description: string;
-      examples?: any[];
+      examples?: unknown[];
     };
   };
 
@@ -89,30 +86,35 @@ export interface EnhancedApiDocsOptions {
 }
 
 /**
- * Enhanced API documentation decorator that provides comprehensive documentation
+ * Add basic decorators (tags, auth, content types)
  */
-export function EnhancedApiDocs(options: EnhancedApiDocsOptions) {
-  const decorators = [];
-
-  // Tags
+function addBasicDecorators(
+  decorators: unknown[],
+  options: EnhancedApiDocsOptions,
+): void {
   if (options.tags) {
     decorators.push(ApiTags(...options.tags));
   }
 
-  // Authentication
   if (options.requiresAuth !== false) {
     decorators.push(ApiBearerAuth());
   }
 
-  // Content types
   if (options.consumes) {
     decorators.push(ApiConsumes(...options.consumes));
   }
   if (options.produces) {
     decorators.push(ApiProduces(...options.produces));
   }
+}
 
-  // Path parameters
+/**
+ * Add parameter decorators (path, query, headers)
+ */
+function addParameterDecorators(
+  decorators: unknown[],
+  options: EnhancedApiDocsOptions,
+): void {
   if (options.params?.path) {
     options.params.path.forEach((param) => {
       decorators.push(
@@ -126,7 +128,6 @@ export function EnhancedApiDocs(options: EnhancedApiDocsOptions) {
     });
   }
 
-  // Query parameters
   if (options.params?.query) {
     options.params.query.forEach((param) => {
       decorators.push(
@@ -141,13 +142,11 @@ export function EnhancedApiDocs(options: EnhancedApiDocsOptions) {
     });
   }
 
-  // Headers
   if (options.params?.headers) {
     options.params.headers.forEach((header) => {
       decorators.push(
         ApiHeader({
           name: header.name,
-          type: header.type,
           description: header.description,
           required: header.required,
           example: header.example,
@@ -155,7 +154,15 @@ export function EnhancedApiDocs(options: EnhancedApiDocsOptions) {
       );
     });
   }
+}
 
+/**
+ * Add response decorators
+ */
+function addResponseDecorators(
+  decorators: unknown[],
+  options: EnhancedApiDocsOptions,
+): void {
   // Request body
   if (options.requestBody) {
     decorators.push(
@@ -198,36 +205,16 @@ export function EnhancedApiDocs(options: EnhancedApiDocsOptions) {
       }),
     );
   }
+}
 
-  if (!options.responses?.[403]) {
-    decorators.push(
-      ApiResponse({
-        status: 403,
-        description: 'Forbidden - Insufficient permissions',
-      }),
-    );
-  }
-
-  if (!options.responses?.[404]) {
-    decorators.push(
-      ApiResponse({
-        status: 404,
-        description: 'Not Found - Resource does not exist',
-      }),
-    );
-  }
-
-  if (!options.responses?.[500]) {
-    decorators.push(
-      ApiResponse({
-        status: 500,
-        description: 'Internal Server Error',
-      }),
-    );
-  }
-
-  // Operation with enhanced details
-  const operationDescription = [
+/**
+ * Add operation decorator with description
+ */
+function addOperationDecorator(
+  decorators: unknown[],
+  options: EnhancedApiDocsOptions,
+): void {
+  const descriptionParts = [
     options.description,
     options.deprecated
       ? `\n\n⚠️ **DEPRECATED**: ${options.deprecationMessage || 'This endpoint is deprecated and will be removed in a future version.'}`
@@ -235,18 +222,16 @@ export function EnhancedApiDocs(options: EnhancedApiDocsOptions) {
     options.rateLimit
       ? `\n\n📊 **Rate Limit**: ${options.rateLimit.requests} requests per ${options.rateLimit.period}`
       : '',
-    options.cache
-      ? `\n\n💾 **Cache**: ${options.cache.ttl} seconds TTL${options.cache.varyBy ? ` (varies by: ${options.cache.varyBy.join(', ')})` : ''}`
-      : '',
+    options.cache ? getCacheDescription(options.cache) : '',
     options.businessRules?.length
-      ? `\n\n📋 **Business Rules**:\n${options.businessRules.map((rule) => `• ${rule}`).join('\n')}`
+      ? getBusinessRulesDescription(options.businessRules)
       : '',
     options.compliance?.length
       ? `\n\n🔒 **Compliance**: ${options.compliance.join(', ')}`
       : '',
-  ]
-    .filter(Boolean)
-    .join('');
+  ];
+
+  const operationDescription = descriptionParts.filter(Boolean).join('');
 
   decorators.push(
     ApiOperation({
@@ -256,8 +241,49 @@ export function EnhancedApiDocs(options: EnhancedApiDocsOptions) {
       deprecated: options.deprecated,
     }),
   );
+}
 
-  return applyDecorators(...decorators);
+/**
+ * Generate cache description for API documentation
+ */
+function getCacheDescription(cache: {
+  ttl: number;
+  varyBy?: string[];
+}): string {
+  const ttlMinutes = Math.floor(cache.ttl / 60);
+  const ttlSeconds = cache.ttl % 60;
+  const ttlText =
+    ttlMinutes > 0 ? `${ttlMinutes}m ${ttlSeconds}s` : `${ttlSeconds}s`;
+
+  let description = `\n\n💾 **Cache**: ${ttlText}`;
+  if (cache.varyBy?.length) {
+    description += ` (varies by: ${cache.varyBy.join(', ')})`;
+  }
+  return description;
+}
+
+/**
+ * Generate business rules description for API documentation
+ */
+function getBusinessRulesDescription(rules: string[]): string {
+  const rulesList = rules.map((rule) => `• ${rule}`).join('\n');
+  return `\n\n📋 **Business Rules**:\n${rulesList}`;
+}
+
+/**
+ * Enhanced API documentation decorator that provides comprehensive documentation
+ */
+export function EnhancedApiDocs(options: EnhancedApiDocsOptions) {
+  const decorators: unknown[] = [];
+
+  addBasicDecorators(decorators, options);
+  addParameterDecorators(decorators, options);
+  addResponseDecorators(decorators, options);
+  addOperationDecorator(decorators, options);
+
+  return applyDecorators(
+    ...(decorators as (MethodDecorator | ClassDecorator | PropertyDecorator)[]),
+  );
 }
 
 /**

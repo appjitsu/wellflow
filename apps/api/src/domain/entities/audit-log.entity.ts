@@ -53,6 +53,10 @@ export enum AuditResourceType {
  * Audit log metadata interface
  */
 export interface AuditMetadata {
+  eventId?: string;
+  eventType?: string;
+  handler?: string;
+  error?: string;
   sessionId?: string;
   correlationId?: string;
   userAgent?: string;
@@ -85,6 +89,9 @@ export interface AuditMetadata {
   rejectionReason?: string;
   errorType?: string;
   errorCode?: string;
+  validationErrors?: unknown[];
+  warnings?: unknown[];
+  violations?: unknown[];
 }
 
 /**
@@ -160,8 +167,8 @@ export class AuditLog extends AggregateRoot {
   /**
    * Getters
    */
-  getId(): string {
-    return this.id;
+  getId(): { getValue(): string } {
+    return { getValue: () => this.id };
   }
 
   getUserId(): string | null {

@@ -454,6 +454,7 @@ export class CursorPaginationService {
       secondaryField: secondaryColumn,
       secondaryFieldName,
       encodeCursor: (record: T) => {
+        // Field names come from type-safe cursor config, safe for object access
         // eslint-disable-next-line security/detect-object-injection
         const primary = record[primaryFieldName];
 

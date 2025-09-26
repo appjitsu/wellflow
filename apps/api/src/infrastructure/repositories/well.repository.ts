@@ -5,27 +5,70 @@ import { WellRepository } from '../../domain/repositories/well.repository.interf
 import { Well } from '../../domain/entities/well.entity';
 import { ApiNumber } from '../../domain/value-objects/api-number';
 import { WellStatus, WellType } from '../../domain/enums/well-status.enum';
-import { BaseRepository } from './base.repository';
 import { AuditLogService } from '../../application/services/audit-log.service';
 import { AuditResourceType } from '../../domain/entities/audit-log.entity';
 
 import { wells } from '../../database/schema';
+import * as schema from '../../database/schema';
 
 /**
  * Well Repository Implementation
  * Implements well data access using Drizzle ORM
  */
 @Injectable()
-export class WellRepositoryImpl
-  extends BaseRepository<typeof wells>
-  implements WellRepository
-{
+export class WellRepositoryImpl implements WellRepository {
   constructor(
     @Inject('DATABASE_CONNECTION')
-    db: NodePgDatabase<Record<string, never>>,
-    auditLogService?: AuditLogService,
-  ) {
-    super(db, wells, auditLogService);
+    private readonly db: NodePgDatabase<typeof schema>,
+    private readonly auditLogService?: AuditLogService,
+  ) {}
+
+  protected async logAuditAction(
+    action: 'CREATE' | 'UPDATE' | 'DELETE',
+    record: Record<string, unknown>,
+    changes?: {
+      oldValues?: Record<string, unknown>;
+      newValues?: Record<string, unknown>;
+    },
+  ): Promise<void> {
+    if (!this.auditLogService) {
+      return; // Audit logging not available
+    }
+
+    try {
+      const resourceId =
+        (record as { id?: string })?.id ||
+        (record as { getId?: () => string })?.getId?.() ||
+        'unknown';
+
+      switch (action) {
+        case 'CREATE':
+          await this.auditLogService.logCreate(
+            this.getResourceType(),
+            resourceId,
+            changes?.newValues || record,
+          );
+          break;
+        case 'UPDATE':
+          await this.auditLogService.logUpdate(
+            this.getResourceType(),
+            resourceId,
+            changes?.oldValues || {},
+            changes?.newValues || record,
+          );
+          break;
+        case 'DELETE':
+          await this.auditLogService.logDelete(
+            this.getResourceType(),
+            resourceId,
+            changes?.oldValues || record,
+          );
+          break;
+      }
+    } catch (error) {
+      // Log audit failure but don't fail the operation
+      console.error('Failed to log audit action:', error);
+    }
   }
 
   protected getResourceType(): AuditResourceType {

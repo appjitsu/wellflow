@@ -3,11 +3,14 @@ import { EventsHandler } from '@nestjs/cqrs';
 import { WellStatusChangedEvent } from '../../domain/events/well-status-changed.event';
 import { EnhancedEventHandler } from '../../common/events/enhanced-event-handler';
 import { AuditLogService } from '../services/audit-log.service';
+import { WellStatus } from '../../domain/enums/well-status.enum';
 
 @Injectable()
 @EventsHandler(WellStatusChangedEvent)
 export class WellStatusChangedHandler extends EnhancedEventHandler<WellStatusChangedEvent> {
-  private readonly logger = new Logger(WellStatusChangedHandler.name);
+  protected override readonly logger = new Logger(
+    WellStatusChangedHandler.name,
+  );
 
   constructor(auditLogService?: AuditLogService) {
     super(auditLogService, {
@@ -19,40 +22,43 @@ export class WellStatusChangedHandler extends EnhancedEventHandler<WellStatusCha
 
   protected async execute(event: WellStatusChangedEvent): Promise<void> {
     this.logger.log(
-      `Processing well status change: ${event.wellId} from ${event.oldStatus} to ${event.newStatus}`,
+      `Processing well status change: ${event.wellId} from ${event.previousStatus} to ${event.newStatus}`,
     );
 
-    // Execute multiple observers in parallel
-    const observers = [
-      this.notifyStakeholders(event),
-      this.updateComplianceRecords(event),
-      this.triggerWorkflowActions(event),
-      this.updateMonitoringDashboard(event),
-      this.sendNotifications(event),
-    ];
-
-    await Promise.allSettled(observers);
+    // Execute multiple observers
+    this.notifyStakeholders(event);
+    this.updateComplianceRecords(event);
+    this.triggerWorkflowActions(event);
+    this.updateMonitoringDashboard(event);
+    this.sendNotifications(event);
 
     this.logger.log(
       `Completed processing well status change for well ${event.wellId}`,
     );
+
+    return Promise.resolve();
   }
 
-  protected async preHandle(event: WellStatusChangedEvent): Promise<boolean> {
+  protected override async preHandle(
+    event: WellStatusChangedEvent,
+  ): Promise<boolean> {
     // Validate that the status transition is allowed
-    const validTransitions = {
-      drilling: ['active', 'inactive', 'plugged'],
-      active: ['inactive', 'plugged'],
-      inactive: ['active', 'plugged'],
-      plugged: [], // Terminal state
+    const validTransitions: Record<string, string[]> = {
+      [WellStatus.DRILLING]: [
+        WellStatus.ACTIVE,
+        WellStatus.INACTIVE,
+        WellStatus.PLUGGED,
+      ],
+      [WellStatus.ACTIVE]: [WellStatus.INACTIVE, WellStatus.PLUGGED],
+      [WellStatus.INACTIVE]: [WellStatus.ACTIVE, WellStatus.PLUGGED],
+      [WellStatus.PLUGGED]: [], // Terminal state
     };
 
-    const allowedNewStatuses =
-      validTransitions[event.oldStatus as keyof typeof validTransitions] || [];
-    return allowedNewStatuses.includes(event.newStatus);
+    const allowedNewStatuses = validTransitions[event.previousStatus] || [];
+    return Promise.resolve(allowedNewStatuses.includes(event.newStatus));
   }
 
-  protected async handleError(
+  protected override async handleError(
     event: WellStatusChangedEvent,
     error: unknown,
   ): Promise<void> {
@@ -67,12 +73,12 @@ export class WellStatusChangedHandler extends EnhancedEventHandler<WellStatusCha
     // 3. Rollback the status change if possible
 
     // For now, we'll just log and rethrow
-    throw error;
+    return Promise.reject(
+      error instanceof Error ? error : new Error(String(error)),
+    );
   }
 
-  private async notifyStakeholders(
-    event: WellStatusChangedEvent,
-  ): Promise<void> {
+  private notifyStakeholders(event: WellStatusChangedEvent): void {
     // Simulate notifying stakeholders
     this.logger.debug(
       `Notifying stakeholders about well ${event.wellId} status change`,
@@ -84,9 +90,7 @@ export class WellStatusChangedHandler extends EnhancedEventHandler<WellStatusCha
     // - Update notification queues
   }
 
-  private async updateComplianceRecords(
-    event: WellStatusChangedEvent,
-  ): Promise<void> {
+  private updateComplianceRecords(event: WellStatusChangedEvent): void {
     // Update regulatory compliance tracking
     this.logger.debug(`Updating compliance records for well ${event.wellId}`);
 
@@ -96,9 +100,7 @@ export class WellStatusChangedHandler extends EnhancedEventHandler<WellStatusCha
     // - Update permit statuses
   }
 
-  private async triggerWorkflowActions(
-    event: WellStatusChangedEvent,
-  ): Promise<void> {
+  private triggerWorkflowActions(event: WellStatusChangedEvent): void {
     // Trigger workflow actions based on status change
     this.logger.debug(`Triggering workflow actions for well ${event.wellId}`);
 
@@ -108,9 +110,7 @@ export class WellStatusChangedHandler extends EnhancedEventHandler<WellStatusCha
     // - Update project timelines
   }
 
-  private async updateMonitoringDashboard(
-    event: WellStatusChangedEvent,
-  ): Promise<void> {
+  private updateMonitoringDashboard(event: WellStatusChangedEvent): void {
     // Update real-time monitoring dashboards
     this.logger.debug(`Updating monitoring dashboard for well ${event.wellId}`);
 
@@ -120,9 +120,7 @@ export class WellStatusChangedHandler extends EnhancedEventHandler<WellStatusCha
     // - Update KPI calculations
   }
 
-  private async sendNotifications(
-    event: WellStatusChangedEvent,
-  ): Promise<void> {
+  private sendNotifications(event: WellStatusChangedEvent): void {
     // Send notifications to relevant parties
     this.logger.debug(
       `Sending notifications for well ${event.wellId} status change`,

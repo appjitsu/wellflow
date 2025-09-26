@@ -6,7 +6,6 @@ import {
   UseGuards,
   ParseUUIDPipe,
   ParseIntPipe,
-  ValidationPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,46 +18,46 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { AbilitiesGuard } from '../../authorization/abilities.guard';
 import { CheckAbilities } from '../../authorization/abilities.decorator';
 import { Action } from '../../authorization/action.enum';
-import { AuditLogRepository } from '../../domain/repositories/audit-log.repository.interface';
+import type { AuditLogRepository } from '../../domain/repositories/audit-log.repository.interface';
 import {
   AuditAction,
   AuditResourceType,
 } from '../../domain/entities/audit-log.entity';
 
 class AuditLogDto {
-  id: string;
-  userId: string | null;
-  organizationId: string | null;
-  action: AuditAction;
-  resourceType: AuditResourceType;
-  resourceId: string | null;
-  timestamp: Date;
-  ipAddress: string | null;
-  userAgent: string | null;
-  success: boolean;
-  errorMessage: string | null;
-  endpoint: string | null;
-  method: string | null;
-  duration: number | null;
+  id!: string;
+  userId!: string | null;
+  organizationId!: string | null;
+  action!: AuditAction;
+  resourceType!: AuditResourceType;
+  resourceId!: string | null;
+  timestamp!: Date;
+  ipAddress!: string | null;
+  userAgent!: string | null;
+  success!: boolean;
+  errorMessage!: string | null;
+  endpoint!: string | null;
+  method!: string | null;
+  duration!: number | null;
 }
 
 class AuditSearchResultDto {
-  logs: AuditLogDto[];
-  total: number;
-  page: number;
-  limit: number;
-  hasNextPage: boolean;
-  hasPrevPage: boolean;
+  logs!: AuditLogDto[];
+  total!: number;
+  page!: number;
+  limit!: number;
+  hasNextPage!: boolean;
+  hasPrevPage!: boolean;
 }
 
 class AuditStatisticsDto {
-  totalLogs: number;
-  successfulActions: number;
-  failedActions: number;
-  actionsByType: Record<AuditAction, number>;
-  resourcesByType: Record<AuditResourceType, number>;
-  topUsers: Array<{ userId: string; count: number }>;
-  recentActivity: AuditLogDto[];
+  totalLogs!: number;
+  successfulActions!: number;
+  failedActions!: number;
+  actionsByType!: Record<AuditAction, number>;
+  resourcesByType!: Record<AuditResourceType, number>;
+  topUsers!: Array<{ userId: string; count: number }>;
+  recentActivity!: AuditLogDto[];
 }
 
 @ApiTags('Audit')

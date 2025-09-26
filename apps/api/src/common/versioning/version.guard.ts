@@ -12,6 +12,12 @@ import {
   API_VERSION_DEPRECATION_KEY,
 } from './api-version.decorator';
 
+type RequestWithVersion = {
+  apiVersion?: string;
+  route?: { path: string };
+  user?: { id: string };
+};
+
 @Injectable()
 export class VersionGuard implements CanActivate {
   private readonly logger = new Logger(VersionGuard.name);
@@ -22,7 +28,8 @@ export class VersionGuard implements CanActivate {
   ) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest();
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+    const request = context.switchToHttp().getRequest() as RequestWithVersion;
     const handler = context.getHandler();
 
     // Get required version from metadata
@@ -32,10 +39,9 @@ export class VersionGuard implements CanActivate {
     );
 
     // Get deprecation info
-    const deprecationInfo = this.reflector.get(
-      API_VERSION_DEPRECATION_KEY,
-      handler,
-    );
+    const deprecationInfo = this.reflector.get<{
+      message?: string;
+    }>(API_VERSION_DEPRECATION_KEY, handler);
 
     const requestedVersion = request.apiVersion || 'v1';
     const compatibility =

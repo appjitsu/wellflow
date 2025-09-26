@@ -6,11 +6,20 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Observable, tap, catchError } from 'rxjs';
+import { Request, Response } from 'express';
 import { AuditLogService } from '../../application/services/audit-log.service';
 import {
   AuditAction,
   AuditResourceType,
 } from '../../domain/entities/audit-log.entity';
+
+interface ExtendedRequest extends Request {
+  sessionId?: string;
+  correlationId?: string;
+  user?: { userId?: string };
+  userId?: string;
+  requestId?: string;
+}
 
 /**
  * Audit interceptor - automatically logs all HTTP requests and responses
@@ -21,9 +30,13 @@ export class AuditInterceptor implements NestInterceptor {
 
   constructor(private readonly auditLogService: AuditLogService) {}
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const request = context.switchToHttp().getRequest();
-    const response = context.switchToHttp().getResponse();
+  private isRecord(value: unknown): value is Record<string, unknown> {
+    return value !== null && typeof value === 'object' && !Array.isArray(value);
+  }
+
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    const request = context.switchToHttp().getRequest<ExtendedRequest>();
+    const response = context.switchToHttp().getResponse<Response>();
     const handler = context.getHandler();
     const className = context.getClass().name;
     const methodName = handler.name;
@@ -42,64 +55,75 @@ export class AuditInterceptor implements NestInterceptor {
         const duration = Date.now() - startTime;
         const statusCode = response.statusCode;
 
-        // Log successful responses
-        this.auditLogService.logAction(
-          this.mapHttpMethodToAuditAction(request.method),
-          this.mapControllerToResourceType(className),
-          this.extractResourceId(request, className, methodName),
-          true, // success
-          undefined, // no error
-          {}, // no changes
-          {
-            endpoint: request.url,
-            method: request.method,
-            statusCode,
-            duration,
-            responseSize: this.getResponseSize(data),
-            userAgent: request.get('User-Agent'),
-            sessionId: (request as any).sessionId,
-            correlationId: (request as any).correlationId,
-            businessContext: {
-              controller: className,
-              handler: methodName,
-              params: request.params,
-              query: request.query,
-              body: this.sanitizeBody(request.body),
+        // Log successful responses asynchronously
+        this.auditLogService
+          .logAction(
+            this.mapHttpMethodToAuditAction(request.method),
+            this.mapControllerToResourceType(className),
+            this.extractResourceId(request, className, methodName),
+            true, // success
+            undefined, // no error
+            {}, // no changes
+            {
+              endpoint: request.url,
+              method: request.method,
+              statusCode,
+              duration,
+              responseSize: this.getResponseSize(data),
+              userAgent: request.get('User-Agent'),
+              sessionId: request.sessionId,
+              correlationId: request.correlationId,
+              businessContext: {
+                controller: className,
+                handler: methodName,
+                params: request.params,
+                query: request.query,
+                body: this.sanitizeBody(request.body),
+              },
             },
-          },
-        );
+          )
+          .catch((err) => this.logger.error('Audit log failed', err));
       }),
       catchError((error) => {
         const duration = Date.now() - startTime;
-        const statusCode = error.status || error.statusCode || 500;
+        const err = error as {
+          status?: number;
+          statusCode?: number;
+          message?: string;
+          name?: string;
+          code?: string;
+        };
+        const statusCode = err.status || err.statusCode || 500;
 
-        // Log failed responses
-        this.auditLogService.logAction(
-          this.mapHttpMethodToAuditAction(request.method),
-          this.mapControllerToResourceType(className),
-          this.extractResourceId(request, className, methodName),
-          false, // failure
-          error.message || 'Request failed',
-          {}, // no changes
-          {
-            endpoint: request.url,
-            method: request.method,
-            statusCode,
-            duration,
-            errorType: error.name || 'UnknownError',
-            errorCode: error.code,
-            userAgent: request.get('User-Agent'),
-            sessionId: (request as any).sessionId,
-            correlationId: (request as any).correlationId,
-            businessContext: {
-              controller: className,
-              handler: methodName,
-              params: request.params,
-              query: request.query,
-              body: this.sanitizeBody(request.body),
+        // Log failed responses asynchronously
+        this.auditLogService
+          .logAction(
+            this.mapHttpMethodToAuditAction(request.method),
+            this.mapControllerToResourceType(className),
+            this.extractResourceId(request, className, methodName),
+            false, // failure
+            err.message || 'Request failed',
+            {}, // no changes
+            {
+              endpoint: request.url,
+              method: request.method,
+              statusCode,
+              duration,
+              errorType: err.name || 'UnknownError',
+              errorCode: err.code,
+              userAgent: request.get('User-Agent'),
+              sessionId: request.sessionId,
+              correlationId: request.correlationId,
+              businessContext: {
+                controller: className,
+                handler: methodName,
+                params: request.params,
+                query: request.query,
+                body: this.sanitizeBody(request.body),
+              },
             },
-          },
-        );
+          )
+          .catch((logErr) => this.logger.error('Audit log failed', logErr));
 
         throw error;
       }),
@@ -133,41 +157,59 @@ export class AuditInterceptor implements NestInterceptor {
     const resourceName = className.replace(/Controller$/, '').toUpperCase();
 
     // Map common controllers to resource types
-    const resourceMap: Record<string, AuditResourceType> = {
-      WELLS: AuditResourceType.WELL,
-      USERS: AuditResourceType.USER,
-      ORGANIZATIONS: AuditResourceType.ORGANIZATION,
-      LEASES: AuditResourceType.LEASE,
-      PRODUCTION: AuditResourceType.PRODUCTION,
-      PARTNERS: AuditResourceType.PARTNER,
-      CASHCALLS: AuditResourceType.FINANCIAL,
-      FINANCIAL: AuditResourceType.FINANCIAL,
-      COMPLIANCE: AuditResourceType.COMPLIANCE,
-      DOCUMENTS: AuditResourceType.DOCUMENT,
-      DRILLINGPROGRAMS: AuditResourceType.DRILLING_PROGRAM,
-      WORKOVERS: AuditResourceType.WORKOVER,
-      MAINTENANCESCHEDULES: AuditResourceType.MAINTENANCE,
-      AFES: AuditResourceType.AFE,
-      DIVISIONORDERS: AuditResourceType.DIVISION_ORDER,
-      JOINTOPERATINGAGREEMENTS: AuditResourceType.JOA,
-      REVENUE: AuditResourceType.REVENUE_DISTRIBUTION,
-      VENDORS: AuditResourceType.VENDOR,
-      MONITORING: AuditResourceType.SYSTEM,
-    };
-
-    return resourceMap[resourceName] || AuditResourceType.API;
+    switch (resourceName) {
+      case 'WELLS':
+        return AuditResourceType.WELL;
+      case 'USERS':
+        return AuditResourceType.USER;
+      case 'ORGANIZATIONS':
+        return AuditResourceType.ORGANIZATION;
+      case 'LEASES':
+        return AuditResourceType.LEASE;
+      case 'PRODUCTION':
+        return AuditResourceType.PRODUCTION;
+      case 'PARTNERS':
+        return AuditResourceType.PARTNER;
+      case 'CASHCALLS':
+      case 'FINANCIAL':
+        return AuditResourceType.FINANCIAL;
+      case 'COMPLIANCE':
+        return AuditResourceType.COMPLIANCE;
+      case 'DOCUMENTS':
+        return AuditResourceType.DOCUMENT;
+      case 'DRILLINGPROGRAMS':
+        return AuditResourceType.DRILLING_PROGRAM;
+      case 'WORKOVERS':
+        return AuditResourceType.WORKOVER;
+      case 'MAINTENANCESCHEDULES':
+        return AuditResourceType.MAINTENANCE;
+      case 'AFES':
+        return AuditResourceType.AFE;
+      case 'DIVISIONORDERS':
+        return AuditResourceType.DIVISION_ORDER;
+      case 'JOINTOPERATINGAGREEMENTS':
+        return AuditResourceType.JOA;
+      case 'REVENUE':
+        return AuditResourceType.REVENUE_DISTRIBUTION;
+      case 'VENDORS':
+        return AuditResourceType.VENDOR;
+      case 'MONITORING':
+        return AuditResourceType.SYSTEM;
+      default:
+        return AuditResourceType.API;
+    }
   }
 
   /**
    * Extract resource ID from request parameters
    */
   private extractResourceId(
-    request: any,
-    className: string,
-    methodName: string,
+    request: Request,
+    _className: string,
+    _methodName: string,
   ): string | undefined {
     // Try to extract ID from route parameters
-    const params = request.params;
+    const params = request.params as Record<string, string | undefined>;
     if (params.id) return params.id;
     if (params.wellId) return params.wellId;
     if (params.userId) return params.userId;
@@ -182,11 +224,11 @@ export class AuditInterceptor implements NestInterceptor {
   /**
    * Get request ID for correlation
    */
-  private getRequestId(request: any): string {
+  private getRequestId(request: ExtendedRequest): string {
     return (
-      request.get('X-Request-ID') ||
-      request.get('x-request-id') ||
-      (request as any).requestId ||
+      (request.headers['x-request-id'] as string) ||
+      (request.headers['X-Request-ID'] as string) ||
+      request.requestId ||
       'unknown'
     );
   }
@@ -194,15 +236,15 @@ export class AuditInterceptor implements NestInterceptor {
   /**
    * Get user ID from request
    */
-  private getUserId(request: any): string | undefined {
-    return (request as any).user?.id || (request as any).userId;
+  private getUserId(request: ExtendedRequest): string | undefined {
+    return request.user?.userId || request.userId;
   }
 
   /**
    * Sanitize request body for logging (remove sensitive data)
    */
-  private sanitizeBody(body: any): any {
-    if (!body || typeof body !== 'object') return body;
+  private sanitizeBody(body: unknown): Record<string, unknown> {
+    if (!this.isRecord(body)) return {};
 
     const sensitiveFields = [
       'password',
@@ -221,18 +263,23 @@ export class AuditInterceptor implements NestInterceptor {
 
     const sanitized = { ...body };
 
-    for (const field of sensitiveFields) {
-      if (sanitized[field]) {
-        sanitized[field] = '[REDACTED]';
+    Object.keys(sanitized).forEach((key) => {
+      if (sensitiveFields.includes(key)) {
+        // eslint-disable-next-line security/detect-object-injection
+        sanitized[key] = '[REDACTED]';
       }
-    }
 
-    // Recursively sanitize nested objects
-    for (const key in sanitized) {
-      if (typeof sanitized[key] === 'object' && sanitized[key] !== null) {
-        sanitized[key] = this.sanitizeBody(sanitized[key]);
+      // eslint-disable-next-line security/detect-object-injection
+      const value = sanitized[key];
+      if (
+        typeof value === 'object' &&
+        value !== null &&
+        !Array.isArray(value)
+      ) {
+        // eslint-disable-next-line security/detect-object-injection
+        sanitized[key] = this.sanitizeBody(value);
       }
-    }
+    });
 
     return sanitized;
   }
@@ -240,7 +287,7 @@ export class AuditInterceptor implements NestInterceptor {
   /**
    * Get response size estimate
    */
-  private getResponseSize(data: any): number {
+  private getResponseSize(data: unknown): number {
     try {
       if (data === null || data === undefined) return 0;
       const jsonString = JSON.stringify(data);

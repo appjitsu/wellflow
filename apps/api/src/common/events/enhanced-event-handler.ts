@@ -1,11 +1,10 @@
-import { Injectable, Logger, Inject, Optional } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { IEventHandler, IEvent } from '@nestjs/cqrs';
 import { AuditLogService } from '../../application/services/audit-log.service';
 import {
   AuditResourceType,
   AuditAction,
 } from '../../domain/entities/audit-log.entity';
-import { EnhancedEvent } from './enhanced-event-bus.service';
 
 export interface EventHandlerOptions {
   retryAttempts?: number;
@@ -39,7 +38,7 @@ export abstract class EnhancedEventHandler<T extends IEvent>
   async handle(event: T): Promise<void> {
     const startTime = Date.now();
     const eventName = event.constructor.name;
-    const eventId = (event as any).metadata?.eventId || 'unknown';
+    const eventId = this.getEventId(event);
 
     try {
       this.logger.log(`Handling event: ${eventName} (${eventId})`);
@@ -56,60 +55,84 @@ export abstract class EnhancedEventHandler<T extends IEvent>
       // Post-handle cleanup
       await this.postHandle(event);
 
-      const duration = Date.now() - startTime;
-      this.logger.log(
-        `Successfully handled event: ${eventName} in ${duration}ms`,
-      );
-
-      // Audit successful event handling
-      if (this.options.auditEvents && this.auditLogService) {
-        await this.auditLogService.logAction(
-          AuditAction.EXECUTE,
-          AuditResourceType.SYSTEM,
-          `event-handler-${eventName}`,
-          true,
-          undefined,
-          {},
-          {
-            eventId,
-            eventType: eventName,
-            handler: this.constructor.name,
-            duration,
-            businessContext: {
-              eventData: this.sanitizeEventData(event),
-            },
-          },
-        );
-      }
+      await this.handleSuccess(event, startTime, eventName, eventId);
     } catch (error) {
-      const duration = Date.now() - startTime;
-      this.logger.error(
-        `Failed to handle event ${eventName} (${eventId}) after ${duration}ms:`,
-        error,
-      );
-
-      // Audit failed event handling
-      if (this.options.auditEvents && this.auditLogService) {
-        await this.auditLogService.logAction(
-          AuditAction.EXECUTE,
-          AuditResourceType.SYSTEM,
-          `event-handler-${eventName}-failed`,
-          false,
-          error instanceof Error ? error.message : 'Unknown error',
-          {},
-          {
-            eventId,
-            eventType: eventName,
-            handler: this.constructor.name,
-            duration,
-            error: error instanceof Error ? error.message : 'Unknown error',
-          },
-        );
-      }
-
-      // Execute error handling strategy
-      await this.handleError(event, error);
+      await this.handleFailure(event, error, startTime, eventName, eventId);
     }
+  }
+
+  private getEventId(event: T): string {
+    const eventWithMetadata = event as { metadata?: { eventId?: string } };
+    return eventWithMetadata.metadata?.eventId || 'unknown';
+  }
+
+  private async handleSuccess(
+    event: T,
+    startTime: number,
+    eventName: string,
+    eventId: string,
+  ): Promise<void> {
+    const duration = Date.now() - startTime;
+    this.logger.log(
+      `Successfully handled event: ${eventName} in ${duration}ms`,
+    );
+
+    // Audit successful event handling
+    if (this.options.auditEvents && this.auditLogService) {
+      await this.auditLogService.logAction(
+        AuditAction.EXECUTE,
+        AuditResourceType.SYSTEM,
+        `event-handler-${eventName}`,
+        true,
+        undefined,
+        {},
+        {
+          eventId,
+          eventType: eventName,
+          handler: this.constructor.name,
+          duration,
+          businessContext: {
+            eventData: this.sanitizeEventData(event),
+          },
+        },
+      );
+    }
+  }
+
+  private async handleFailure(
+    event: T,
+    error: unknown,
+    startTime: number,
+    eventName: string,
+    eventId: string,
+  ): Promise<void> {
+    const duration = Date.now() - startTime;
+    this.logger.error(
+      `Failed to handle event ${eventName} (${eventId}) after ${duration}ms:`,
+      error,
+    );
+
+    // Audit failed event handling
+    if (this.options.auditEvents && this.auditLogService) {
+      await this.auditLogService.logAction(
+        AuditAction.EXECUTE,
+        AuditResourceType.SYSTEM,
+        `event-handler-${eventName}-failed`,
+        false,
+        error instanceof Error ? error.message : 'Unknown error',
+        {},
+        {
+          eventId,
+          eventType: eventName,
+          handler: this.constructor.name,
+          duration,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      );
+    }
+
+    // Execute error handling strategy
+    await this.handleError(event, error);
   }
 
   /**
@@ -120,23 +143,26 @@ export abstract class EnhancedEventHandler<T extends IEvent>
   /**
    * Pre-handle validation/filtering
    */
-  protected async preHandle(event: T): Promise<boolean> {
-    return true; // Allow all events by default
+  protected async preHandle(_event: T): Promise<boolean> {
+    return Promise.resolve(true); // Allow all events by default
   }
 
   /**
    * Post-handle cleanup
    */
-  protected async postHandle(event: T): Promise<void> {
+  protected async postHandle(_event: T): Promise<void> {
     // Default: no cleanup needed
+    return Promise.resolve();
   }
 
   /**
    * Error handling strategy
    */
-  protected async handleError(event: T, error: unknown): Promise<void> {
+  protected async handleError(_event: T, error: unknown): Promise<void> {
     // Default: rethrow the error
-    throw error;
+    const errorInstance =
+      error instanceof Error ? error : new Error(String(error));
+    return Promise.reject(errorInstance);
   }
 
   /**
@@ -171,7 +197,7 @@ export abstract class EnhancedEventHandler<T extends IEvent>
    * Sanitize event data for logging
    */
   protected sanitizeEventData(event: T): Record<string, unknown> {
-    const data = { ...event } as any;
+    const data = { ...event } as Record<string, unknown>;
 
     // Remove sensitive fields
     const sensitiveFields = [
@@ -181,9 +207,10 @@ export abstract class EnhancedEventHandler<T extends IEvent>
       'key',
       'privateKey',
     ];
-    sensitiveFields.forEach((field) => {
-      if (data[field]) {
-        data[field] = '[REDACTED]';
+    Object.keys(data).forEach((key) => {
+      if (sensitiveFields.includes(key)) {
+        // eslint-disable-next-line security/detect-object-injection
+        data[key] = '[REDACTED]';
       }
     });
 
@@ -193,14 +220,19 @@ export abstract class EnhancedEventHandler<T extends IEvent>
   /**
    * Get event metadata if available
    */
-  protected getEventMetadata(event: T): any {
-    return (event as any).metadata || {};
+  protected getEventMetadata(event: T): Record<string, unknown> {
+    return (
+      ((event as Record<string, unknown>).metadata as Record<
+        string,
+        unknown
+      >) || {}
+    );
   }
 
   /**
    * Check if this handler should process the event
    */
-  protected shouldHandle(event: T): boolean {
+  protected shouldHandle(_event: T): boolean {
     return true; // Handle all events by default
   }
 

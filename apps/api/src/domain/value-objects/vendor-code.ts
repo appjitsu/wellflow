@@ -127,9 +127,11 @@ export class VendorCode {
     };
 
     Object.entries(industryMappings).forEach(([full, abbrev]) => {
+      const escapedFull = full.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const patternString = `\\b${escapedFull}\\b`;
       // eslint-disable-next-line security/detect-non-literal-regexp
-      const regex = new RegExp(`\\b${full}\\b`, 'gi');
-      cleanName = cleanName.replace(regex, abbrev);
+      const pattern = new RegExp(patternString, 'gi');
+      cleanName = cleanName.replace(pattern, abbrev);
     });
 
     return cleanName;

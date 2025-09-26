@@ -288,22 +288,25 @@ export class VendorRepositoryImpl implements VendorRepository {
         pagination.sortBy as keyof typeof vendors
       ] as AnyColumn;
       if (sortColumn) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         query =
           pagination.sortOrder === 'DESC'
-            ? (query as any).orderBy(desc(sortColumn)) // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-            : (query as any).orderBy(asc(sortColumn)); // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+            ? ((query as { orderBy: (column: unknown) => unknown }).orderBy(
+                desc(sortColumn),
+              ) as typeof query)
+            : ((query as { orderBy: (column: unknown) => unknown }).orderBy(
+                asc(sortColumn),
+              ) as typeof query);
       }
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      query = (query as any).orderBy(desc(vendors.createdAt)); // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      query = (
+        query as unknown as { orderBy: (column: unknown) => typeof query }
+      ).orderBy(desc(vendors.createdAt));
     }
 
     // Apply pagination
     if (pagination) {
       const offset = (pagination.page - 1) * pagination.limit;
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      query = (query as any).limit(pagination.limit).offset(offset); // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      query = query.limit(pagination.limit).offset(offset) as typeof query;
     }
 
     return query;

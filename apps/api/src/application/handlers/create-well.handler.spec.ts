@@ -7,13 +7,17 @@ import { WellRepository } from '../../domain/repositories/well.repository.interf
 import { WellType } from '../../domain/enums/well-status.enum';
 import { Well } from '../../domain/entities/well.entity';
 import { ApiNumber } from '../../domain/value-objects/api-number';
-import { UnitOfWork } from '../../infrastructure/repositories/unit-of-work';
+import {
+  UnitOfWork,
+  Entity,
+} from '../../infrastructure/repositories/unit-of-work';
+import { AuditLogService } from '../services/audit-log.service';
 
 describe('CreateWellHandler', () => {
   let handler: CreateWellHandler;
   let wellRepository: jest.Mocked<WellRepository>;
   let eventBus: jest.Mocked<EventBus>;
-  let unitOfWork: any;
+  let unitOfWork: jest.Mocked<UnitOfWork>;
 
   const mockWellRepository = {
     findByApiNumber: jest.fn(),
@@ -54,6 +58,30 @@ describe('CreateWellHandler', () => {
         {
           provide: EventBus,
           useValue: mockEventBus,
+        },
+        {
+          provide: AuditLogService,
+          useValue: {
+            logCreate: jest.fn(),
+            logUpdate: jest.fn(),
+            logDelete: jest.fn(),
+            logAction: jest.fn(),
+            logSuccess: jest.fn(),
+            logFailure: jest.fn(),
+            logExecute: jest.fn(),
+            logRead: jest.fn(),
+            logLogin: jest.fn(),
+            logLogout: jest.fn(),
+            logExport: jest.fn(),
+            logImport: jest.fn(),
+            logApprove: jest.fn(),
+            logReject: jest.fn(),
+            logSubmit: jest.fn(),
+            logSystemAction: jest.fn(),
+            logApiCall: jest.fn(),
+            logBatch: jest.fn(),
+            getContext: jest.fn(),
+          },
         },
       ],
     }).compile();
@@ -244,8 +272,9 @@ describe('CreateWellHandler', () => {
       };
 
       wellRepository.findByApiNumber.mockResolvedValue(null);
-      unitOfWork.registerNew.mockImplementation((well: Well) => {
-        // Mock the well to return domain events
+      unitOfWork.registerNew.mockImplementation((entity: Entity) => {
+        // Mock the entity to return domain events
+        const well = entity as Well;
         well.getDomainEvents = mockWellWithEvents.getDomainEvents;
         well.clearDomainEvents = mockWellWithEvents.clearDomainEvents;
       });

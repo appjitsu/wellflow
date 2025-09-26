@@ -3,6 +3,7 @@ import { DatabaseModule } from '../../database/database.module';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type * as schema from '../../database/schema';
 import { UnitOfWork } from './unit-of-work';
+import { AuditLogService } from '../../application/services/audit-log.service';
 
 // Repository Implementations
 import { OwnerPaymentRepository } from './owner-payment.repository';
@@ -26,6 +27,11 @@ import { WorkoverRepository } from './workover.repository';
 import { DailyDrillingReportRepository } from './daily-drilling-report.repository';
 import { MaintenanceScheduleRepository } from './maintenance-schedule.repository';
 import { PartnersRepositoryImpl } from '../../partners/infrastructure/partners.repository';
+import { RegulatoryUnitOfWork } from './regulatory-unit-of-work';
+import { HSEIncidentRepositoryImpl } from './hse-incident.repository';
+import { EnvironmentalMonitoringRepositoryImpl } from './environmental-monitoring.repository';
+import { RegulatoryReportRepositoryImpl } from './regulatory-report.repository';
+import { RegulatoryDomainEventPublisher } from '../../domain/shared/regulatory-domain-event-publisher';
 
 /**
  * Repository Module
@@ -64,7 +70,13 @@ import { PartnersRepositoryImpl } from '../../partners/infrastructure/partners.r
     },
     {
       provide: 'WellRepository',
-      useClass: WellRepositoryImpl,
+      useFactory: (
+        databaseConnection: NodePgDatabase<typeof schema>,
+        auditLogService: AuditLogService,
+      ) => {
+        return new WellRepositoryImpl(databaseConnection, auditLogService);
+      },
+      inject: ['DATABASE_CONNECTION', AuditLogService],
     },
     {
       provide: 'AfeRepository',
@@ -173,6 +185,40 @@ import { PartnersRepositoryImpl } from '../../partners/infrastructure/partners.r
       },
       inject: ['DATABASE_CONNECTION'],
     },
+
+    // Regulatory Repositories
+    {
+      // eslint-disable-next-line no-secrets/no-secrets
+      provide: 'RegulatoryUnitOfWork',
+      useFactory: (
+        databaseConnection: NodePgDatabase<typeof schema>,
+        eventPublisher: RegulatoryDomainEventPublisher,
+      ) => {
+        return new RegulatoryUnitOfWork(databaseConnection, eventPublisher);
+      },
+      inject: ['DATABASE_CONNECTION', RegulatoryDomainEventPublisher],
+    },
+    {
+      provide: 'HSEIncidentRepository',
+      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
+        return new HSEIncidentRepositoryImpl(databaseConnection);
+      },
+      inject: ['DATABASE_CONNECTION'],
+    },
+    {
+      provide: 'EnvironmentalMonitoringRepository',
+      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
+        return new EnvironmentalMonitoringRepositoryImpl(databaseConnection);
+      },
+      inject: ['DATABASE_CONNECTION'],
+    },
+    {
+      provide: 'RegulatoryReportRepository',
+      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
+        return new RegulatoryReportRepositoryImpl(databaseConnection);
+      },
+      inject: ['DATABASE_CONNECTION'],
+    },
   ],
   exports: [
     UnitOfWork,
@@ -197,6 +243,11 @@ import { PartnersRepositoryImpl } from '../../partners/infrastructure/partners.r
     'DailyDrillingReportRepository',
     'MaintenanceScheduleRepository',
     'PartnersRepository',
+    // eslint-disable-next-line no-secrets/no-secrets
+    'RegulatoryUnitOfWork',
+    'HSEIncidentRepository',
+    'EnvironmentalMonitoringRepository',
+    'RegulatoryReportRepository',
   ],
 })
 export class RepositoryModule {

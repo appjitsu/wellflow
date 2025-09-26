@@ -1,7 +1,23 @@
 import { Injectable, Inject, Logger, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
-import { AuditLogRepository } from '../../domain/repositories/audit-log.repository.interface';
+import type { AuditLogRepository } from '../../domain/repositories/audit-log.repository.interface';
+
+/**
+ * Extended Request interface with custom properties
+ */
+interface EnhancedRequest extends Request {
+  user?: {
+    id: string;
+    organizationId: string;
+  };
+  requestId?: string;
+  sessionId?: string;
+  correlationId?: string;
+  route: {
+    path?: string;
+  };
+}
 import {
   AuditLog,
   AuditAction,
@@ -33,7 +49,7 @@ export class AuditLogService {
   constructor(
     @Inject('AuditLogRepository')
     private readonly auditLogRepository: AuditLogRepository,
-    @Inject(REQUEST) private readonly request: Request,
+    @Inject(REQUEST) private readonly request: EnhancedRequest,
   ) {
     this.initializeContext();
   }
@@ -44,13 +60,13 @@ export class AuditLogService {
   private initializeContext(): void {
     if (this.request) {
       this.context = {
-        userId: (this.request as any).user?.id,
-        organizationId: (this.request as any).user?.organizationId,
+        userId: this.request.user?.id,
+        organizationId: this.request.user?.organizationId,
         ipAddress: this.getClientIp(),
         userAgent: this.request.get('User-Agent'),
-        requestId: (this.request as any).requestId,
-        sessionId: (this.request as any).sessionId,
-        correlationId: (this.request as any).correlationId,
+        requestId: this.request.requestId,
+        sessionId: this.request.sessionId,
+        correlationId: this.request.correlationId,
       };
     }
   }
@@ -61,7 +77,7 @@ export class AuditLogService {
   private getClientIp(): string | undefined {
     const forwarded = this.request?.get('X-Forwarded-For');
     if (forwarded) {
-      return forwarded.split(',')[0].trim();
+      return forwarded.split(',')[0]?.trim();
     }
 
     const realIp = this.request?.get('X-Real-IP');
@@ -184,8 +200,9 @@ export class AuditLogService {
 
       await this.auditLogRepository.save(auditLog);
 
+      const resourceIdentifier = resourceId ? `(${resourceId})` : '';
       this.logger.debug(
-        `Audit log created: ${action} ${resourceType}${resourceId ? `(${resourceId})` : ''} by user ${this.context.userId || 'unknown'}`,
+        `Audit log created: ${action} ${resourceType}${resourceIdentifier} by user ${this.context.userId || 'unknown'}`,
       );
     } catch (error) {
       // Don't let audit logging failures break the main flow
@@ -440,7 +457,7 @@ export class AuditLogService {
     metadata?: AuditMetadata,
   ): Promise<void> {
     await this.logAction(
-      success ? AuditAction.EXECUTE : AuditAction.EXECUTE, // Could use a different action for API calls
+      AuditAction.EXECUTE,
       AuditResourceType.EXTERNAL_SERVICE,
       `${serviceName}:${endpoint}`,
       success,

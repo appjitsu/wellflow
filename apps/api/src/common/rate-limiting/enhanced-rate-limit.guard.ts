@@ -6,12 +6,24 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import {
   EnhancedRateLimiterService,
   UserTier,
+  RateLimitResult,
 } from './enhanced-rate-limiter.service';
 import { MetricsService } from '../../monitoring/metrics.service';
+
+interface ExtendedRequest extends Request {
+  user?: {
+    userId?: string;
+    roles?: string[];
+    subscriptionTier?: { tier?: string };
+    tier?: string;
+  };
+  userId?: string;
+  rateLimitInfo?: unknown;
+}
 
 @Injectable()
 export class EnhancedRateLimitGuard implements CanActivate {
@@ -23,26 +35,27 @@ export class EnhancedRateLimitGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<Request>();
-    const response = context.switchToHttp().getResponse();
+    const request = context.switchToHttp().getRequest<ExtendedRequest>();
+    const response = context.switchToHttp().getResponse<Response>();
 
     const userId = this.getUserId(request);
     const userTier = this.getUserTier(request);
-    const endpoint = request.route?.path || request.url;
+    const endpoint =
+      (request.route as { path: string } | undefined)?.path || request.url;
     const method = request.method;
     const ipAddress = this.getClientIp(request);
 
     try {
       // Check rate limit
       const rateLimitResult = await this.rateLimiter.checkRateLimit(
-        userId,
+        userId || 'anonymous',
         userTier,
         endpoint,
         method,
       );
 
       // Record API request metrics
-      await this.metricsService.recordApiRequest(
+      this.metricsService.recordApiRequest(
         endpoint,
         method,
         0, // Will be updated after response
@@ -55,7 +68,7 @@ export class EnhancedRateLimitGuard implements CanActivate {
       if (!rateLimitResult.allowed) {
         // Record blocked request
         await this.rateLimiter.recordBlockedRequest(
-          userId,
+          userId || 'anonymous',
           ipAddress,
           endpoint,
           'Rate limit exceeded',
@@ -90,14 +103,11 @@ export class EnhancedRateLimitGuard implements CanActivate {
       }
 
       // Store rate limit info on request for later use
-      (request as any).rateLimitInfo = rateLimitResult;
+      (request as { rateLimitInfo?: unknown }).rateLimitInfo = rateLimitResult;
 
       return true;
     } catch (error) {
-      if (
-        error instanceof HttpException &&
-        error.getStatus() === HttpStatus.TOO_MANY_REQUESTS
-      ) {
+      if (error instanceof HttpException && error.getStatus() === 429) {
         throw error;
       }
 
@@ -107,23 +117,23 @@ export class EnhancedRateLimitGuard implements CanActivate {
     }
   }
 
-  private getUserId(request: Request): string {
-    return (request as any).user?.id || (request as any).userId || 'anonymous';
+  private getUserId(request: ExtendedRequest): string {
+    return request.user?.userId || request.userId || 'anonymous';
   }
 
-  private getUserTier(request: Request): UserTier {
-    const user = (request as any).user;
+  private getUserTier(request: ExtendedRequest): UserTier {
+    const user = request.user;
 
     if (!user) return UserTier.FREE;
 
     // Get tier from user roles or subscription
     return this.rateLimiter.getUserTier(
       user.roles || [],
-      user.subscriptionTier || user.tier,
+      user.subscriptionTier?.tier || user.tier,
     );
   }
 
-  private getClientIp(request: Request): string {
+  private getClientIp(request: ExtendedRequest): string {
     return (
       request.get('x-forwarded-for')?.split(',')[0]?.trim() ||
       request.get('x-real-ip') ||
@@ -133,7 +143,10 @@ export class EnhancedRateLimitGuard implements CanActivate {
     );
   }
 
-  private setRateLimitHeaders(response: any, rateLimitResult: any): void {
+  private setRateLimitHeaders(
+    response: Response,
+    rateLimitResult: RateLimitResult,
+  ): void {
     const config = this.rateLimiter.getTierConfig(rateLimitResult.tier);
 
     response.setHeader('X-RateLimit-Limit', config.requests);
