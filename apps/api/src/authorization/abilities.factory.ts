@@ -29,6 +29,10 @@ type Subjects =
       | 'Workover'
       | 'DailyDrillingReport'
       | 'MaintenanceSchedule'
+      | 'OwnerPayment'
+      | 'CashCall'
+      | 'JointOperatingAgreement'
+      | 'JibStatement'
     >
   | 'all';
 
@@ -137,6 +141,26 @@ export class AbilitiesFactory {
       can('update', 'DrillingProgram');
       can('export', 'DrillingProgram');
       cannot('delete', 'DrillingProgram');
+
+      // Financial entity permissions
+      can('create', 'OwnerPayment');
+      can('read', 'OwnerPayment');
+      can('update', 'OwnerPayment');
+      cannot('delete', 'OwnerPayment');
+
+      can('create', 'CashCall');
+      can('read', 'CashCall');
+      can('update', 'CashCall');
+      cannot('delete', 'CashCall');
+
+      can('create', 'JointOperatingAgreement');
+      can('read', 'JointOperatingAgreement');
+      can('update', 'JointOperatingAgreement');
+
+      can('create', 'JibStatement');
+      can('read', 'JibStatement');
+      can('update', 'JibStatement');
+      cannot('delete', 'JointOperatingAgreement');
 
       can('create', 'Workover');
       can('read', 'Workover');

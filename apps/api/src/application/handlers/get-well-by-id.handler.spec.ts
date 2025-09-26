@@ -27,7 +27,7 @@ describe('GetWellByIdHandler', () => {
   };
 
   const mockWell = {
-    getId: jest.fn().mockReturnValue('well-123'),
+    getId: jest.fn().mockReturnValue({ getValue: () => 'well-123' }),
     getApiNumber: jest.fn().mockReturnValue({ getValue: () => '42-123-45678' }),
     getName: jest.fn().mockReturnValue('Test Well'),
     getOperatorId: jest.fn().mockReturnValue('operator-123'),
@@ -176,7 +176,7 @@ describe('GetWellByIdHandler', () => {
 
     it('should handle well with all optional fields populated', async () => {
       const fullWell = {
-        getId: jest.fn().mockReturnValue('well-full'),
+        getId: jest.fn().mockReturnValue({ getValue: () => 'well-full' }),
         getApiNumber: jest
           .fn()
           .mockReturnValue({ getValue: () => '42-123-99999' }),

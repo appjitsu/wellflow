@@ -9,6 +9,10 @@ export { productionRecords } from './production-records';
 export { partners } from './partners';
 export { leasePartners } from './lease-partners';
 
+// Financial transactions
+export { ownerPayments } from './owner-payments';
+export { cashCalls } from './cash-calls';
+
 // Compliance and reporting entities
 export { complianceReports } from './compliance-reports';
 export { jibStatements } from './jib-statements';
@@ -38,6 +42,10 @@ export { afeApprovals } from './afe-approvals';
 
 // Division orders and revenue
 export { divisionOrders } from './division-orders';
+
+// Stakeholder agreements
+export { jointOperatingAgreements } from './joint-operating-agreements';
+
 export { revenueDistributions } from './revenue-distributions';
 
 // Lease operating statements

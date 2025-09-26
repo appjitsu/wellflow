@@ -123,6 +123,24 @@ export class AppConfigService {
   }
 
   /**
+   * CORS Configuration
+   */
+  get corsOrigins(): string[] {
+    const origins = this.configService.get<string>('CORS_ORIGINS', '');
+    return origins
+      ? origins
+          .split(',')
+          .map((origin) => origin.trim())
+          .filter(Boolean)
+      : [
+          'http://localhost:3000',
+          'https://localhost:3000',
+          'http://localhost:3001',
+          'https://localhost:3001',
+        ];
+  }
+
+  /**
    * HTTPS Configuration
    */
   get httpsEnabled(): boolean {

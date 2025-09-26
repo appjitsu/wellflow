@@ -29,7 +29,7 @@ describe('GetWellsByOperatorHandler', () => {
     status: WellStatus = WellStatus.PLANNED,
     wellType: WellType = WellType.OIL,
   ) => ({
-    getId: jest.fn().mockReturnValue(id),
+    getId: jest.fn().mockReturnValue({ getValue: () => id }),
     getApiNumber: jest.fn().mockReturnValue({ getValue: () => apiNumber }),
     getName: jest.fn().mockReturnValue(name),
     getOperatorId: jest.fn().mockReturnValue('operator-123'),

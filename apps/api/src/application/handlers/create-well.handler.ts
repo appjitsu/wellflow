@@ -6,6 +6,7 @@ import { Well } from '../../domain/entities/well.entity';
 import { ApiNumber } from '../../domain/value-objects/api-number';
 import { Location } from '../../domain/value-objects/location';
 import { Coordinates } from '../../domain/value-objects/coordinates';
+import { UnitOfWork } from '../../infrastructure/repositories/unit-of-work';
 import { randomUUID } from 'crypto';
 
 /**
@@ -17,11 +18,14 @@ export class CreateWellHandler implements ICommandHandler<CreateWellCommand> {
   constructor(
     @Inject('WellRepository')
     private readonly wellRepository: WellRepository,
+    private readonly unitOfWork: UnitOfWork,
     private readonly eventBus: EventBus,
   ) {}
 
   async execute(command: CreateWellCommand): Promise<string> {
     try {
+      this.unitOfWork.begin();
+
       // Create value objects
       const apiNumber = new ApiNumber(command.apiNumber);
       const coordinates = new Coordinates(
@@ -59,10 +63,11 @@ export class CreateWellHandler implements ICommandHandler<CreateWellCommand> {
         },
       );
 
-      // Save well
-      await this.wellRepository.save(well);
+      // Register for creation and commit
+      this.unitOfWork.registerNew(well);
+      await this.unitOfWork.commit();
 
-      // Publish domain events
+      // Publish domain events after successful commit
       const events = well.getDomainEvents();
       for (const event of events) {
         this.eventBus.publish(event);
@@ -71,6 +76,7 @@ export class CreateWellHandler implements ICommandHandler<CreateWellCommand> {
 
       return wellId;
     } catch (error) {
+      this.unitOfWork.rollback();
       if (error instanceof ConflictException) {
         throw error;
       }

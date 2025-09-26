@@ -42,7 +42,7 @@ export class WellRepositoryImpl implements WellRepository {
   async save(well: Well): Promise<void> {
     // Map domain model to database schema
     const wellData = {
-      id: well.getId(),
+      id: well.getId().getValue(),
       organizationId: well.getOperatorId(), // Map operatorId to organizationId in schema
       apiNumber: well.getApiNumber().getValue(),
       wellName: well.getName(), // Map name to wellName in schema
@@ -62,7 +62,7 @@ export class WellRepositoryImpl implements WellRepository {
     const existing = await this.db
       .select({ id: wells.id })
       .from(wells)
-      .where(eq(wells.id, well.getId()))
+      .where(eq(wells.id, well.getId().getValue()))
       .limit(1);
 
     if (existing.length > 0) {
@@ -70,7 +70,7 @@ export class WellRepositoryImpl implements WellRepository {
       await this.db
         .update(wells)
         .set(wellData)
-        .where(eq(wells.id, well.getId()));
+        .where(eq(wells.id, well.getId().getValue()));
     } else {
       // Insert new well
       await this.db.insert(wells).values({

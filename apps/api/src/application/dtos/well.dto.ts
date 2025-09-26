@@ -63,7 +63,7 @@ export class WellDto {
 
   static fromEntity(well: Well): WellDto {
     return {
-      id: well.getId(),
+      id: well.getId().getValue(),
       apiNumber: well.getApiNumber().getValue(),
       name: well.getName(),
       operatorId: well.getOperatorId(),

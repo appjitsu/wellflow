@@ -21,6 +21,27 @@ export class CircuitBreaker {
 
   constructor(private readonly config: CircuitBreakerConfig) {}
 
+  /**
+   * Get the current state of the circuit breaker
+   */
+  getState(): CircuitState {
+    return this.state;
+  }
+
+  /**
+   * Get current failure count
+   */
+  getFailureCount(): number {
+    return this.failureCount;
+  }
+
+  /**
+   * Get last failure timestamp
+   */
+  getLastFailureTime(): number {
+    return this.lastFailureTime;
+  }
+
   async execute<T>(operation: () => Promise<T>): Promise<T> {
     if (this.state === CircuitState.OPEN) {
       if (this.shouldAttemptReset()) {

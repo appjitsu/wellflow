@@ -7,11 +7,13 @@ import { WellRepository } from '../../domain/repositories/well.repository.interf
 import { WellType } from '../../domain/enums/well-status.enum';
 import { Well } from '../../domain/entities/well.entity';
 import { ApiNumber } from '../../domain/value-objects/api-number';
+import { UnitOfWork } from '../../infrastructure/repositories/unit-of-work';
 
 describe('CreateWellHandler', () => {
   let handler: CreateWellHandler;
   let wellRepository: jest.Mocked<WellRepository>;
   let eventBus: jest.Mocked<EventBus>;
+  let unitOfWork: any;
 
   const mockWellRepository = {
     findByApiNumber: jest.fn(),
@@ -37,6 +39,19 @@ describe('CreateWellHandler', () => {
           useValue: mockWellRepository,
         },
         {
+          provide: UnitOfWork,
+          useValue: {
+            begin: jest.fn(),
+            commit: jest.fn(),
+            rollback: jest.fn(),
+            isActive: jest.fn(),
+            registerNew: jest.fn(),
+            registerDirty: jest.fn(),
+            registerDeleted: jest.fn(),
+            registerClean: jest.fn(),
+          },
+        },
+        {
           provide: EventBus,
           useValue: mockEventBus,
         },
@@ -46,6 +61,7 @@ describe('CreateWellHandler', () => {
     handler = module.get<CreateWellHandler>(CreateWellHandler);
     wellRepository = module.get('WellRepository');
     eventBus = module.get(EventBus);
+    unitOfWork = module.get(UnitOfWork);
   });
 
   afterEach(() => {
@@ -69,7 +85,7 @@ describe('CreateWellHandler', () => {
 
     it('should create well successfully', async () => {
       wellRepository.findByApiNumber.mockResolvedValue(null);
-      wellRepository.save.mockResolvedValue(undefined);
+      unitOfWork.commit.mockResolvedValue(undefined);
 
       const result = await handler.execute(validCommand);
 
@@ -77,10 +93,11 @@ describe('CreateWellHandler', () => {
       expect(result).toMatch(
         /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
       ); // UUID v4 format
-      expect(mockWellRepository.findByApiNumber).toHaveBeenCalledWith(
+      expect(wellRepository.findByApiNumber).toHaveBeenCalledWith(
         expect.any(ApiNumber),
       );
-      expect(mockWellRepository.save).toHaveBeenCalledWith(expect.any(Well));
+      expect(unitOfWork.registerNew).toHaveBeenCalledWith(expect.any(Well));
+      expect(unitOfWork.commit).toHaveBeenCalled();
       // Note: Events are only published if the well has domain events, which depends on the Well entity implementation
     });
 
@@ -101,7 +118,7 @@ describe('CreateWellHandler', () => {
 
     it('should handle repository save errors', async () => {
       wellRepository.findByApiNumber.mockResolvedValue(null);
-      wellRepository.save.mockRejectedValue(
+      unitOfWork.commit.mockRejectedValue(
         new Error('Database connection failed'),
       );
 
@@ -139,7 +156,7 @@ describe('CreateWellHandler', () => {
       );
 
       wellRepository.findByApiNumber.mockResolvedValue(null);
-      wellRepository.save.mockResolvedValue(undefined);
+      unitOfWork.commit.mockResolvedValue(undefined);
 
       const result = await handler.execute(minimalCommand);
 
@@ -147,10 +164,11 @@ describe('CreateWellHandler', () => {
       expect(result).toMatch(
         /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
       );
-      expect(mockWellRepository.findByApiNumber).toHaveBeenCalledWith(
+      expect(wellRepository.findByApiNumber).toHaveBeenCalledWith(
         expect.any(ApiNumber),
       );
-      expect(mockWellRepository.save).toHaveBeenCalledWith(expect.any(Well));
+      expect(unitOfWork.registerNew).toHaveBeenCalledWith(expect.any(Well));
+      expect(unitOfWork.commit).toHaveBeenCalled();
     });
 
     it('should generate unique ID for each well', async () => {
@@ -201,22 +219,23 @@ describe('CreateWellHandler', () => {
       );
 
       wellRepository.findByApiNumber.mockResolvedValue(null);
-      wellRepository.save.mockResolvedValue(undefined);
+      unitOfWork.commit.mockResolvedValue(undefined);
 
       const result = await handler.execute(fullCommand);
 
       expect(typeof result).toBe('string');
-      expect(wellRepository.save).toHaveBeenCalledWith(
+      expect(unitOfWork.registerNew).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'Full Well',
           operatorId: 'operator-456',
           wellType: WellType.OIL,
         }),
       );
+      expect(unitOfWork.commit).toHaveBeenCalled();
     });
 
     it('should publish domain events after saving well', async () => {
-      const mockWell = {
+      const mockWellWithEvents = {
         getDomainEvents: jest.fn().mockReturnValue([
           { type: 'WellCreated', wellId: 'test-id' },
           { type: 'WellStatusChanged', wellId: 'test-id' },
@@ -225,12 +244,12 @@ describe('CreateWellHandler', () => {
       };
 
       wellRepository.findByApiNumber.mockResolvedValue(null);
-      wellRepository.save.mockImplementation((well) => {
+      unitOfWork.registerNew.mockImplementation((well: Well) => {
         // Mock the well to return domain events
-        well.getDomainEvents = mockWell.getDomainEvents;
-        well.clearDomainEvents = mockWell.clearDomainEvents;
-        return Promise.resolve();
+        well.getDomainEvents = mockWellWithEvents.getDomainEvents;
+        well.clearDomainEvents = mockWellWithEvents.clearDomainEvents;
       });
+      unitOfWork.commit.mockResolvedValue(undefined);
 
       await handler.execute(validCommand);
 
@@ -245,7 +264,7 @@ describe('CreateWellHandler', () => {
         type: 'WellStatusChanged',
         wellId: 'test-id',
       });
-      expect(mockWell.clearDomainEvents).toHaveBeenCalled();
+      expect(mockWellWithEvents.clearDomainEvents).toHaveBeenCalled();
     });
 
     it('should handle invalid API number format', async () => {
@@ -328,14 +347,15 @@ describe('CreateWellHandler', () => {
       );
 
       wellRepository.findByApiNumber.mockResolvedValue(null);
-      wellRepository.save.mockResolvedValue(undefined);
+      unitOfWork.commit.mockResolvedValue(undefined);
 
       const oilResult = await handler.execute(oilCommand);
       const gasResult = await handler.execute(gasCommand);
 
       expect(typeof oilResult).toBe('string');
       expect(typeof gasResult).toBe('string');
-      expect((wellRepository.save as jest.Mock).mock.calls.length).toBe(2);
+      expect(unitOfWork.registerNew).toHaveBeenCalledTimes(2);
+      expect(unitOfWork.commit).toHaveBeenCalledTimes(2);
     });
 
     it('should handle location with only coordinates', async () => {
@@ -348,14 +368,14 @@ describe('CreateWellHandler', () => {
       );
 
       wellRepository.findByApiNumber.mockResolvedValue(null);
-      wellRepository.save.mockResolvedValue(undefined);
+      unitOfWork.commit.mockResolvedValue(undefined);
 
       const result = await handler.execute(minimalLocationCommand);
 
       expect(typeof result).toBe('string');
-      // Use a safe approach to check if save was called with a Well instance
-      const saveCall = (wellRepository.save as jest.Mock).mock.calls[0][0];
-      expect(saveCall).toBeInstanceOf(Well);
+      // Check that registerNew was called with a Well instance
+      expect(unitOfWork.registerNew).toHaveBeenCalledWith(expect.any(Well));
+      expect(unitOfWork.commit).toHaveBeenCalled();
     });
 
     it('should handle location with full address', async () => {
@@ -375,14 +395,14 @@ describe('CreateWellHandler', () => {
       );
 
       wellRepository.findByApiNumber.mockResolvedValue(null);
-      wellRepository.save.mockResolvedValue(undefined);
+      unitOfWork.commit.mockResolvedValue(undefined);
 
       const result = await handler.execute(fullLocationCommand);
 
       expect(typeof result).toBe('string');
-      // Use a safe approach to check if save was called with a Well instance
-      const saveCall = (wellRepository.save as jest.Mock).mock.calls[0][0];
-      expect(saveCall).toBeInstanceOf(Well);
+      // Check that registerNew was called with a Well instance
+      expect(unitOfWork.registerNew).toHaveBeenCalledWith(expect.any(Well));
+      expect(unitOfWork.commit).toHaveBeenCalled();
     });
   });
 });

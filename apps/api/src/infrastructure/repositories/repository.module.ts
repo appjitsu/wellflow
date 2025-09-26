@@ -2,8 +2,13 @@ import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../../database/database.module';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type * as schema from '../../database/schema';
+import { UnitOfWork } from './unit-of-work';
 
 // Repository Implementations
+import { OwnerPaymentRepository } from './owner-payment.repository';
+import { CashCallRepository } from './cash-call.repository';
+import { JoaRepository } from './joa.repository';
+import { JibStatementRepository } from './jib-statement.repository';
 import { OrganizationRepository } from './organization.repository';
 import { WellRepositoryImpl } from './well.repository';
 import { AfeDomainRepository } from './afe-domain.repository';
@@ -20,6 +25,7 @@ import { DrillingProgramRepository } from './drilling-program.repository';
 import { WorkoverRepository } from './workover.repository';
 import { DailyDrillingReportRepository } from './daily-drilling-report.repository';
 import { MaintenanceScheduleRepository } from './maintenance-schedule.repository';
+import { PartnersRepositoryImpl } from '../../partners/infrastructure/partners.repository';
 
 /**
  * Repository Module
@@ -28,6 +34,26 @@ import { MaintenanceScheduleRepository } from './maintenance-schedule.repository
 @Module({
   imports: [DatabaseModule],
   providers: [
+    // Unit of Work Pattern
+    UnitOfWork,
+
+    // Financial Repositories
+    {
+      provide: 'OwnerPaymentRepository',
+      useClass: OwnerPaymentRepository,
+    },
+    {
+      provide: 'CashCallRepository',
+      useClass: CashCallRepository,
+    },
+    {
+      provide: 'JoaRepository',
+      useClass: JoaRepository,
+    },
+    {
+      provide: 'JibStatementRepository',
+      useClass: JibStatementRepository,
+    },
     // Core Repositories
     {
       provide: 'OrganizationRepository',
@@ -69,6 +95,10 @@ import { MaintenanceScheduleRepository } from './maintenance-schedule.repository
         return new LeaseRepository(databaseConnection);
       },
       inject: ['DATABASE_CONNECTION'],
+    },
+    {
+      provide: 'PartnersRepository',
+      useClass: PartnersRepositoryImpl,
     },
 
     // Title Management Repositories
@@ -145,6 +175,11 @@ import { MaintenanceScheduleRepository } from './maintenance-schedule.repository
     },
   ],
   exports: [
+    UnitOfWork,
+    'OwnerPaymentRepository',
+    'CashCallRepository',
+    'JoaRepository',
+    'JibStatementRepository',
     'OrganizationRepository',
     'WellRepository',
     'AfeRepository',
@@ -161,6 +196,7 @@ import { MaintenanceScheduleRepository } from './maintenance-schedule.repository
     'WorkoverRepository',
     'DailyDrillingReportRepository',
     'MaintenanceScheduleRepository',
+    'PartnersRepository',
   ],
 })
 export class RepositoryModule {

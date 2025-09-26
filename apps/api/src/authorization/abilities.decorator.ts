@@ -15,6 +15,10 @@ export interface RequiredRule {
     | 'ComplianceReport'
     | 'DrillingProgram'
     | 'Workover'
+    | 'OwnerPayment'
+    | 'CashCall'
+    | 'JointOperatingAgreement'
+    | 'JibStatement'
     | 'all';
 }
 
