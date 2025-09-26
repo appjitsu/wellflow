@@ -18,7 +18,10 @@ export class UpdateTitleOpinionFindingsHandler
       throw new NotFoundException('Title opinion not found');
     }
 
-    opinion.updateFindings(cmd.findings, cmd.recommendations);
+    opinion.updateFindings({
+      findings: cmd.findings,
+      recommendations: cmd.recommendations,
+    });
     await this.repo.save(opinion);
   }
 }

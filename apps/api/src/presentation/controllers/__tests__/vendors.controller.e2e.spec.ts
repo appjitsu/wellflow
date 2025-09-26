@@ -206,17 +206,13 @@ describe('VendorsController (e2e)', () => {
           suspendedVendors: 0,
           qualifiedVendors: 0,
           recentlyAdded: 1,
+          vendorsByType: {},
+          vendorsByRating: {},
+          expiringInsurance: 0,
+          expiringCertifications: 0,
+          averagePerformanceRating: 0,
         }),
         findWithExpiringQualifications: jest.fn().mockResolvedValue([]),
-        getStatistics: jest.fn().mockResolvedValue({
-          totalVendors: 1,
-          activeVendors: 0,
-          pendingApproval: 1,
-          suspendedVendors: 0,
-          qualifiedVendors: 0,
-          recentlyAdded: 1,
-        }),
-        getVendorsWithExpiringQualifications: jest.fn().mockResolvedValue([]),
       })
       .compile();
 

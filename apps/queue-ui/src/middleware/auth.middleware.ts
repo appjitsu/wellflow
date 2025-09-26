@@ -1,8 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
 import jwt from 'jsonwebtoken';
 import { logger } from '../utils/logger';
 
-interface AuthenticatedRequest extends Request {
+export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     email: string;
@@ -22,7 +22,11 @@ interface AuthenticatedRequest extends Request {
  * - Role-based access control
  * - Request logging for audit trails
  */
-export function authMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+export function authMiddleware(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void | Response {
   // Skip authentication for health check, API info endpoints, static assets, and Bull Board API
   if (
     req.path === '/health' ||

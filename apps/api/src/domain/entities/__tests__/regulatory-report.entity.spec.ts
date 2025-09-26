@@ -446,8 +446,8 @@ describe('RegulatoryReport Entity', () => {
         const attachments = report.attachments as Record<string, unknown>[];
         expect(attachments).toBeDefined();
         expect(attachments).toHaveLength(1);
-        expect(attachments[0].filename).toBe('test.pdf');
-        expect(attachments[0].attachedAt).toBeInstanceOf(Date);
+        expect(attachments[0]?.filename).toBe('test.pdf');
+        expect(attachments[0]?.attachedAt).toBeInstanceOf(Date);
       });
 
       it('should initialize attachments array if undefined', () => {

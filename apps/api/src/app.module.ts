@@ -51,6 +51,7 @@ import { CacheModule } from './common/cache/cache.module';
 import { ValidationModule } from './common/validation/validation.module';
 import { RateLimitingModule } from './common/rate-limiting/rate-limiting.module';
 import { EnhancedRateLimitGuard } from './common/rate-limiting/enhanced-rate-limit.guard';
+import { AuthModule } from './auth/auth.module';
 @Module({
   imports: [
     NestConfigModule.forRoot({
@@ -69,6 +70,7 @@ import { EnhancedRateLimitGuard } from './common/rate-limiting/enhanced-rate-lim
     LogRocketModule,
     DatabaseModule,
     RedisModule,
+    AuthModule, // New authentication module with Passport.js strategies
     AuthorizationModule,
     UsersModule,
     WellsModule,

@@ -18,6 +18,7 @@ import {
 import { TestingModule, Test } from '@nestjs/testing';
 import request from 'supertest';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { AuditLogService } from '../../application/services/audit-log.service';
 
 describe('LeaseOperatingStatements (e2e)', () => {
   let app: INestApplication;
@@ -62,6 +63,28 @@ describe('LeaseOperatingStatements (e2e)', () => {
           };
           return true;
         }),
+      })
+      .overrideProvider(AuditLogService)
+      .useValue({
+        logCreate: jest.fn(),
+        logUpdate: jest.fn(),
+        logDelete: jest.fn(),
+        logAction: jest.fn(),
+        logSuccess: jest.fn(),
+        logFailure: jest.fn(),
+        logExecute: jest.fn(),
+        logRead: jest.fn(),
+        logLogin: jest.fn(),
+        logLogout: jest.fn(),
+        logExport: jest.fn(),
+        logImport: jest.fn(),
+        logApprove: jest.fn(),
+        logReject: jest.fn(),
+        logSubmit: jest.fn(),
+        logSystemAction: jest.fn(),
+        logApiCall: jest.fn(),
+        logBatch: jest.fn(),
+        getContext: jest.fn(),
       })
       .overrideGuard(AbilitiesGuard)
       .useValue({

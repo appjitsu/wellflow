@@ -20,6 +20,16 @@ describe('UsersController', () => {
     lastName: 'User',
     role: 'pumper',
     phone: null,
+    // Authentication fields
+    passwordHash: null,
+    emailVerified: false,
+    emailVerificationToken: null,
+    emailVerificationExpiresAt: null,
+    failedLoginAttempts: 0,
+    lockedUntil: null,
+    passwordResetToken: null,
+    passwordResetExpiresAt: null,
+    // System fields
     isActive: true,
     lastLoginAt: null,
     createdAt: new Date('2024-01-01T00:00:00.000Z'),

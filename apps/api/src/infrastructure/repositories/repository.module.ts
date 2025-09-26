@@ -32,6 +32,8 @@ import { HSEIncidentRepositoryImpl } from './hse-incident.repository';
 import { EnvironmentalMonitoringRepositoryImpl } from './environmental-monitoring.repository';
 import { RegulatoryReportRepositoryImpl } from './regulatory-report.repository';
 import { RegulatoryDomainEventPublisher } from '../../domain/shared/regulatory-domain-event-publisher';
+import { AuditLogRepositoryImpl } from './audit-log.repository';
+import { RegulatoryOutboxService } from '../events/regulatory-outbox.service';
 
 /**
  * Repository Module
@@ -42,6 +44,21 @@ import { RegulatoryDomainEventPublisher } from '../../domain/shared/regulatory-d
   providers: [
     // Unit of Work Pattern
     UnitOfWork,
+
+    // Services
+    AuditLogService,
+    RegulatoryDomainEventPublisher,
+    RegulatoryOutboxService,
+
+    // Repositories
+    {
+      provide: 'AuditLogRepository',
+      useClass: AuditLogRepositoryImpl,
+    },
+    {
+      provide: 'RegulatoryEventPublisher',
+      useClass: RegulatoryOutboxService,
+    },
 
     // Financial Repositories
     {
@@ -222,6 +239,10 @@ import { RegulatoryDomainEventPublisher } from '../../domain/shared/regulatory-d
   ],
   exports: [
     UnitOfWork,
+    AuditLogService,
+    RegulatoryDomainEventPublisher,
+    'AuditLogRepository',
+    'RegulatoryEventPublisher',
     'OwnerPaymentRepository',
     'CashCallRepository',
     'JoaRepository',

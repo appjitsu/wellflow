@@ -373,9 +373,6 @@ describe('AuditLog', () => {
         action: AuditAction.LOGIN,
         resourceType: AuditResourceType.SYSTEM,
         ipAddress: '203.0.113.10',
-        ipAddress: '203.0.113.10',
-        ipAddress: '203.0.113.10',
-        ipAddress: '203.0.113.10',
         userAgent: 'Chrome/91.0',
         metadata: {
           sessionId: 'session-456',
