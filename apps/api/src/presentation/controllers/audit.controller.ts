@@ -116,7 +116,7 @@ export class AuditController {
     return {
       ...result,
       logs: result.logs.map((log) => ({
-        id: log.getId(),
+        id: log.getId().getValue(),
         userId: log.getUserId(),
         organizationId: log.getOrganizationId(),
         action: log.getAction(),
@@ -155,7 +155,7 @@ export class AuditController {
     return {
       ...result,
       logs: result.logs.map((log) => ({
-        id: log.getId(),
+        id: log.getId().getValue(),
         userId: log.getUserId(),
         organizationId: log.getOrganizationId(),
         action: log.getAction(),
@@ -197,7 +197,7 @@ export class AuditController {
     return {
       ...result,
       logs: result.logs.map((log) => ({
-        id: log.getId(),
+        id: log.getId().getValue(),
         userId: log.getUserId(),
         organizationId: log.getOrganizationId(),
         action: log.getAction(),
@@ -241,7 +241,7 @@ export class AuditController {
     return {
       ...result,
       logs: result.logs.map((log) => ({
-        id: log.getId(),
+        id: log.getId().getValue(),
         userId: log.getUserId(),
         organizationId: log.getOrganizationId(),
         action: log.getAction(),
@@ -275,7 +275,7 @@ export class AuditController {
     }
 
     return {
-      id: log.getId(),
+      id: log.getId().getValue(),
       userId: log.getUserId(),
       organizationId: log.getOrganizationId(),
       action: log.getAction(),

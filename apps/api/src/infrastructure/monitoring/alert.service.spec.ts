@@ -135,7 +135,7 @@ describe('AlertService', () => {
       const rule: AlertRule = {
         id: 'test-rule',
         name: 'Test Rule',
-        condition: (metrics) => metrics.errorRate > 0.05,
+        condition: (metrics) => (metrics as any).errorRate > 0.05,
         alertTemplate: {
           type: 'ERROR',
           severity: 'HIGH',
@@ -154,14 +154,14 @@ describe('AlertService', () => {
 
       const activeAlerts = service.getActiveAlerts();
       expect(activeAlerts).toHaveLength(1);
-      expect(activeAlerts[0].title).toBe('High Error Rate');
+      expect(activeAlerts[0]?.title).toBe('High Error Rate');
     });
 
     it('should not trigger alerts when conditions are not met', async () => {
       const rule: AlertRule = {
         id: 'test-rule',
         name: 'Test Rule',
-        condition: (metrics) => metrics.errorRate > 0.05,
+        condition: (metrics) => (metrics as any).errorRate > 0.05,
         alertTemplate: {
           type: 'ERROR',
           severity: 'HIGH',
@@ -247,7 +247,7 @@ describe('AlertService', () => {
 
       const activeAlerts = service.getActiveAlerts();
       expect(activeAlerts).toHaveLength(1);
-      expect(activeAlerts[0].title).toBe('Alert 1');
+      expect(activeAlerts[0]?.title).toBe('Alert 1');
     });
   });
 
@@ -273,8 +273,8 @@ describe('AlertService', () => {
       const history = service.getAlertHistory();
 
       expect(history).toHaveLength(2);
-      expect(history[0].title).toBe('Second Alert'); // Most recent first
-      expect(history[1].title).toBe('First Alert');
+      expect(history[0]?.title).toBe('Second Alert'); // Most recent first
+      expect(history[1]?.title).toBe('First Alert');
     });
 
     it('should limit results when specified', async () => {

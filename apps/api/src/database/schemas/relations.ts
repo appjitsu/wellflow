@@ -34,13 +34,23 @@ import {
   chainOfTitleEntries,
   titleOpinionDocuments,
   curativeActivities,
+  geologicalData,
+  formationTops,
+  reserves,
+  declineCurves,
+  reservesValidations,
+  wellPerformance,
+  enhancedProduction,
+  productionAllocation,
+  ownerPayments,
+  cashCalls,
+  jointOperatingAgreements,
   // Operational management
   drillingPrograms,
   dailyDrillingReports,
   workovers,
   maintenanceSchedules,
 } from './index';
-import { ownerPayments, cashCalls, jointOperatingAgreements } from './index';
 
 // =============================================================================
 // DRIZZLE RELATIONS
@@ -66,6 +76,14 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   ownerPayments: many(ownerPayments),
   cashCalls: many(cashCalls),
   jointOperatingAgreements: many(jointOperatingAgreements),
+  geologicalData: many(geologicalData),
+  formationTops: many(formationTops),
+  reserves: many(reserves),
+  declineCurves: many(declineCurves),
+  reservesValidations: many(reservesValidations),
+  wellPerformance: many(wellPerformance),
+  enhancedProduction: many(enhancedProduction),
+  productionAllocation: many(productionAllocation),
 
   complianceSchedules: many(complianceSchedules),
 }));
@@ -81,6 +99,15 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   environmentalIncidents: many(environmentalIncidents),
   regulatoryFilings: many(regulatoryFilings),
   afeApprovals: many(afeApprovals),
+  geologicalDataCreated: many(geologicalData),
+  geologicalDataInterpreted: many(geologicalData),
+  declineCurvesCreated: many(declineCurves),
+  reservesValidationsRequested: many(reservesValidations),
+  reservesValidationsReviewed: many(reservesValidations),
+  wellPerformanceCreated: many(wellPerformance),
+  wellPerformanceUpdated: many(wellPerformance),
+  enhancedProductionRecorded: many(enhancedProduction),
+  productionAllocationsCreated: many(productionAllocation),
 }));
 
 export const leasesRelations = relations(leases, ({ one, many }) => ({
@@ -98,6 +125,7 @@ export const leasesRelations = relations(leases, ({ one, many }) => ({
   leaseOperatingStatements: many(leaseOperatingStatements),
   titleOpinions: many(titleOpinions),
   chainOfTitleEntries: many(chainOfTitleEntries),
+  reserves: many(reserves),
 }));
 
 export const wellsRelations = relations(wells, ({ one, many }) => ({
@@ -119,11 +147,18 @@ export const wellsRelations = relations(wells, ({ one, many }) => ({
   environmentalIncidents: many(environmentalIncidents),
   regulatoryFilings: many(regulatoryFilings),
   complianceSchedules: many(complianceSchedules),
+  geologicalData: many(geologicalData),
+  formationTops: many(formationTops),
+  reserves: many(reserves),
+  declineCurves: many(declineCurves),
+  enhancedProduction: many(enhancedProduction),
+  productionAllocation: many(productionAllocation),
+  wellPerformance: many(wellPerformance),
 }));
 
 export const productionRecordsRelations = relations(
   productionRecords,
-  ({ one }) => ({
+  ({ one, many }) => ({
     organization: one(organizations, {
       fields: [productionRecords.organizationId],
       references: [organizations.id],
@@ -132,6 +167,7 @@ export const productionRecordsRelations = relations(
       fields: [productionRecords.wellId],
       references: [wells.id],
     }),
+    wellPerformanceRecords: many(wellPerformance),
   }),
 );
 
@@ -230,6 +266,181 @@ export const wellTestsRelations = relations(wellTests, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+export const geologicalDataRelations = relations(
+  geologicalData,
+  ({ one, many }) => ({
+    organization: one(organizations, {
+      fields: [geologicalData.organizationId],
+      references: [organizations.id],
+    }),
+    well: one(wells, {
+      fields: [geologicalData.wellId],
+      references: [wells.id],
+    }),
+    createdByUser: one(users, {
+      fields: [geologicalData.createdByUserId],
+      references: [users.id],
+    }),
+    interpretedByUser: one(users, {
+      fields: [geologicalData.interpretedByUserId],
+      references: [users.id],
+    }),
+    formationTops: many(formationTops),
+  }),
+);
+
+export const formationTopsRelations = relations(formationTops, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [formationTops.organizationId],
+    references: [organizations.id],
+  }),
+  well: one(wells, {
+    fields: [formationTops.wellId],
+    references: [wells.id],
+  }),
+  geologicalData: one(geologicalData, {
+    fields: [formationTops.geologicalDataId],
+    references: [geologicalData.id],
+  }),
+}));
+
+export const reservesRelations = relations(reserves, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [reserves.organizationId],
+    references: [organizations.id],
+  }),
+  well: one(wells, {
+    fields: [reserves.wellId],
+    references: [wells.id],
+  }),
+  lease: one(leases, {
+    fields: [reserves.leaseId],
+    references: [leases.id],
+  }),
+  evaluatorPartner: one(partners, {
+    fields: [reserves.evaluatorPartnerId],
+    references: [partners.id],
+  }),
+  declineCurves: many(declineCurves),
+  reservesValidations: many(reservesValidations),
+}));
+
+export const declineCurvesRelations = relations(declineCurves, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [declineCurves.organizationId],
+    references: [organizations.id],
+  }),
+  well: one(wells, {
+    fields: [declineCurves.wellId],
+    references: [wells.id],
+  }),
+  reserves: one(reserves, {
+    fields: [declineCurves.reservesId],
+    references: [reserves.id],
+  }),
+  createdByUser: one(users, {
+    fields: [declineCurves.createdByUserId],
+    references: [users.id],
+  }),
+}));
+
+export const reservesValidationsRelations = relations(
+  reservesValidations,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [reservesValidations.organizationId],
+      references: [organizations.id],
+    }),
+    reserves: one(reserves, {
+      fields: [reservesValidations.reservesId],
+      references: [reserves.id],
+    }),
+    validatorPartner: one(partners, {
+      fields: [reservesValidations.validatorPartnerId],
+      references: [partners.id],
+    }),
+    requestedByUser: one(users, {
+      fields: [reservesValidations.requestedByUserId],
+      references: [users.id],
+    }),
+    reviewedByUser: one(users, {
+      fields: [reservesValidations.reviewedByUserId],
+      references: [users.id],
+    }),
+  }),
+);
+
+export const enhancedProductionRelations = relations(
+  enhancedProduction,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [enhancedProduction.organizationId],
+      references: [organizations.id],
+    }),
+    well: one(wells, {
+      fields: [enhancedProduction.wellId],
+      references: [wells.id],
+    }),
+    productionRecord: one(productionRecords, {
+      fields: [enhancedProduction.productionRecordId],
+      references: [productionRecords.id],
+    }),
+    recordedByUser: one(users, {
+      fields: [enhancedProduction.recordedByUserId],
+      references: [users.id],
+    }),
+  }),
+);
+
+export const productionAllocationRelations = relations(
+  productionAllocation,
+  ({ one, many }) => ({
+    organization: one(organizations, {
+      fields: [productionAllocation.organizationId],
+      references: [organizations.id],
+    }),
+    lease: one(leases, {
+      fields: [productionAllocation.leaseId],
+      references: [leases.id],
+    }),
+    well: one(wells, {
+      fields: [productionAllocation.wellId],
+      references: [wells.id],
+    }),
+    createdByUser: one(users, {
+      fields: [productionAllocation.createdByUserId],
+      references: [users.id],
+    }),
+    enhancedProductionRecords: many(enhancedProduction),
+  }),
+);
+
+export const wellPerformanceRelations = relations(
+  wellPerformance,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [wellPerformance.organizationId],
+      references: [organizations.id],
+    }),
+    well: one(wells, {
+      fields: [wellPerformance.wellId],
+      references: [wells.id],
+    }),
+    productionRecord: one(productionRecords, {
+      fields: [wellPerformance.productionRecordId],
+      references: [productionRecords.id],
+    }),
+    createdByUser: one(users, {
+      fields: [wellPerformance.createdByUserId],
+      references: [users.id],
+    }),
+    updatedByUser: one(users, {
+      fields: [wellPerformance.updatedByUserId],
+      references: [users.id],
+    }),
+  }),
+);
 
 export const afesRelations = relations(afes, ({ one, many }) => ({
   organization: one(organizations, {

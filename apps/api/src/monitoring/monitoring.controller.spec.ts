@@ -3,6 +3,12 @@ import { HttpException } from '@nestjs/common';
 import { MonitoringController } from './monitoring.controller';
 import { SentryService } from '../sentry/sentry.service';
 import { LogRocketService } from '../logrocket/logrocket.service';
+import { MetricsService } from './metrics.service';
+import { CircuitBreakerService } from '../common/resilience/circuit-breaker.service';
+import { RetryService } from '../common/resilience/retry.service';
+import { EnhancedEventBusService } from '../common/events/enhanced-event-bus.service';
+import { DatabasePerformanceService } from '../infrastructure/database/database-performance.service';
+import { AlertService } from '../infrastructure/monitoring/alert.service';
 
 describe('MonitoringController', () => {
   let controller: MonitoringController;
@@ -29,6 +35,47 @@ describe('MonitoringController', () => {
             getSessionURL: jest
               .fn()
               .mockResolvedValue('https://app.logrocket.com/session/123'),
+          },
+        },
+        {
+          provide: MetricsService,
+          useValue: {
+            getSystemMetrics: jest.fn(),
+          },
+        },
+        {
+          provide: CircuitBreakerService,
+          useValue: {
+            getAllMetrics: jest.fn(),
+            resetCircuitBreaker: jest.fn(),
+          },
+        },
+        {
+          provide: RetryService,
+          useValue: {},
+        },
+        {
+          provide: EnhancedEventBusService,
+          useValue: {
+            getEventMetrics: jest.fn(),
+          },
+        },
+        {
+          provide: DatabasePerformanceService,
+          useValue: {
+            getPerformanceMetrics: jest.fn(),
+            getQueryPerformanceStats: jest.fn(),
+            getSlowQueries: jest.fn(),
+            getLockInfo: jest.fn(),
+          },
+        },
+        {
+          provide: AlertService,
+          useValue: {
+            getActiveAlerts: jest.fn(),
+            getAlertHistory: jest.fn(),
+            resolveAlert: jest.fn(),
+            createAlert: jest.fn(),
           },
         },
       ],

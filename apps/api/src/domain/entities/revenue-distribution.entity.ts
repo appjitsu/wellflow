@@ -109,7 +109,14 @@ export class RevenueDistribution {
     this.productionMonth = productionMonth;
     this.productionVolumes = { ...productionVolumes };
     this.revenueBreakdown = { ...revenueBreakdown };
-    this.paymentInfo = paymentInfo ? { ...paymentInfo } : {};
+    this.paymentInfo = paymentInfo
+      ? {
+          ...paymentInfo,
+          paymentDate: paymentInfo.paymentDate
+            ? new Date(paymentInfo.paymentDate.getTime())
+            : undefined,
+        }
+      : {};
     this.createdAt = new Date();
     this.updatedAt = new Date();
     this.version = 1;
@@ -161,7 +168,12 @@ export class RevenueDistribution {
   }
 
   getPaymentInfo(): PaymentInfo {
-    return { ...this.paymentInfo };
+    return {
+      ...this.paymentInfo,
+      paymentDate: this.paymentInfo.paymentDate
+        ? new Date(this.paymentInfo.paymentDate.getTime())
+        : undefined,
+    };
   }
 
   getCreatedAt(): Date {

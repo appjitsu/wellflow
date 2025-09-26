@@ -46,8 +46,8 @@ export class TitleOpinion {
     this.leaseId = props.leaseId;
     this.opinionNumber = props.opinionNumber;
     this.examinerName = props.examinerName;
-    this.examinationDate = new Date(props.examinationDate);
-    this.effectiveDate = new Date(props.effectiveDate);
+    this.examinationDate = new Date(props.examinationDate.getTime());
+    this.effectiveDate = new Date(props.effectiveDate.getTime());
     this.titleStatus = props.titleStatus;
     this.findings = props.findings;
     this.recommendations = props.recommendations;
@@ -76,7 +76,7 @@ export class TitleOpinion {
     return new Date(this.examinationDate);
   }
   getEffectiveDate(): Date {
-    return new Date(this.effectiveDate);
+    return new Date(this.effectiveDate.getTime());
   }
   getTitleStatus(): TitleStatus {
     return this.titleStatus;
@@ -95,9 +95,16 @@ export class TitleOpinion {
     this.touch();
   }
 
-  updateFindings(findings?: string, recommendations?: string): void {
-    this.findings = findings;
-    this.recommendations = recommendations;
+  updateFindings(updates: {
+    findings?: string;
+    recommendations?: string;
+  }): void {
+    if ('findings' in updates) {
+      this.findings = updates.findings;
+    }
+    if ('recommendations' in updates) {
+      this.recommendations = updates.recommendations;
+    }
     this.touch();
   }
 
