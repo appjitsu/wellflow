@@ -135,12 +135,7 @@ export class EnvironmentalMonitoring extends AggregateRoot {
       monitoring._measuredValue = measuredValue;
     }
 
-    if (complianceLimit !== undefined) {
-      monitoring._complianceLimit = complianceLimit;
-      monitoring.checkCompliance(measuredValue);
-    }
-
-    // Raise domain event
+    // Raise domain event for data recording
     monitoring.addDomainEvent(
       new MonitoringDataRecordedEvent(
         monitoring._id,
@@ -149,6 +144,11 @@ export class EnvironmentalMonitoring extends AggregateRoot {
         measuredValue,
       ),
     );
+
+    if (complianceLimit !== undefined) {
+      monitoring._complianceLimit = complianceLimit;
+      monitoring.checkCompliance(measuredValue);
+    }
 
     return monitoring;
   }
@@ -161,10 +161,7 @@ export class EnvironmentalMonitoring extends AggregateRoot {
     this._measuredValue = measuredValue;
     this._updatedAt = new Date();
 
-    // Check for compliance violations
-    this.checkCompliance(measuredValue);
-
-    // Raise domain event
+    // Raise domain event for data recording
     this.addDomainEvent(
       new MonitoringDataRecordedEvent(
         this._id,
@@ -173,6 +170,9 @@ export class EnvironmentalMonitoring extends AggregateRoot {
         measuredValue,
       ),
     );
+
+    // Check for compliance violations
+    this.checkCompliance(measuredValue);
   }
 
   private checkCompliance(measuredValue?: number): void {
@@ -310,6 +310,18 @@ export class EnvironmentalMonitoring extends AggregateRoot {
     return this._wellId;
   }
 
+  public get location(): string | undefined {
+    return this._location;
+  }
+
+  public get facilityId(): string | undefined {
+    return this._facilityId;
+  }
+
+  public get equipmentId(): string | undefined {
+    return this._equipmentId;
+  }
+
   public get parameter(): string {
     return this._parameter;
   }
@@ -324,6 +336,58 @@ export class EnvironmentalMonitoring extends AggregateRoot {
 
   public get measuredValue(): number | undefined {
     return this._measuredValue;
+  }
+
+  public get detectionLimit(): number | undefined {
+    return this._detectionLimit;
+  }
+
+  public get exceedanceThreshold(): number | undefined {
+    return this._exceedanceThreshold;
+  }
+
+  public get regulatoryStandard(): string | undefined {
+    return this._regulatoryStandard;
+  }
+
+  public get monitoringMethod(): string | undefined {
+    return this._monitoringMethod;
+  }
+
+  public get equipmentType(): string | undefined {
+    return this._equipmentType;
+  }
+
+  public get equipmentSerialNumber(): string | undefined {
+    return this._equipmentSerialNumber;
+  }
+
+  public get calibrationDate(): Date | undefined {
+    return this._calibrationDate;
+  }
+
+  public get nextCalibrationDate(): Date | undefined {
+    return this._nextCalibrationDate;
+  }
+
+  public get qaQcMethod(): string | undefined {
+    return this._qaQcMethod;
+  }
+
+  public get dataQualityIndicator(): string | undefined {
+    return this._dataQualityIndicator;
+  }
+
+  public get weatherConditions(): Record<string, unknown> | undefined {
+    return this._weatherConditions;
+  }
+
+  public get operationalConditions(): Record<string, unknown> | undefined {
+    return this._operationalConditions;
+  }
+
+  public get reportingPeriod(): string | undefined {
+    return this._reportingPeriod;
   }
 
   public get complianceLimit(): number | undefined {
@@ -348,6 +412,18 @@ export class EnvironmentalMonitoring extends AggregateRoot {
 
   public get reportedDate(): Date | undefined {
     return this._reportedDate;
+  }
+
+  public get reportNumber(): string | undefined {
+    return this._reportNumber;
+  }
+
+  public get correctiveActions(): Record<string, unknown>[] | undefined {
+    return this._correctiveActions;
+  }
+
+  public get followUpDate(): Date | undefined {
+    return this._followUpDate;
   }
 
   public get followUpRequired(): boolean {

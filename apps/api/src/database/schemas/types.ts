@@ -1,40 +1,45 @@
 // Import all table schemas
 import {
-  organizations,
-  users,
-  leases,
-  wells,
-  productionRecords,
-  partners,
-  leasePartners,
-  complianceReports,
-  jibStatements,
-  documents,
-  equipment,
-  wellTests,
   afes,
   afeLineItems,
   afeApprovals,
-  divisionOrders,
-  revenueDistributions,
+  chainOfTitleEntries,
+  complianceReports,
+  complianceSchedules,
+  curativeActivities,
+  curativeItems,
+  declineCurves,
+  documents,
+  environmentalIncidents,
+  enhancedProduction,
+  equipment,
+  formationTops,
+  geologicalData,
+  jointOperatingAgreements,
+  leasePartners,
   leaseOperatingStatements,
-  vendors,
+  leases,
+  organizations,
+  ownerPayments,
+  partners,
+  productionAllocation,
+  productionRecords,
+  regulatoryFilings,
+  reserves,
+  reservesValidations,
+  revenueDistributions,
+  spillReports,
+  titleOpinionDocuments,
+  titleOpinions,
+  users,
   vendorContacts,
   vendorContracts,
   vendorPerformanceReviews,
   vendorQualifications,
-  titleOpinions,
-  curativeItems,
-  environmentalIncidents,
-  spillReports,
-  regulatoryFilings,
-  complianceSchedules,
-  chainOfTitleEntries,
-  titleOpinionDocuments,
-  curativeActivities,
-  ownerPayments,
-  cashCalls,
-  jointOperatingAgreements,
+  vendors,
+  wellPerformance,
+  wellTests,
+  wells,
 } from './index';
 
 // =============================================================================
@@ -60,6 +65,13 @@ export type NewWell = typeof wells.$inferInsert;
 // Production Record types
 export type ProductionRecord = typeof productionRecords.$inferSelect;
 export type NewProductionRecord = typeof productionRecords.$inferInsert;
+
+// Geological Data types
+export type GeologicalData = typeof geologicalData.$inferSelect;
+export type NewGeologicalData = typeof geologicalData.$inferInsert;
+
+export type FormationTop = typeof formationTops.$inferSelect;
+export type NewFormationTop = typeof formationTops.$inferInsert;
 
 // Partner types
 export type Partner = typeof partners.$inferSelect;
@@ -88,6 +100,15 @@ export type NewEquipment = typeof equipment.$inferInsert;
 // Well Test types
 export type WellTest = typeof wellTests.$inferSelect;
 export type NewWellTest = typeof wellTests.$inferInsert;
+
+export type WellPerformance = typeof wellPerformance.$inferSelect;
+export type NewWellPerformance = typeof wellPerformance.$inferInsert;
+
+export type EnhancedProduction = typeof enhancedProduction.$inferSelect;
+export type NewEnhancedProduction = typeof enhancedProduction.$inferInsert;
+
+export type ProductionAllocation = typeof productionAllocation.$inferSelect;
+export type NewProductionAllocation = typeof productionAllocation.$inferInsert;
 
 // AFE types
 export type Afe = typeof afes.$inferSelect;
@@ -176,3 +197,13 @@ export type NewJointOperatingAgreement =
 
 export type ComplianceSchedule = typeof complianceSchedules.$inferSelect;
 export type NewComplianceSchedule = typeof complianceSchedules.$inferInsert;
+
+// Reserves management types
+export type Reserve = typeof reserves.$inferSelect;
+export type NewReserve = typeof reserves.$inferInsert;
+
+export type DeclineCurve = typeof declineCurves.$inferSelect;
+export type NewDeclineCurve = typeof declineCurves.$inferInsert;
+
+export type ReservesValidation = typeof reservesValidations.$inferSelect;
+export type NewReservesValidation = typeof reservesValidations.$inferInsert;

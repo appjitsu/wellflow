@@ -71,8 +71,10 @@ export class DivisionOrder {
     this.wellId = wellId;
     this.partnerId = partnerId;
     this.decimalInterest = decimalInterest;
-    this.effectiveDate = new Date(effectiveDate);
-    this.endDate = options?.endDate ? new Date(options.endDate) : undefined;
+    this.effectiveDate = new Date(effectiveDate.getTime());
+    this.endDate = options?.endDate
+      ? new Date(options.endDate.getTime())
+      : undefined;
     this.isActive = options?.isActive ?? true;
     this.createdAt = new Date();
     this.updatedAt = new Date();
@@ -113,11 +115,11 @@ export class DivisionOrder {
   }
 
   getEffectiveDate(): Date {
-    return new Date(this.effectiveDate);
+    return new Date(this.effectiveDate.getTime());
   }
 
   getEndDate(): Date | undefined {
-    return this.endDate ? new Date(this.endDate) : undefined;
+    return this.endDate ? new Date(this.endDate.getTime()) : undefined;
   }
 
   getIsActive(): boolean {
@@ -202,7 +204,7 @@ export class DivisionOrder {
       return; // Already inactive
     }
 
-    this.validateEndDate(endDate);
+    this.validateEndDate(endDate, this.effectiveDate);
 
     this.isActive = false;
     this.endDate = new Date(endDate);
@@ -280,12 +282,12 @@ export class DivisionOrder {
     }
 
     if (endDate) {
-      this.validateEndDate(endDate);
+      this.validateEndDate(endDate, effectiveDate);
     }
   }
 
-  private validateEndDate(endDate: Date): void {
-    if (endDate <= this.effectiveDate) {
+  private validateEndDate(endDate: Date, effectiveDate: Date): void {
+    if (endDate <= effectiveDate) {
       throw new Error('End date must be after effective date');
     }
   }

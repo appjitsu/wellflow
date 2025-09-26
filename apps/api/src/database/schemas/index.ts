@@ -4,6 +4,13 @@ export { users } from './users';
 export { leases } from './leases';
 export { wells } from './wells';
 export { productionRecords } from './production-records';
+export {
+  geologicalData,
+  geologicalInterpretationStatusEnum,
+  geologicalDataSourceEnum,
+  geologicalLogTypeEnum,
+} from './geological-data';
+export { formationTops } from './formation-tops';
 
 // Partner and financial entities
 export { partners } from './partners';
@@ -28,7 +35,21 @@ export {
 // Document and equipment entities
 export { documents } from './documents';
 export { equipment } from './equipment';
-export { wellTests } from './well-tests';
+export {
+  wellTests,
+  wellTestMethodEnum,
+  wellTestValidationStatusEnum,
+} from './well-tests';
+export {
+  wellPerformance,
+  wellPerformanceStatusEnum,
+  artificialLiftMethodEnum,
+} from './well-performance';
+export {
+  enhancedProduction,
+  productionDataSourceEnum,
+} from './enhanced-production';
+export { productionAllocation } from './production-allocation';
 
 // Operational management entities
 export {
@@ -91,6 +112,16 @@ export { spillReports } from './spill-reports';
 export { regulatoryFilings } from './regulatory-filings';
 export { regulatoryReports } from './regulatory-reports';
 export { complianceSchedules } from './compliance-schedules';
+export {
+  reserves,
+  reservesCategoryEnum,
+  reservesClassificationEnum,
+} from './reserves';
+export { declineCurves, declineCurveMethodEnum } from './decline-curves';
+export {
+  reservesValidations,
+  reservesValidationStatusEnum,
+} from './reserves-validations';
 
 // Messaging / Outbox
 export { outboxEvents } from './outbox-events';
