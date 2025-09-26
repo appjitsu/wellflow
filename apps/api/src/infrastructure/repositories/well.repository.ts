@@ -5,6 +5,9 @@ import { WellRepository } from '../../domain/repositories/well.repository.interf
 import { Well } from '../../domain/entities/well.entity';
 import { ApiNumber } from '../../domain/value-objects/api-number';
 import { WellStatus, WellType } from '../../domain/enums/well-status.enum';
+import { BaseRepository } from './base.repository';
+import { AuditLogService } from '../../application/services/audit-log.service';
+import { AuditResourceType } from '../../domain/entities/audit-log.entity';
 
 import { wells } from '../../database/schema';
 
@@ -13,11 +16,18 @@ import { wells } from '../../database/schema';
  * Implements well data access using Drizzle ORM
  */
 @Injectable()
-export class WellRepositoryImpl implements WellRepository {
+export class WellRepositoryImpl extends BaseRepository<typeof wells> implements WellRepository {
   constructor(
     @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<Record<string, never>>,
-  ) {}
+    db: NodePgDatabase<Record<string, never>>,
+    auditLogService?: AuditLogService,
+  ) {
+    super(db, wells, auditLogService);
+  }
+
+  protected getResourceType(): AuditResourceType {
+    return AuditResourceType.WELL;
+  }
 
   private mapWellStatusToDatabase(
     status: WellStatus,
@@ -60,22 +70,33 @@ export class WellRepositoryImpl implements WellRepository {
 
     // Check if well exists
     const existing = await this.db
-      .select({ id: wells.id })
+      .select()
       .from(wells)
       .where(eq(wells.id, well.getId().getValue()))
       .limit(1);
 
-    if (existing.length > 0) {
+    const existingWell = existing.length > 0 ? existing[0] : null;
+
+    if (existingWell) {
       // Update existing well
       await this.db
         .update(wells)
         .set(wellData)
         .where(eq(wells.id, well.getId().getValue()));
+
+      // Audit logging for update
+      await this.logAuditAction('UPDATE', wellData, {
+        oldValues: existingWell,
+        newValues: wellData,
+      });
     } else {
       // Insert new well
       await this.db.insert(wells).values({
         ...wellData,
       });
+
+      // Audit logging for creation
+      await this.logAuditAction('CREATE', wellData, { newValues: wellData });
     }
   }
 

@@ -36,28 +36,115 @@ export async function bootstrap() {
   // Global exception filter
   app.useGlobalFilters(new GlobalExceptionFilter());
 
-  // Swagger API Documentation
+  // Enhanced Swagger API Documentation
   const config = new DocumentBuilder()
-    .setTitle('WellFlow API')
-    .setDescription('Oil & Gas Well Management Platform API')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .addTag('Wells', 'Well management operations')
-    .addTag('Vendors', 'Vendor management and qualification')
-    .addTag('Title Management', 'Title opinion and curative item management')
-    .addTag('AFEs', 'Authorization for Expenditure management')
-    .addTag('Lease Operating Statements', 'Lease operating expense tracking')
-    .addTag(
-      'Daily Drilling Reports',
-      'Daily drilling reporting and submission operations',
+    .setTitle('WellFlow API - Oil & Gas Well Management Platform')
+    .setDescription(`
+# WellFlow API
+
+A comprehensive, enterprise-grade API for oil & gas well management, designed with critical infrastructure security and compliance in mind.
+
+## 🚀 Features
+
+- **Multi-tenant Architecture**: Organization-based data isolation
+- **Audit Logging**: Complete audit trail for all operations
+- **Circuit Breaker Pattern**: Resilient external API integrations
+- **API Versioning**: Backward-compatible versioning strategy
+- **Advanced Caching**: Multi-level caching for optimal performance
+- **Security-First**: Comprehensive security headers and validation
+- **Health Monitoring**: Real-time system health and performance metrics
+
+## 🔐 Authentication
+
+All API endpoints require JWT Bearer token authentication except health checks.
+
+\`\`\`
+Authorization: Bearer <your-jwt-token>
+\`\`\`
+
+## 📊 Rate Limiting
+
+API requests are rate-limited based on user tier:
+- **Free Tier**: 60 requests/minute
+- **Standard**: 120 requests/minute
+- **Enterprise**: 300 requests/minute
+
+## 🔄 API Versions
+
+- **v1**: Legacy API (deprecated)
+- **v2**: Current stable API with enhanced features
+
+Use the \`API-Version\` header to specify version:
+\`\`\`
+API-Version: v2
+\`\`\`
+
+## 🏷️ Response Format
+
+All responses follow a consistent format:
+
+\`\`\`json
+{
+  "success": true,
+  "message": "Operation completed",
+  "data": { ... },
+  "timestamp": "2024-01-01T12:00:00.000Z"
+}
+\`\`\`
+
+## 📋 Compliance
+
+This API complies with:
+- **IEC 62443**: Industrial Cybersecurity Standards
+- **NIST CSF**: Cybersecurity Framework
+- **API-1164**: Oil & Gas Industry API Standards
+- **CISA**: Cybersecurity Performance Goals
+
+## 🆘 Support
+
+For API support, contact: api-support@wellflow.com
+Security issues: security@wellflow.com
+    `)
+    .setVersion('2.0.0')
+    .setContact('API Support', 'api-support@wellflow.com', 'support@wellflow.com')
+    .setLicense('Enterprise License', 'https://wellflow.com/license')
+    .setTermsOfService('https://wellflow.com/terms')
+    .setExternalDoc('API Changelog', 'https://wellflow.com/api/changelog')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'JWT-auth',
     )
-    .addTag(
-      'Maintenance Schedules',
-      'Equipment maintenance scheduling and completion',
+    .addApiKey(
+      {
+        type: 'apiKey',
+        in: 'header',
+        name: 'X-API-Key',
+      },
+      'api-key',
     )
-    .addTag('Operators', 'Operator-specific operations')
-    .addTag('Health', 'Health check endpoints')
-    .addServer(configService.apiUrl || getBaseUrl(), 'API Server')
+    .addTag('Wells', 'Well lifecycle management - creation, updates, status tracking')
+    .addTag('Vendors', 'Vendor management, qualification, and performance tracking')
+    .addTag('Title Management', 'Title opinion management and curative item processing')
+    .addTag('AFEs', 'Authorization for Expenditure - budget management and approvals')
+    .addTag('Lease Operating Statements', 'Lease operating expense tracking and reporting')
+    .addTag('Daily Drilling Reports', 'Daily drilling operations reporting and compliance')
+    .addTag('Maintenance Schedules', 'Equipment maintenance scheduling and completion tracking')
+    .addTag('Production Records', 'Production data collection and analytics')
+    .addTag('Regulatory Reporting', 'Automated regulatory compliance reporting')
+    .addTag('Financial', 'Financial operations - payments, cash calls, revenue distribution')
+    .addTag('Audit', 'Audit logging and compliance monitoring (Admin/Auditor only)')
+    .addTag('Health', 'System health checks and monitoring')
+    .addTag('Monitoring', 'System metrics and performance monitoring')
+    .addTag('API', 'API metadata and versioning information')
+    .addServer(configService.apiUrl || getBaseUrl(), 'Production API Server')
+    .addServer('http://localhost:3000', 'Local Development Server')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

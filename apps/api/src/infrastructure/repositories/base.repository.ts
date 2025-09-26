@@ -1,10 +1,12 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Optional } from '@nestjs/common';
 import { eq, and, sql, count, desc, asc } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { AnyPgColumn, PgTable, TableConfig } from 'drizzle-orm/pg-core';
 import * as schema from '../../database/schema';
 import type { UnitOfWorkTransaction } from './unit-of-work';
 import type { Specification } from '../../domain/specifications/specification.interface';
+import { AuditLogService } from '../../application/services/audit-log.service';
+import { AuditResourceType } from '../../domain/entities/audit-log.entity';
 
 /**
  * Base Repository Implementation
@@ -16,7 +18,14 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
     @Inject('DATABASE_CONNECTION')
     protected readonly db: NodePgDatabase<typeof schema>,
     protected readonly table: T,
+    @Optional() protected readonly auditLogService?: AuditLogService,
   ) {}
+
+  /**
+   * Get the audit resource type for this repository
+   * Should be overridden by subclasses
+   */
+  protected abstract getResourceType(): AuditResourceType;
 
   /**
    * Create a new record
@@ -27,7 +36,12 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
       .values(data as T['$inferInsert'])
       .returning();
 
-    return result[0] as T['$inferSelect'];
+    const createdRecord = result[0] as T['$inferSelect'];
+
+    // Audit logging for creation
+    await this.logAuditAction('CREATE', createdRecord, { newValues: createdRecord });
+
+    return createdRecord;
   }
 
   /**
@@ -152,13 +166,26 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
     id: string,
     data: Partial<T['$inferInsert']>,
   ): Promise<T['$inferSelect'] | null> {
+    // Get the old record for audit logging
+    const oldRecord = await this.findById(id);
+
     const result = await this.db
       .update(this.table)
       .set(data)
       .where(eq((this.table as Record<string, unknown>).id as AnyPgColumn, id))
       .returning();
 
-    return (result as any)[0] || null; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+    const updatedRecord = (result as any)[0] || null; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+
+    // Audit logging for update
+    if (updatedRecord && oldRecord) {
+      await this.logAuditAction('UPDATE', updatedRecord, {
+        oldValues: oldRecord,
+        newValues: updatedRecord,
+      });
+    }
+
+    return updatedRecord;
   }
 
   /**
@@ -184,6 +211,9 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
    * Delete record by ID
    */
   async delete(id: string): Promise<boolean> {
+    // Get the record before deleting for audit logging
+    const recordToDelete = await this.findById(id);
+
     const result = await this.db
       .delete(this.table)
       .where(eq((this.table as Record<string, unknown>).id as AnyPgColumn, id))
@@ -191,7 +221,14 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
         id: (this.table as Record<string, unknown>).id as AnyPgColumn,
       });
 
-    return result.length > 0;
+    const wasDeleted = result.length > 0;
+
+    // Audit logging for deletion
+    if (wasDeleted && recordToDelete) {
+      await this.logAuditAction('DELETE', recordToDelete, { oldValues: recordToDelete });
+    }
+
+    return wasDeleted;
   }
 
   /**
@@ -367,5 +404,54 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
   ): Promise<boolean> {
     const count = await this.countBySpecification(specification);
     return count > 0;
+  }
+
+  /**
+   * Log audit action for database operations
+   */
+  protected async logAuditAction(
+    action: 'CREATE' | 'UPDATE' | 'DELETE',
+    record: any,
+    changes?: {
+      oldValues?: Record<string, unknown>;
+      newValues?: Record<string, unknown>;
+    },
+  ): Promise<void> {
+    if (!this.auditLogService) {
+      return; // Audit logging not available
+    }
+
+    try {
+      const resourceId = record?.id || record?.getId?.() || 'unknown';
+
+      switch (action) {
+        case 'CREATE':
+          await this.auditLogService.logCreate(
+            this.getResourceType(),
+            resourceId,
+            changes?.newValues || record,
+          );
+          break;
+        case 'UPDATE':
+          await this.auditLogService.logUpdate(
+            this.getResourceType(),
+            resourceId,
+            changes?.oldValues || {},
+            changes?.newValues || record,
+          );
+          break;
+        case 'DELETE':
+          await this.auditLogService.logDelete(
+            this.getResourceType(),
+            resourceId,
+            changes?.oldValues || record,
+          );
+          break;
+      }
+    } catch (error) {
+      // Don't let audit logging failures break the main operation
+      // Just log the error and continue
+      console.error('Failed to log audit action:', error);
+    }
   }
 }
