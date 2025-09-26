@@ -2,6 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { eq, ilike, and } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { BaseRepository } from './base.repository';
+import { AuditResourceType } from '../../domain/entities/audit-log.entity';
 import { organizations } from '../../database/schema';
 import * as schema from '../../database/schema';
 
@@ -18,6 +19,10 @@ export class OrganizationRepository extends BaseRepository<
     db: NodePgDatabase<typeof schema>,
   ) {
     super(db, organizations);
+  }
+
+  protected getResourceType(): AuditResourceType {
+    return AuditResourceType.ORGANIZATION;
   }
 
   /**

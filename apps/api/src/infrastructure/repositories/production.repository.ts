@@ -2,6 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { eq, and, gte, lte, desc, sum, avg, count } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { BaseRepository } from './base.repository';
+import { AuditResourceType } from '../../domain/entities/audit-log.entity';
 import { productionRecords } from '../../database/schema';
 import * as schema from '../../database/schema';
 import {
@@ -25,6 +26,10 @@ export class ProductionRepository
     db: NodePgDatabase<typeof schema>,
   ) {
     super(db, productionRecords);
+  }
+
+  protected getResourceType(): AuditResourceType {
+    return AuditResourceType.PRODUCTION;
   }
 
   /**

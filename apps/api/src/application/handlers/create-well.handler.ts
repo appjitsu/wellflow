@@ -7,6 +7,11 @@ import { ApiNumber } from '../../domain/value-objects/api-number';
 import { Location } from '../../domain/value-objects/location';
 import { Coordinates } from '../../domain/value-objects/coordinates';
 import { UnitOfWork } from '../../infrastructure/repositories/unit-of-work';
+import { AuditLogService } from '../services/audit-log.service';
+import {
+  AuditResourceType,
+  AuditAction,
+} from '../../domain/entities/audit-log.entity';
 import { randomUUID } from 'crypto';
 
 /**
@@ -20,6 +25,7 @@ export class CreateWellHandler implements ICommandHandler<CreateWellCommand> {
     private readonly wellRepository: WellRepository,
     private readonly unitOfWork: UnitOfWork,
     private readonly eventBus: EventBus,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   async execute(command: CreateWellCommand): Promise<string> {
@@ -67,6 +73,21 @@ export class CreateWellHandler implements ICommandHandler<CreateWellCommand> {
       this.unitOfWork.registerNew(well);
       await this.unitOfWork.commit();
 
+      // Audit logging for successful well creation
+      await this.auditLogService.logExecute(
+        AuditResourceType.SYSTEM,
+        `create-well-${wellId}`,
+        {
+          businessContext: {
+            wellId,
+            apiNumber: apiNumber.getValue(),
+            operatorId: command.operatorId,
+            wellType: command.wellType,
+            leaseId: command.leaseId,
+          },
+        },
+      );
+
       // Publish domain events after successful commit
       const events = well.getDomainEvents();
       for (const event of events) {
@@ -77,12 +98,30 @@ export class CreateWellHandler implements ICommandHandler<CreateWellCommand> {
       return wellId;
     } catch (error) {
       this.unitOfWork.rollback();
+
+      // Audit logging for failed well creation
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      await this.auditLogService.logAction(
+        AuditAction.EXECUTE,
+        AuditResourceType.SYSTEM,
+        `create-well-failed`,
+        false,
+        errorMessage,
+        {},
+        {
+          businessContext: {
+            apiNumber: command.apiNumber,
+            operatorId: command.operatorId,
+            commandData: command,
+          },
+        },
+      );
+
       if (error instanceof ConflictException) {
         throw error;
       }
-      throw new BadRequestException(
-        `Failed to create well: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
+      throw new BadRequestException(`Failed to create well: ${errorMessage}`);
     }
   }
 }

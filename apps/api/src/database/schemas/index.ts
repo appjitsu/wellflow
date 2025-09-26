@@ -86,5 +86,8 @@ export { complianceSchedules } from './compliance-schedules';
 // Messaging / Outbox
 export { outboxEvents } from './outbox-events';
 
+// Audit and security
+export { auditLogs } from './audit-logs';
+
 // Relations
 export * from './relations';

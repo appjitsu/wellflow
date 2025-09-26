@@ -39,10 +39,22 @@ import {
 import { RequestLoggingMiddleware } from './common/middleware/request-logging.middleware';
 import { CircuitBreakerService } from './common/resilience/circuit-breaker.service';
 import { RetryService } from './common/resilience/retry.service';
+import { AuditInterceptor } from './common/interceptors/audit.interceptor';
+import { AuditLogService } from './application/services/audit-log.service';
+import { AuditLogRepositoryImpl } from './infrastructure/repositories/audit-log.repository';
+import { AuditLogRepository } from './domain/repositories/audit-log.repository.interface';
 
 import { RegulatoryReportingModule } from './regulatory-reporting/regulatory-reporting.module';
 import { OperationsModule } from './operations/operations.module';
 import { FinancialModule } from './financial/financial.module';
+import { AuditController } from './presentation/controllers/audit.controller';
+import { HealthModule } from './health/health.module';
+import { VersioningModule } from './common/versioning/versioning.module';
+import { VersionInterceptor } from './common/versioning/version.interceptor';
+import { CacheModule } from './common/cache/cache.module';
+import { ValidationModule } from './common/validation/validation.module';
+import { RateLimitingModule } from './common/rate-limiting/rate-limiting.module';
+import { EnhancedRateLimitGuard } from './common/rate-limiting/enhanced-rate-limit.guard';
 @Module({
   imports: [
     NestConfigModule.forRoot({
@@ -76,22 +88,32 @@ import { FinancialModule } from './financial/financial.module';
     IncidentsModule,
     OperationsModule,
     FinancialModule,
+    HealthModule,
+    VersioningModule,
+    CacheModule,
+    ValidationModule,
+    RateLimitingModule,
   ],
-  controllers: [AppController, OperatorsController],
+  controllers: [AppController, OperatorsController, AuditController],
   providers: [
     AppService,
     // Resilience services for external API calls
     CircuitBreakerService,
     RetryService,
-    // Rate limiting guard - applied globally for security
+    // Audit logging services
+    AuditLogService,
+    {
+      provide: 'AuditLogRepository',
+      useClass: AuditLogRepositoryImpl,
+    },
+    // Enhanced rate limiting guard - applied globally for security
     {
       provide: APP_GUARD,
-      useClass: WellFlowThrottlerGuard,
+      useClass: EnhancedRateLimitGuard,
     },
     // JWT authentication guard - ensure JWT strategy configured in auth module
     {
       provide: APP_GUARD,
-
       useClass: JwtAuthGuard,
     },
     {
@@ -101,6 +123,14 @@ import { FinancialModule } from './financial/financial.module';
     {
       provide: APP_INTERCEPTOR,
       useClass: AuditLogInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AuditInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: VersionInterceptor,
     },
   ],
 })

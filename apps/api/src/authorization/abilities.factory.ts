@@ -28,6 +28,7 @@ type Subjects =
       | 'DrillingProgram'
       | 'Workover'
       | 'DailyDrillingReport'
+      | 'AuditLog'
       | 'MaintenanceSchedule'
       | 'OwnerPayment'
       | 'CashCall'
@@ -347,6 +348,9 @@ export class AbilitiesFactory {
     if (user.roles.includes('AUDITOR')) {
       can('audit', 'Well');
       can('read', 'Well');
+
+      // Audit log permissions - auditors need full access to logs
+      can('manage', 'AuditLog');
 
       // Cannot modify anything
       cannot('create', 'Well');

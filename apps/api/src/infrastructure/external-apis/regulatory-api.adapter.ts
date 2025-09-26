@@ -3,6 +3,7 @@ import { CircuitBreakerService } from '../../common/resilience/circuit-breaker.s
 import { RetryService } from '../../common/resilience/retry.service';
 import { RESILIENCE_CONFIG } from '../../common/resilience/resilience.config';
 import { ErrorFactory } from '../../common/errors/domain-errors';
+import { AuditLogService } from '../../application/services/audit-log.service';
 
 /**
  * Anti-Corruption Layer Interfaces
@@ -193,6 +194,7 @@ export class RegulatoryApiAdapter implements IRegulatoryApiAdapter {
     private readonly circuitBreakerService: CircuitBreakerService,
     @Inject(RetryService)
     private readonly retryService: RetryService,
+    private readonly auditLogService: AuditLogService,
   ) {
     // Register circuit breaker for regulatory API
     this.circuitBreakerService.registerCircuitBreaker(this.SERVICE_NAME, {
@@ -208,6 +210,8 @@ export class RegulatoryApiAdapter implements IRegulatoryApiAdapter {
   async submitReport(
     domainReport: RegulatoryReport,
   ): Promise<SubmissionResult> {
+    const startTime = Date.now();
+
     try {
       this.logger.log(
         `Submitting regulatory report ${domainReport.id} for well ${domainReport.wellId}`,
@@ -242,11 +246,56 @@ export class RegulatoryApiAdapter implements IRegulatoryApiAdapter {
         `submit-report-${domainReport.id}`,
       );
 
+      const duration = Date.now() - startTime;
+
+      // Audit logging for successful external API call
+      await this.auditLogService.logApiCall(
+        this.SERVICE_NAME,
+        'reports/submit',
+        'POST',
+        true,
+        undefined,
+        duration,
+        {
+          reportId: domainReport.id,
+          wellId: domainReport.wellId,
+          externalSubmissionId: result.submissionId,
+          businessContext: {
+            reportType: domainReport.reportType,
+            periodStart: domainReport.periodStart,
+            periodEnd: domainReport.periodEnd,
+          },
+        },
+      );
+
       this.logger.log(
         `Successfully submitted regulatory report ${domainReport.id}`,
       );
       return result;
     } catch (error) {
+      const duration = Date.now() - startTime;
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+
+      // Audit logging for failed external API call
+      await this.auditLogService.logApiCall(
+        this.SERVICE_NAME,
+        'reports/submit',
+        'POST',
+        false,
+        errorMessage,
+        duration,
+        {
+          reportId: domainReport.id,
+          wellId: domainReport.wellId,
+          businessContext: {
+            reportType: domainReport.reportType,
+            periodStart: domainReport.periodStart,
+            periodEnd: domainReport.periodEnd,
+          },
+        },
+      );
+
       if (
         error instanceof Error &&
         error.message.includes('Circuit breaker is')
