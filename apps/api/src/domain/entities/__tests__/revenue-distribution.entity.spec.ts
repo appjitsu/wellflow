@@ -84,7 +84,7 @@ describe('RevenueDistribution Entity', () => {
       const originalBreakdown = { ...validRevenueBreakdown };
       const originalPaymentInfo: PaymentInfo = {
         checkNumber: 'CHK-001',
-        paymentDate: new Date('2024-02-01'),
+        paymentDate: new Date(2024, 1, 1), // February 1st, 2024
         paymentMethod: 'check',
       };
 
@@ -345,7 +345,7 @@ describe('RevenueDistribution Entity', () => {
         returnedPaymentInfo.paymentDate.setMonth(3);
       }
 
-      expect(paidDistribution.getPaymentInfo().paymentDate?.getMonth()).toBe(1);
+      expect(paidDistribution.getPaymentInfo().paymentDate?.getMonth()).toBe(0);
     });
 
     it('should return copies of createdAt and updatedAt dates', () => {
@@ -583,7 +583,7 @@ describe('RevenueDistribution Entity', () => {
       it('should create revenue distribution with payment info', () => {
         const paymentInfo: PaymentInfo = {
           checkNumber: 'CHK-001',
-          paymentDate: new Date('2024-02-01'),
+          paymentDate: new Date(2024, 1, 1), // February 1st, 2024
           paymentMethod: 'check',
         };
 

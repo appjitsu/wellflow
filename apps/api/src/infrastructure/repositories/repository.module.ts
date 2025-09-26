@@ -56,6 +56,7 @@ import { RegulatoryOutboxService } from '../events/regulatory-outbox.service';
       useClass: AuditLogRepositoryImpl,
     },
     {
+      // eslint-disable-next-line no-secrets/no-secrets
       provide: 'RegulatoryEventPublisher',
       useClass: RegulatoryOutboxService,
     },
@@ -242,6 +243,7 @@ import { RegulatoryOutboxService } from '../events/regulatory-outbox.service';
     AuditLogService,
     RegulatoryDomainEventPublisher,
     'AuditLogRepository',
+    // eslint-disable-next-line no-secrets/no-secrets
     'RegulatoryEventPublisher',
     'OwnerPaymentRepository',
     'CashCallRepository',

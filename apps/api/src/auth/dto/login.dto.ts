@@ -4,8 +4,10 @@ import {
   MinLength,
   MaxLength,
   IsNotEmpty,
+  IsOptional,
+  IsBoolean,
 } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 /**
  * Login Request DTO
@@ -38,4 +40,13 @@ export class LoginDto {
   @MinLength(1, { message: 'Password is required' })
   @MaxLength(128, { message: 'Password cannot exceed 128 characters' })
   password!: string;
+
+  @ApiPropertyOptional({
+    description: 'Remember me option for extended session duration',
+    example: true,
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Remember me must be a boolean' })
+  rememberMe?: boolean;
 }

@@ -15,10 +15,15 @@ export class RedisCacheService implements ICache {
 
   constructor(
     @Inject('REDIS_CONNECTION')
-    private readonly redis: Redis,
+    private readonly redis: Redis | null,
   ) {}
 
   async get<T>(key: string): Promise<T | null> {
+    if (!this.redis) {
+      this.stats.misses++;
+      return null;
+    }
+
     try {
       const value = await this.redis.get(key);
 
@@ -47,6 +52,10 @@ export class RedisCacheService implements ICache {
     value: T,
     options: CacheOptions = {},
   ): Promise<void> {
+    if (!this.redis) {
+      return;
+    }
+
     try {
       const serializedValue = JSON.stringify(value);
       const ttl = options.ttl || 3600; // 1 hour default
@@ -66,6 +75,10 @@ export class RedisCacheService implements ICache {
   }
 
   async delete(key: string): Promise<boolean> {
+    if (!this.redis) {
+      return false;
+    }
+
     try {
       const result = await this.redis.del(key);
       const deleted = result > 0;
@@ -86,6 +99,10 @@ export class RedisCacheService implements ICache {
   }
 
   async clear(): Promise<void> {
+    if (!this.redis) {
+      return;
+    }
+
     try {
       // This is dangerous - only use in testing
       await this.redis.flushdb();
@@ -96,6 +113,10 @@ export class RedisCacheService implements ICache {
   }
 
   async has(key: string): Promise<boolean> {
+    if (!this.redis) {
+      return false;
+    }
+
     try {
       const exists = await this.redis.exists(key);
       return exists === 1;
@@ -106,6 +127,15 @@ export class RedisCacheService implements ICache {
   }
 
   async getStats(): Promise<CacheStats> {
+    if (!this.redis) {
+      return {
+        ...this.stats,
+        hitRate: 0,
+        totalSize: 0,
+        entryCount: 0,
+      };
+    }
+
     try {
       const info = await this.redis.info();
       const stats = await this.redis.info('stats');
@@ -137,6 +167,10 @@ export class RedisCacheService implements ICache {
   }
 
   async invalidateByTag(tag: string): Promise<number> {
+    if (!this.redis) {
+      return 0;
+    }
+
     try {
       // Find all keys with this tag
       const tagKeys = await this.redis.keys(`tag:*`);
@@ -168,6 +202,10 @@ export class RedisCacheService implements ICache {
   }
 
   async invalidateByPattern(pattern: string): Promise<number> {
+    if (!this.redis) {
+      return 0;
+    }
+
     try {
       const keys = await this.redis.keys(pattern);
       if (keys.length === 0) return 0;

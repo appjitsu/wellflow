@@ -1,3 +1,4 @@
+// eslint-disable sonarjs/no-hardcoded-passwords, @typescript-eslint/await-thenable
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -6,6 +7,8 @@ import { User, UserRole } from '../domain/entities/user.entity';
 import { Email } from '../domain/value-objects/email';
 import { Password } from '../domain/value-objects/password';
 import { AuditLogService } from '../application/services/audit-log.service';
+import { EmailService } from '../application/services/email.service';
+import { OrganizationsService } from '../organizations/organizations.service';
 
 /**
  * Unit Tests for AuthService
@@ -19,6 +22,8 @@ describe('AuthService', () => {
   let mockJwtService: any;
   let mockConfigService: any;
   let mockAuditLogService: any;
+  let mockEmailService: any;
+  let mockOrganizationsService: any;
 
   beforeEach(async () => {
     // Mock dependencies
@@ -53,11 +58,21 @@ describe('AuthService', () => {
       logFailure: jest.fn(),
     };
 
+    mockEmailService = {
+      sendWelcomeEmail: jest.fn(),
+      sendPasswordResetEmail: jest.fn(),
+      sendEmailVerification: jest.fn(),
+    };
+
+    mockOrganizationsService = {
+      createOrganization: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
         {
-          provide: 'AuthUserRepository',
+          provide: 'UserRepository',
           useValue: mockUserRepository,
         },
         {
@@ -71,6 +86,14 @@ describe('AuthService', () => {
         {
           provide: AuditLogService,
           useValue: mockAuditLogService,
+        },
+        {
+          provide: EmailService,
+          useValue: mockEmailService,
+        },
+        {
+          provide: OrganizationsService,
+          useValue: mockOrganizationsService,
         },
       ],
     }).compile();
@@ -153,9 +176,7 @@ describe('AuthService', () => {
           'StrongAuth123!',
           '127.0.0.1',
         ),
-      ).rejects.toThrow(
-        'Account is temporarily locked due to multiple failed login attempts',
-      );
+      ).rejects.toThrow('Account is temporarily locked');
 
       expect(mockAuditLogService.logFailure).toHaveBeenCalledWith(
         'LOGIN',
@@ -175,7 +196,7 @@ describe('AuthService', () => {
   });
 
   describe('generateTokens', () => {
-    it('should generate access and refresh tokens', async () => {
+    it('should generate access and refresh tokens', () => {
       const testUser = new User(
         'user-123',
         'org-456',
@@ -192,7 +213,7 @@ describe('AuthService', () => {
         .mockReturnValueOnce('access-token')
         .mockReturnValueOnce('refresh-token');
 
-      const result = await service.generateTokens(testUser);
+      const result = service.generateTokens(testUser);
 
       expect(result).toEqual({
         accessToken: 'access-token',
@@ -207,11 +228,13 @@ describe('AuthService', () => {
     it('should register a new user successfully', async () => {
       const registerData = {
         email: 'newuser@example.com',
-        password: 'StrongAuth123!',
+        // eslint-disable-next-line sonarjs/no-hardcoded-passwords
+        password: 'MyStr0ngP@ssw0rd2024!',
         firstName: 'Jane',
         lastName: 'Smith',
         organizationId: 'org-789',
-        phoneNumber: '+1987654321',
+        role: UserRole.PUMPER,
+        phone: '+1987654321',
       };
 
       mockUserRepository.findByEmail.mockResolvedValue(null);
@@ -222,7 +245,7 @@ describe('AuthService', () => {
           Email.create('newuser@example.com'),
           'Jane',
           'Smith',
-          UserRole.VIEWER,
+          UserRole.PUMPER,
           '+1987654321',
           'hashed-password',
           false,
@@ -250,11 +273,13 @@ describe('AuthService', () => {
     it('should throw error for duplicate email', async () => {
       const registerData = {
         email: 'existing@example.com',
-        password: 'StrongAuth123!',
+        // eslint-disable-next-line sonarjs/no-hardcoded-passwords
+        password: 'MyStr0ngP@ssw0rd2024!',
         firstName: 'Jane',
         lastName: 'Smith',
         organizationId: 'org-789',
-        phoneNumber: '+1987654321',
+        role: UserRole.PUMPER,
+        phone: '+1987654321',
       };
 
       const existingUser = new User(

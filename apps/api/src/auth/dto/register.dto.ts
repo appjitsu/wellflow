@@ -8,6 +8,8 @@ import {
   IsUUID,
   IsOptional,
   Matches,
+  ValidateIf,
+  IsBoolean,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRole } from '../../domain/entities/user.entity';
@@ -75,14 +77,67 @@ export class RegisterDto {
   @MaxLength(100, { message: 'Last name cannot exceed 100 characters' })
   lastName!: string;
 
-  @ApiProperty({
-    description: 'Organization ID (UUID)',
+  @ApiPropertyOptional({
+    description:
+      'Organization ID (UUID) - required if joining existing organization',
     example: '123e4567-e89b-12d3-a456-426614174000',
     format: 'uuid',
   })
+  @IsOptional()
+  @ValidateIf((o: RegisterDto) => !o.createOrganization)
   @IsUUID(4, { message: 'Organization ID must be a valid UUID' })
-  @IsNotEmpty({ message: 'Organization ID is required' })
-  organizationId!: string;
+  @IsNotEmpty({
+    message: 'Organization ID is required when not creating a new organization',
+  })
+  organizationId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Create new organization instead of joining existing one',
+    example: true,
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Create organization must be a boolean' })
+  createOrganization?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Organization name (required if creating new organization)',
+    example: 'Acme Oil & Gas Company',
+    minLength: 1,
+    maxLength: 255,
+  })
+  @IsOptional()
+  @ValidateIf((o: RegisterDto) => Boolean(o.createOrganization))
+  @IsString({ message: 'Organization name must be a string' })
+  @IsNotEmpty({
+    message: 'Organization name is required when creating a new organization',
+  })
+  @MaxLength(255, { message: 'Organization name cannot exceed 255 characters' })
+  organizationName?: string;
+
+  @ApiPropertyOptional({
+    description: 'Organization contact email (optional)',
+    example: 'contact@acmeoil.com',
+    format: 'email',
+  })
+  @IsOptional()
+  @IsEmail({}, { message: 'Organization contact email must be valid' })
+  @MaxLength(255, {
+    message: 'Organization contact email cannot exceed 255 characters',
+  })
+  organizationContactEmail?: string;
+
+  @ApiPropertyOptional({
+    description: 'Organization contact phone (optional)',
+    example: '+1-555-987-6543',
+    maxLength: 20,
+  })
+  @IsOptional()
+  @IsString({ message: 'Organization contact phone must be a string' })
+  @MaxLength(20, {
+    message: 'Organization contact phone cannot exceed 20 characters',
+  })
+  organizationContactPhone?: string;
 
   @ApiProperty({
     description: 'User role in the organization',

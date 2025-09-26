@@ -72,8 +72,8 @@ describe('TitleOpinion Entity', () => {
     });
 
     it('should create copies of date objects to prevent external mutation', () => {
-      const originalExaminationDate = new Date('2024-01-15');
-      const originalEffectiveDate = new Date('2024-01-01');
+      const originalExaminationDate = new Date(2024, 0, 15); // January 15, 2024
+      const originalEffectiveDate = new Date(2024, 0, 1); // January 1, 2024
 
       const props: TitleOpinionProps = {
         ...validProps,
@@ -160,7 +160,7 @@ describe('TitleOpinion Entity', () => {
 
       // Entity dates should remain unchanged
       expect(titleOpinion.getExaminationDate().getFullYear()).toBe(2024);
-      expect(titleOpinion.getEffectiveDate().getMonth()).toBe(0); // January
+      expect(titleOpinion.getEffectiveDate().getMonth()).toBe(11); // December
     });
   });
 

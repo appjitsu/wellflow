@@ -20,6 +20,7 @@ export interface RequiredRule {
     | 'JointOperatingAgreement'
     | 'JibStatement'
     | 'AuditLog'
+    | 'Vendor'
     | 'all';
 }
 
@@ -200,3 +201,25 @@ export const CanExportWorkovers = () =>
 
 export const CanAuditWorkovers = () =>
   CheckAbilities({ action: 'audit', subject: 'Workover' });
+
+// Vendor permissions
+export const CanCreateVendor = () =>
+  CheckAbilities({ action: 'create', subject: 'Vendor' });
+
+export const CanReadVendor = () =>
+  CheckAbilities({ action: 'read', subject: 'Vendor' });
+
+export const CanUpdateVendor = () =>
+  CheckAbilities({ action: 'update', subject: 'Vendor' });
+
+export const CanDeleteVendor = () =>
+  CheckAbilities({ action: 'delete', subject: 'Vendor' });
+
+export const CanUpdateVendorStatus = () =>
+  CheckAbilities({ action: 'updateStatus', subject: 'Vendor' });
+
+export const CanExportVendors = () =>
+  CheckAbilities({ action: 'export', subject: 'Vendor' });
+
+export const CanAuditVendors = () =>
+  CheckAbilities({ action: 'audit', subject: 'Vendor' });

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return */
 import {
   Controller,
   Get,
@@ -13,7 +14,14 @@ import {
   ValidationPipe,
   Logger,
 } from '@nestjs/common';
+import { CurrentUser } from '../decorators/current-user.decorator';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import {
+  CanCreateVendor,
+  CanReadVendor,
+  CanUpdateVendor,
+  CanUpdateVendorStatus,
+} from '../../authorization/abilities.decorator';
 import {
   ApiTags,
   ApiOperation,
@@ -152,6 +160,8 @@ class UpdateVendorInsuranceDto {
 @Controller('vendors')
 export class VendorsController {
   private readonly logger = new Logger(VendorsController.name);
+  private readonly TEST_ORG_ID = 'test-org-id';
+  private readonly TEST_USER_ID = 'test-user-id';
 
   constructor(
     private readonly commandBus: CommandBus,
@@ -164,11 +174,15 @@ export class VendorsController {
   @ApiResponse({ status: 201, description: 'Vendor created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 409, description: 'Vendor code already exists' })
-  async createVendor(@Body(ValidationPipe) createVendorDto: CreateVendorDto) {
+  @CanCreateVendor()
+  async createVendor(
+    @Body(ValidationPipe) createVendorDto: CreateVendorDto,
+    @CurrentUser() user?: any,
+  ) {
     this.logger.log(`Creating vendor: ${createVendorDto.vendorName}`);
 
     const command = new CreateVendorCommand(
-      'test-org-id', // TODO: Get from authenticated user context
+      user?.getOrganizationId() || this.TEST_ORG_ID,
       createVendorDto.vendorName,
       createVendorDto.vendorCode,
       createVendorDto.vendorType,
@@ -178,7 +192,7 @@ export class VendorsController {
       createVendorDto.serviceAddress,
       createVendorDto.website,
       createVendorDto.notes,
-      'test-user-id', // TODO: Get from authenticated user context
+      user?.getId() || this.TEST_USER_ID,
     );
 
     const vendorId = await this.commandBus.execute(command);
@@ -200,7 +214,9 @@ export class VendorsController {
   @ApiQuery({ name: 'status', required: false, enum: VendorStatus })
   @ApiQuery({ name: 'vendorType', required: false, enum: VendorType })
   @ApiQuery({ name: 'searchTerm', required: false, type: String })
+  @CanReadVendor()
   async getVendors(
+    @CurrentUser() user?: any,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('status') status?: VendorStatus,
@@ -210,7 +226,7 @@ export class VendorsController {
     this.logger.log('Getting vendors list');
 
     const query = new GetVendorsByOrganizationQuery(
-      'test-org-id', // TODO: Get from authenticated user context
+      user?.getOrganizationId() || this.TEST_ORG_ID,
       {
         status: status ? [status] : undefined,
         vendorType: vendorType ? [vendorType] : undefined,
@@ -222,6 +238,48 @@ export class VendorsController {
       },
     );
 
+    return await this.queryBus.execute(query);
+  }
+
+  @Get('statistics')
+  @ApiOperation({ summary: 'Get vendor statistics' })
+  @ApiResponse({
+    status: 200,
+    description: 'Vendor statistics retrieved successfully',
+  })
+  @CanReadVendor()
+  async getVendorStatistics(@CurrentUser() user?: any) {
+    this.logger.log('Getting vendor statistics');
+
+    const organizationId = user?.getOrganizationId?.() || 'test-org-id';
+    const query = new GetVendorStatisticsQuery(organizationId);
+    return await this.queryBus.execute(query);
+  }
+
+  @Get('expiring-qualifications')
+  @ApiOperation({ summary: 'Get vendors with expiring qualifications' })
+  @ApiResponse({
+    status: 200,
+    description: 'Vendors with expiring qualifications retrieved successfully',
+  })
+  @ApiQuery({
+    name: 'days',
+    required: false,
+    type: Number,
+    description: 'Number of days to look ahead (default: 30)',
+  })
+  @CanReadVendor()
+  async getVendorsWithExpiringQualifications(
+    @Query('days') days?: string,
+    @CurrentUser() user?: any,
+  ) {
+    this.logger.log('Getting vendors with expiring qualifications');
+
+    const organizationId = user?.getOrganizationId?.() || 'test-org-id';
+    const query = new GetVendorsWithExpiringQualificationsQuery(
+      organizationId,
+      days ? parseInt(days) : 30,
+    );
     return await this.queryBus.execute(query);
   }
 
@@ -246,9 +304,11 @@ export class VendorsController {
   })
   @ApiResponse({ status: 400, description: 'Invalid status or input data' })
   @ApiResponse({ status: 404, description: 'Vendor not found' })
+  @CanUpdateVendorStatus()
   async updateVendorStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body(ValidationPipe) updateStatusDto: UpdateVendorStatusDto,
+    @CurrentUser() user?: any,
   ) {
     this.logger.log(
       `Updating vendor status: ${id} to ${updateStatusDto.status}`,
@@ -258,46 +318,10 @@ export class VendorsController {
       id,
       updateStatusDto.status,
       updateStatusDto.reason,
-      'test-user-id', // TODO: Get from authenticated user context
+      user?.getId() || this.TEST_USER_ID,
     );
 
     await this.commandBus.execute(command);
-  }
-
-  @Get('statistics')
-  @ApiOperation({ summary: 'Get vendor statistics' })
-  @ApiResponse({
-    status: 200,
-    description: 'Vendor statistics retrieved successfully',
-  })
-  async getVendorStatistics() {
-    this.logger.log('Getting vendor statistics');
-
-    const query = new GetVendorStatisticsQuery('test-org-id'); // TODO: Get from authenticated user context
-    return await this.queryBus.execute(query);
-  }
-
-  @Get('expiring-qualifications')
-  @ApiOperation({ summary: 'Get vendors with expiring qualifications' })
-  @ApiResponse({
-    status: 200,
-    description: 'Vendors with expiring qualifications retrieved successfully',
-  })
-  @ApiQuery({
-    name: 'days',
-    required: false,
-    type: Number,
-    description: 'Number of days to look ahead (default: 30)',
-  })
-  async getVendorsWithExpiringQualifications(@Query('days') days?: string) {
-    this.logger.log('Getting vendors with expiring qualifications');
-
-    const query = new GetVendorsWithExpiringQualificationsQuery(
-      'test-org-id', // TODO: Get from authenticated user context
-      parseInt(days || '30'),
-    );
-
-    return await this.queryBus.execute(query);
   }
 
   @Put(':id/insurance')
@@ -309,9 +333,11 @@ export class VendorsController {
   })
   @ApiResponse({ status: 400, description: 'Invalid insurance data' })
   @ApiResponse({ status: 404, description: 'Vendor not found' })
+  @CanUpdateVendor()
   async updateVendorInsurance(
     @Param('id', ParseUUIDPipe) id: string,
     @Body(ValidationPipe) insuranceDto: UpdateVendorInsuranceDto,
+    @CurrentUser() user?: any,
   ) {
     this.logger.log(`Updating vendor insurance: ${id}`);
 
@@ -368,7 +394,7 @@ export class VendorsController {
     const command = new UpdateVendorInsuranceCommand(
       id,
       insuranceData,
-      'test-user-id', // TODO: Get from authenticated user context
+      user?.getId() || this.TEST_USER_ID,
     );
 
     await this.commandBus.execute(command);

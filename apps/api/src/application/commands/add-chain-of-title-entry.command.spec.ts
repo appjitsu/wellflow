@@ -3,6 +3,7 @@ import {
   RecordingInfo,
 } from './add-chain-of-title-entry.command';
 
+// eslint-disable-next-line no-secrets/no-secrets
 describe('AddChainOfTitleEntryCommand', () => {
   const validOrganizationId = 'org-123';
   const validLeaseId = 'lease-456';

@@ -71,10 +71,8 @@ export class DivisionOrder {
     this.wellId = wellId;
     this.partnerId = partnerId;
     this.decimalInterest = decimalInterest;
-    this.effectiveDate = new Date(effectiveDate.getTime());
-    this.endDate = options?.endDate
-      ? new Date(options.endDate.getTime())
-      : undefined;
+    this.effectiveDate = new Date(effectiveDate);
+    this.endDate = options?.endDate ? new Date(options.endDate) : undefined;
     this.isActive = options?.isActive ?? true;
     this.createdAt = new Date();
     this.updatedAt = new Date();
@@ -115,11 +113,11 @@ export class DivisionOrder {
   }
 
   getEffectiveDate(): Date {
-    return new Date(this.effectiveDate.getTime());
+    return new Date(this.effectiveDate);
   }
 
   getEndDate(): Date | undefined {
-    return this.endDate ? new Date(this.endDate.getTime()) : undefined;
+    return this.endDate ? new Date(this.endDate) : undefined;
   }
 
   getIsActive(): boolean {

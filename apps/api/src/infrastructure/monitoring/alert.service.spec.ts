@@ -67,6 +67,18 @@ describe('AlertService', () => {
     });
 
     it('should send notifications when alert is created', async () => {
+      // Add a test webhook channel
+      service.addNotificationChannel({
+        id: 'test-webhook',
+        type: 'WEBHOOK',
+        name: 'Test Webhook',
+        config: {
+          url: 'https://test.example.com/webhook',
+          notifyOnResolution: true,
+        },
+        enabled: true,
+      });
+
       const alertData = {
         type: 'ERROR' as const,
         severity: 'CRITICAL' as const,
@@ -295,27 +307,55 @@ describe('AlertService', () => {
 
   describe('default rules', () => {
     it('should initialize with default alert rules', async () => {
+      // Create a fresh service instance to ensure default rules are initialized
+      const freshModule: TestingModule = await Test.createTestingModule({
+        providers: [
+          AlertService,
+          {
+            provide: ConfigService,
+            useValue: mockConfigService,
+          },
+        ],
+      }).compile();
+
+      const freshService = freshModule.get<AlertService>(AlertService);
+
       // We can't directly access private alertRules, but we can test by triggering them
       const metrics = { executionTime: 6000 }; // Above critical threshold
 
       // This should trigger the slow-query-critical rule
-      await service.evaluateRules(metrics);
+      await freshService.evaluateRules(metrics);
 
-      const activeAlerts = service.getActiveAlerts();
+      const activeAlerts = freshService.getActiveAlerts();
       expect(
-        activeAlerts.some((alert) => alert.title === 'Critical Slow Query'),
+        activeAlerts.some(
+          (alert) => alert.title === 'Critical Slow Query Detected',
+        ),
       ).toBe(true);
     });
   });
 
   describe('default channels', () => {
     it('should initialize with default notification channels', async () => {
+      // Create a fresh service instance to ensure default channels are initialized
+      const freshModule: TestingModule = await Test.createTestingModule({
+        providers: [
+          AlertService,
+          {
+            provide: ConfigService,
+            useValue: mockConfigService,
+          },
+        ],
+      }).compile();
+
+      const freshService = freshModule.get<AlertService>(AlertService);
+
       // Test that Slack channel is configured when webhook URL is provided
       const metrics = { executionTime: 6000 };
-      await service.evaluateRules(metrics);
+      await freshService.evaluateRules(metrics);
 
       // Should have created alerts (testing indirectly that channels exist)
-      const activeAlerts = service.getActiveAlerts();
+      const activeAlerts = freshService.getActiveAlerts();
       expect(activeAlerts.length).toBeGreaterThan(0);
     });
   });

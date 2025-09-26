@@ -18,7 +18,7 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { AbilitiesGuard } from '../../authorization/abilities.guard';
 import { CheckAbilities } from '../../authorization/abilities.decorator';
 import { Action } from '../../authorization/action.enum';
-import type { AuditLogRepository } from '../../domain/repositories/audit-log.repository.interface';
+import { AuditLogRepository } from '../../domain/repositories/audit-log.repository.interface';
 import {
   AuditAction,
   AuditResourceType,

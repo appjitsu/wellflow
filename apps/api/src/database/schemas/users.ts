@@ -54,6 +54,7 @@ export const users = pgTable(
     // Account lockout protection (Sprint 3 requirement: 5 failed attempts)
     failedLoginAttempts: integer('failed_login_attempts').default(0).notNull(),
     lockedUntil: timestamp('locked_until'),
+    lockoutCount: integer('lockout_count').default(0).notNull(), // Track progressive lockouts
 
     // Password reset functionality
     passwordResetToken: varchar('password_reset_token', { length: 255 }),

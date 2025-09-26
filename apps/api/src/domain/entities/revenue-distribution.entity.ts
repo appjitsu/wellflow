@@ -164,7 +164,18 @@ export class RevenueDistribution {
   }
 
   getRevenueBreakdown(): RevenueBreakdown {
-    return { ...this.revenueBreakdown };
+    return {
+      ...this.revenueBreakdown,
+      oilRevenue: this.revenueBreakdown.oilRevenue,
+      gasRevenue: this.revenueBreakdown.gasRevenue,
+      totalRevenue: this.revenueBreakdown.totalRevenue,
+      severanceTax: this.revenueBreakdown.severanceTax,
+      adValorem: this.revenueBreakdown.adValorem,
+      transportationCosts: this.revenueBreakdown.transportationCosts,
+      processingCosts: this.revenueBreakdown.processingCosts,
+      otherDeductions: this.revenueBreakdown.otherDeductions,
+      netRevenue: this.revenueBreakdown.netRevenue,
+    };
   }
 
   getPaymentInfo(): PaymentInfo {

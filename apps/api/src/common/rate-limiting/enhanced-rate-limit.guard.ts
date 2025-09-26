@@ -5,6 +5,7 @@ import {
   HttpException,
   HttpStatus,
   Logger,
+  Inject,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import {
@@ -12,7 +13,16 @@ import {
   UserTier,
   RateLimitResult,
 } from './enhanced-rate-limiter.service';
-import { MetricsService } from '../../monitoring/metrics.service';
+
+// Interface for metrics service
+interface IMetricsService {
+  recordApiRequest(
+    endpoint: string,
+    method: string,
+    responseTime: number,
+    statusCode: number,
+  ): void;
+}
 
 interface ExtendedRequest extends Request {
   user?: {
@@ -31,7 +41,7 @@ export class EnhancedRateLimitGuard implements CanActivate {
 
   constructor(
     private readonly rateLimiter: EnhancedRateLimiterService,
-    private readonly metricsService: MetricsService,
+    @Inject('MetricsService') private readonly metricsService: IMetricsService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

@@ -1,3 +1,4 @@
+// eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
 import {
   Injectable,
   Inject,
@@ -7,6 +8,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { User, UserRole } from '../domain/entities/user.entity';
+import { AuthToken } from '../domain/value-objects/auth-token';
 
 import { JwtPayload, AuthenticatedUser } from './strategies/jwt.strategy';
 import { AuditLogService } from '../application/services/audit-log.service';
@@ -14,6 +16,14 @@ import {
   AuditAction,
   AuditResourceType,
 } from '../domain/entities/audit-log.entity';
+import { EmailService } from '../application/services/email.service';
+import {
+  OrganizationsService,
+  CreateOrganizationDto,
+} from '../organizations/organizations.service';
+
+// Constants
+const USER_NOT_FOUND_MESSAGE = 'User not found';
 
 /**
  * User Repository Interface
@@ -34,9 +44,14 @@ export interface RegisterUserDto {
   password: string;
   firstName: string;
   lastName: string;
-  organizationId: string;
+  organizationId?: string;
   role: UserRole;
   phone?: string;
+  // Organization creation fields
+  createOrganization?: boolean;
+  organizationName?: string;
+  organizationContactEmail?: string;
+  organizationContactPhone?: string;
 }
 
 /**
@@ -71,11 +86,13 @@ export interface LoginResponse {
 @Injectable()
 export class AuthService {
   constructor(
-    @Inject('AuthUserRepository')
+    @Inject('UserRepository')
     private readonly userRepository: AuthUserRepository,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly auditLogService: AuditLogService,
+    private readonly emailService: EmailService,
+    private readonly organizationsService: OrganizationsService,
   ) {}
 
   /**
@@ -90,9 +107,48 @@ export class AuthService {
       throw new ConflictException('User with this email already exists');
     }
 
+    let organizationId = registerData.organizationId;
+
+    // Create organization if requested
+    if (registerData.createOrganization) {
+      if (!registerData.organizationName) {
+        throw new ConflictException(
+          'Organization name is required when creating a new organization',
+        );
+      }
+
+      const organizationDto: CreateOrganizationDto = {
+        name: registerData.organizationName,
+        contactEmail: registerData.organizationContactEmail,
+        contactPhone: registerData.organizationContactPhone,
+      };
+
+      const newOrganization =
+        await this.organizationsService.createOrganization(organizationDto);
+      organizationId = newOrganization.id;
+
+      // Log organization creation
+      await this.auditLogService.logSuccess(
+        AuditAction.CREATE,
+        AuditResourceType.ORGANIZATION,
+        newOrganization.id,
+        {
+          newValues: {
+            name: newOrganization.name,
+            contactEmail: newOrganization.email,
+            contactPhone: newOrganization.phone,
+          },
+        },
+      );
+    }
+
+    if (!organizationId) {
+      throw new ConflictException('Organization ID is required');
+    }
+
     // Create new user using domain entity
     const user = await User.create(
-      registerData.organizationId,
+      organizationId,
       registerData.email,
       registerData.firstName,
       registerData.lastName,
@@ -103,6 +159,16 @@ export class AuthService {
 
     // Save user
     const savedUser = await this.userRepository.save(user);
+
+    // Send email verification
+    await this.emailService.sendEmailVerification(
+      savedUser.getId(),
+      savedUser.getOrganizationId(),
+      savedUser.getEmail().getValue(),
+      savedUser.getFirstName(),
+      savedUser.getLastName(),
+      savedUser.getEmailVerificationToken() || '',
+    );
 
     // Log registration event
     await this.auditLogService.logSuccess(
@@ -139,7 +205,7 @@ export class AuthService {
         AuditAction.LOGIN,
         AuditResourceType.USER,
         'unknown',
-        'User not found',
+        USER_NOT_FOUND_MESSAGE,
         {},
         {
           businessContext: { email },
@@ -150,8 +216,13 @@ export class AuthService {
       return null;
     }
 
-    // Check if account is locked
+    // Check if account is locked (this will auto-unlock if expired)
     if (user.isAccountLocked()) {
+      const lockoutDuration = user.getLockedUntil();
+      const lockoutMessage = lockoutDuration
+        ? `Account is temporarily locked until ${lockoutDuration.toISOString()}. This is lockout #${user.getLockoutCount()}.`
+        : 'Account is temporarily locked due to multiple failed login attempts';
+
       await this.auditLogService.logFailure(
         AuditAction.LOGIN,
         AuditResourceType.USER,
@@ -162,14 +233,14 @@ export class AuthService {
           businessContext: {
             email,
             failedAttempts: user.getFailedLoginAttempts(),
+            lockoutCount: user.getLockoutCount(),
+            lockedUntil: lockoutDuration,
           },
           ipAddress,
           userAgent,
         },
       );
-      throw new UnauthorizedException(
-        'Account is temporarily locked due to multiple failed login attempts',
-      );
+      throw new UnauthorizedException(lockoutMessage);
     }
 
     // Validate password
@@ -229,7 +300,10 @@ export class AuthService {
   /**
    * Generate JWT tokens for authenticated user
    */
-  generateTokens(user: User): { accessToken: string; refreshToken: string } {
+  generateTokens(
+    user: User,
+    rememberMe: boolean = false,
+  ): { accessToken: string; refreshToken: string } {
     const payload: JwtPayload = {
       sub: user.getId(),
       email: user.getEmail().getValue(),
@@ -241,9 +315,13 @@ export class AuthService {
       expiresIn: this.configService.get<string>('JWT_EXPIRES_IN', '15m'),
     });
 
-    // Generate refresh token (longer expiry)
+    // Generate refresh token with extended expiry for remember me
+    const refreshTokenExpiry = rememberMe
+      ? this.configService.get<string>('JWT_REMEMBER_ME_EXPIRES_IN', '30d')
+      : this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d');
+
     const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d'),
+      expiresIn: refreshTokenExpiry,
     });
 
     return { accessToken, refreshToken };
@@ -252,14 +330,17 @@ export class AuthService {
   /**
    * Login user and return tokens
    */
-  async login(user: AuthenticatedUser): Promise<LoginResponse> {
+  async login(
+    user: AuthenticatedUser,
+    rememberMe: boolean = false,
+  ): Promise<LoginResponse> {
     // Get full user entity for token generation
     const fullUser = await this.userRepository.findById(user.id);
     if (!fullUser) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException(USER_NOT_FOUND_MESSAGE);
     }
 
-    const tokens = this.generateTokens(fullUser);
+    const tokens = this.generateTokens(fullUser, rememberMe);
     const expiresIn = this.parseExpirationTime(
       this.configService.get<string>('JWT_EXPIRES_IN', '15m'),
     );
@@ -287,11 +368,20 @@ export class AuthService {
   async verifyEmail(userId: string, token: string): Promise<void> {
     const user = await this.userRepository.findById(userId);
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException(USER_NOT_FOUND_MESSAGE);
     }
 
     user.verifyEmail(token);
     await this.userRepository.save(user);
+
+    // Send welcome email after successful verification
+    await this.emailService.sendWelcomeEmail(
+      user.getId(),
+      user.getOrganizationId(),
+      user.getEmail().getValue(),
+      user.getFirstName(),
+      user.getLastName(),
+    );
 
     await this.auditLogService.logSuccess(
       AuditAction.UPDATE,
@@ -301,6 +391,52 @@ export class AuthService {
       {
         businessContext: {
           action: 'email_verified',
+          email: user.getEmail().getValue(),
+        },
+      },
+    );
+  }
+
+  /**
+   * Resend email verification token
+   */
+  async resendVerificationEmail(userId: string): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException(USER_NOT_FOUND_MESSAGE);
+    }
+
+    if (user.isEmailVerified()) {
+      throw new ConflictException('Email is already verified');
+    }
+
+    // Generate new verification token
+    const verificationToken = AuthToken.createEmailVerificationToken();
+    user.updateEmailVerificationToken(
+      verificationToken.getValue(),
+      verificationToken.getExpiresAt(),
+    );
+
+    await this.userRepository.save(user);
+
+    // Send verification email
+    await this.emailService.resendEmailVerification(
+      user.getId(),
+      user.getOrganizationId(),
+      user.getEmail().getValue(),
+      user.getFirstName(),
+      user.getLastName(),
+      user.getEmailVerificationToken() || '',
+    );
+
+    await this.auditLogService.logSuccess(
+      AuditAction.UPDATE,
+      AuditResourceType.USER,
+      user.getId(),
+      {},
+      {
+        businessContext: {
+          action: 'email_verification_resent',
           email: user.getEmail().getValue(),
         },
       },
@@ -331,6 +467,88 @@ export class AuthService {
         return value * 60 * 60 * 24;
       default:
         return 900;
+    }
+  }
+
+  /**
+   * Unlock user account (Admin only)
+   * Manually unlock a locked user account
+   */
+  async unlockUserAccount(userId: string): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException(USER_NOT_FOUND_MESSAGE);
+    }
+
+    if (!user.isAccountLocked()) {
+      return; // Account is not locked, nothing to do
+    }
+
+    user.unlockAccount();
+    await this.userRepository.save(user);
+
+    await this.auditLogService.logSuccess(
+      AuditAction.UPDATE,
+      AuditResourceType.USER,
+      user.getId(),
+      {},
+      {
+        businessContext: {
+          action: 'account_unlocked_manually',
+          email: user.getEmail().getValue(),
+          previousFailedAttempts: user.getFailedLoginAttempts(),
+        },
+      },
+    );
+  }
+
+  /**
+   * Refresh access token using refresh token
+   */
+  async refreshToken(
+    refreshToken: string,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    try {
+      // Verify the refresh token
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const payload = this.jwtService.verify(refreshToken);
+
+      // Get user to ensure they still exist and are active
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+      const user = await this.userRepository.findById(payload.sub);
+      if (!user || !user.isAccountActive()) {
+        throw new UnauthorizedException('User not found or inactive');
+      }
+
+      // Generate new tokens (refresh token rotation for security)
+      const tokens = this.generateTokens(user, true); // Assume remember me for refresh
+
+      await this.auditLogService.logSuccess(
+        AuditAction.LOGIN,
+        AuditResourceType.USER,
+        user.getId(),
+        {},
+        {
+          businessContext: {
+            action: 'token_refreshed',
+            email: user.getEmail().getValue(),
+          },
+        },
+      );
+
+      return tokens;
+    } catch {
+      await this.auditLogService.logFailure(
+        AuditAction.LOGIN,
+        AuditResourceType.USER,
+        'unknown',
+        'Invalid refresh token',
+        {},
+        {
+          businessContext: { action: 'token_refresh_failed' },
+        },
+      );
+      throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }
 }

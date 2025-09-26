@@ -154,6 +154,21 @@ export interface SystemNotificationJobData extends BaseJobData {
   templateData?: Record<string, unknown>;
 }
 
+export interface UserAuthEmailJobData extends BaseJobData {
+  emailType: 'email_verification' | 'welcome' | 'password_reset';
+  recipientEmail: string;
+  recipientName: string;
+  templateData: {
+    firstName: string;
+    lastName: string;
+    verificationToken?: string;
+    verificationUrl?: string;
+    resetToken?: string;
+    resetUrl?: string;
+    organizationName?: string;
+  };
+}
+
 // Union types for job data
 export type DataValidationJobData =
   | ProductionDataValidationJobData
@@ -169,7 +184,8 @@ export type ReportGenerationJobData =
 export type EmailNotificationJobData =
   | ComplianceReminderJobData
   | ProductionAlertJobData
-  | SystemNotificationJobData;
+  | SystemNotificationJobData
+  | UserAuthEmailJobData;
 
 export type AllJobData =
   | DataValidationJobData

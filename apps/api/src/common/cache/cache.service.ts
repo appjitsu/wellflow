@@ -233,7 +233,7 @@ export class CacheService implements ICache {
    */
   async increment(key: string, amount: number = 1): Promise<number | null> {
     // Redis supports atomic increment
-    if (this.redisCache) {
+    if (this.redisCache && this.redisCache['redis']) {
       try {
         const result = await this.redisCache['redis'].incrby(key, amount);
         // Update memory cache
@@ -268,7 +268,7 @@ export class CacheService implements ICache {
 
     if (value !== null) {
       // Extend TTL in Redis
-      if (this.redisCache) {
+      if (this.redisCache && this.redisCache['redis']) {
         try {
           await this.redisCache['redis'].expire(key, ttlSeconds);
         } catch (error) {

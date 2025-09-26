@@ -50,6 +50,7 @@ type Subjects =
       | 'CashCall'
       | 'JointOperatingAgreement'
       | 'JibStatement'
+      | 'Vendor'
     >
   | 'all';
 
@@ -177,6 +178,9 @@ export class AbilitiesFactory {
 
       // Operational entity permissions
       can('create', 'DrillingProgram');
+
+      // Vendor permissions - operators cannot manage vendors
+      cannot('manage', 'Vendor');
       can('read', 'DrillingProgram');
       can('update', 'DrillingProgram');
       can('export', 'DrillingProgram');

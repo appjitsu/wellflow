@@ -1,3 +1,5 @@
+// eslint-disable sonarjs/no-hardcoded-passwords
+// eslint-disable sonarjs/no-hardcoded-passwords
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -8,6 +10,8 @@ import { User, UserRole } from '../domain/entities/user.entity';
 import { Email } from '../domain/value-objects/email';
 import { Password } from '../domain/value-objects/password';
 import { AuditLogService } from '../application/services/audit-log.service';
+import { EmailService } from '../application/services/email.service';
+import { OrganizationsService } from '../organizations/organizations.service';
 
 /**
  * Integration Test for Authentication System
@@ -34,6 +38,16 @@ describe('Authentication System Integration', () => {
     logFailure: jest.fn(),
   };
 
+  const mockEmailService = {
+    sendWelcomeEmail: jest.fn(),
+    sendPasswordResetEmail: jest.fn(),
+    sendEmailVerification: jest.fn(),
+  };
+
+  const mockOrganizationsService = {
+    createOrganization: jest.fn(),
+  };
+
   const mockConfigService = {
     get: jest.fn((key: string) => {
       switch (key) {
@@ -43,6 +57,8 @@ describe('Authentication System Integration', () => {
           return '1h';
         case 'JWT_REFRESH_EXPIRES_IN':
           return '7d';
+        case 'JWT_REMEMBER_ME_EXPIRES_IN':
+          return '30d';
         default:
           return undefined;
       }
@@ -63,12 +79,20 @@ describe('Authentication System Integration', () => {
           }),
         },
         {
-          provide: 'AuthUserRepository',
+          provide: 'UserRepository',
           useValue: mockUserRepository,
         },
         {
           provide: AuditLogService,
           useValue: mockAuditLogService,
+        },
+        {
+          provide: EmailService,
+          useValue: mockEmailService,
+        },
+        {
+          provide: OrganizationsService,
+          useValue: mockOrganizationsService,
         },
         {
           provide: ConfigService,
@@ -226,6 +250,170 @@ describe('Authentication System Integration', () => {
       // Account should be locked after 5 attempts
       expect(testUser.isAccountLocked()).toBe(true);
       expect(testUser.getFailedLoginAttempts()).toBe(5);
+      expect(testUser.getLockoutCount()).toBe(1);
+    });
+
+    it('should implement progressive lockout duration', () => {
+      const testUser = new User(
+        'user-123',
+        'org-456',
+        Email.create('test@example.com'),
+        'John',
+        'Doe',
+        UserRole.MANAGER,
+      );
+
+      // First lockout - 30 minutes
+      for (let i = 0; i < 5; i++) {
+        testUser.recordFailedLoginAttempt('127.0.0.1', 'test-agent');
+      }
+      expect(testUser.getLockoutCount()).toBe(1);
+      const firstLockout = testUser.getLockedUntil();
+
+      // Reset for second lockout
+      testUser.unlockAccount();
+      for (let i = 0; i < 5; i++) {
+        testUser.recordFailedLoginAttempt('127.0.0.1', 'test-agent');
+      }
+      expect(testUser.getLockoutCount()).toBe(2);
+      const secondLockout = testUser.getLockedUntil();
+
+      // Second lockout should be longer than first
+      expect(secondLockout!.getTime() - Date.now()).toBeGreaterThan(
+        firstLockout!.getTime() - Date.now(),
+      );
+    });
+
+    it('should allow manual account unlock', () => {
+      const testUser = new User(
+        'user-123',
+        'org-456',
+        Email.create('test@example.com'),
+        'John',
+        'Doe',
+        UserRole.MANAGER,
+      );
+
+      // Lock the account
+      for (let i = 0; i < 5; i++) {
+        testUser.recordFailedLoginAttempt('127.0.0.1', 'test-agent');
+      }
+      expect(testUser.isAccountLocked()).toBe(true);
+
+      // Manually unlock
+      testUser.unlockAccount();
+      expect(testUser.isAccountLocked()).toBe(false);
+      expect(testUser.getFailedLoginAttempts()).toBe(0);
+    });
+  });
+
+  describe('Remember Me Functionality', () => {
+    it('should generate longer-lived tokens for remember me', async () => {
+      const mockUser = {
+        id: 'user-123',
+        email: 'test@example.com',
+        firstName: 'John',
+        lastName: 'Doe',
+        role: UserRole.MANAGER,
+        organizationId: 'org-456',
+        isEmailVerified: true,
+        lastLoginAt: new Date(),
+      };
+
+      // Test without remember me
+      const normalTokens = await authService.login(mockUser, false);
+      expect(normalTokens.accessToken).toBeDefined();
+      expect(normalTokens.refreshToken).toBeDefined();
+
+      // Test with remember me
+      const rememberMeTokens = await authService.login(mockUser, true);
+      expect(rememberMeTokens.accessToken).toBeDefined();
+      expect(rememberMeTokens.refreshToken).toBeDefined();
+
+      // Both should have tokens but remember me should have longer expiry
+      // (This would require decoding JWT to verify expiry times in a real test)
+    });
+  });
+
+  describe('Organization Creation During Registration', () => {
+    it('should create organization during user registration', async () => {
+      // Mock repository to return null for new user
+      mockUserRepository.findByEmail.mockResolvedValue(null);
+      mockUserRepository.save.mockImplementation((user) =>
+        Promise.resolve(user),
+      );
+      // Mock findById to return the created user for email verification
+      mockUserRepository.findById.mockResolvedValue(null); // Will be set after user creation
+      mockOrganizationsService.createOrganization.mockResolvedValue({
+        id: 'org-123',
+        name: 'New Oil Company',
+        email: 'contact@newoil.com',
+        phone: '+1-555-123-4567',
+      });
+      mockEmailService.sendWelcomeEmail.mockResolvedValue(undefined);
+
+      const registerData = {
+        email: 'owner@newcompany.com',
+        // eslint-disable-next-line sonarjs/no-hardcoded-passwords
+        password: 'MyStr0ngP@ssw0rd2024!',
+        firstName: 'Jane',
+        lastName: 'Smith',
+        role: UserRole.OWNER,
+        createOrganization: true,
+        organizationName: 'New Oil Company',
+        organizationContactEmail: 'contact@newoil.com',
+        organizationContactPhone: '+1-555-123-4567',
+      };
+
+      const user = await authService.register(registerData);
+
+      expect(user).toBeDefined();
+      expect(user.getEmail().getValue()).toBe(registerData.email);
+      expect(user.getFirstName()).toBe(registerData.firstName);
+      expect(user.getLastName()).toBe(registerData.lastName);
+      expect(user.getRole()).toBe(registerData.role);
+      expect(user.getOrganizationId()).toBeDefined();
+      expect(user.isEmailVerified()).toBe(false);
+    });
+
+    it('should require organization name when creating organization', async () => {
+      // Mock repository to return null for new user
+      mockUserRepository.findByEmail.mockResolvedValue(null);
+
+      const registerData = {
+        email: 'owner@newcompany.com',
+        // eslint-disable-next-line sonarjs/no-hardcoded-passwords
+        password: 'MyStr0ngP@ssw0rd2024!',
+        firstName: 'Jane',
+        lastName: 'Smith',
+        role: UserRole.OWNER,
+        createOrganization: true,
+        // Missing organizationName
+      };
+
+      await expect(authService.register(registerData)).rejects.toThrow(
+        'Organization name is required when creating a new organization',
+      );
+    });
+
+    it('should require organization ID when not creating organization', async () => {
+      // Mock repository to return null for new user
+      mockUserRepository.findByEmail.mockResolvedValue(null);
+
+      const registerData = {
+        email: 'user@existingcompany.com',
+        // eslint-disable-next-line sonarjs/no-hardcoded-passwords
+        password: 'MyStr0ngP@ssw0rd2024!',
+        firstName: 'John',
+        lastName: 'Doe',
+        role: UserRole.MANAGER,
+        createOrganization: false,
+        // Missing organizationId
+      };
+
+      await expect(authService.register(registerData)).rejects.toThrow(
+        'Organization ID is required',
+      );
     });
 
     it('should support email verification', () => {
