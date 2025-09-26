@@ -407,7 +407,7 @@ export class VendorSpecificationService {
 }
 ```
 
-## Repository Integration
+## Repository Query Integration
 
 ### Query Expression Translation
 

@@ -19,6 +19,7 @@ export interface RequiredRule {
     | 'CashCall'
     | 'JointOperatingAgreement'
     | 'JibStatement'
+    | 'AuditLog'
     | 'all';
 }
 

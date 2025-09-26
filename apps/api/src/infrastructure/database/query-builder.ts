@@ -1,10 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable security/detect-object-injection */
 
 import {
   eq,
@@ -34,12 +28,24 @@ export class QueryBuilder<T extends PgTable> {
   private orderByClause: SQL[] = [];
   private limitValue?: number;
   private offsetValue?: number;
-  private selectFields?: Record<string, unknown>;
+  private selectFields?: Record<string, unknown> | unknown[];
 
   constructor(
     private readonly db: NodePgDatabase<typeof schema>,
     private readonly table: T,
   ) {}
+
+  /**
+   * Safely access a column by key name
+   */
+  private getColumn(key: string): AnyColumn {
+    // eslint-disable-next-line security/detect-object-injection
+    const column = (this.table as Record<string, unknown>)[key];
+    if (!column) {
+      throw new Error(`Column '${key}' not found in table`);
+    }
+    return column as AnyColumn;
+  }
 
   /**
    * Add WHERE condition
@@ -89,15 +95,13 @@ export class QueryBuilder<T extends PgTable> {
    * Filter by date range
    */
   dateRange(field: string, startDate: Date, endDate: Date): this {
-    const column = (this.table as unknown as Record<string, AnyColumn>)[field];
-    if (column) {
-      const gteCondition = gte(column, startDate);
-      const lteCondition = lte(column, endDate);
-      if (gteCondition && lteCondition) {
-        const combined = and(gteCondition, lteCondition);
-        if (combined) {
-          return this.where(combined);
-        }
+    const column = this.getColumn(field);
+    const gteCondition = gte(column, startDate);
+    const lteCondition = lte(column, endDate);
+    if (gteCondition && lteCondition) {
+      const combined = and(gteCondition, lteCondition);
+      if (combined) {
+        return this.where(combined);
       }
     }
     return this;
@@ -107,11 +111,8 @@ export class QueryBuilder<T extends PgTable> {
    * Filter by text search (case-insensitive)
    */
   search(field: string, query: string): this {
-    const column = (this.table as unknown as Record<string, AnyColumn>)[field];
-    if (column) {
-      return this.where(ilike(column, `%${query}%`));
-    }
-    return this;
+    const column = this.getColumn(field);
+    return this.where(ilike(column, `%${query}%`));
   }
 
   /**
@@ -119,40 +120,31 @@ export class QueryBuilder<T extends PgTable> {
    */
   whereIn(field: string, values: unknown[]): this {
     if (values.length === 0) return this;
-    const column = (this.table as unknown as Record<string, AnyColumn>)[field];
-    if (column) {
-      return this.where(inArray(column, values));
-    }
-    return this;
+    const column = this.getColumn(field);
+    return this.where(inArray(column, values));
   }
 
   /**
    * Filter by null values
    */
   whereNull(field: string): this {
-    const column = (this.table as unknown as Record<string, AnyColumn>)[field];
-    if (column) {
-      return this.where(isNull(column));
-    }
-    return this;
+    const column = this.getColumn(field);
+    return this.where(isNull(column));
   }
 
   /**
    * Filter by non-null values
    */
   whereNotNull(field: string): this {
-    const column = (this.table as unknown as Record<string, AnyColumn>)[field];
-    if (column) {
-      return this.where(isNotNull(column));
-    }
-    return this;
+    const column = this.getColumn(field);
+    return this.where(isNotNull(column));
   }
 
   /**
    * Add ORDER BY clause
    */
   orderBy(field: string, direction: 'asc' | 'desc' = 'asc'): this {
-    const column = (this.table as any)[field];
+    const column = this.getColumn(field);
     this.orderByClause.push(
       direction === 'desc' ? sql`${column} DESC` : sql`${column} ASC`,
     );
@@ -178,7 +170,7 @@ export class QueryBuilder<T extends PgTable> {
   /**
    * Select specific fields
    */
-  select(fields: any): this {
+  select(fields: Record<string, unknown> | unknown[]): this {
     this.selectFields = fields;
     return this;
   }
@@ -186,28 +178,48 @@ export class QueryBuilder<T extends PgTable> {
   /**
    * Execute query and return results
    */
-  async execute(): Promise<any[]> {
-    let query: any = this.selectFields
-      ? this.db.select(this.selectFields as any).from(this.table as any)
-      : this.db.select().from(this.table as any);
+  async execute(): Promise<Record<string, unknown>[]> {
+    // Use type-safe approach with proper Drizzle query typing
+    let query: unknown;
 
+    if (this.selectFields) {
+      // Custom select fields require rebuilding the query
+      query = this.db
+        .select(this.selectFields as Record<string, SQL<unknown>>)
+        .from(this.table as PgTable);
+    } else {
+      query = this.db.select().from(this.table as PgTable);
+    }
+
+    // Apply conditions using type-safe method assertions
     if (this.whereConditions.length > 0) {
-      query = query.where(and(...this.whereConditions) as any);
+      const condition = and(...this.whereConditions);
+      if (condition) {
+        query = (query as { where: (condition: SQLWrapper) => unknown }).where(
+          condition,
+        );
+      }
     }
 
     if (this.orderByClause.length > 0) {
-      query = query.orderBy(...this.orderByClause);
+      query = (query as { orderBy: (...args: SQL[]) => unknown }).orderBy(
+        ...this.orderByClause,
+      );
     }
 
     if (this.offsetValue !== undefined) {
-      query = query.offset(this.offsetValue);
+      query = (query as { offset: (value: number) => unknown }).offset(
+        this.offsetValue,
+      );
     }
 
     if (this.limitValue !== undefined) {
-      query = query.limit(this.limitValue);
+      query = (query as { limit: (value: number) => unknown }).limit(
+        this.limitValue,
+      );
     }
 
-    return await query;
+    return await (query as Promise<Record<string, unknown>[]>);
   }
 
   /**
@@ -222,15 +234,20 @@ export class QueryBuilder<T extends PgTable> {
    * Execute query and return count
    */
   async count(): Promise<number> {
-    let query: any = this.db
+    let query: unknown = this.db
       .select({ count: sql`count(*)` })
-      .from(this.table as any);
+      .from(this.table as PgTable);
 
     if (this.whereConditions.length > 0) {
-      query = query.where(and(...this.whereConditions) as any);
+      const condition = and(...this.whereConditions);
+      if (condition) {
+        query = (query as { where: (condition: SQLWrapper) => unknown }).where(
+          condition,
+        );
+      }
     }
 
-    const result = await query;
+    const result = await (query as Promise<Array<{ count: number | string }>>);
     return Number(result[0]?.count || 0);
   }
 
@@ -317,7 +334,10 @@ export class QueryUtils {
   /**
    * Execute raw SQL query with parameters
    */
-  async raw<T = any>(query: string, _params: any[] = []): Promise<T[]> {
+  async raw<T = Record<string, unknown>>(
+    query: string,
+    _params: unknown[] = [],
+  ): Promise<T[]> {
     const result = await this.db.execute(sql.raw(query));
     // Extract rows from result if it's in the format { rows: [...] }
     if (result && typeof result === 'object' && 'rows' in result) {
@@ -372,9 +392,9 @@ export class QueryUtils {
     currentUser: string;
   }> {
     const [version, database, user] = await Promise.all([
-      this.raw('SELECT version()'),
-      this.raw('SELECT current_database()'),
-      this.raw('SELECT current_user'),
+      this.raw<{ version: string }>('SELECT version()'),
+      this.raw<{ current_database: string }>('SELECT current_database()'),
+      this.raw<{ current_user: string }>('SELECT current_user'),
     ]);
 
     return {

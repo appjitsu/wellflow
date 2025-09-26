@@ -138,7 +138,13 @@ export class EnhancedRateLimiterService {
     endpoint?: string,
     method?: string,
   ): Promise<RateLimitResult> {
-    const config = this.tierConfigs[userTier];
+    const config = Object.prototype.hasOwnProperty.call(
+      this.tierConfigs,
+      userTier,
+    )
+      ? // eslint-disable-next-line security/detect-object-injection
+        this.tierConfigs[userTier]
+      : this.tierConfigs[UserTier.FREE];
 
     if (!config) {
       this.logger.warn(`Unknown user tier: ${userTier}, falling back to FREE`);
@@ -311,13 +317,13 @@ export class EnhancedRateLimiterService {
       recommendedAction = 'allow';
     }
 
-    return {
+    return Promise.resolve({
       isAbusive: riskScore >= 0.3,
       riskLevel,
       patterns,
       recommendedAction,
       confidence: Math.min(riskScore, 1.0),
-    };
+    });
   }
 
   /**
@@ -384,7 +390,10 @@ export class EnhancedRateLimiterService {
    * Get rate limit configuration for a tier
    */
   getTierConfig(tier: UserTier): RateLimitConfig {
-    return this.tierConfigs[tier] || this.tierConfigs[UserTier.FREE];
+    return Object.prototype.hasOwnProperty.call(this.tierConfigs, tier)
+      ? // eslint-disable-next-line security/detect-object-injection
+        this.tierConfigs[tier]
+      : this.tierConfigs[UserTier.FREE];
   }
 
   /**
@@ -398,8 +407,10 @@ export class EnhancedRateLimiterService {
    * Update tier configuration (admin function)
    */
   updateTierConfig(tier: UserTier, config: Partial<RateLimitConfig>): void {
-    if (this.tierConfigs[tier]) {
+    if (Object.prototype.hasOwnProperty.call(this.tierConfigs, tier)) {
+      // eslint-disable-next-line security/detect-object-injection
       this.tierConfigs[tier] = { ...this.tierConfigs[tier], ...config };
+
       this.logger.log(`Updated rate limit config for tier ${tier}:`, config);
     }
   }
@@ -436,6 +447,7 @@ export class EnhancedRateLimiterService {
     burstUsed: number;
     burstLimit: number;
   }> {
+    // eslint-disable-next-line security/detect-object-injection
     const config = this.tierConfigs[tier];
     const key = `ratelimit:${userId}:${config.windowMs}`;
     const burstKey = `ratelimit:burst:${userId}`;

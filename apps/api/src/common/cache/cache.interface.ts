@@ -1,4 +1,4 @@
-export interface CacheEntry<T = any> {
+export interface CacheEntry<T = unknown> {
   key: string;
   value: T;
   expiresAt?: Date;

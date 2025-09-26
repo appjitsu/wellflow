@@ -1,5 +1,33 @@
 # Pattern Integration and Compatibility Guide
 
+- RBAC CASL: Comprehensive implementation in
+  apps/api/src/authorization/abilities.factory.ts with detailed permissions for
+  roles (ADMIN, OPERATOR, VIEWER, MANAGER, REGULATOR, AUDITOR) and
+  actions/subjects.
+- SOLID Principles:
+- SRP: Services like AfeApprovalWorkflowService have single responsibilities
+- OCP: Strategy patterns for tax calculations and state-specific logic
+- LSP: Well state classes properly extend base behavior
+- ISP: Segregated interfaces in repositories and services
+- DIP: Dependency injection with interfaces in repositories and services
+- Hexagonal Architecture: Clear separation with domain core, infrastructure
+  adapters (database, external APIs, monitoring), and controllers as driving
+  adapters.
+- DDD: Domain entities, events, value objects, and domain services in
+  apps/api/src/domain/.
+- CQRS: Separate read/write models implied through repository interfaces and
+  query services.
+- Repository Pattern: Repository interfaces and implementations in
+  apps/api/src/infrastructure/repositories/ and
+  apps/api/src/domain/repositories/.
+- DTO Pattern: Data transfer objects used in controllers and services.
+- Specification Pattern: Query specifications in repository implementations.
+- Unit of Work: unit-of-work.ts and regulatory-unit-of-work.ts for transaction
+  management.
+- Strategy Pattern: Tenant isolation strategies and other behavioral patterns.
+- Factory Pattern: Factories in apps/api/src/domain/factories/ for creating
+  domain objects.
+
 ## Pattern Compatibility Matrix
 
 ### Highly Compatible Patterns (Work Best Together)
@@ -122,23 +150,23 @@ graph TB
 
 ### Application Logic (Implement Second)
 
-5. **CQRS**: Separate read/write operations
-6. **Unit of Work**: Transaction management
-7. **Specification Pattern**: Reusable business rules
-8. **Strategy Pattern**: Configurable algorithms
+1. **CQRS**: Separate read/write operations
+2. **Unit of Work**: Transaction management
+3. **Specification Pattern**: Reusable business rules
+4. **Strategy Pattern**: Configurable algorithms
 
 ### Resilience & Integration (Implement Third)
 
-9. **Anti-Corruption Layer**: External system integration
-10. **Circuit Breaker**: Fault tolerance
-11. **Retry Pattern**: Transient failure handling
-12. **Observer Pattern**: Event-driven architecture
+1. **Anti-Corruption Layer**: External system integration
+2. **Circuit Breaker**: Fault tolerance
+3. **Retry Pattern**: Transient failure handling
+4. **Observer Pattern**: Event-driven architecture
 
 ### Supporting Patterns (Implement As Needed)
 
-13. **Factory Pattern**: Complex object creation
-14. **SOLID Principles**: Code quality foundation
-15. **RBAC/CASL**: Security and permissions
+1. **Factory Pattern**: Complex object creation
+2. **SOLID Principles**: Code quality foundation
+3. **RBAC/CASL**: Security and permissions
 
 ## Pattern Selection Decision Tree
 

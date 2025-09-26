@@ -1,10 +1,30 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { sql } from 'drizzle-orm';
 import { Redis } from 'ioredis';
 import { CircuitBreakerService } from '../common/resilience/circuit-breaker.service';
 import { RetryService } from '../common/resilience/retry.service';
 import { AuditLogService } from '../application/services/audit-log.service';
+import { AuditAction } from '../domain/entities/audit-log.entity';
 import * as schema from '../database/schema';
+
+type HealthStatus = 'healthy' | 'unhealthy' | 'degraded';
+
+type HealthCheckItemResult = {
+  status: HealthStatus;
+  responseTime?: number;
+  error?: string;
+  details?: Record<string, unknown>;
+};
+
+type ExternalServiceCheckResult = {
+  status: 'healthy' | 'unhealthy' | 'degraded';
+  responseTime: number;
+  details?: Record<string, unknown>;
+  error?: string;
+};
+
+const UNKNOWN_ERROR = 'Unknown error';
 
 export interface HealthCheckResult {
   status: 'healthy' | 'unhealthy';
@@ -14,10 +34,10 @@ export interface HealthCheckResult {
   checks: Record<
     string,
     {
-      status: 'healthy' | 'unhealthy';
+      status: HealthStatus;
       responseTime?: number;
       error?: string;
-      details?: any;
+      details?: Record<string, unknown>;
     }
   >;
 }
@@ -59,23 +79,31 @@ export class HealthCheckService {
       this.checkExternalServicesHealth(),
     ]);
 
-    const checkResults: Record<string, any> = {};
+    const checkResults: Record<string, HealthCheckItemResult> = {};
 
     checks.forEach((result, index) => {
-      const checkName = [
+      const checkNames = [
         'database',
         'redis',
         'circuit_breaker',
         'retry',
         'memory',
         'external_services',
-      ][index];
+      ] as const;
+      // eslint-disable-next-line security/detect-object-injection
+      const checkName = checkNames[index] ?? `check_${index}`;
+
       if (result.status === 'fulfilled') {
-        checkResults[checkName] = result.value;
+        // eslint-disable-next-line security/detect-object-injection
+        (checkResults as Record<string, unknown>)[checkName] = result.value;
       } else {
-        checkResults[checkName] = {
+        // eslint-disable-next-line security/detect-object-injection
+        (checkResults as Record<string, unknown>)[checkName] = {
           status: 'unhealthy',
-          error: result.reason.message,
+          error:
+            result.reason instanceof Error
+              ? result.reason.message
+              : UNKNOWN_ERROR,
           responseTime: 0,
         };
       }
@@ -89,7 +117,8 @@ export class HealthCheckService {
       status: allHealthy ? 'healthy' : 'unhealthy',
       timestamp: new Date().toISOString(),
       uptime: Date.now() - this.startTime,
-      version: process.env.npm_package_version || '1.0.0',
+      // eslint-disable-next-line no-process-env
+      version: process.env['npm_package_version'] || '1.0.0',
       checks: checkResults,
     };
   }
@@ -138,15 +167,17 @@ export class HealthCheckService {
     };
   }
 
-  async checkDatabase(): Promise<any> {
+  async checkDatabase(): Promise<{
+    status: 'healthy' | 'unhealthy';
+    responseTime: number;
+    details?: Record<string, unknown>;
+    error?: string;
+  }> {
     const startTime = Date.now();
 
     try {
       // Test basic connectivity
-      await this.db.execute({
-        sql: 'SELECT 1',
-        args: [],
-      });
+      await this.db.execute(sql`SELECT 1`);
 
       // Test a more complex query
       const result = await this.db
@@ -168,12 +199,17 @@ export class HealthCheckService {
       return {
         status: 'unhealthy',
         responseTime: Date.now() - startTime,
-        error: error.message,
+        error: error instanceof Error ? error.message : UNKNOWN_ERROR,
       };
     }
   }
 
-  async checkRedis(): Promise<any> {
+  async checkRedis(): Promise<{
+    status: 'healthy' | 'unhealthy';
+    responseTime: number;
+    details?: Record<string, unknown>;
+    error?: string;
+  }> {
     const startTime = Date.now();
 
     try {
@@ -195,12 +231,12 @@ export class HealthCheckService {
       return {
         status: 'unhealthy',
         responseTime: Date.now() - startTime,
-        error: error.message,
+        error: error instanceof Error ? error.message : UNKNOWN_ERROR,
       };
     }
   }
 
-  async checkExternalServices(): Promise<any> {
+  async checkExternalServices(): Promise<ExternalServiceCheckResult> {
     const startTime = Date.now();
 
     try {
@@ -209,37 +245,47 @@ export class HealthCheckService {
 
       // Check if any circuit breakers are open
       const openBreakers = circuitBreakerMetrics.filter(
-        (metric) => metric.state === 'OPEN',
+        (metric) => metric.state.toString() === 'OPEN',
       );
 
       const responseTime = Date.now() - startTime;
 
-      return {
+      return Promise.resolve({
         status: openBreakers.length === 0 ? 'healthy' : 'degraded',
         responseTime,
         details: {
           totalCircuitBreakers: circuitBreakerMetrics.length,
           openCircuitBreakers: openBreakers.length,
-          circuitBreakerStates: circuitBreakerMetrics.reduce((acc, metric) => {
-            acc[metric.serviceName] = metric.state;
-            return acc;
-          }, {}),
+          circuitBreakerStates: circuitBreakerMetrics.reduce(
+            (acc, metric) => {
+              return { ...acc, [metric.serviceName]: metric.state };
+            },
+            {} as Record<string, string>,
+          ),
         },
-      };
+      });
     } catch (error) {
-      return {
+      return Promise.resolve({
         status: 'unhealthy',
         responseTime: Date.now() - startTime,
-        error: error.message,
-      };
+        error: error instanceof Error ? error.message : UNKNOWN_ERROR,
+      });
     }
   }
 
-  async getSystemMetrics(): Promise<any> {
+  async getSystemMetrics(): Promise<{
+    timestamp: string;
+    uptime: number;
+    memory: Record<string, number>;
+    cpu: Record<string, number>;
+    process: Record<string, string | number>;
+    resilience: Record<string, unknown>;
+    audit: Record<string, unknown>;
+  }> {
     const memUsage = process.memoryUsage();
     const cpuUsage = process.cpuUsage();
 
-    return {
+    return Promise.resolve({
       timestamp: new Date().toISOString(),
       uptime: Date.now() - this.startTime,
       memory: {
@@ -268,71 +314,98 @@ export class HealthCheckService {
       audit: {
         // Recent audit activity summary
       },
-    };
+    });
   }
 
   // Private helper methods
 
-  private async checkDatabaseHealth(): Promise<any> {
+  private async checkDatabaseHealth(): Promise<{
+    status: 'healthy' | 'unhealthy';
+    responseTime: number;
+    details?: Record<string, unknown>;
+    error?: string;
+  }> {
     return await this.checkDatabase();
   }
 
-  private async checkRedisHealth(): Promise<any> {
+  private async checkRedisHealth(): Promise<{
+    status: 'healthy' | 'unhealthy';
+    responseTime: number;
+    details?: Record<string, unknown>;
+    error?: string;
+  }> {
     return await this.checkRedis();
   }
 
-  private async checkCircuitBreakerHealth(): Promise<any> {
+  private async checkCircuitBreakerHealth(): Promise<{
+    status: 'healthy' | 'unhealthy' | 'degraded';
+    responseTime: number;
+    details?: Record<string, unknown>;
+    error?: string;
+  }> {
     const startTime = Date.now();
 
     try {
       const metrics = this.circuitBreakerService.getAllMetrics();
       const unhealthyBreakers = metrics.filter(
-        (m) => m.state === 'OPEN' && m.failureCount > 5,
+        (m) => m.state.toString() === 'OPEN' && m.failureCount > 5,
       );
 
-      return {
+      return Promise.resolve({
         status: unhealthyBreakers.length === 0 ? 'healthy' : 'degraded',
         responseTime: Date.now() - startTime,
         details: {
           totalBreakers: metrics.length,
           unhealthyBreakers: unhealthyBreakers.length,
-          states: metrics.reduce((acc, m) => {
-            acc[m.serviceName] = m.state;
-            return acc;
-          }, {}),
+          states: metrics.reduce(
+            (acc, m) => {
+              return { ...acc, [m.serviceName]: m.state };
+            },
+            {} as Record<string, string>,
+          ),
         },
-      };
+      });
     } catch (error) {
-      return {
+      return Promise.resolve({
         status: 'unhealthy',
         responseTime: Date.now() - startTime,
-        error: error.message,
-      };
+        error: error instanceof Error ? error.message : UNKNOWN_ERROR,
+      });
     }
   }
 
-  private async checkRetryHealth(): Promise<any> {
+  private async checkRetryHealth(): Promise<{
+    status: 'healthy' | 'unhealthy';
+    responseTime: number;
+    details?: Record<string, unknown>;
+    error?: string;
+  }> {
     const startTime = Date.now();
 
     try {
       // Check if retry service is functioning
-      return {
+      return Promise.resolve({
         status: 'healthy',
         responseTime: Date.now() - startTime,
         details: {
           serviceAvailable: true,
         },
-      };
+      });
     } catch (error) {
-      return {
+      return Promise.resolve({
         status: 'unhealthy',
         responseTime: Date.now() - startTime,
-        error: error.message,
-      };
+        error: error instanceof Error ? error.message : UNKNOWN_ERROR,
+      });
     }
   }
 
-  private async checkMemoryHealth(): Promise<any> {
+  private async checkMemoryHealth(): Promise<{
+    status: 'healthy' | 'unhealthy';
+    responseTime: number;
+    details?: Record<string, unknown>;
+    error?: string;
+  }> {
     const startTime = Date.now();
     const memUsage = process.memoryUsage();
 
@@ -345,7 +418,7 @@ export class HealthCheckService {
       // Consider unhealthy if using more than 90% of heap
       const isHealthy = usageRatio < 0.9;
 
-      return {
+      return Promise.resolve({
         status: isHealthy ? 'healthy' : 'unhealthy',
         responseTime: Date.now() - startTime,
         details: {
@@ -353,23 +426,28 @@ export class HealthCheckService {
           heapTotal: Math.round(heapTotalMB),
           usageRatio: Math.round(usageRatio * 100) / 100,
         },
-      };
+      });
     } catch (error) {
-      return {
+      return Promise.resolve({
         status: 'unhealthy',
         responseTime: Date.now() - startTime,
-        error: error.message,
-      };
+        error: error instanceof Error ? error.message : UNKNOWN_ERROR,
+      });
     }
   }
 
-  private async checkExternalServicesHealth(): Promise<any> {
+  private async checkExternalServicesHealth(): Promise<{
+    status: 'healthy' | 'unhealthy' | 'degraded';
+    responseTime: number;
+    details?: Record<string, unknown>;
+    error?: string;
+  }> {
     return await this.checkExternalServices();
   }
 
   private async checkDatabaseConnection(): Promise<boolean> {
     try {
-      await this.db.execute({ sql: 'SELECT 1', args: [] });
+      await this.db.execute(sql`SELECT 1`);
       return true;
     } catch {
       return false;
@@ -389,7 +467,7 @@ export class HealthCheckService {
     // Check if audit logging is working
     try {
       await this.auditLogService.logSystemAction(
-        'HEALTH_CHECK',
+        AuditAction.READ,
         'system-health',
         true,
       );
@@ -405,7 +483,7 @@ export class HealthCheckService {
     const heapTotalMB = memUsage.heapTotal / 1024 / 1024;
 
     // Consider dead if using more than 95% of heap or heap is corrupted
-    return heapUsedMB / heapTotalMB < 0.95 && heapTotalMB > 0;
+    return Promise.resolve(heapUsedMB / heapTotalMB < 0.95 && heapTotalMB > 0);
   }
 
   private async checkEventLoopLag(): Promise<boolean> {
@@ -421,16 +499,16 @@ export class HealthCheckService {
 
   private async checkGarbageCollection(): Promise<boolean> {
     // Basic GC check - in a real implementation, you'd use gc-stats or similar
-    return process.memoryUsage().heapUsed > 0;
+    return Promise.resolve(process.memoryUsage().heapUsed > 0);
   }
 
   private parseRedisVersion(info: string): string {
-    const match = info.match(/redis_version:([^\r\n]+)/);
-    return match ? match[1] : 'unknown';
+    const match = /redis_version:([^\r\n]+)/.exec(info);
+    return match && match[1] ? match[1] : 'unknown';
   }
 
   private parseRedisUptime(info: string): number {
-    const match = info.match(/uptime_in_seconds:([^\r\n]+)/);
-    return match ? parseInt(match[1]) : 0;
+    const match = /uptime_in_seconds:([^\r\n]+)/.exec(info);
+    return match && match[1] ? parseInt(match[1]) : 0;
   }
 }

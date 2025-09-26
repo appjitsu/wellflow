@@ -1,5 +1,6 @@
-import { SetMetadata, Version } from '@nestjs/common';
+import { SetMetadata } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Request, Response } from 'express';
 
 export const API_VERSION_KEY = 'api_version';
 export const API_VERSION_DEPRECATION_KEY = 'api_version_deprecated';
@@ -25,9 +26,13 @@ export const ApiVersionDocs = (options: {
   description?: string;
   deprecated?: boolean;
   deprecatedMessage?: string;
-  examples?: Record<string, any>;
+  examples?: Record<string, unknown>;
 }) => {
-  return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
+  return (
+    target: object,
+    propertyKey: string,
+    descriptor: PropertyDescriptor,
+  ) => {
     const decorators = [];
 
     if (options.summary) {
@@ -62,12 +67,16 @@ export const ApiVersionDocs = (options: {
  * Version negotiation middleware
  */
 export const VersionNegotiation = () => {
-  return (req: any, res: any, next: any) => {
+  return (
+    req: Request & { apiVersion?: string },
+    res: Response,
+    next: () => void,
+  ) => {
     // Extract version from various sources
     const version =
-      req.headers['api-version'] ||
-      req.headers['accept-version'] ||
-      req.query.version ||
+      (req.headers['api-version'] as string) ||
+      (req.headers['accept-version'] as string) ||
+      (req.query.version as string) ||
       'v1';
 
     req.apiVersion = version;

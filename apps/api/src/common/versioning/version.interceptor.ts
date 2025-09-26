@@ -6,7 +6,19 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Observable, tap } from 'rxjs';
+import { Request, Response } from 'express';
 import { VersionService } from './version.service';
+
+declare module 'express' {
+  interface Request {
+    apiVersion?: string;
+    apiVersionInfo?: {
+      isCompatible: boolean;
+      warnings: string[];
+      suggestedVersion?: string;
+    };
+  }
+}
 
 @Injectable()
 export class VersionInterceptor implements NestInterceptor {
@@ -14,15 +26,16 @@ export class VersionInterceptor implements NestInterceptor {
 
   constructor(private readonly versionService: VersionService) {}
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const request = context.switchToHttp().getRequest();
-    const response = context.switchToHttp().getResponse();
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    const request = context
+      .switchToHttp()
+      .getRequest<Request & { route?: { path?: string } }>();
+    const response = context.switchToHttp().getResponse<Response>();
 
     // Negotiate API version
-    const requestedVersion = this.extractVersion(request);
     const resolvedVersion = this.versionService.negotiateVersion(
-      request.headers.accept,
-      request.query.version,
+      request.headers.accept as string,
+      (request.query as { version?: string }).version,
     );
 
     // Check compatibility
@@ -52,8 +65,9 @@ export class VersionInterceptor implements NestInterceptor {
     }
 
     // Log version usage
-    const userAgent = request.get('User-Agent');
-    const endpoint = request.route?.path || request.url;
+    const userAgent = request.get('User-Agent') || '';
+    const endpoint =
+      (request.route as { path?: string } | undefined)?.path || request.url;
     this.versionService.logVersionUsage(resolvedVersion, endpoint, userAgent);
 
     // Log warnings if any
@@ -68,9 +82,11 @@ export class VersionInterceptor implements NestInterceptor {
       tap(() => {
         // Add version metadata to successful responses
         if (response.statusCode < 400) {
-          const responseData = response.locals?.data;
+          const responseData = (
+            response.locals as { data?: Record<string, unknown> }
+          )?.data;
           if (responseData && typeof responseData === 'object') {
-            response.locals.data = {
+            (response.locals as { data?: Record<string, unknown> }).data = {
               ...responseData,
               _metadata: {
                 apiVersion: resolvedVersion,
@@ -83,12 +99,12 @@ export class VersionInterceptor implements NestInterceptor {
     );
   }
 
-  private extractVersion(request: any): string {
+  private extractVersion(request: Request): string {
     // Extract version from various sources
     return (
-      request.headers['api-version'] ||
-      request.headers['accept-version'] ||
-      request.query.version ||
+      (request.headers['api-version'] as string) ||
+      (request.headers['accept-version'] as string) ||
+      (request.query as { version?: string }).version ||
       'v1'
     );
   }

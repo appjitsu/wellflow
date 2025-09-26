@@ -5,6 +5,7 @@ import { ApiNumber } from '../../domain/value-objects/api-number';
 import { Location } from '../../domain/value-objects/location';
 import { Coordinates } from '../../domain/value-objects/coordinates';
 import { WellStatus, WellType } from '../../domain/enums/well-status.enum';
+import { AuditLogService } from '../../application/services/audit-log.service';
 
 describe('WellRepositoryImpl', () => {
   let repository: WellRepositoryImpl;
@@ -72,6 +73,30 @@ describe('WellRepositoryImpl', () => {
           provide: 'DATABASE_CONNECTION',
           useValue: mockDb,
         },
+        {
+          provide: AuditLogService,
+          useValue: {
+            logCreate: jest.fn(),
+            logUpdate: jest.fn(),
+            logDelete: jest.fn(),
+            logAction: jest.fn(),
+            logSuccess: jest.fn(),
+            logFailure: jest.fn(),
+            logExecute: jest.fn(),
+            logRead: jest.fn(),
+            logLogin: jest.fn(),
+            logLogout: jest.fn(),
+            logExport: jest.fn(),
+            logImport: jest.fn(),
+            logApprove: jest.fn(),
+            logReject: jest.fn(),
+            logSubmit: jest.fn(),
+            logSystemAction: jest.fn(),
+            logApiCall: jest.fn(),
+            logBatch: jest.fn(),
+            getContext: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -114,7 +139,7 @@ describe('WellRepositoryImpl', () => {
 
       await repository.save(testWell);
 
-      expect(mockDb.select).toHaveBeenCalledWith({ id: expect.any(Object) });
+      expect(mockDb.select).toHaveBeenCalledWith();
       expect(mockDb.insert).toHaveBeenCalled();
       expect(mockDb.update).not.toHaveBeenCalled();
     });

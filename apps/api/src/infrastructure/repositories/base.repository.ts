@@ -1,10 +1,30 @@
 import { Injectable, Inject, Optional } from '@nestjs/common';
 import { eq, and, sql, count, desc, asc } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import type { AnyPgColumn, PgTable, TableConfig } from 'drizzle-orm/pg-core';
+import type {
+  AnyPgColumn,
+  PgTable,
+  TableConfig,
+  PgSelect,
+} from 'drizzle-orm/pg-core';
 import * as schema from '../../database/schema';
 import type { UnitOfWorkTransaction } from './unit-of-work';
-import type { Specification } from '../../domain/specifications/specification.interface';
+import type { ISpecification } from '../../domain/specifications/specification.interface';
+import type { SQL } from 'drizzle-orm';
+
+/**
+ * Base table interface with required id column
+ */
+export interface BaseTable extends PgTable<TableConfig> {
+  id: AnyPgColumn;
+}
+
+/**
+ * SQL Specification interface that extends ISpecification with SQL generation capability
+ */
+export interface ISqlSpecification<T> extends ISpecification<T> {
+  toSqlClause(): SQL<unknown>;
+}
 import { AuditLogService } from '../../application/services/audit-log.service';
 import { AuditResourceType } from '../../domain/entities/audit-log.entity';
 
@@ -13,13 +33,28 @@ import { AuditResourceType } from '../../domain/entities/audit-log.entity';
  * Provides common CRUD operations for all entities using Drizzle ORM
  */
 @Injectable()
-export abstract class BaseRepository<T extends PgTable<TableConfig>> {
+export abstract class BaseRepository<
+  T extends PgTable<TableConfig> & { id: AnyPgColumn },
+> {
   constructor(
     @Inject('DATABASE_CONNECTION')
     protected readonly db: NodePgDatabase<typeof schema>,
     protected readonly table: T,
     @Optional() protected readonly auditLogService?: AuditLogService,
   ) {}
+
+  /**
+   * Safely access a column by key name
+   * This method provides type-safe access to table columns while avoiding object injection warnings
+   */
+  protected getColumn(key: string): AnyPgColumn {
+    // eslint-disable-next-line security/detect-object-injection
+    const column = (this.table as Record<string, unknown>)[key];
+    if (!column) {
+      throw new Error(`Column '${key}' not found in table`);
+    }
+    return column as AnyPgColumn;
+  }
 
   /**
    * Get the audit resource type for this repository
@@ -64,30 +99,15 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
   }
 
   /**
-   * Create a new record within a transaction
-   */
-  async createWithinTransaction(
-    data: Partial<T['$inferInsert']>,
-    unitOfWork: UnitOfWorkTransaction,
-  ): Promise<T['$inferSelect']> {
-    const result = await (
-      unitOfWork.getTransaction() as NodePgDatabase<typeof schema>
-    )
-      .insert(this.table)
-      .values(data as T['$inferInsert'])
-      .returning();
-
-    return result[0] as T['$inferSelect'];
-  }
-
-  /**
    * Find record by ID
    */
   async findById(id: string): Promise<T['$inferSelect'] | null> {
     const result = await this.db
       .select()
-      .from(this.table as any) // eslint-disable-line @typescript-eslint/no-explicit-any
-      .where(eq((this.table as Record<string, unknown>).id as AnyPgColumn, id))
+      .from(this.table as PgTable<TableConfig> & { id: AnyPgColumn })
+      .where(
+        eq((this.table as PgTable<TableConfig> & { id: AnyPgColumn }).id, id),
+      )
       .limit(1);
 
     return result[0] || null;
@@ -99,20 +119,18 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
   async findAll(
     filters?: Record<string, unknown>,
   ): Promise<T['$inferSelect'][]> {
-    let query = this.db.select().from(this.table as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+    let query = this.db.select().from(this.table as PgTable<TableConfig>);
 
     if (filters) {
       const conditions = Object.entries(filters)
         .filter(([_, value]) => value !== undefined)
-        .map(([key, value]) =>
-          eq(
-            (this.table as Record<string, unknown>)[key] as AnyPgColumn, // eslint-disable-line security/detect-object-injection
-            value,
-          ),
-        );
+        .map(([key, value]) => eq(this.getColumn(key), value));
 
       if (conditions.length > 0) {
-        query = query.where(and(...conditions)) as any; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+        const condition = and(...conditions);
+        if (condition) {
+          query = query.where(condition) as unknown as typeof query;
+        }
       }
     }
 
@@ -133,12 +151,7 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
     if (filters) {
       const conditions = Object.entries(filters)
         .filter(([_, value]) => value !== undefined)
-        .map(([key, value]) =>
-          eq(
-            (this.table as Record<string, unknown>)[key] as AnyPgColumn, // eslint-disable-line security/detect-object-injection
-            value,
-          ),
-        );
+        .map(([key, value]) => eq(this.getColumn(key), value));
 
       if (conditions.length > 0) {
         whereClause = and(...conditions);
@@ -148,29 +161,33 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
     // Build order by clause
     let orderByClause;
     if (orderBy) {
-      const field = (this.table as Record<string, unknown>)[orderBy.field];
-      orderByClause =
-        orderBy.direction === 'desc'
-          ? desc(field as AnyPgColumn)
-          : asc(field as AnyPgColumn);
+      const field = this.getColumn(orderBy.field);
+      orderByClause = orderBy.direction === 'desc' ? desc(field) : asc(field);
     }
 
     // Execute queries
-    let dataQuery = this.db.select().from(this.table as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-    let countQuery = this.db.select({ count: count() }).from(this.table as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+    let dataQuery: unknown = this.db
+      .select()
+      .from(this.table as PgTable<TableConfig>);
+    let countQuery: unknown = this.db
+      .select({ count: count() })
+      .from(this.table as PgTable<TableConfig>);
 
     if (whereClause) {
-      dataQuery = dataQuery.where(whereClause) as any; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
-      countQuery = countQuery.where(whereClause) as any; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+      dataQuery = (dataQuery as PgSelect).where(whereClause);
+      countQuery = (countQuery as PgSelect).where(whereClause);
     }
 
     if (orderByClause) {
-      dataQuery = dataQuery.orderBy(orderByClause) as any; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+      dataQuery = (dataQuery as PgSelect).orderBy(orderByClause);
     }
 
-    dataQuery = dataQuery.offset(offset).limit(limit) as any; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+    dataQuery = (dataQuery as PgSelect).offset(offset).limit(limit);
 
-    const [data, totalResult] = await Promise.all([dataQuery, countQuery]);
+    const [data, totalResult] = await Promise.all([
+      dataQuery as Promise<T['$inferSelect'][]>,
+      countQuery as Promise<{ count: number }[]>,
+    ]);
 
     return {
       data,
@@ -194,14 +211,18 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
       .where(eq((this.table as Record<string, unknown>).id as AnyPgColumn, id))
       .returning();
 
-    const updatedRecord = (result as any)[0] || null; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+    const updatedRecord = (result as T['$inferSelect'][])[0] || null;
 
     // Audit logging for update
     if (updatedRecord && oldRecord) {
-      await this.logAuditAction('UPDATE', updatedRecord, {
-        oldValues: oldRecord,
-        newValues: updatedRecord,
-      });
+      await this.logAuditAction(
+        'UPDATE',
+        updatedRecord as Record<string, unknown>,
+        {
+          oldValues: oldRecord as Record<string, unknown>,
+          newValues: updatedRecord as Record<string, unknown>,
+        },
+      );
     }
 
     return updatedRecord;
@@ -223,26 +244,7 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
       .where(eq((this.table as Record<string, unknown>).id as AnyPgColumn, id))
       .returning();
 
-    return (result as any)[0] || null; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
-  }
-
-  /**
-   * Update record by ID within a transaction
-   */
-  async updateWithinTransaction(
-    id: string,
-    data: Partial<T['$inferInsert']>,
-    unitOfWork: UnitOfWorkTransaction,
-  ): Promise<T['$inferSelect'] | null> {
-    const result = await (
-      unitOfWork.getTransaction() as NodePgDatabase<typeof schema>
-    )
-      .update(this.table)
-      .set(data)
-      .where(eq((this.table as Record<string, unknown>).id as AnyPgColumn, id))
-      .returning();
-
-    return (result as any)[0] || null; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+    return (result as T['$inferSelect'][])[0] || null;
   }
 
   /**
@@ -291,31 +293,12 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
   }
 
   /**
-   * Delete record by ID within a transaction
-   */
-  async deleteWithinTransaction(
-    id: string,
-    unitOfWork: UnitOfWorkTransaction,
-  ): Promise<boolean> {
-    const result = await (
-      unitOfWork.getTransaction() as NodePgDatabase<typeof schema>
-    )
-      .delete(this.table)
-      .where(eq((this.table as Record<string, unknown>).id as AnyPgColumn, id))
-      .returning({
-        id: (this.table as Record<string, unknown>).id as AnyPgColumn,
-      });
-
-    return result.length > 0;
-  }
-
-  /**
    * Check if record exists by ID
    */
   async exists(id: string): Promise<boolean> {
     const result = await this.db
       .select({ id: (this.table as Record<string, unknown>).id as AnyPgColumn })
-      .from(this.table as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+      .from(this.table as PgTable<TableConfig>)
       .where(eq((this.table as Record<string, unknown>).id as AnyPgColumn, id))
       .limit(1);
 
@@ -326,24 +309,21 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
    * Count records with optional filters
    */
   async count(filters?: Record<string, unknown>): Promise<number> {
-    let query = this.db.select({ count: count() }).from(this.table as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+    let query: unknown = this.db
+      .select({ count: count() })
+      .from(this.table as PgTable<TableConfig>);
 
     if (filters) {
       const conditions = Object.entries(filters)
         .filter(([_, value]) => value !== undefined)
-        .map(([key, value]) =>
-          eq(
-            (this.table as Record<string, unknown>)[key] as AnyPgColumn, // eslint-disable-line security/detect-object-injection
-            value,
-          ),
-        );
+        .map(([key, value]) => eq(this.getColumn(key), value));
 
       if (conditions.length > 0) {
-        query = query.where(and(...conditions)) as any; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+        query = (query as PgSelect).where(and(...conditions));
       }
     }
 
-    const result = await query;
+    const result = await (query as Promise<{ count: number }[]>);
     return result[0]?.count || 0;
   }
 
@@ -355,7 +335,7 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
   ): Promise<T['$inferSelect'][]> {
     return this.db
       .select()
-      .from(this.table as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+      .from(this.table as PgTable<TableConfig>)
       .where(
         eq(
           (this.table as Record<string, unknown>).organizationId as AnyPgColumn,
@@ -385,7 +365,7 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
    * Find records by specification
    */
   async findBySpecification<TEntity>(
-    specification: Specification<TEntity>,
+    specification: ISqlSpecification<TEntity>,
   ): Promise<T['$inferSelect'][]> {
     const sqlClause = specification.toSqlClause();
 
@@ -399,7 +379,7 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
    * Find records by specification with pagination
    */
   async findBySpecificationWithPagination<TEntity>(
-    specification: Specification<TEntity>,
+    specification: ISqlSpecification<TEntity>,
     offset: number,
     limit: number,
     orderBy?: { field: string; direction: 'asc' | 'desc' },
@@ -409,9 +389,7 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
     // Build order by clause
     let orderByClause: ReturnType<typeof desc> | undefined;
     if (orderBy) {
-      const field = (this.table as Record<string, unknown>)[
-        orderBy.field
-      ] as AnyPgColumn;
+      const field = this.getColumn(orderBy.field);
       orderByClause = orderBy.direction === 'desc' ? desc(field) : asc(field);
     }
 
@@ -426,10 +404,14 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
       .where(sqlClause);
 
     if (orderByClause) {
-      dataQuery = dataQuery.orderBy(orderByClause) as any; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+      dataQuery = dataQuery.orderBy(
+        orderByClause,
+      ) as unknown as typeof dataQuery;
     }
 
-    dataQuery = dataQuery.offset(offset).limit(limit) as any; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+    dataQuery = dataQuery
+      .offset(offset)
+      .limit(limit) as unknown as typeof dataQuery;
 
     const [data, totalResult] = await Promise.all([dataQuery, countQuery]);
 
@@ -443,13 +425,13 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
    * Count records by specification
    */
   async countBySpecification<TEntity>(
-    specification: Specification<TEntity>,
+    specification: ISqlSpecification<TEntity>,
   ): Promise<number> {
     const sqlClause = specification.toSqlClause();
 
     const result = await this.db
       .select({ count: count() })
-      .from(this.table as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+      .from(this.table as PgTable<TableConfig>)
       .where(sqlClause);
 
     return result[0]?.count || 0;
@@ -459,7 +441,7 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
    * Check if any records satisfy the specification
    */
   async existsBySpecification<TEntity>(
-    specification: Specification<TEntity>,
+    specification: ISqlSpecification<TEntity>,
   ): Promise<boolean> {
     const count = await this.countBySpecification(specification);
     return count > 0;
@@ -470,7 +452,7 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
    */
   protected async logAuditAction(
     action: 'CREATE' | 'UPDATE' | 'DELETE',
-    record: any,
+    record: Record<string, unknown>,
     changes?: {
       oldValues?: Record<string, unknown>;
       newValues?: Record<string, unknown>;
@@ -481,7 +463,10 @@ export abstract class BaseRepository<T extends PgTable<TableConfig>> {
     }
 
     try {
-      const resourceId = record?.id || record?.getId?.() || 'unknown';
+      const resourceId =
+        (record as { id?: string })?.id ||
+        (record as { getId?: () => string })?.getId?.() ||
+        'unknown';
 
       switch (action) {
         case 'CREATE':

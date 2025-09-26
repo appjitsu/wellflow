@@ -1,131 +1,159 @@
-import { and, or, not, sql } from 'drizzle-orm';
-import type { SQL } from 'drizzle-orm';
-
 /**
- * SQL Clause interface for type-safe query building
+ * Specification pattern interface
+ * Encapsulates business rules that can be combined and reused
  */
-export interface SqlClause {
-  condition: SQL<unknown>;
+export interface ISpecification<T> {
+  /**
+   * Check if candidate satisfies the specification
+   */
+  isSatisfiedBy(candidate: T): Promise<boolean>;
+
+  /**
+   * Combine with another specification using AND
+   */
+  and(other: ISpecification<T>): ISpecification<T>;
+
+  /**
+   * Combine with another specification using OR
+   */
+  or(other: ISpecification<T>): ISpecification<T>;
+
+  /**
+   * Negate the specification (NOT)
+   */
+  not(): ISpecification<T>;
+
+  /**
+   * Get specification metadata
+   */
+  getMetadata(): SpecificationMetadata;
 }
 
 /**
- * Base Specification Interface
- * Implements the Specification Pattern for encapsulating business rules
+ * Specification metadata
  */
-export abstract class Specification<T> {
-  /**
-   * Check if an entity satisfies this specification
-   * Used for in-memory filtering
-   */
-  abstract isSatisfiedBy(candidate: T): boolean;
+export interface SpecificationMetadata {
+  name: string;
+  description: string;
+  priority: number;
+  category: string;
+  tags: string[];
+}
 
-  /**
-   * Convert specification to SQL clause for database queries
-   * Used for efficient database filtering
-   */
-  abstract toSqlClause(): SQL<unknown>;
+/**
+ * Composite specification for combining multiple specifications
+ */
+export abstract class CompositeSpecification<T> implements ISpecification<T> {
+  abstract isSatisfiedBy(candidate: T): Promise<boolean>;
+  abstract getMetadata(): SpecificationMetadata;
 
-  /**
-   * Combine specifications with AND logic
-   */
-  and(other: Specification<T>): AndSpecification<T> {
+  and(other: ISpecification<T>): ISpecification<T> {
     return new AndSpecification(this, other);
   }
 
-  /**
-   * Combine specifications with OR logic
-   */
-  or(other: Specification<T>): OrSpecification<T> {
+  or(other: ISpecification<T>): ISpecification<T> {
     return new OrSpecification(this, other);
   }
 
-  /**
-   * Negate this specification
-   */
-  not(): NotSpecification<T> {
+  not(): ISpecification<T> {
     return new NotSpecification(this);
   }
 }
 
 /**
- * AND Specification - combines two specifications with AND logic
+ * AND specification combinator
  */
-export class AndSpecification<T> extends Specification<T> {
+export class AndSpecification<T> extends CompositeSpecification<T> {
   constructor(
-    private readonly left: Specification<T>,
-    private readonly right: Specification<T>,
+    private left: ISpecification<T>,
+    private right: ISpecification<T>,
   ) {
     super();
   }
 
-  isSatisfiedBy(candidate: T): boolean {
-    return (
-      this.left.isSatisfiedBy(candidate) && this.right.isSatisfiedBy(candidate)
-    );
+  async isSatisfiedBy(candidate: T): Promise<boolean> {
+    const [leftResult, rightResult] = await Promise.all([
+      this.left.isSatisfiedBy(candidate),
+      this.right.isSatisfiedBy(candidate),
+    ]);
+    return leftResult && rightResult;
   }
 
-  toSqlClause(): SQL<unknown> {
-    const leftClause = this.left.toSqlClause();
-    const rightClause = this.right.toSqlClause();
-
-    return and(leftClause, rightClause) as SQL<unknown>;
+  getMetadata(): SpecificationMetadata {
+    return {
+      name: `And(${this.left.getMetadata().name}, ${this.right.getMetadata().name})`,
+      description: `Combines ${this.left.getMetadata().name} AND ${this.right.getMetadata().name}`,
+      priority: Math.max(
+        this.left.getMetadata().priority,
+        this.right.getMetadata().priority,
+      ),
+      category: 'composite',
+      tags: [
+        ...this.left.getMetadata().tags,
+        ...this.right.getMetadata().tags,
+        'and',
+      ],
+    };
   }
 }
 
 /**
- * OR Specification - combines two specifications with OR logic
+ * OR specification combinator
  */
-export class OrSpecification<T> extends Specification<T> {
+export class OrSpecification<T> extends CompositeSpecification<T> {
   constructor(
-    private readonly left: Specification<T>,
-    private readonly right: Specification<T>,
+    private left: ISpecification<T>,
+    private right: ISpecification<T>,
   ) {
     super();
   }
 
-  isSatisfiedBy(candidate: T): boolean {
-    return (
-      this.left.isSatisfiedBy(candidate) || this.right.isSatisfiedBy(candidate)
-    );
+  async isSatisfiedBy(candidate: T): Promise<boolean> {
+    const [leftResult, rightResult] = await Promise.all([
+      this.left.isSatisfiedBy(candidate),
+      this.right.isSatisfiedBy(candidate),
+    ]);
+    return leftResult || rightResult;
   }
 
-  toSqlClause(): SQL<unknown> {
-    const leftClause = this.left.toSqlClause();
-    const rightClause = this.right.toSqlClause();
-
-    return or(leftClause, rightClause) as SQL<unknown>;
+  getMetadata(): SpecificationMetadata {
+    return {
+      name: `Or(${this.left.getMetadata().name}, ${this.right.getMetadata().name})`,
+      description: `Combines ${this.left.getMetadata().name} OR ${this.right.getMetadata().name}`,
+      priority: Math.max(
+        this.left.getMetadata().priority,
+        this.right.getMetadata().priority,
+      ),
+      category: 'composite',
+      tags: [
+        ...this.left.getMetadata().tags,
+        ...this.right.getMetadata().tags,
+        'or',
+      ],
+    };
   }
 }
 
 /**
- * NOT Specification - negates a specification
+ * NOT specification combinator
  */
-export class NotSpecification<T> extends Specification<T> {
-  constructor(private readonly specification: Specification<T>) {
+export class NotSpecification<T> extends CompositeSpecification<T> {
+  constructor(private spec: ISpecification<T>) {
     super();
   }
 
-  isSatisfiedBy(candidate: T): boolean {
-    return !this.specification.isSatisfiedBy(candidate);
+  async isSatisfiedBy(candidate: T): Promise<boolean> {
+    const result = await this.spec.isSatisfiedBy(candidate);
+    return !result;
   }
 
-  toSqlClause(): SQL<unknown> {
-    const clause = this.specification.toSqlClause();
-
-    return not(clause);
-  }
-}
-
-/**
- * True Specification - always returns true
- * Useful for building composite specifications
- */
-export class TrueSpecification<T> extends Specification<T> {
-  isSatisfiedBy(_candidate: T): boolean {
-    return true;
-  }
-
-  toSqlClause(): SQL<unknown> {
-    return sql`1 = 1`;
+  getMetadata(): SpecificationMetadata {
+    return {
+      name: `Not(${this.spec.getMetadata().name})`,
+      description: `Negates ${this.spec.getMetadata().name}`,
+      priority: this.spec.getMetadata().priority,
+      category: 'composite',
+      tags: [...this.spec.getMetadata().tags, 'not'],
+    };
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable, Logger, Inject, Optional } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ICache, CacheOptions, CacheStats } from './cache.interface';
 import { MemoryCacheService } from './memory-cache.service';
 import { RedisCacheService } from './redis-cache.service';
@@ -128,9 +128,14 @@ export class CacheService implements ICache {
   }
 
   async getStats(): Promise<CacheStats> {
+    const memoryStatsPromise =
+      this.memoryCache?.getStats() ?? Promise.resolve(null);
+    const redisStatsPromise =
+      this.redisCache?.getStats() ?? Promise.resolve(null);
+
     const [memoryStats, redisStats] = await Promise.allSettled([
-      this.memoryCache?.getStats(),
-      this.redisCache?.getStats(),
+      memoryStatsPromise,
+      redisStatsPromise,
     ]);
 
     const memory =
@@ -301,7 +306,7 @@ export class CacheService implements ICache {
   }
 
   async setMany(
-    entries: Array<{ key: string; value: any; options?: CacheOptions }>,
+    entries: Array<{ key: string; value: unknown; options?: CacheOptions }>,
   ): Promise<void> {
     const promises = entries.map(({ key, value, options }) =>
       this.set(key, value, options),
@@ -311,8 +316,8 @@ export class CacheService implements ICache {
   }
 
   private calculateCombinedHitRate(
-    memory: CacheStats | null,
-    redis: CacheStats | null,
+    memory: CacheStats | null | undefined,
+    redis: CacheStats | null | undefined,
   ): number {
     const totalHits = (memory?.hits || 0) + (redis?.hits || 0);
     const totalMisses = (memory?.misses || 0) + (redis?.misses || 0);

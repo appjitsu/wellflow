@@ -358,7 +358,7 @@ export class TexasRRCAntiCorruptionLayer {
 
 Prepare for eventual microservices while maintaining simplicity:
 
-```
+```txt
 src/
 ├── modules/
 │   ├── wells/                 # Wells bounded context
@@ -522,7 +522,7 @@ export class AuditService {
 
 ### 1. **Test Pyramid**
 
-```
+```txt
          /\
         /E2E\        5% - Critical user journeys
        /------\

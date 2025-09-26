@@ -4,13 +4,15 @@ import {
   ArgumentMetadata,
   BadRequestException,
   Logger,
-  Inject,
   Optional,
 } from '@nestjs/common';
 import { validate, ValidationError } from 'class-validator';
 import { plainToClass } from 'class-transformer';
 import { AuditLogService } from '../../application/services/audit-log.service';
-import { AuditResourceType } from '../../domain/entities/audit-log.entity';
+import {
+  AuditResourceType,
+  AuditAction,
+} from '../../domain/entities/audit-log.entity';
 
 export interface ValidationContext {
   userId?: string;
@@ -26,7 +28,7 @@ export interface ValidationResult {
   isValid: boolean;
   errors: ValidationError[];
   warnings: string[];
-  sanitizedData: any;
+  sanitizedData: unknown;
 }
 
 /**
@@ -39,12 +41,15 @@ export interface ValidationResult {
  * - Data sanitization
  */
 @Injectable()
-export class EnhancedValidationPipe implements PipeTransform<any> {
+export class EnhancedValidationPipe implements PipeTransform<unknown> {
   private readonly logger = new Logger(EnhancedValidationPipe.name);
 
   constructor(@Optional() private readonly auditLogService?: AuditLogService) {}
 
-  async transform(value: any, metadata: ArgumentMetadata): Promise<any> {
+  async transform(
+    value: unknown,
+    metadata: ArgumentMetadata,
+  ): Promise<unknown> {
     if (!value || typeof value !== 'object') {
       return value;
     }
@@ -55,7 +60,7 @@ export class EnhancedValidationPipe implements PipeTransform<any> {
     }
 
     // Transform plain object to class instance
-    const object = plainToClass(metatype, value);
+    const object = plainToClass(metatype, value) as unknown;
 
     // Perform comprehensive validation
     const validationResult = await this.validateComprehensive(object, metadata);
@@ -78,14 +83,15 @@ export class EnhancedValidationPipe implements PipeTransform<any> {
   }
 
   private async validateComprehensive(
-    object: any,
+    object: unknown,
     metadata: ArgumentMetadata,
   ): Promise<ValidationResult> {
+    const obj = object as Record<string, unknown>;
     const errors: ValidationError[] = [];
     const warnings: string[] = [];
 
     // 1. Standard class-validator validation
-    const classValidatorErrors = await validate(object, {
+    const classValidatorErrors = await validate(obj, {
       whitelist: true,
       forbidNonWhitelisted: true,
       forbidUnknownValues: true,
@@ -93,28 +99,22 @@ export class EnhancedValidationPipe implements PipeTransform<any> {
     errors.push(...classValidatorErrors);
 
     // 2. Domain-specific validation
-    const domainValidation = await this.validateDomainRules(object, metadata);
+    const domainValidation = await this.validateDomainRules(obj, metadata);
     errors.push(...domainValidation.errors);
     warnings.push(...domainValidation.warnings);
 
     // 3. Security validation
-    const securityValidation = await this.validateSecurityRules(
-      object,
-      metadata,
-    );
+    const securityValidation = await this.validateSecurityRules(obj, metadata);
     errors.push(...securityValidation.errors);
     warnings.push(...securityValidation.warnings);
 
     // 4. Business rule validation
-    const businessValidation = await this.validateBusinessRules(
-      object,
-      metadata,
-    );
+    const businessValidation = await this.validateBusinessRules(obj, metadata);
     errors.push(...businessValidation.errors);
     warnings.push(...businessValidation.warnings);
 
     // 5. Data sanitization
-    const sanitizedData = await this.sanitizeData(object, metadata);
+    const sanitizedData = await this.sanitizeData(obj, metadata);
 
     return {
       isValid: errors.length === 0,
@@ -125,9 +125,10 @@ export class EnhancedValidationPipe implements PipeTransform<any> {
   }
 
   private async validateDomainRules(
-    object: any,
+    object: unknown,
     metadata: ArgumentMetadata,
   ): Promise<ValidationResult> {
+    const obj = object as Record<string, unknown>;
     const errors: ValidationError[] = [];
     const warnings: string[] = [];
 
@@ -135,16 +136,16 @@ export class EnhancedValidationPipe implements PipeTransform<any> {
 
     switch (className) {
       case 'CreateWellDto':
-        await this.validateWellCreation(object, errors, warnings);
+        await this.validateWellCreation(obj, errors, warnings);
         break;
       case 'UpdateWellDto':
-        await this.validateWellUpdate(object, errors, warnings);
+        await this.validateWellUpdate(obj, errors, warnings);
         break;
       case 'CreateLeaseDto':
-        await this.validateLeaseCreation(object, errors, warnings);
+        await this.validateLeaseCreation(obj, errors, warnings);
         break;
       case 'CreateProductionDto':
-        await this.validateProductionData(object, errors, warnings);
+        await this.validateProductionData(obj, errors, warnings);
         break;
     }
 
@@ -152,14 +153,15 @@ export class EnhancedValidationPipe implements PipeTransform<any> {
       isValid: errors.length === 0,
       errors,
       warnings,
-      sanitizedData: object,
+      sanitizedData: obj as unknown,
     };
   }
 
   private async validateSecurityRules(
-    object: any,
-    metadata: ArgumentMetadata,
+    object: unknown,
+    _metadata: ArgumentMetadata,
   ): Promise<ValidationResult> {
+    const obj = object as Record<string, unknown>;
     const errors: ValidationError[] = [];
     const warnings: string[] = [];
 
@@ -170,7 +172,7 @@ export class EnhancedValidationPipe implements PipeTransform<any> {
       /('|(\\x27)|(\\x2D))/, // Quotes and dashes
     ];
 
-    const objectString = JSON.stringify(object);
+    const objectString = JSON.stringify(obj);
     sqlInjectionPatterns.forEach((pattern) => {
       if (pattern.test(objectString)) {
         warnings.push('Potential SQL injection pattern detected');
@@ -202,12 +204,13 @@ export class EnhancedValidationPipe implements PipeTransform<any> {
       'ssn',
       'creditCard',
     ];
-    sensitiveFields.forEach((field) => {
-      if (object[field]) {
+    /* eslint-disable security/detect-object-injection */
+    Object.keys(obj).forEach((key) => {
+      if (sensitiveFields.includes(key) && obj[key]) {
         errors.push({
-          target: object,
-          property: field,
-          value: object[field],
+          target: obj,
+          property: key,
+          value: obj[key],
           constraints: {
             sensitiveData:
               'Sensitive data should not be included in request body',
@@ -215,19 +218,21 @@ export class EnhancedValidationPipe implements PipeTransform<any> {
         } as ValidationError);
       }
     });
+    /* eslint-enable security/detect-object-injection */
 
-    return {
+    return Promise.resolve({
       isValid: errors.length === 0,
       errors,
       warnings,
-      sanitizedData: object,
-    };
+      sanitizedData: obj as unknown,
+    });
   }
 
   private async validateBusinessRules(
-    object: any,
+    object: unknown,
     metadata: ArgumentMetadata,
   ): Promise<ValidationResult> {
+    const obj = object as Record<string, unknown>;
     const errors: ValidationError[] = [];
     const warnings: string[] = [];
 
@@ -245,21 +250,22 @@ export class EnhancedValidationPipe implements PipeTransform<any> {
         break;
     }
 
-    return {
+    return Promise.resolve({
       isValid: errors.length === 0,
       errors,
       warnings,
-      sanitizedData: object,
-    };
+      sanitizedData: obj as unknown,
+    });
   }
 
   private async sanitizeData(
-    object: any,
-    metadata: ArgumentMetadata,
-  ): Promise<any> {
-    const sanitized = { ...object };
+    object: unknown,
+    _metadata: ArgumentMetadata,
+  ): Promise<unknown> {
+    const sanitized = { ...(object as Record<string, unknown>) };
 
     // Trim string fields
+    /* eslint-disable security/detect-object-injection */
     Object.keys(sanitized).forEach((key) => {
       if (typeof sanitized[key] === 'string') {
         sanitized[key] = sanitized[key].trim();
@@ -268,31 +274,40 @@ export class EnhancedValidationPipe implements PipeTransform<any> {
 
     // Sanitize HTML content if present
     const htmlFields = ['description', 'notes', 'comments'];
-    htmlFields.forEach((field) => {
-      if (sanitized[field] && typeof sanitized[field] === 'string') {
+    Object.keys(sanitized).forEach((key) => {
+      if (
+        htmlFields.includes(key) &&
+        sanitized[key] &&
+        typeof sanitized[key] === 'string'
+      ) {
         // Basic HTML sanitization - remove script tags, etc.
-        sanitized[field] = sanitized[field]
-          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-          .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+        sanitized[key] = sanitized[key]
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+          .replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '')
           .replace(/javascript:/gi, '');
       }
     });
+    /* eslint-enable security/detect-object-injection */
 
     // Normalize email addresses
     if (sanitized.email && typeof sanitized.email === 'string') {
       sanitized.email = sanitized.email.toLowerCase();
     }
 
-    return sanitized;
+    return Promise.resolve(sanitized as unknown);
   }
 
   private async validateWellCreation(
-    object: any,
+    object: Record<string, unknown>,
     errors: ValidationError[],
     warnings: string[],
   ): Promise<void> {
     // Validate API number format (14 digits)
-    if (object.apiNumber && !/^\d{14}$/.test(object.apiNumber)) {
+    if (
+      object.apiNumber &&
+      typeof object.apiNumber === 'string' &&
+      !/^\d{14}$/.test(object.apiNumber)
+    ) {
       errors.push({
         target: object,
         property: 'apiNumber',
@@ -304,9 +319,19 @@ export class EnhancedValidationPipe implements PipeTransform<any> {
     }
 
     // Validate coordinates are within reasonable bounds
-    if (object.location?.coordinates) {
-      const { latitude, longitude } = object.location.coordinates;
-      if (latitude < -90 || latitude > 90) {
+    if (
+      object.location &&
+      typeof object.location === 'object' &&
+      'coordinates' in object.location &&
+      typeof object.location.coordinates === 'object' &&
+      object.location.coordinates !== null
+    ) {
+      const coordinates = object.location.coordinates as {
+        latitude?: number;
+        longitude?: number;
+      };
+      const { latitude, longitude } = coordinates;
+      if (typeof latitude === 'number' && (latitude < -90 || latitude > 90)) {
         errors.push({
           target: object,
           property: 'location.coordinates.latitude',
@@ -316,7 +341,10 @@ export class EnhancedValidationPipe implements PipeTransform<any> {
           },
         } as ValidationError);
       }
-      if (longitude < -180 || longitude > 180) {
+      if (
+        typeof longitude === 'number' &&
+        (longitude < -180 || longitude > 180)
+      ) {
         errors.push({
           target: object,
           property: 'location.coordinates.longitude',
@@ -337,29 +365,43 @@ export class EnhancedValidationPipe implements PipeTransform<any> {
       'OBSERVATION',
       'DRY_HOLE',
     ];
-    if (object.wellType && !validWellTypes.includes(object.wellType)) {
+    if (
+      object.wellType &&
+      typeof object.wellType === 'string' &&
+      !validWellTypes.includes(object.wellType)
+    ) {
       warnings.push(
         `Well type '${object.wellType}' is not in the standard list`,
       );
     }
+    return Promise.resolve();
   }
 
   private async validateWellUpdate(
-    object: any,
-    errors: ValidationError[],
-    warnings: string[],
+    _object: Record<string, unknown>,
+    _errors: ValidationError[],
+    _warnings: string[],
   ): Promise<void> {
     // Similar validations but for updates
     // Could add additional rules for what can be updated
   }
 
   private async validateLeaseCreation(
-    object: any,
+    object: Record<string, unknown>,
     errors: ValidationError[],
-    warnings: string[],
+    _warnings: string[],
   ): Promise<void> {
     // Validate lease dates
-    if (object.effectiveDate && object.expirationDate) {
+    if (
+      object.effectiveDate &&
+      object.expirationDate &&
+      (typeof object.effectiveDate === 'string' ||
+        typeof object.effectiveDate === 'number' ||
+        object.effectiveDate instanceof Date) &&
+      (typeof object.expirationDate === 'string' ||
+        typeof object.expirationDate === 'number' ||
+        object.expirationDate instanceof Date)
+    ) {
       const effective = new Date(object.effectiveDate);
       const expiration = new Date(object.expirationDate);
 
@@ -376,7 +418,11 @@ export class EnhancedValidationPipe implements PipeTransform<any> {
     }
 
     // Validate royalty rate is reasonable (0-50%)
-    if (object.royaltyRate !== undefined) {
+    if (
+      object.royaltyRate !== undefined &&
+      object.royaltyRate !== null &&
+      typeof object.royaltyRate === 'number'
+    ) {
       if (object.royaltyRate < 0 || object.royaltyRate > 0.5) {
         errors.push({
           target: object,
@@ -388,15 +434,21 @@ export class EnhancedValidationPipe implements PipeTransform<any> {
         } as ValidationError);
       }
     }
+    return Promise.resolve();
   }
 
   private async validateProductionData(
-    object: any,
+    object: Record<string, unknown>,
     errors: ValidationError[],
     warnings: string[],
   ): Promise<void> {
     // Validate production date is not in the future
-    if (object.productionDate) {
+    if (
+      object.productionDate &&
+      (typeof object.productionDate === 'string' ||
+        typeof object.productionDate === 'number' ||
+        object.productionDate instanceof Date)
+    ) {
       const prodDate = new Date(object.productionDate);
       const now = new Date();
 
@@ -421,31 +473,42 @@ export class EnhancedValidationPipe implements PipeTransform<any> {
 
     // Validate volumes are reasonable
     const volumeFields = ['oilVolume', 'gasVolume', 'waterVolume'];
-    volumeFields.forEach((field) => {
-      if (object[field] !== undefined) {
-        if (object[field] < 0) {
+    /* eslint-disable security/detect-object-injection */
+    Object.keys(object).forEach((key) => {
+      if (
+        volumeFields.includes(key) &&
+        object[key] !== undefined &&
+        object[key] !== null &&
+        typeof object[key] === 'number'
+      ) {
+        const value = object[key];
+        if (value < 0) {
           errors.push({
             target: object,
-            property: field,
-            value: object[field],
+            property: key,
+            value: value,
             constraints: {
-              positiveVolume: `${field} cannot be negative`,
+              positiveVolume: `${key} cannot be negative`,
             },
           } as ValidationError);
         }
 
         // Warn for unusually high volumes
-        if (object[field] > 10000) {
-          warnings.push(`${field} seems unusually high: ${object[field]}`);
+        if (value > 10000) {
+          warnings.push(`${key} seems unusually high: ${value}`);
         }
       }
     });
+    /* eslint-enable security/detect-object-injection */
+    return Promise.resolve();
   }
 
-  private formatValidationErrors(errors: ValidationError[]): any[] {
+  private formatValidationErrors(
+    errors: ValidationError[],
+  ): Array<Record<string, unknown>> {
     return errors.map((error) => ({
       field: error.property,
-      value: error.value,
+      value: error.value as unknown,
       constraints: error.constraints,
       children: error.children?.map(
         (child) => this.formatValidationErrors([child])[0],
@@ -463,7 +526,7 @@ export class EnhancedValidationPipe implements PipeTransform<any> {
 
     if (!result.isValid) {
       await this.auditLogService.logAction(
-        'EXECUTE',
+        AuditAction.EXECUTE,
         AuditResourceType.SYSTEM,
         `validation-failed-${className}`,
         false,
@@ -479,7 +542,7 @@ export class EnhancedValidationPipe implements PipeTransform<any> {
       );
     } else if (result.warnings.length > 0) {
       await this.auditLogService.logAction(
-        'EXECUTE',
+        AuditAction.EXECUTE,
         AuditResourceType.SYSTEM,
         `validation-warnings-${className}`,
         true,
@@ -492,7 +555,8 @@ export class EnhancedValidationPipe implements PipeTransform<any> {
     }
   }
 
-  private isClass(metatype: any): boolean {
+  private isClass(metatype: unknown): boolean {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return metatype && typeof metatype === 'function' && metatype.prototype;
   }
 }

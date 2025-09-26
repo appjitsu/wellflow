@@ -1,5 +1,6 @@
 import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
+import { randomBytes } from 'crypto';
 import { AppConfigService } from '../../config/app.config';
 
 export interface SecurityHeadersConfig {
@@ -162,7 +163,7 @@ export class SecurityHeadersMiddleware implements NestMiddleware {
     res.setHeader('X-Request-ID', requestId);
 
     // Store request ID on request object for use in audit logging
-    (req as any).requestId = requestId;
+    (req as { requestId?: string }).requestId = requestId;
 
     // Request timestamp
     res.setHeader('X-Request-Timestamp', new Date().toISOString());
@@ -233,18 +234,18 @@ export class SecurityHeadersMiddleware implements NestMiddleware {
       'x-request-id',
     ];
 
-    const result: Record<string, string> = {};
+    const result = new Map<string, string>();
     relevantHeaders.forEach((header) => {
       const value = req.get(header);
       if (value) {
-        result[header] = value;
+        result.set(header, value);
       }
     });
 
-    return result;
+    return Object.fromEntries(result);
   }
 
   private generateRequestId(): string {
-    return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `req_${Date.now()}_${randomBytes(4).toString('hex')}`;
   }
 }

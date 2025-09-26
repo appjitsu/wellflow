@@ -35,8 +35,8 @@ export interface PerformanceAlert {
  */
 export interface IQueryPerformanceObserver {
   onQueryExecuted(metrics: QueryPerformanceMetrics): void;
-  onSlowQueryDetected(alert: PerformanceAlert): void;
-  onQueryError(metrics: QueryPerformanceMetrics): void;
+  onSlowQueryDetected(alert: PerformanceAlert): Promise<void>;
+  onQueryError(metrics: QueryPerformanceMetrics): Promise<void>;
 }
 
 /**
@@ -105,7 +105,7 @@ export class QueryPerformanceService {
    * Record query execution metrics
    * Main method for tracking query performance
    */
-  recordQueryExecution(metrics: QueryPerformanceMetrics): void {
+  async recordQueryExecution(metrics: QueryPerformanceMetrics): Promise<void> {
     // Store metrics for analysis
     const organizationKey = metrics.organizationId || 'global';
     if (!this.queryMetrics.has(organizationKey)) {
@@ -126,7 +126,7 @@ export class QueryPerformanceService {
     this.notifyQueryExecuted(metrics);
 
     // Check for performance issues
-    this.analyzeQueryPerformance(metrics);
+    await this.analyzeQueryPerformance(metrics);
 
     // Log performance data
     this.logQueryPerformance(metrics);
@@ -157,21 +157,21 @@ export class QueryPerformanceService {
         userId,
       };
 
-      this.recordQueryExecution(metrics);
+      void this.recordQueryExecution(metrics);
     };
   }
 
   /**
    * Record query error
    */
-  recordQueryError(
+  async recordQueryError(
     queryId: string,
     query: string,
     error: string,
     executionTime: number,
     organizationId?: string,
     userId?: string,
-  ): void {
+  ): Promise<void> {
     const metrics: QueryPerformanceMetrics = {
       queryId,
       query,
@@ -182,8 +182,8 @@ export class QueryPerformanceService {
       userId,
     };
 
-    this.recordQueryExecution(metrics);
-    this.notifyQueryError(metrics);
+    void this.recordQueryExecution(metrics);
+    await this.notifyQueryError(metrics);
   }
 
   /**
@@ -269,33 +269,37 @@ export class QueryPerformanceService {
   /**
    * Private method to notify observers of query errors
    */
-  private notifyQueryError(metrics: QueryPerformanceMetrics): void {
-    this.observers.forEach((observer) => {
-      try {
-        observer.onQueryError(metrics);
-      } catch (error) {
-        this.logger.error('Error notifying query error observer:', error);
-      }
-    });
+  private async notifyQueryError(
+    metrics: QueryPerformanceMetrics,
+  ): Promise<void> {
+    await Promise.allSettled(
+      this.observers.map((observer) =>
+        observer.onQueryError(metrics).catch((error) => {
+          this.logger.error('Error notifying query error observer:', error);
+        }),
+      ),
+    );
   }
 
   /**
    * Private method to notify observers of slow queries
    */
-  private notifySlowQuery(alert: PerformanceAlert): void {
-    this.observers.forEach((observer) => {
-      try {
-        observer.onSlowQueryDetected(alert);
-      } catch (error) {
-        this.logger.error('Error notifying slow query observer:', error);
-      }
-    });
+  private async notifySlowQuery(alert: PerformanceAlert): Promise<void> {
+    await Promise.allSettled(
+      this.observers.map((observer) =>
+        observer.onSlowQueryDetected(alert).catch((error) => {
+          this.logger.error('Error notifying slow query observer:', error);
+        }),
+      ),
+    );
   }
 
   /**
    * Analyze query performance and generate alerts
    */
-  private analyzeQueryPerformance(metrics: QueryPerformanceMetrics): void {
+  private async analyzeQueryPerformance(
+    metrics: QueryPerformanceMetrics,
+  ): Promise<void> {
     const { executionTime } = metrics;
 
     // Check for slow queries
@@ -309,7 +313,7 @@ export class QueryPerformanceService {
         threshold: this.performanceThresholds.slowQueryThreshold,
       };
 
-      this.notifySlowQuery(alert);
+      await this.notifySlowQuery(alert);
     }
 
     // Check for timeouts
@@ -322,7 +326,7 @@ export class QueryPerformanceService {
         threshold: this.performanceThresholds.timeoutThreshold,
       };
 
-      this.notifySlowQuery(alert);
+      await this.notifySlowQuery(alert);
     }
   }
 

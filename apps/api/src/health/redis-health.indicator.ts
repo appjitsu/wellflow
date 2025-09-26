@@ -25,11 +25,14 @@ export class RedisHealthIndicator extends HealthIndicator {
       const responseTime = Date.now() - startTime;
 
       // Parse version from info
-      const version = info.match(/redis_version:([^\r\n]+)/)?.[1] || 'unknown';
+      const versionMatch = /redis_version:([^\r\n]+)/.exec(info);
+      const version = versionMatch?.[1] || 'unknown';
 
       // Parse memory usage
-      const usedMemory = memory.match(/used_memory:([^\r\n]+)/)?.[1] || '0';
-      const maxMemory = memory.match(/maxmemory:([^\r\n]+)/)?.[1] || '0';
+      const usedMemoryMatch = /used_memory:([^\r\n]+)/.exec(memory);
+      const usedMemory = usedMemoryMatch?.[1] || '0';
+      const maxMemoryMatch = /maxmemory:([^\r\n]+)/.exec(memory);
+      const maxMemory = maxMemoryMatch?.[1] || '0';
 
       const memoryUsagePercent =
         maxMemory !== '0'
@@ -48,7 +51,7 @@ export class RedisHealthIndicator extends HealthIndicator {
       });
     } catch (error) {
       return this.getStatus(key, false, {
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown Redis error',
         status: 'disconnected',
       });
     }

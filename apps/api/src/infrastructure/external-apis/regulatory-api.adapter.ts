@@ -9,6 +9,8 @@ import { AuditLogService } from '../../application/services/audit-log.service';
  * Anti-Corruption Layer Interfaces
  * These define the contracts for translating between domain and external systems
  */
+const UNKNOWN_ERROR_MESSAGE = 'Unknown error';
+
 export interface IRegulatoryApiAdapter {
   submitReport(domainReport: RegulatoryReport): Promise<SubmissionResult>;
   getSubmissionStatus(externalReferenceId: string): Promise<SubmissionStatus>;
@@ -259,11 +261,11 @@ export class RegulatoryApiAdapter implements IRegulatoryApiAdapter {
         {
           reportId: domainReport.id,
           wellId: domainReport.wellId,
-          externalSubmissionId: result.submissionId,
+          externalSubmissionId: result.externalReferenceId,
           businessContext: {
             reportType: domainReport.reportType,
-            periodStart: domainReport.periodStart,
-            periodEnd: domainReport.periodEnd,
+            periodStart: domainReport.reportingPeriod.startDate,
+            periodEnd: domainReport.reportingPeriod.endDate,
           },
         },
       );
@@ -275,7 +277,7 @@ export class RegulatoryApiAdapter implements IRegulatoryApiAdapter {
     } catch (error) {
       const duration = Date.now() - startTime;
       const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
+        error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE;
 
       // Audit logging for failed external API call
       await this.auditLogService.logApiCall(
@@ -290,8 +292,8 @@ export class RegulatoryApiAdapter implements IRegulatoryApiAdapter {
           wellId: domainReport.wellId,
           businessContext: {
             reportType: domainReport.reportType,
-            periodStart: domainReport.periodStart,
-            periodEnd: domainReport.periodEnd,
+            periodStart: domainReport.reportingPeriod.startDate,
+            periodEnd: domainReport.reportingPeriod.endDate,
           },
         },
       );
@@ -321,7 +323,7 @@ export class RegulatoryApiAdapter implements IRegulatoryApiAdapter {
       }
 
       throw ErrorFactory.externalApi(
-        'Unknown error occurred',
+        UNKNOWN_ERROR_MESSAGE,
         this.SERVICE_NAME,
         'submit-report',
         { reportId: domainReport.id, wellId: domainReport.wellId },
@@ -359,7 +361,7 @@ export class RegulatoryApiAdapter implements IRegulatoryApiAdapter {
         error,
       );
       throw ErrorFactory.externalApi(
-        `Unable to retrieve submission status: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Unable to retrieve submission status: ${error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE}`,
         this.SERVICE_NAME,
         'get-submission-status',
       );
@@ -403,7 +405,7 @@ export class RegulatoryApiAdapter implements IRegulatoryApiAdapter {
       return {
         isValid: false,
         errors: [
-          `Validation service unavailable: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          `Validation service unavailable: ${error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE}`,
         ],
         warnings: [],
       };
@@ -522,7 +524,9 @@ export class RegulatoryApiAdapter implements IRegulatoryApiAdapter {
       message?: string;
     };
     const errorMessage =
-      errorObj?.response?.data?.message || errorObj?.message || 'Unknown error';
+      errorObj?.response?.data?.message ||
+      errorObj?.message ||
+      UNKNOWN_ERROR_MESSAGE;
     const statusCode = errorObj?.response?.status;
 
     // Map different error types

@@ -1,19 +1,12 @@
 import { applyDecorators } from '@nestjs/common';
-import {
-  ApiOperation,
-  ApiResponse,
-  ApiBody,
-  ApiParam,
-  ApiQuery,
-  ApiHeader,
-  getSchemaPath,
-  ApiExtraModels,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+
+const EXAMPLE_TIMESTAMP = '2024-01-01T12:00:00.000Z';
 
 export interface ApiExample {
   summary: string;
   description?: string;
-  value: any;
+  value: unknown;
 }
 
 export interface EnhancedApiOperationOptions {
@@ -22,7 +15,7 @@ export interface EnhancedApiOperationOptions {
   operationId?: string;
   tags?: string[];
   deprecated?: boolean;
-  security?: any[];
+  security?: Record<string, unknown>[];
   examples?: {
     request?: ApiExample[];
     response?: ApiExample[];
@@ -53,21 +46,28 @@ export function EnhancedApiOperation(options: EnhancedApiOperationOptions) {
   if (options.examples?.request) {
     decorators.push(
       ApiBody({
-        examples: options.examples.request.reduce((acc, example, index) => {
-          acc[`example-${index + 1}`] = {
-            summary: example.summary,
-            description: example.description,
-            value: example.value,
-          };
-          return acc;
-        }, {} as any),
+        schema: { type: 'object' },
+        examples: options.examples.request.reduce(
+          (acc, example, index) => {
+            acc[`example-${index + 1}`] = {
+              summary: example.summary,
+              description: example.description,
+              value: example.value,
+            };
+            return acc;
+          },
+          {} as Record<
+            string,
+            { summary: string; description?: string; value: unknown }
+          >,
+        ),
       }),
     );
   }
 
   // Response examples
   if (options.examples?.response) {
-    options.examples.response.forEach((example, index) => {
+    options.examples.response.forEach((example, _index) => {
       decorators.push(
         ApiResponse({
           status: 200,
@@ -85,7 +85,7 @@ export function EnhancedApiOperation(options: EnhancedApiOperationOptions) {
   // Error examples
   if (options.errorExamples) {
     Object.entries(options.errorExamples).forEach(([statusCode, examples]) => {
-      examples.forEach((example, index) => {
+      examples.forEach((example, _index) => {
         decorators.push(
           ApiResponse({
             status: parseInt(statusCode),
@@ -114,7 +114,7 @@ export const CommonApiExamples = {
       success: true,
       message: 'Operation completed successfully',
       data: {},
-      timestamp: '2024-01-01T12:00:00.000Z',
+      timestamp: EXAMPLE_TIMESTAMP,
     },
   },
 
@@ -212,10 +212,10 @@ export const WellApiExamples = {
         name: 'Well #1 - North Field',
         apiNumber: '42123456789000',
         status: 'ACTIVE',
-        createdAt: '2024-01-01T12:00:00.000Z',
-        updatedAt: '2024-01-01T12:00:00.000Z',
+        createdAt: EXAMPLE_TIMESTAMP,
+        updatedAt: EXAMPLE_TIMESTAMP,
       },
-      timestamp: '2024-01-01T12:00:00.000Z',
+      timestamp: EXAMPLE_TIMESTAMP,
     },
   },
 
@@ -270,7 +270,7 @@ export const PaginationExamples = {
         hasNextPage: true,
         hasPrevPage: false,
       },
-      timestamp: '2024-01-01T12:00:00.000Z',
+      timestamp: EXAMPLE_TIMESTAMP,
     },
   },
 
@@ -298,8 +298,8 @@ export const AuditLogExamples = {
       action: 'CREATE',
       resourceType: 'WELL',
       resourceId: 'well-101',
-      timestamp: '2024-01-01T12:00:00.000Z',
-      ipAddress: '192.168.1.100',
+      timestamp: EXAMPLE_TIMESTAMP,
+      ipAddress: '203.0.113.100', // RFC 5737 documentation IP
       userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       success: true,
       endpoint: '/api/v2/wells',
@@ -317,7 +317,7 @@ export const HealthCheckExamples = {
     summary: 'All systems healthy',
     value: {
       status: 'healthy',
-      timestamp: '2024-01-01T12:00:00.000Z',
+      timestamp: EXAMPLE_TIMESTAMP,
       uptime: 86400000, // 24 hours in ms
       version: '2.0.0',
       checks: {
@@ -353,7 +353,7 @@ export const HealthCheckExamples = {
     summary: 'Some systems unhealthy',
     value: {
       status: 'unhealthy',
-      timestamp: '2024-01-01T12:00:00.000Z',
+      timestamp: EXAMPLE_TIMESTAMP,
       uptime: 3600000, // 1 hour in ms
       version: '2.0.0',
       checks: {

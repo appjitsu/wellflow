@@ -17,6 +17,14 @@ export { cashCalls } from './cash-calls';
 export { complianceReports } from './compliance-reports';
 export { jibStatements } from './jib-statements';
 
+// Regulatory compliance entities
+export { permits, permitRenewals } from './permits';
+export { hseIncidents, incidentResponses } from './hse-incidents';
+export {
+  environmentalMonitoring,
+  wasteManagement,
+} from './environmental-monitoring';
+
 // Document and equipment entities
 export { documents } from './documents';
 export { equipment } from './equipment';
@@ -81,6 +89,7 @@ export { spillReports } from './spill-reports';
 
 // Regulatory compliance
 export { regulatoryFilings } from './regulatory-filings';
+export { regulatoryReports } from './regulatory-reports';
 export { complianceSchedules } from './compliance-schedules';
 
 // Messaging / Outbox

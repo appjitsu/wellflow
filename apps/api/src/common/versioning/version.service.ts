@@ -79,8 +79,11 @@ export class VersionService {
    */
   getDefaultVersion(): ApiVersion {
     return (
-      Array.from(this.versions.values()).find((v) => v.isDefault) ||
-      this.versions.get('v1')!
+      Array.from(this.versions.values()).find((v) => v.isDefault) ??
+      this.versions.get('v1') ??
+      (() => {
+        throw new Error('Default version not found');
+      })()
     );
   }
 
@@ -174,7 +177,7 @@ export class VersionService {
   /**
    * Get version-specific features
    */
-  getVersionFeatures(version: string): Record<string, any> {
+  getVersionFeatures(version: string): Record<string, unknown> {
     const versionInfo = this.versions.get(version);
     if (!versionInfo) return {};
 

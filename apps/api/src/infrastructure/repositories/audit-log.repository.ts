@@ -9,8 +9,8 @@ import {
   asc,
   sql,
   count,
-  or,
   like,
+  SQL,
 } from 'drizzle-orm';
 import * as schema from '../../database/schema';
 import {
@@ -23,6 +23,7 @@ import {
   AuditLog,
   AuditAction,
   AuditResourceType,
+  AuditMetadata,
 } from '../../domain/entities/audit-log.entity';
 import { auditLogs } from '../../database/schemas/audit-logs';
 
@@ -35,7 +36,7 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
 
   async save(auditLog: AuditLog): Promise<void> {
     const data = {
-      id: auditLog.getId(),
+      id: auditLog.getId().getValue(),
       userId: auditLog.getUserId(),
       organizationId: auditLog.getOrganizationId(),
       action: auditLog.getAction(),
@@ -69,7 +70,7 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
     if (auditLogs.length === 0) return;
 
     const data = auditLogs.map((log) => ({
-      id: log.getId(),
+      id: log.getId().getValue(),
       userId: log.getUserId(),
       organizationId: log.getOrganizationId(),
       action: log.getAction(),
@@ -119,7 +120,7 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
     const conditions = [eq(auditLogs.userId, userId)];
 
     const orderBy =
-      sortOrder === 'desc' ? desc(auditLogs[sortBy]) : asc(auditLogs[sortBy]);
+      sortOrder === 'desc' ? desc(auditLogs[sortBy]) : asc(auditLogs[sortBy]); // eslint-disable-line security/detect-object-injection
 
     const offset = (page - 1) * limit;
 
@@ -137,10 +138,10 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
         .where(and(...conditions)),
     ]);
 
-    const total = totalResult[0].count;
+    const total = totalResult[0]?.count ?? 0;
 
     return {
-      logs: logs.map(this.mapToEntity),
+      logs: logs.map((log) => this.mapToEntity(log)),
       total,
       page,
       limit,
@@ -163,7 +164,7 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
     const conditions = [eq(auditLogs.organizationId, organizationId)];
 
     const orderBy =
-      sortOrder === 'desc' ? desc(auditLogs[sortBy]) : asc(auditLogs[sortBy]);
+      sortOrder === 'desc' ? desc(auditLogs[sortBy]) : asc(auditLogs[sortBy]); // eslint-disable-line security/detect-object-injection
 
     const offset = (page - 1) * limit;
 
@@ -181,10 +182,10 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
         .where(and(...conditions)),
     ]);
 
-    const total = totalResult[0].count;
+    const total = totalResult[0]?.count ?? 0;
 
     return {
-      logs: logs.map(this.mapToEntity),
+      logs: logs.map((log) => this.mapToEntity(log)),
       total,
       page,
       limit,
@@ -211,7 +212,7 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
     ];
 
     const orderBy =
-      sortOrder === 'desc' ? desc(auditLogs[sortBy]) : asc(auditLogs[sortBy]);
+      sortOrder === 'desc' ? desc(auditLogs[sortBy]) : asc(auditLogs[sortBy]); // eslint-disable-line security/detect-object-injection
 
     const offset = (page - 1) * limit;
 
@@ -229,10 +230,10 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
         .where(and(...conditions)),
     ]);
 
-    const total = totalResult[0].count;
+    const total = totalResult[0]?.count ?? 0;
 
     return {
-      logs: logs.map(this.mapToEntity),
+      logs: logs.map((log) => this.mapToEntity(log)),
       total,
       page,
       limit,
@@ -241,17 +242,7 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
     };
   }
 
-  async search(
-    filters: AuditLogFilters,
-    pagination: AuditLogPagination = {},
-  ): Promise<AuditLogSearchResult> {
-    const {
-      page = 1,
-      limit = 50,
-      sortBy = 'timestamp',
-      sortOrder = 'desc',
-    } = pagination;
-
+  private buildSearchConditions(filters: AuditLogFilters): SQL[] {
     const conditions = [];
 
     if (filters.userId) conditions.push(eq(auditLogs.userId, filters.userId));
@@ -276,10 +267,25 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
     if (filters.endDate)
       conditions.push(lte(auditLogs.timestamp, filters.endDate));
 
+    return conditions;
+  }
+
+  async search(
+    filters: AuditLogFilters,
+    pagination: AuditLogPagination = {},
+  ): Promise<AuditLogSearchResult> {
+    const {
+      page = 1,
+      limit = 50,
+      sortBy = 'timestamp',
+      sortOrder = 'desc',
+    } = pagination;
+
+    const conditions = this.buildSearchConditions(filters);
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     const orderBy =
-      sortOrder === 'desc' ? desc(auditLogs[sortBy]) : asc(auditLogs[sortBy]);
+      sortOrder === 'desc' ? desc(auditLogs[sortBy]) : asc(auditLogs[sortBy]); // eslint-disable-line security/detect-object-injection
 
     const offset = (page - 1) * limit;
 
@@ -294,10 +300,10 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
       this.db.select({ count: count() }).from(auditLogs).where(whereClause),
     ]);
 
-    const total = totalResult[0].count;
+    const total = totalResult[0]?.count ?? 0;
 
     return {
-      logs: logs.map(this.mapToEntity),
+      logs: logs.map((log) => this.mapToEntity(log)),
       total,
       page,
       limit,
@@ -384,7 +390,7 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
         .limit(50),
     ]);
 
-    const stats = statsResult[0];
+    const stats = statsResult[0] || { total: 0, successful: 0, failed: 0 };
 
     // Convert arrays to records
     const actionsByType = actionsResult.reduce(
@@ -403,10 +409,12 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
       {} as Record<AuditResourceType, number>,
     );
 
-    const topUsers = usersResult.map((row) => ({
-      userId: row.userId!,
-      count: row.count,
-    }));
+    const topUsers = usersResult
+      .filter((row) => row.userId != null)
+      .map((row) => ({
+        userId: row.userId as string,
+        count: row.count,
+      }));
 
     return {
       totalLogs: stats.total,
@@ -415,7 +423,7 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
       actionsByType,
       resourcesByType,
       topUsers,
-      recentActivity: recentResult.map(this.mapToEntity),
+      recentActivity: recentResult.map((log) => this.mapToEntity(log)),
     };
   }
 
@@ -427,7 +435,7 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
       .from(auditLogs)
       .where(lte(auditLogs.timestamp, olderThan));
 
-    return result[0].count;
+    return result[0]?.count ?? 0;
   }
 
   async deleteLogs(olderThan: Date): Promise<number> {
@@ -438,26 +446,33 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
     return result.rowCount || 0;
   }
 
-  private mapToEntity(row: any): AuditLog {
+  private mapToEntity(row: unknown): AuditLog {
+    const auditRow = row as Record<string, unknown>;
     return new AuditLog(
-      row.id,
-      row.userId,
-      row.organizationId,
-      row.action as AuditAction,
-      row.resourceType as AuditResourceType,
-      row.resourceId,
-      row.timestamp,
-      row.ipAddress,
-      row.userAgent,
-      row.oldValues ? JSON.parse(row.oldValues) : null,
-      row.newValues ? JSON.parse(row.newValues) : null,
-      row.success,
-      row.errorMessage,
-      row.metadata ? JSON.parse(row.metadata) : null,
-      row.requestId,
-      row.endpoint,
-      row.method,
-      row.duration ? parseInt(row.duration) : null,
+      auditRow.id as string,
+      auditRow.userId as string | null,
+      auditRow.organizationId as string | null,
+      auditRow.action as AuditAction,
+      auditRow.resourceType as AuditResourceType,
+      auditRow.resourceId as string | null,
+      auditRow.timestamp as Date,
+      auditRow.ipAddress as string | null,
+      auditRow.userAgent as string | null,
+      auditRow.oldValues
+        ? (JSON.parse(auditRow.oldValues as string) as Record<string, unknown>)
+        : null,
+      auditRow.newValues
+        ? (JSON.parse(auditRow.newValues as string) as Record<string, unknown>)
+        : null,
+      auditRow.success as boolean,
+      auditRow.errorMessage as string | null,
+      auditRow.metadata
+        ? (JSON.parse(auditRow.metadata as string) as AuditMetadata)
+        : null,
+      auditRow.requestId as string | null,
+      auditRow.endpoint as string | null,
+      auditRow.method as string | null,
+      auditRow.duration ? parseInt(auditRow.duration as string) : null,
     );
   }
 }

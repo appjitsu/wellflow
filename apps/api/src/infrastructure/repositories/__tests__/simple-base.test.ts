@@ -1,11 +1,16 @@
 import { BaseRepository } from '../base.repository';
 import { organizations } from '../../../database/schema';
+import { AuditResourceType } from '../../../domain/entities/audit-log.entity';
 
 // Create a test repository class that bypasses NestJS dependency injection
 class TestRepository extends BaseRepository<typeof organizations> {
   constructor(db: unknown) {
     // Bypass the @Inject decorator by calling the parent constructor directly
     super(db as never, organizations);
+  }
+
+  protected getResourceType(): AuditResourceType {
+    return AuditResourceType.ORGANIZATION;
   }
 }
 

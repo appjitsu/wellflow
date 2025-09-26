@@ -1,5 +1,6 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { sql } from 'drizzle-orm';
 import * as schema from '../../database/schema';
 
 export interface QueryMetrics {
@@ -22,7 +23,7 @@ export interface SlowQueryAlert {
     userId?: string;
     applicationName?: string;
     clientAddress?: string;
-    queryPlan?: any;
+    queryPlan?: unknown;
   };
 }
 
@@ -218,10 +219,11 @@ export class DatabasePerformanceService {
     >();
     slowQueries.forEach((metric) => {
       const pattern = this.extractQueryPattern(metric.query);
-      if (!queryGroups.has(pattern)) {
-        queryGroups.set(pattern, { totalTime: 0, count: 0, queries: [] });
+      let group = queryGroups.get(pattern);
+      if (!group) {
+        group = { totalTime: 0, count: 0, queries: [] };
+        queryGroups.set(pattern, group);
       }
-      const group = queryGroups.get(pattern)!;
       group.totalTime += metric.executionTime;
       group.count++;
       group.queries.push(metric.query);
@@ -240,11 +242,18 @@ export class DatabasePerformanceService {
       totalQueries: recentMetrics.length,
       averageExecutionTime:
         executionTimes.reduce((a, b) => a + b, 0) / executionTimes.length,
-      medianExecutionTime: executionTimes[medianIndex],
+      // eslint-disable-next-line security/detect-object-injection
+      medianExecutionTime: executionTimes[medianIndex] ?? 0,
       p95ExecutionTime:
-        executionTimes[p95Index] || executionTimes[executionTimes.length - 1],
+        // eslint-disable-next-line security/detect-object-injection
+        executionTimes[p95Index] ??
+        executionTimes[executionTimes.length - 1] ??
+        0,
       p99ExecutionTime:
-        executionTimes[p99Index] || executionTimes[executionTimes.length - 1],
+        // eslint-disable-next-line security/detect-object-injection
+        executionTimes[p99Index] ??
+        executionTimes[executionTimes.length - 1] ??
+        0,
       slowQueriesCount: slowQueries.length,
       topSlowQueries,
     };
@@ -272,22 +281,13 @@ export class DatabasePerformanceService {
       relation: string;
     }>;
   }> {
-    try {
-      // This would query pg_locks, pg_stat_activity, etc.
-      // For now, return mock data structure
-      return {
-        activeLocks: 0,
-        blockedQueries: 0,
-        lockWaiters: [],
-      };
-    } catch (error) {
-      this.logger.error('Failed to get lock information:', error);
-      return {
-        activeLocks: 0,
-        blockedQueries: 0,
-        lockWaiters: [],
-      };
-    }
+    // This would query pg_locks, pg_stat_activity, etc.
+    // For now, return mock data structure
+    return Promise.resolve({
+      activeLocks: 0,
+      blockedQueries: 0,
+      lockWaiters: [],
+    });
   }
 
   private async handleSlowQuery(queryMetric: QueryMetrics): Promise<void> {
@@ -305,6 +305,7 @@ export class DatabasePerformanceService {
     // 2. Log to external monitoring service
     // 3. Trigger query optimization suggestions
     // 4. Collect query execution plans for analysis
+    return Promise.resolve();
   }
 
   private async getConnectionStats(): Promise<{
@@ -313,26 +314,25 @@ export class DatabasePerformanceService {
     connectionUtilization: number;
   }> {
     try {
-      const result = await this.db.execute({
-        sql: `
+      const result = await this.db.execute(sql`
           SELECT
             count(*) as active_connections,
             (SELECT setting FROM pg_settings WHERE name = 'max_connections') as max_connections
           FROM pg_stat_activity
           WHERE state = 'active'
-        `,
-        args: [],
-      });
+        `);
 
-      const activeConnections =
+      const row =
         Array.isArray(result) && result[0]
-          ? parseInt((result[0] as any).active_connections) || 0
-          : 0;
+          ? (result[0] as {
+              active_connections: string;
+              max_connections: string;
+            })
+          : null;
 
-      const maxConnections =
-        Array.isArray(result) && result[0]
-          ? parseInt((result[0] as any).max_connections) || 100
-          : 100;
+      const activeConnections = row ? parseInt(row.active_connections) || 0 : 0;
+
+      const maxConnections = row ? parseInt(row.max_connections) || 100 : 100;
 
       return {
         activeConnections,
@@ -356,20 +356,19 @@ export class DatabasePerformanceService {
   }> {
     try {
       // Query pg_stat_database for cache statistics
-      const result = await this.db.execute({
-        sql: `
+      const result = await this.db.execute(sql`
           SELECT
             blks_hit::float / (blks_hit + blks_read) * 100 as cache_hit_ratio
           FROM pg_stat_database
           WHERE datname = current_database()
-        `,
-        args: [],
-      });
+        `);
 
-      const cacheHitRatio =
+      const row =
         Array.isArray(result) && result[0]
-          ? parseFloat((result[0] as any).cache_hit_ratio) || 0
-          : 0;
+          ? (result[0] as { cache_hit_ratio: string })
+          : null;
+
+      const cacheHitRatio = row ? parseFloat(row.cache_hit_ratio) || 0 : 0;
 
       return {
         cacheHitRatio,
@@ -386,10 +385,10 @@ export class DatabasePerformanceService {
     }
   }
 
-  private getQueryStats(): {
+  private async getQueryStats(): Promise<{
     averageQueryTime: number;
     slowQueriesCount: number;
-  } {
+  }> {
     const recentMetrics = this.queryMetrics.filter(
       (m) => m.timestamp > new Date(Date.now() - 60 * 60 * 1000), // Last hour
     );
@@ -404,16 +403,16 @@ export class DatabasePerformanceService {
       (m) => m.executionTime > this.slowQueryThreshold,
     ).length;
 
-    return {
+    return Promise.resolve({
       averageQueryTime,
       slowQueriesCount,
-    };
+    });
   }
 
   private sanitizeQuery(query: string): string {
     // Remove actual values from parameterized queries for privacy
     return query
-      .replace(/\$[0-9]+/g, '?') // Replace parameter placeholders
+      .replace(/\$\d+/g, '?') // Replace parameter placeholders
       .replace(/\s+/g, ' ') // Normalize whitespace
       .trim();
   }

@@ -1,10 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   IQueryPerformanceObserver,
   QueryPerformanceMetrics,
   PerformanceAlert,
 } from './query-performance.service';
+import { AlertService } from './alert.service';
 
 /**
  * Performance Alert Observer
@@ -37,7 +38,11 @@ export class PerformanceAlertObserver implements IQueryPerformanceObserver {
     cooldownMinutes: 5,
   };
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    @Inject(forwardRef(() => AlertService))
+    private readonly alertService: AlertService,
+  ) {
     // Override rate limits from configuration
     this.alertRateLimit.maxAlertsPerMinute = this.configService.get<number>(
       'ALERT_RATE_LIMIT_PER_MINUTE',
@@ -74,7 +79,7 @@ export class PerformanceAlertObserver implements IQueryPerformanceObserver {
    * Handle slow query detection
    * Implements rate limiting to prevent alert spam
    */
-  onSlowQueryDetected(alert: PerformanceAlert): void {
+  async onSlowQueryDetected(alert: PerformanceAlert): Promise<void> {
     const alertKey = this.generateAlertKey(alert);
 
     // Check rate limiting
@@ -89,14 +94,14 @@ export class PerformanceAlertObserver implements IQueryPerformanceObserver {
     this.logAlert(alert);
 
     // Send notifications based on severity
-    this.sendNotifications(alert);
+    await this.sendNotifications(alert);
   }
 
   /**
    * Handle query errors
    * Always logs errors regardless of rate limiting
    */
-  onQueryError(metrics: QueryPerformanceMetrics): void {
+  async onQueryError(metrics: QueryPerformanceMetrics): Promise<void> {
     this.logger.error(
       `Query error: ${metrics.queryId} failed after ${metrics.executionTime}ms`,
       {
@@ -117,7 +122,7 @@ export class PerformanceAlertObserver implements IQueryPerformanceObserver {
       threshold: 0,
     };
 
-    this.sendNotifications(errorAlert);
+    await this.sendNotifications(errorAlert);
   }
 
   /**
@@ -208,28 +213,35 @@ export class PerformanceAlertObserver implements IQueryPerformanceObserver {
 
   /**
    * Send notifications based on alert severity
-   * In a real implementation, this would integrate with notification services
    */
-  private sendNotifications(alert: PerformanceAlert): void {
-    const { severity, type } = alert;
+  private async sendNotifications(alert: PerformanceAlert): Promise<void> {
+    const { severity, type, message, metrics } = alert;
 
-    // For now, just log the notification intent
-    // In production, this would integrate with:
-    // - Email notifications (Resend)
-    // - SMS alerts (Twilio) for critical issues
-    // - Slack/Teams webhooks
-    // - PagerDuty for critical production issues
+    try {
+      // Create alert using AlertService
+      await this.alertService.createAlert({
+        type: 'PERFORMANCE',
+        severity: severity,
+        title: `${severity} ${type} Alert`,
+        message,
+        metadata: {
+          queryId: metrics.queryId,
+          executionTime: metrics.executionTime,
+          organizationId: metrics.organizationId,
+          userId: metrics.userId,
+          query: this.sanitizeQuery(metrics.query),
+        },
+      });
 
-    if (severity === 'CRITICAL') {
-      this.logger.error(
-        `📱 Would send CRITICAL notification for ${type} alert`,
-        { alert },
-      );
-    } else if (severity === 'HIGH') {
-      this.logger.warn(
-        `📧 Would send HIGH priority notification for ${type} alert`,
-        { alert },
-      );
+      this.logger.log(`Alert sent via AlertService: ${severity} ${type}`);
+    } catch (error) {
+      this.logger.error(`Failed to send alert via AlertService:`, error);
+      // Fallback to logging
+      if (severity === 'CRITICAL') {
+        this.logger.error(`🚨 CRITICAL ALERT: ${message}`, { alert });
+      } else if (severity === 'HIGH') {
+        this.logger.warn(`⚠️ HIGH ALERT: ${message}`, { alert });
+      }
     }
 
     // Log performance metrics for monitoring dashboards

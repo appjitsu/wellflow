@@ -17,10 +17,11 @@ import {
 import { JwtAuthGuard } from '../../presentation/guards/jwt-auth.guard';
 import { AbilitiesGuard } from '../../authorization/abilities.guard';
 import { CheckAbilities } from '../../authorization/abilities.decorator';
-import { Action } from '../../authorization/action.enum';
+import { Actions } from '../../authorization/abilities.factory';
 import {
   EnhancedRateLimiterService,
   UserTier,
+  RateLimitConfig,
 } from './enhanced-rate-limiter.service';
 
 @ApiTags('Rate Limiting')
@@ -33,7 +34,7 @@ export class RateLimitingController {
   @Get('config')
   @ApiOperation({ summary: 'Get rate limiting configuration' })
   @ApiResponse({ status: 200, description: 'Rate limiting configuration' })
-  @CheckAbilities({ action: Action.Read, subject: 'System' })
+  @CheckAbilities({ action: 'read' as Actions, subject: 'all' })
   getConfiguration() {
     return {
       tiers: this.rateLimiter.getAllTierConfigs(),
@@ -44,7 +45,7 @@ export class RateLimitingController {
   @Get('status/:userId')
   @ApiOperation({ summary: 'Get rate limit status for a user' })
   @ApiResponse({ status: 200, description: 'User rate limit status' })
-  @CheckAbilities({ action: Action.Read, subject: 'System' })
+  @CheckAbilities({ action: 'read' as Actions, subject: 'all' })
   async getUserStatus(
     @Param('userId') userId: string,
     @Body() body: { tier: UserTier },
@@ -63,7 +64,7 @@ export class RateLimitingController {
   @Post('reset/:userId')
   @ApiOperation({ summary: 'Reset rate limits for a user' })
   @ApiResponse({ status: 200, description: 'Rate limits reset successfully' })
-  @CheckAbilities({ action: Action.Manage, subject: 'System' })
+  @CheckAbilities({ action: 'manage' as Actions, subject: 'all' })
   async resetUserLimits(@Param('userId') userId: string) {
     await this.rateLimiter.resetUserLimits(userId);
 
@@ -80,8 +81,10 @@ export class RateLimitingController {
     status: 200,
     description: 'Configuration updated successfully',
   })
-  @CheckAbilities({ action: Action.Manage, subject: 'System' })
-  updateConfiguration(@Body() updates: { tier: UserTier; config: any }) {
+  @CheckAbilities({ action: 'manage' as Actions, subject: 'all' })
+  updateConfiguration(
+    @Body() updates: { tier: UserTier; config: Partial<RateLimitConfig> },
+  ) {
     const { tier, config } = updates;
 
     try {
@@ -95,7 +98,7 @@ export class RateLimitingController {
       };
     } catch (error) {
       throw new HttpException(
-        `Failed to update configuration: ${error.message}`,
+        `Failed to update configuration: ${error instanceof Error ? error.message : 'Unknown error'}`,
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -104,15 +107,15 @@ export class RateLimitingController {
   @Get('blocked-requests/:userId')
   @ApiOperation({ summary: 'Get blocked requests for a user' })
   @ApiResponse({ status: 200, description: 'Blocked requests list' })
-  @CheckAbilities({ action: Action.Read, subject: 'System' })
+  @CheckAbilities({ action: 'read' as Actions, subject: 'all' })
   async getBlockedRequests(@Param('userId') userId: string) {
     // This would need to be implemented in the service
     // For now, return placeholder
-    return {
+    return Promise.resolve({
       userId,
       blockedRequests: [],
       message: 'Blocked requests tracking not yet implemented',
       timestamp: new Date().toISOString(),
-    };
+    });
   }
 }

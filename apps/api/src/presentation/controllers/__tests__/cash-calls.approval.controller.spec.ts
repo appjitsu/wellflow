@@ -29,7 +29,7 @@ describe('CashCallsController approval', () => {
   });
 
   it('approves a cash call', async () => {
-    const res = await controller.approve('id-1');
+    const res = await controller.approve('id-1', 'org-1');
     expect(res.id).toBe('approved-id');
     expect(commandBus.execute).toHaveBeenCalled();
   });
