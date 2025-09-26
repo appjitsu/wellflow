@@ -205,7 +205,7 @@ export class SecurityHeadersMiddleware implements NestMiddleware {
     const suspiciousPatterns = [
       /\b(sqlmap|nmap|nikto|dirbuster|owasp|acunetix)\b/i,
       /\b(union.*select|script.*alert|javascript:)\b/i,
-      /\b(\.\./|\.\.\\)\b/, // Directory traversal
+      /\.\.\//, // Directory traversal (forward slashes)
     ];
 
     return suspiciousPatterns.some(pattern => pattern.test(userAgent) || pattern.test(req.url));
