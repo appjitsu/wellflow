@@ -28,7 +28,6 @@ describe('Database Schema Tests', () => {
     // The database and migrations are already set up by the global setup
     // Just verify the connection works
     await _db.select().from(schema.organizations).limit(1);
-    console.log(`🔧 Connected to test database: ${testDbConfig.database}`);
   });
 
   afterAll(async () => {

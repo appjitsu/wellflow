@@ -1,5 +1,13 @@
-import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { CheckAbilities } from '../../authorization/abilities.decorator';
 import { CreateCashCallDto } from '../dtos/create-cash-call.dto';
@@ -10,6 +18,8 @@ import { ApproveCashCallCommand } from '../../application/commands/approve-cash-
 import { RecordCashCallConsentCommand } from '../../application/commands/record-cash-call-consent.command';
 import type { CashCallProps } from '../../domain/entities/cash-call.entity';
 import { CurrentOrganization } from '../decorators/current-organization.decorator';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { AbilitiesGuard } from '../../authorization/abilities.guard';
 
 function assertValidCashCallPayload(
   value: unknown,
@@ -34,7 +44,9 @@ function assertValidCashCallPayload(
 }
 
 @ApiTags('CashCalls')
+@ApiBearerAuth()
 @Controller('cash-calls')
+@UseGuards(JwtAuthGuard, AbilitiesGuard)
 export class CashCallsController {
   constructor(
     private readonly commandBus: CommandBus,

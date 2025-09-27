@@ -288,7 +288,6 @@ describe('ThrottlerGuard', () => {
   describe('Error Handling', () => {
     it('should handle storage errors gracefully', () => {
       const handleStorageError = (error: Error) => {
-        console.error('Rate limit storage error:', error);
         // Fail open - allow request when storage fails
         return true;
       };

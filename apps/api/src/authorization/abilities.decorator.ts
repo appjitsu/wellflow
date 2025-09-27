@@ -21,6 +21,8 @@ export interface RequiredRule {
     | 'JibStatement'
     | 'AuditLog'
     | 'Vendor'
+    | 'Financial'
+    | 'WellTest'
     | 'all';
 }
 
@@ -223,3 +225,56 @@ export const CanExportVendors = () =>
 
 export const CanAuditVendors = () =>
   CheckAbilities({ action: 'audit', subject: 'Vendor' });
+
+// Financial permissions
+export const CanCreateOwnerPayment = () =>
+  CheckAbilities({ action: 'create', subject: 'OwnerPayment' });
+
+export const CanReadOwnerPayment = () =>
+  CheckAbilities({ action: 'read', subject: 'OwnerPayment' });
+
+export const CanUpdateOwnerPayment = () =>
+  CheckAbilities({ action: 'update', subject: 'OwnerPayment' });
+
+export const CanDeleteOwnerPayment = () =>
+  CheckAbilities({ action: 'delete', subject: 'OwnerPayment' });
+
+export const CanCreateCashCall = () =>
+  CheckAbilities({ action: 'create', subject: 'CashCall' });
+
+export const CanReadCashCall = () =>
+  CheckAbilities({ action: 'read', subject: 'CashCall' });
+
+export const CanUpdateCashCall = () =>
+  CheckAbilities({ action: 'update', subject: 'CashCall' });
+
+export const CanDeleteCashCall = () =>
+  CheckAbilities({ action: 'delete', subject: 'CashCall' });
+
+export const CanApproveCashCall = () =>
+  CheckAbilities({ action: 'approve', subject: 'CashCall' });
+
+export const CanReadFinancial = () =>
+  CheckAbilities({ action: 'read', subject: 'Financial' });
+
+export const CanCreateFinancial = () =>
+  CheckAbilities({ action: 'create', subject: 'Financial' });
+
+export const CanUpdateFinancial = () =>
+  CheckAbilities({ action: 'update', subject: 'Financial' });
+
+export const CanDeleteFinancial = () =>
+  CheckAbilities({ action: 'delete', subject: 'Financial' });
+
+// Well Test permissions
+export const CanCreateWellTest = () =>
+  CheckAbilities({ action: 'create', subject: 'WellTest' });
+
+export const CanReadWellTest = () =>
+  CheckAbilities({ action: 'read', subject: 'WellTest' });
+
+export const CanUpdateWellTest = () =>
+  CheckAbilities({ action: 'update', subject: 'WellTest' });
+
+export const CanDeleteWellTest = () =>
+  CheckAbilities({ action: 'delete', subject: 'WellTest' });

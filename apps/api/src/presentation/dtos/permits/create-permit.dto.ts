@@ -12,15 +12,25 @@ import {
   Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PermitType } from '../../../domain/value-objects/permit-type.vo';
+
+export enum PermitTypeEnum {
+  DRILLING = 'drilling',
+  COMPLETION = 'completion',
+  WORKOVER = 'workover',
+  INJECTION = 'injection',
+  DISPOSAL = 'disposal',
+  FACILITY = 'facility',
+  PIPELINE = 'pipeline',
+  ENVIRONMENTAL = 'environmental',
+}
 
 export class CreatePermitDto {
   @ApiProperty({
     description: 'Type of permit being applied for',
-    enum: PermitType,
-    example: 'drilling',
+    enum: PermitTypeEnum,
+    example: PermitTypeEnum.DRILLING,
   })
-  @IsEnum(PermitType)
+  @IsEnum(PermitTypeEnum)
   permitType!: string;
 
   @ApiProperty({

@@ -103,18 +103,6 @@ describe('RLS Performance Impact Assessment', () => {
       const performanceOverhead =
         ((timeWithRLS - timeWithoutRLS) / timeWithoutRLS) * 100;
 
-      console.log('\n=== RLS Performance Impact Assessment ===');
-      console.log(
-        `Query without RLS: ${timeWithoutRLS.toFixed(2)}ms (200 wells returned)`,
-      );
-      console.log(
-        `Query with RLS: ${timeWithRLS.toFixed(2)}ms (100 wells returned)`,
-      );
-      console.log(`Performance overhead: ${performanceOverhead.toFixed(2)}%`);
-      console.log(
-        `Absolute difference: ${(timeWithRLS - timeWithoutRLS).toFixed(2)}ms`,
-      );
-
       // Performance should be reasonable (less than 100% overhead for this simple case)
       expect(performanceOverhead).toBeLessThan(100);
     });
@@ -160,12 +148,6 @@ describe('RLS Performance Impact Assessment', () => {
 
       expect(complexQuery).toHaveLength(25);
 
-      console.log('\n=== Complex Query Performance ===');
-      console.log(
-        `Complex query with RLS and joins: ${timeComplex.toFixed(2)}ms`,
-      );
-      console.log(`Results returned: ${complexQuery.length}`);
-
       // Complex queries should still be reasonably fast (under 50ms for this dataset)
       expect(timeComplex).toBeLessThan(50);
     });
@@ -202,12 +184,6 @@ describe('RLS Performance Impact Assessment', () => {
 
       expect(indexedQuery).toHaveLength(125); // 250 wells for org1, half are oil
 
-      console.log('\n=== Index Effectiveness with RLS ===');
-      console.log(`Indexed query with RLS: ${timeIndexed.toFixed(2)}ms`);
-      console.log(
-        `Results returned: ${indexedQuery.length} out of 250 org wells`,
-      );
-
       // Indexed queries should be fast even with RLS
       expect(timeIndexed).toBeLessThan(25);
     });
@@ -237,14 +213,6 @@ describe('RLS Performance Impact Assessment', () => {
           'Monitor database CPU and memory usage under RLS load',
         ],
       };
-
-      console.log('\n=== RLS Performance Optimization Recommendations ===');
-      Object.entries(recommendations).forEach(([category, items]) => {
-        console.log(`\n${category.toUpperCase()}:`);
-        items.forEach((item, index) => {
-          console.log(`  ${index + 1}. ${item}`);
-        });
-      });
 
       // This test always passes - it's for documentation
       expect(recommendations).toBeDefined();
