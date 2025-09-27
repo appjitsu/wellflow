@@ -10,7 +10,7 @@ import {
 } from '@casl/ability';
 
 // Define all subjects that can be used in permissions
-type Subjects = InferSubjects<'Well' | 'Lease' | 'Production'> | 'all';
+type Subjects = InferSubjects<'Well' | 'Lease' | 'Production' | 'User'> | 'all';
 
 // Define all actions that can be performed
 export type Actions =
@@ -23,7 +23,9 @@ export type Actions =
   | 'submitReport' // Can submit regulatory reports
   | 'viewSensitive' // Can view sensitive data
   | 'export' // Can export data
-  | 'audit'; // Can view audit logs
+  | 'audit' // Can view audit logs
+  | 'inviteUser' // Can invite new users
+  | 'assignRole'; // Can assign roles to users
 
 export type AppAbility = MongoAbility<[Actions, Subjects], MongoQuery>;
 
@@ -80,6 +82,14 @@ export function createAbilityForUser(user: User): AppAbility {
     can('delete', 'Lease', { organizationId: user.organizationId });
     can('export', 'Lease', { organizationId: user.organizationId });
 
+    // Full user management within organization
+    can('create', 'User', { organizationId: user.organizationId });
+    can('read', 'User', { organizationId: user.organizationId });
+    can('update', 'User', { organizationId: user.organizationId });
+    can('delete', 'User', { organizationId: user.organizationId });
+    can('inviteUser', 'User', { organizationId: user.organizationId });
+    can('assignRole', 'User', { organizationId: user.organizationId });
+
     return build({
       detectSubjectType: (item) =>
         (item as Record<string, unknown>).constructor as unknown as ExtractSubjectType<Subjects>,
@@ -111,6 +121,14 @@ export function createAbilityForUser(user: User): AppAbility {
     can('export', 'Lease', { organizationId: user.organizationId });
     cannot('create', 'Lease');
     cannot('delete', 'Lease');
+
+    // Limited user management - can view users and invite pumpers
+    can('read', 'User', { organizationId: user.organizationId });
+    can('inviteUser', 'User', { organizationId: user.organizationId });
+    can('update', 'User', { organizationId: user.organizationId, role: 'pumper' });
+    cannot('create', 'User');
+    cannot('delete', 'User');
+    cannot('assignRole', 'User');
 
     return build({
       detectSubjectType: (item) =>
