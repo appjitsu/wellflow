@@ -8,6 +8,7 @@ import {
   ComplianceReminderJobData,
   ProductionAlertJobData,
   SystemNotificationJobData,
+  UserAuthEmailJobData,
   NotificationJobResult,
 } from '../types/job.types';
 
@@ -94,6 +95,8 @@ export class EmailNotificationProcessor implements OnModuleInit {
         result = await this.sendProductionAlert(data, job);
       } else if ('notificationType' in data && 'message' in data) {
         result = await this.sendSystemNotification(data, job);
+      } else if ('emailType' in data && 'recipientEmail' in data) {
+        result = await this.sendUserAuthEmail(data, job);
       } else {
         throw new Error('Unknown email notification job type');
       }
@@ -325,6 +328,76 @@ export class EmailNotificationProcessor implements OnModuleInit {
     message: string,
   ): string {
     return `System Notification (${notificationType}): ${message}`;
+  }
+
+  private async sendUserAuthEmail(
+    data: UserAuthEmailJobData,
+    job: Job,
+  ): Promise<NotificationJobResult> {
+    this.logger.log(`Sending user auth email: ${data.emailType}`);
+
+    await job.updateProgress(25);
+
+    // Get email template based on type
+    const emailTemplate = this.getUserAuthEmailTemplate(
+      data.emailType,
+      data.templateData,
+    );
+    await this.simulateDelay(150);
+
+    await job.updateProgress(50);
+
+    // Send email to single recipient
+    try {
+      await this.simulateEmailSend(data.recipientEmail, emailTemplate);
+      this.logger.log(`User auth email sent to ${data.recipientEmail}`);
+
+      await job.updateProgress(100);
+
+      return {
+        success: true,
+        message: `${data.emailType} email sent successfully`,
+        sentTo: [data.recipientEmail],
+        failedRecipients: [],
+        messageId: `auth-${data.emailType}-${Date.now()}`,
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE;
+      this.logger.error(
+        `Failed to send ${data.emailType} email to ${data.recipientEmail}: ${errorMessage}`,
+      );
+
+      return {
+        success: false,
+        message: `Failed to send ${data.emailType} email`,
+        sentTo: [],
+        failedRecipients: [data.recipientEmail],
+        messageId: `auth-${data.emailType}-${Date.now()}`,
+      };
+    }
+  }
+
+  private getUserAuthEmailTemplate(
+    emailType: string,
+    templateData: UserAuthEmailJobData['templateData'],
+  ): string {
+    const { firstName, lastName } = templateData;
+    const fullName = `${firstName} ${lastName}`;
+
+    switch (emailType) {
+      case 'email_verification':
+        return `Welcome to WellFlow, ${fullName}! Please verify your email address by clicking the link: ${templateData.verificationUrl}`;
+
+      case 'welcome':
+        return `Welcome to WellFlow, ${fullName}! Your email has been verified and your account is now active. You can now log in to access your dashboard.`;
+
+      case 'password_reset':
+        return `Hello ${fullName}, you requested a password reset. Click this link to reset your password: ${templateData.resetUrl}`;
+
+      default:
+        return `Hello ${fullName}, you have a notification from WellFlow.`;
+    }
   }
 
   private async simulateEmailSend(

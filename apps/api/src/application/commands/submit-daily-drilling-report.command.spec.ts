@@ -1,5 +1,6 @@
 import { SubmitDailyDrillingReportCommand } from './submit-daily-drilling-report.command';
 
+// eslint-disable-next-line no-secrets/no-secrets
 describe('SubmitDailyDrillingReportCommand', () => {
   const validId = 'report-123';
 

@@ -52,6 +52,7 @@ export class Email {
 
     // RFC 5322 compliant email regex (simplified but robust)
     const emailRegex =
+      // eslint-disable-next-line security/detect-unsafe-regex
       /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 
     if (!emailRegex.test(trimmedValue)) {

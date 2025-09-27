@@ -9,6 +9,9 @@ import { LocalStrategy } from './strategies/local.strategy';
 import { AuthUserRepositoryImpl } from './infrastructure/auth-user.repository';
 import { DatabaseModule } from '../database/database.module';
 import { AuditLogService } from '../application/services/audit-log.service';
+import { EmailService } from '../application/services/email.service';
+import { JobsModule } from '../jobs/jobs.module';
+import { OrganizationsModule } from '../organizations/organizations.module';
 
 /**
  * Authentication Module
@@ -54,6 +57,8 @@ import { AuditLogService } from '../application/services/audit-log.service';
     // Required modules
     ConfigModule,
     DatabaseModule, // For database access
+    JobsModule, // For email notifications
+    OrganizationsModule, // For organization creation
   ],
 
   providers: [
@@ -66,12 +71,15 @@ import { AuditLogService } from '../application/services/audit-log.service';
 
     // Repository implementation (following Repository pattern)
     {
-      provide: 'AuthUserRepository',
+      provide: 'UserRepository',
       useClass: AuthUserRepositoryImpl,
     },
 
     // Audit logging service (existing service)
     AuditLogService,
+
+    // Email service for authentication workflows
+    EmailService,
   ],
 
   controllers: [AuthController],
@@ -83,7 +91,7 @@ import { AuditLogService } from '../application/services/audit-log.service';
     LocalStrategy,
 
     // Export for testing and integration
-    'AuthUserRepository',
+    'UserRepository',
   ],
 })
 export class AuthModule {
@@ -101,6 +109,8 @@ export class AuthModule {
       'JWT_EXPIRES_IN',
       'JWT_REFRESH_EXPIRES_IN',
     ];
+
+    // Note: JWT_REMEMBER_ME_EXPIRES_IN is optional and defaults to 30d if not set
 
     const missingVars = requiredEnvVars.filter(
       (varName) => !this.configService.get<string>(varName),

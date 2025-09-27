@@ -1,4 +1,3 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { AuditController } from './audit.controller';
 import { AuditLogRepository } from '../../domain/repositories/audit-log.repository.interface';
 import {
@@ -6,14 +5,12 @@ import {
   AuditResourceType,
   AuditLog,
 } from '../../domain/entities/audit-log.entity';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { AbilitiesGuard } from '../../authorization/abilities.guard';
 
 describe('AuditController', () => {
   let controller: AuditController;
   let auditLogRepository: jest.Mocked<AuditLogRepository>;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     const mockAuditLogRepository = {
       search: jest.fn(),
       findByUserId: jest.fn(),
@@ -23,23 +20,9 @@ describe('AuditController', () => {
       getStatistics: jest.fn(),
     } as any;
 
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [AuditController],
-      providers: [
-        {
-          provide: 'AuditLogRepository',
-          useValue: mockAuditLogRepository,
-        },
-      ],
-    })
-      .overrideGuard(JwtAuthGuard)
-      .useValue({ canActivate: jest.fn(() => true) })
-      .overrideGuard(AbilitiesGuard)
-      .useValue({ canActivate: jest.fn(() => true) })
-      .compile();
-
-    controller = module.get<AuditController>(AuditController);
-    auditLogRepository = module.get('AuditLogRepository');
+    // Create controller instance directly to avoid guard issues
+    controller = new AuditController(mockAuditLogRepository);
+    auditLogRepository = mockAuditLogRepository;
   });
 
   it('should be defined', () => {

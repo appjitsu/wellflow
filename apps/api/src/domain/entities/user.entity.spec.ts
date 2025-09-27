@@ -1,4 +1,5 @@
 import { User, UserRole } from './user.entity';
+// eslint-disable sonarjs/no-hardcoded-ip
 import { Email } from '../value-objects/email';
 import { Password } from '../value-objects/password';
 import { AuthToken } from '../value-objects/auth-token';
@@ -82,6 +83,7 @@ describe('User Entity', () => {
         new Date(Date.now() + 24 * 60 * 60 * 1000), // emailVerificationExpiresAt
         2, // failedLoginAttempts
         new Date(Date.now() + 30 * 60 * 1000), // lockedUntil
+        1, // lockoutCount
         validToken, // passwordResetToken
         new Date(Date.now() + 60 * 60 * 1000), // passwordResetExpiresAt
         false, // isActive
@@ -312,6 +314,7 @@ describe('User Entity', () => {
           undefined,
           0,
           undefined,
+          0, // lockoutCount
           undefined,
           undefined,
           false, // isActive
@@ -340,6 +343,7 @@ describe('User Entity', () => {
         );
 
         userWithFailedAttempts.recordSuccessfulLogin(
+          // eslint-disable-next-line sonarjs/no-hardcoded-ip
           '192.168.1.1',
           'Chrome/91.0',
         );
@@ -355,6 +359,7 @@ describe('User Entity', () => {
         expect(event.userId).toBe(validId);
         expect(event.organizationId).toBe(validOrganizationId);
         expect(event.email).toBe(validEmail);
+        // eslint-disable-next-line sonarjs/no-hardcoded-ip
         expect(event.ipAddress).toBe('192.168.1.1');
         expect(event.userAgent).toBe('Chrome/91.0');
       });
@@ -362,6 +367,7 @@ describe('User Entity', () => {
 
     describe('recordFailedLoginAttempt', () => {
       it('should increment failed attempts and update timestamp', () => {
+        // eslint-disable-next-line sonarjs/no-hardcoded-ip
         user.recordFailedLoginAttempt('192.168.1.1', 'Chrome/91.0');
 
         expect(user.getFailedLoginAttempts()).toBe(1);
@@ -385,6 +391,7 @@ describe('User Entity', () => {
         );
 
         userWith4Attempts.recordFailedLoginAttempt(
+          // eslint-disable-next-line sonarjs/no-hardcoded-ip
           '192.168.1.1',
           'Chrome/91.0',
         );
@@ -401,6 +408,7 @@ describe('User Entity', () => {
         expect(event.email).toBe(validEmail);
         expect(event.failedAttempts).toBe(5);
         expect(event.lockedUntil).toBeInstanceOf(Date);
+        // eslint-disable-next-line sonarjs/no-hardcoded-ip
         expect(event.ipAddress).toBe('192.168.1.1');
         expect(event.userAgent).toBe('Chrome/91.0');
       });
@@ -578,8 +586,10 @@ describe('User Entity', () => {
           undefined,
           0,
           undefined,
+          0, // lockoutCount
           validToken,
-          new Date(Date.now() - 60 * 60 * 1000), // expired
+          new Date('2024-01-01'), // expired
+          true, // isActive
         );
 
         await expect(

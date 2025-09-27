@@ -85,8 +85,8 @@ describe('DivisionOrder', () => {
 
     it('should create copies of date objects to prevent external mutation', () => {
       const decimalInterest = new DecimalInterest(0.05);
-      const effectiveDate = new Date('2024-01-01');
-      const endDate = new Date('2024-12-31');
+      const effectiveDate = new Date(2024, 0, 1); // January 1, 2024
+      const endDate = new Date(2024, 11, 31); // December 31, 2024
 
       const divisionOrder = new DivisionOrder(
         'do-123',
@@ -228,8 +228,8 @@ describe('DivisionOrder', () => {
 
     beforeEach(() => {
       decimalInterest = new DecimalInterest(0.075);
-      effectiveDate = new Date('2024-01-01');
-      endDate = new Date('2024-12-31');
+      effectiveDate = new Date(2024, 0, 1); // January 1, 2024
+      endDate = new Date(2024, 11, 31); // December 31, 2024
 
       divisionOrder = new DivisionOrder(
         'do-123',

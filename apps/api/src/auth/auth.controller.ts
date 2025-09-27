@@ -23,6 +23,9 @@ import {
 } from '@nestjs/swagger';
 import { AuthService, RegisterUserDto } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+
+// eslint-disable-next-line sonarjs/no-duplicate-string
+const EXAMPLE_USER_ID = '123e4567-e89b-12d3-a456-426614174000';
 import { RegisterDto } from './dto/register.dto';
 import {
   LoginResponseDto,
@@ -30,9 +33,16 @@ import {
   EmailVerificationResponseDto,
   AuthErrorResponseDto,
 } from './dto/auth-response.dto';
+import {
+  RefreshTokenDto,
+  RefreshTokenResponseDto,
+} from './dto/refresh-token.dto';
 import { AuthenticatedUser } from './strategies/jwt.strategy';
 import { RATE_LIMIT_TIERS } from '../common/throttler';
 import { Public } from '../common/decorators/public.decorator';
+import { JwtAuthGuard } from '../presentation/guards/jwt-auth.guard';
+import { AbilitiesGuard } from '../authorization/abilities.guard';
+import { CheckAbilities } from '../authorization/abilities.decorator';
 
 /**
  * Authentication Controller
@@ -89,6 +99,10 @@ export class AuthController {
       organizationId: registerDto.organizationId,
       role: registerDto.role,
       phone: registerDto.phone,
+      createOrganization: registerDto.createOrganization,
+      organizationName: registerDto.organizationName,
+      organizationContactEmail: registerDto.organizationContactEmail,
+      organizationContactPhone: registerDto.organizationContactPhone,
     };
 
     const user = await this.authService.register(registerData);
@@ -107,6 +121,8 @@ export class AuthController {
         lastLoginAt: user.getLastLoginAt(),
       },
       requiresEmailVerification: true,
+      organizationName: registerDto.organizationName,
+      organizationCreated: Boolean(registerDto.createOrganization),
     };
   }
 
@@ -142,9 +158,10 @@ export class AuthController {
   })
   async login(
     @Request() req: { user: AuthenticatedUser },
+    @Body() loginDto: LoginDto,
   ): Promise<LoginResponseDto> {
     // User is already validated by LocalStrategy
-    return this.authService.login(req.user);
+    return this.authService.login(req.user, loginDto.rememberMe || false);
   }
 
   /**
@@ -163,7 +180,7 @@ export class AuthController {
   @ApiParam({
     name: 'userId',
     description: 'User ID',
-    example: '123e4567-e89b-12d3-a456-426614174000',
+    example: EXAMPLE_USER_ID,
   })
   @ApiQuery({
     name: 'token',
@@ -190,6 +207,56 @@ export class AuthController {
     return {
       message: 'Email verified successfully. You can now log in.',
       verifiedAt: new Date(),
+    };
+  }
+
+  /**
+   * Resend Email Verification
+   * Resends verification email to user
+   */
+  @Post('resend-verification/:userId')
+  @Public() // Public endpoint for resending verification
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ [RATE_LIMIT_TIERS.STRICT]: { limit: 3, ttl: 300000 } }) // Very strict rate limiting - 3 per 5 minutes
+  @ApiOperation({
+    summary: 'Resend email verification',
+    description:
+      'Resends the email verification token to the user. Rate limited to prevent abuse.',
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'User ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Verification email sent successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        sentAt: { type: 'string', format: 'date-time' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'User not found',
+    type: AuthErrorResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Email already verified',
+    type: AuthErrorResponseDto,
+  })
+  async resendVerificationEmail(
+    @Param('userId') userId: string,
+  ): Promise<{ message: string; sentAt: Date }> {
+    await this.authService.resendVerificationEmail(userId);
+
+    return {
+      message: 'Verification email sent successfully. Please check your inbox.',
+      sentAt: new Date(),
     };
   }
 
@@ -272,5 +339,75 @@ export class AuthController {
     return {
       message: 'Logout successful',
     };
+  }
+
+  /**
+   * Unlock User Account (Admin Only)
+   * Manually unlock a locked user account
+   */
+  @Post('unlock-account/:userId')
+  @UseGuards(JwtAuthGuard, AbilitiesGuard)
+  @CheckAbilities({ action: 'update', subject: 'User' })
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ [RATE_LIMIT_TIERS.STRICT]: { limit: 10, ttl: 60000 } })
+  @ApiOperation({
+    summary: 'Unlock user account (Admin only)',
+    description:
+      'Manually unlock a user account that has been locked due to failed login attempts. Requires admin privileges.',
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'User ID to unlock',
+    type: 'string',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Account unlocked successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'User not found',
+    type: AuthErrorResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Insufficient permissions',
+    type: AuthErrorResponseDto,
+  })
+  async unlockAccount(
+    @Param('userId') userId: string,
+  ): Promise<{ message: string }> {
+    await this.authService.unlockUserAccount(userId);
+    return { message: 'Account unlocked successfully' };
+  }
+
+  /**
+   * Refresh Access Token
+   * Generates new access and refresh tokens using a valid refresh token
+   */
+  @Post('refresh')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ [RATE_LIMIT_TIERS.DEFAULT]: { limit: 30, ttl: 60000 } })
+  @ApiOperation({
+    summary: 'Refresh access token',
+    description:
+      'Generates new access and refresh tokens using a valid refresh token. Implements token rotation for security.',
+  })
+  @ApiBody({ type: RefreshTokenDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Tokens refreshed successfully',
+    type: RefreshTokenResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Invalid or expired refresh token',
+    type: AuthErrorResponseDto,
+  })
+  async refreshToken(
+    @Body() refreshTokenDto: RefreshTokenDto,
+  ): Promise<RefreshTokenResponseDto> {
+    return this.authService.refreshToken(refreshTokenDto.refreshToken);
   }
 }

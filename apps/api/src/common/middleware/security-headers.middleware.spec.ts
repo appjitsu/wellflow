@@ -15,7 +15,17 @@ describe('SecurityHeadersMiddleware', () => {
       nodeEnv: 'development',
     } as jest.Mocked<AppConfigService>;
 
-    mockRequest = {};
+    mockRequest = {
+      path: '/api/test',
+      ip: '127.0.0.1',
+      headers: {},
+      get: jest.fn(
+        (headerName: string) =>
+          (mockRequest.headers as Record<string, string>)[
+            headerName.toLowerCase()
+          ],
+      ) as any,
+    };
     mockResponse = {
       setHeader: jest.fn(),
       removeHeader: jest.fn(),
@@ -51,7 +61,7 @@ describe('SecurityHeadersMiddleware', () => {
 
       expect(mockResponse.setHeader).toHaveBeenCalledWith(
         'Content-Security-Policy',
-        "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+        "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https://api.logrocket.com https://cdn.logrocket.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests; block-all-mixed-content",
       );
     });
 
@@ -103,7 +113,7 @@ describe('SecurityHeadersMiddleware', () => {
 
       expect(mockResponse.setHeader).toHaveBeenCalledWith(
         'Permissions-Policy',
-        'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+        'camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), accelerometer=(), gyroscope=(), ambient-light-sensor=(), autoplay=(), encrypted-media=(), fullscreen=(self), picture-in-picture=()',
       );
     });
 
@@ -118,7 +128,7 @@ describe('SecurityHeadersMiddleware', () => {
 
       expect(mockResponse.setHeader).toHaveBeenCalledWith(
         'Strict-Transport-Security',
-        'max-age=31536000; includeSubDomains; preload',
+        'max-age=63072000; includeSubDomains; preload',
       );
     });
 

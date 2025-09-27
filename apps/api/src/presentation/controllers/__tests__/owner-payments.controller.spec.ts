@@ -7,7 +7,18 @@ class CommandBusMock {
   execute = jest.fn(() => Promise.resolve('new-id'));
 }
 class QueryBusMock {
-  execute = jest.fn(() => Promise.resolve({ id: 'id-1' }));
+  execute = jest.fn(() =>
+    Promise.resolve({
+      id: 'id-1',
+      organizationId: 'org-1',
+      partnerId: 'partner-1',
+      revenueDistributionId: 'rd-1',
+      method: 'CHECK',
+      status: 'PENDING',
+      grossAmount: '100.00',
+      netAmount: '90.00',
+    }),
+  );
 }
 
 describe('OwnerPaymentsController', () => {

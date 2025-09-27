@@ -34,6 +34,7 @@ export class User {
     private emailVerificationExpiresAt?: Date,
     private failedLoginAttempts: number = 0,
     private lockedUntil?: Date,
+    private lockoutCount: number = 0, // Track number of times account has been locked
     private passwordResetToken?: string,
     private passwordResetExpiresAt?: Date,
     private isActive: boolean = true,
@@ -80,11 +81,30 @@ export class User {
   }
 
   isAccountLocked(): boolean {
-    return this.lockedUntil ? new Date() < this.lockedUntil : false;
+    if (!this.lockedUntil) {
+      return false;
+    }
+
+    // Check if lockout period has expired
+    if (new Date() >= this.lockedUntil) {
+      // Auto-unlock expired lockouts
+      this.unlockAccount();
+      return false;
+    }
+
+    return true;
   }
 
   getFailedLoginAttempts(): number {
     return this.failedLoginAttempts;
+  }
+
+  getLockoutCount(): number {
+    return this.lockoutCount;
+  }
+
+  getLockedUntil(): Date | undefined {
+    return this.lockedUntil;
   }
 
   getLastLoginAt(): Date | undefined {
@@ -116,10 +136,6 @@ export class User {
     return this.emailVerificationExpiresAt;
   }
 
-  getLockedUntil(): Date | undefined {
-    return this.lockedUntil;
-  }
-
   getPasswordResetToken(): string | undefined {
     return this.passwordResetToken;
   }
@@ -143,6 +159,7 @@ export class User {
     emailVerificationExpiresAt?: Date | null,
     failedLoginAttempts?: number,
     lockedUntil?: Date | null,
+    lockoutCount?: number,
     passwordResetToken?: string | null,
     passwordResetExpiresAt?: Date | null,
     isActive?: boolean,
@@ -166,6 +183,7 @@ export class User {
       emailVerificationExpiresAt || undefined,
       failedLoginAttempts || 0,
       lockedUntil || undefined,
+      lockoutCount || 0,
       passwordResetToken || undefined,
       passwordResetExpiresAt || undefined,
       isActive ?? true,
@@ -264,8 +282,15 @@ export class User {
 
     // Lock account after 5 failed attempts (Sprint 3 requirement)
     if (this.failedLoginAttempts >= 5) {
-      // Lock for 30 minutes
-      this.lockedUntil = new Date(Date.now() + 30 * 60 * 1000);
+      this.lockoutCount += 1;
+
+      // Progressive lockout: increase duration with each lockout
+      const baseLockoutMinutes = 30;
+      const lockoutMultiplier = Math.min(this.lockoutCount, 5); // Cap at 5x
+      const lockoutDurationMs =
+        baseLockoutMinutes * lockoutMultiplier * 60 * 1000;
+
+      this.lockedUntil = new Date(Date.now() + lockoutDurationMs);
 
       this.addDomainEvent(
         new UserAccountLockedEvent(
@@ -281,6 +306,26 @@ export class User {
     }
   }
 
+  /**
+   * Manually unlock account (for administrators)
+   */
+  unlockAccount(): void {
+    this.failedLoginAttempts = 0;
+    this.lockedUntil = undefined;
+    this.updatedAt = new Date();
+  }
+
+  /**
+   * Check if account lockout has expired and auto-unlock if needed
+   */
+  checkAndAutoUnlock(): boolean {
+    if (this.lockedUntil && new Date() >= this.lockedUntil) {
+      this.unlockAccount();
+      return true; // Account was unlocked
+    }
+    return false; // No unlock needed
+  }
+
   verifyEmail(token: string): void {
     if (this.emailVerified) {
       return; // Already verified
@@ -290,6 +335,7 @@ export class User {
       throw new Error('No email verification token found');
     }
 
+    // eslint-disable-next-line security/detect-possible-timing-attacks
     if (this.emailVerificationToken !== token) {
       throw new Error('Invalid email verification token');
     }
@@ -322,6 +368,12 @@ export class User {
     return resetToken;
   }
 
+  updateEmailVerificationToken(token: string, expiresAt: Date): void {
+    this.emailVerificationToken = token;
+    this.emailVerificationExpiresAt = expiresAt;
+    this.updatedAt = new Date();
+  }
+
   async resetPassword(
     token: string,
     newPlainTextPassword: string,
@@ -330,6 +382,7 @@ export class User {
       throw new Error('No password reset token found');
     }
 
+    // eslint-disable-next-line security/detect-possible-timing-attacks
     if (this.passwordResetToken !== token) {
       throw new Error('Invalid password reset token');
     }

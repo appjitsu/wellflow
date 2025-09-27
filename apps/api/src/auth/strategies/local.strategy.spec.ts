@@ -1,3 +1,5 @@
+// eslint-disable sonarjs/no-hardcoded-ip, sonarjs/no-invariant-returns
+// eslint-disable sonarjs/no-hardcoded-ip
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
 import { LocalStrategy } from './local.strategy';
@@ -62,6 +64,7 @@ describe('LocalStrategy', () => {
         },
         connection: { remoteAddress: '127.0.0.1' },
         socket: null,
+        // eslint-disable-next-line sonarjs/no-invariant-returns
         get: jest.fn((header: string) => {
           if (header === 'x-forwarded-for') return null;
           if (header === 'x-real-ip') return null;
@@ -98,8 +101,10 @@ describe('LocalStrategy', () => {
       mockAuthService.validateUserCredentials.mockResolvedValue(null);
 
       const mockRequest = {
+        // eslint-disable-next-line sonarjs/no-hardcoded-ip
         ip: '192.168.1.100',
         headers: {},
+        // eslint-disable-next-line sonarjs/no-hardcoded-ip
         connection: { remoteAddress: '192.168.1.100' },
         socket: null,
         get: jest.fn(() => null),
@@ -116,6 +121,7 @@ describe('LocalStrategy', () => {
       expect(mockAuthService.validateUserCredentials).toHaveBeenCalledWith(
         'invalid@example.com',
         'wrongpassword',
+        // eslint-disable-next-line sonarjs/no-hardcoded-ip
         '192.168.1.100',
         undefined, // userAgent
       );
@@ -224,8 +230,10 @@ describe('LocalStrategy', () => {
       mockAuthService.validateUserCredentials.mockResolvedValue(testUser);
 
       const mockRequest = {
+        // eslint-disable-next-line sonarjs/no-hardcoded-ip
         ip: '10.0.0.1',
         headers: {},
+        // eslint-disable-next-line sonarjs/no-hardcoded-ip
         connection: { remoteAddress: '10.0.0.1' },
         socket: null,
         get: jest.fn(() => null),
@@ -240,6 +248,7 @@ describe('LocalStrategy', () => {
       expect(mockAuthService.validateUserCredentials).toHaveBeenCalledWith(
         'test@example.com',
         'StrongAuth123!',
+        // eslint-disable-next-line sonarjs/no-hardcoded-ip
         '10.0.0.1', // Fallback to connection.remoteAddress
         undefined, // userAgent
       );
@@ -340,8 +349,10 @@ describe('LocalStrategy', () => {
       mockAuthService.validateUserCredentials.mockResolvedValue(operatorUser);
 
       const mockRequest = {
+        // eslint-disable-next-line sonarjs/no-hardcoded-ip
         ip: '192.168.100.50', // Field office IP
         headers: {},
+        // eslint-disable-next-line sonarjs/no-hardcoded-ip
         connection: { remoteAddress: '192.168.100.50' },
         socket: null,
         get: jest.fn(() => null),
@@ -358,6 +369,7 @@ describe('LocalStrategy', () => {
       expect(mockAuthService.validateUserCredentials).toHaveBeenCalledWith(
         'field.operator@oilcompany.com',
         'StrongAuth123!',
+        // eslint-disable-next-line sonarjs/no-hardcoded-ip
         '192.168.100.50',
         undefined, // userAgent
       );

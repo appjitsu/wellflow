@@ -87,6 +87,7 @@ describe('JointOperatingAgreement Entity', () => {
       };
 
       expect(() => {
+        // eslint-disable-next-line sonarjs/constructor-for-side-effects
         new JointOperatingAgreement(props);
       }).toThrow('effectiveDate must be YYYY-MM-DD');
     });
@@ -101,6 +102,7 @@ describe('JointOperatingAgreement Entity', () => {
       };
 
       expect(() => {
+        // eslint-disable-next-line sonarjs/constructor-for-side-effects
         new JointOperatingAgreement(props);
       }).toThrow('endDate must be YYYY-MM-DD');
     });
@@ -114,6 +116,7 @@ describe('JointOperatingAgreement Entity', () => {
       };
 
       expect(() => {
+        // eslint-disable-next-line sonarjs/constructor-for-side-effects
         new JointOperatingAgreement(props);
       }).toThrow('agreementNumber is required');
     });

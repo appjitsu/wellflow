@@ -1,5 +1,5 @@
 /* eslint-disable no-secrets/no-secrets */
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 /**
  * User Response DTO
@@ -109,6 +109,18 @@ export class RegisterResponseDto {
     example: true,
   })
   requiresEmailVerification!: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Organization name (if created during registration)',
+    example: 'Acme Oil & Gas Company',
+  })
+  organizationName?: string;
+
+  @ApiPropertyOptional({
+    description: 'Whether a new organization was created',
+    example: true,
+  })
+  organizationCreated?: boolean;
 }
 
 /**

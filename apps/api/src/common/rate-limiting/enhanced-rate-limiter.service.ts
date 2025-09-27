@@ -126,7 +126,7 @@ export class EnhancedRateLimiterService {
 
   constructor(
     @Inject('REDIS_CONNECTION')
-    private readonly redis: Redis,
+    private readonly redis: Redis | null,
   ) {}
 
   /**
@@ -155,6 +155,17 @@ export class EnhancedRateLimiterService {
     const burstKey = `ratelimit:burst:${userId}`;
 
     try {
+      // If Redis is not available, allow all requests (fallback mode)
+      if (!this.redis) {
+        this.logger.warn('Redis not available, allowing all requests');
+        return {
+          allowed: true,
+          remaining: config.requests,
+          resetTime: new Date(Date.now() + config.windowMs),
+          tier: userTier,
+        };
+      }
+
       // Use Redis atomic operations for rate limiting
       const now = Date.now();
       const windowStart = now - config.windowMs;
@@ -335,6 +346,11 @@ export class EnhancedRateLimiterService {
     endpoint: string,
     reason: string,
   ): Promise<void> {
+    if (!this.redis) {
+      this.logger.warn('Redis not available, cannot record blocked request');
+      return;
+    }
+
     const key = `blocked:${userId}`;
 
     try {
@@ -419,6 +435,11 @@ export class EnhancedRateLimiterService {
    * Reset rate limits for a user (admin function)
    */
   async resetUserLimits(userId: string): Promise<void> {
+    if (!this.redis) {
+      this.logger.warn('Redis not available, cannot reset user limits');
+      return;
+    }
+
     try {
       const keys = await this.redis.keys(`ratelimit:*:${userId}:*`);
       if (keys.length > 0) {
@@ -453,6 +474,18 @@ export class EnhancedRateLimiterService {
     const burstKey = `ratelimit:burst:${userId}`;
 
     try {
+      if (!this.redis) {
+        this.logger.warn('Redis not available, returning default user status');
+        return {
+          currentUsage: 0,
+          limit: config.requests,
+          remaining: config.requests,
+          resetTime: new Date(Date.now() + config.windowMs),
+          burstUsed: 0,
+          burstLimit: config.burstAllowance || 0,
+        };
+      }
+
       const now = Date.now();
       const windowStart = now - config.windowMs;
 
