@@ -2,7 +2,10 @@
 
 ## Overview
 
-The WellFlow API provides comprehensive functionality for oil & gas well management, production tracking, regulatory compliance, and operational monitoring. Built with NestJS and following Clean Architecture principles with Domain-Driven Design patterns.
+The WellFlow API provides comprehensive functionality for oil & gas well
+management, production tracking, regulatory compliance, and operational
+monitoring. Built with NestJS and following Clean Architecture principles with
+Domain-Driven Design patterns.
 
 ## Base URL
 
@@ -61,13 +64,16 @@ Error responses include detailed information:
 ### Health & Monitoring
 
 #### Get Health Status
+
 ```http
 GET /health
 ```
 
-Returns system health information including database connectivity, external services, and performance metrics.
+Returns system health information including database connectivity, external
+services, and performance metrics.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -87,13 +93,16 @@ Returns system health information including database connectivity, external serv
 ```
 
 #### Get System Metrics
+
 ```http
 GET /monitoring/metrics
 ```
 
-Returns comprehensive system metrics including performance, database, cache, and business metrics.
+Returns comprehensive system metrics including performance, database, cache, and
+business metrics.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -123,6 +132,7 @@ Returns comprehensive system metrics including performance, database, cache, and
 ```
 
 #### Get Database Performance Metrics
+
 ```http
 GET /monitoring/metrics/database
 ```
@@ -130,6 +140,7 @@ GET /monitoring/metrics/database
 Returns detailed database performance metrics and query statistics.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -152,6 +163,7 @@ Returns detailed database performance metrics and query statistics.
 ```
 
 #### Get Slow Database Queries
+
 ```http
 GET /monitoring/metrics/database/slow-queries?threshold=1000&hours=1
 ```
@@ -159,10 +171,13 @@ GET /monitoring/metrics/database/slow-queries?threshold=1000&hours=1
 Returns database queries that exceeded the specified threshold.
 
 **Parameters:**
-- `threshold` (optional): Query execution time threshold in milliseconds (default: 1000)
+
+- `threshold` (optional): Query execution time threshold in milliseconds
+  (default: 1000)
 - `hours` (optional): Time range in hours (default: 1)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -185,6 +200,7 @@ Returns database queries that exceeded the specified threshold.
 ```
 
 #### Get Circuit Breaker Metrics
+
 ```http
 GET /monitoring/metrics/circuit-breakers
 ```
@@ -192,6 +208,7 @@ GET /monitoring/metrics/circuit-breakers
 Returns circuit breaker status and metrics for resilience monitoring.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -213,6 +230,7 @@ Returns circuit breaker status and metrics for resilience monitoring.
 ```
 
 #### Get Event Processing Metrics
+
 ```http
 GET /monitoring/metrics/events
 ```
@@ -220,6 +238,7 @@ GET /monitoring/metrics/events
 Returns event processing metrics for domain events and CQRS operations.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -242,6 +261,7 @@ Returns event processing metrics for domain events and CQRS operations.
 ### Alert Management
 
 #### Get Active Alerts
+
 ```http
 GET /monitoring/alerts
 ```
@@ -249,6 +269,7 @@ GET /monitoring/alerts
 Returns all currently active alerts in the system.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -273,6 +294,7 @@ Returns all currently active alerts in the system.
 ```
 
 #### Get Alert History
+
 ```http
 GET /monitoring/alerts/history?limit=50
 ```
@@ -280,9 +302,11 @@ GET /monitoring/alerts/history?limit=50
 Returns historical alert data with optional limit.
 
 **Parameters:**
+
 - `limit` (optional): Maximum number of alerts to return (default: 100)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -305,6 +329,7 @@ Returns historical alert data with optional limit.
 ```
 
 #### Resolve Alert
+
 ```http
 POST /monitoring/alerts/{alertId}/resolve
 ```
@@ -312,9 +337,11 @@ POST /monitoring/alerts/{alertId}/resolve
 Resolves a specific alert by ID.
 
 **Parameters:**
+
 - `alertId`: The unique identifier of the alert to resolve
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -323,6 +350,7 @@ Resolves a specific alert by ID.
 ```
 
 #### Create Test Alert
+
 ```http
 POST /monitoring/alerts/test
 ```
@@ -330,6 +358,7 @@ POST /monitoring/alerts/test
 Creates a test alert to verify the alerting system is working.
 
 **Request Body:**
+
 ```json
 {
   "message": "This is a test alert",
@@ -338,6 +367,7 @@ Creates a test alert to verify the alerting system is working.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -349,6 +379,7 @@ Creates a test alert to verify the alerting system is working.
 ### Circuit Breaker Management
 
 #### Get Circuit Breaker Metrics
+
 ```http
 GET /monitoring/metrics/circuit-breakers
 ```
@@ -356,6 +387,7 @@ GET /monitoring/metrics/circuit-breakers
 Returns circuit breaker status and metrics.
 
 #### Reset Circuit Breaker
+
 ```http
 POST /monitoring/circuit-breakers/reset
 ```
@@ -363,6 +395,7 @@ POST /monitoring/circuit-breakers/reset
 Resets a circuit breaker to allow requests to pass through again.
 
 **Request Body:**
+
 ```json
 {
   "serviceName": "external-weather-api"
@@ -370,6 +403,7 @@ Resets a circuit breaker to allow requests to pass through again.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -378,6 +412,7 @@ Resets a circuit breaker to allow requests to pass through again.
 ```
 
 ### Database Locks
+
 ```http
 GET /monitoring/metrics/database/locks
 ```
@@ -385,6 +420,7 @@ GET /monitoring/metrics/database/locks
 Returns information about current database locks and blocking queries.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -404,16 +440,16 @@ Returns information about current database locks and blocking queries.
 
 ## Error Codes
 
-| Code | Description | HTTP Status |
-|------|-------------|-------------|
-| `VALIDATION_ERROR` | Input validation failed | 400 |
-| `UNAUTHORIZED` | Authentication required | 401 |
-| `FORBIDDEN` | Insufficient permissions | 403 |
-| `NOT_FOUND` | Resource not found | 404 |
-| `CONFLICT` | Resource conflict | 409 |
-| `RATE_LIMIT_EXCEEDED` | Too many requests | 429 |
-| `INTERNAL_ERROR` | Internal server error | 500 |
-| `SERVICE_UNAVAILABLE` | Service temporarily unavailable | 503 |
+| Code                  | Description                     | HTTP Status |
+| --------------------- | ------------------------------- | ----------- |
+| `VALIDATION_ERROR`    | Input validation failed         | 400         |
+| `UNAUTHORIZED`        | Authentication required         | 401         |
+| `FORBIDDEN`           | Insufficient permissions        | 403         |
+| `NOT_FOUND`           | Resource not found              | 404         |
+| `CONFLICT`            | Resource conflict               | 409         |
+| `RATE_LIMIT_EXCEEDED` | Too many requests               | 429         |
+| `INTERNAL_ERROR`      | Internal server error           | 500         |
+| `SERVICE_UNAVAILABLE` | Service temporarily unavailable | 503         |
 
 ## Pagination
 
@@ -424,12 +460,14 @@ GET /vendors?page=1&limit=20&sort=createdAt&order=desc
 ```
 
 **Parameters:**
+
 - `page`: Page number (default: 1)
 - `limit`: Items per page (default: 20, max: 100)
 - `sort`: Field to sort by
 - `order`: Sort order (`asc` or `desc`)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -460,11 +498,13 @@ GET /wells?status=ACTIVE&search=well-001&operatorId=123
 The API supports real-time updates via WebSocket:
 
 ### Connection
+
 ```javascript
 const ws = new WebSocket('wss://api.wellflow.com/ws');
 ```
 
 ### Events
+
 - `well:status:changed` - Well status updates
 - `production:recorded` - New production data
 - `alert:created` - New system alerts
@@ -473,16 +513,19 @@ const ws = new WebSocket('wss://api.wellflow.com/ws');
 ## SDKs & Libraries
 
 ### JavaScript/TypeScript SDK
+
 ```bash
 npm install @wellflow/sdk
 ```
 
 ### Python SDK
+
 ```bash
 pip install wellflow-sdk
 ```
 
 ### .NET SDK
+
 ```bash
 dotnet add package WellFlow.SDK
 ```
@@ -490,6 +533,7 @@ dotnet add package WellFlow.SDK
 ## Support
 
 For API support and questions:
+
 - **Email**: api-support@wellflow.com
 - **Documentation**: https://docs.wellflow.com
 - **Status Page**: https://status.wellflow.com
@@ -497,6 +541,7 @@ For API support and questions:
 ## Changelog
 
 ### v1.0.0 (Current)
+
 - Initial API release
 - Comprehensive monitoring and alerting
 - Circuit breaker resilience patterns
@@ -504,4 +549,5 @@ For API support and questions:
 
 ---
 
-**WellFlow API - Built for the oil & gas industry with enterprise-grade reliability and security.**
+**WellFlow API - Built for the oil & gas industry with enterprise-grade
+reliability and security.**

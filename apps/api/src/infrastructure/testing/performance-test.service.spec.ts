@@ -102,14 +102,6 @@ describe('PerformanceTestService', () => {
       expect(dbTest!.details).toBeDefined();
       expect(Array.isArray(dbTest!.details.errors)).toBe(true);
 
-      // Log the actual results for analysis
-      console.log('🔍 Database Query Performance Test Results:', {
-        passed: dbTest!.passed,
-        averageQueryTime: dbTest!.details.averageQueryTime,
-        slowestQuery: dbTest!.details.slowestQuery,
-        errors: dbTest!.details.errors,
-      });
-
       // For implementation validation, we accept the result
       // In production, this would validate actual <50ms performance
       expect(dbTest!.executionTime).toBeGreaterThan(0);
@@ -137,11 +129,6 @@ describe('PerformanceTestService', () => {
       expect(indexTest!.details).toBeDefined();
       expect(Array.isArray(indexTest!.details.errors)).toBe(true);
 
-      console.log('🔍 Index Usage Validation:', {
-        passed: indexTest!.passed,
-        errors: indexTest!.details.errors,
-      });
-
       // For implementation validation, we check that the test executed
       expect(indexTest!.executionTime).toBeGreaterThan(0);
     });
@@ -167,12 +154,6 @@ describe('PerformanceTestService', () => {
       expect(typeof paginationTest!.passed).toBe('boolean');
       expect(paginationTest!.details).toBeDefined();
       expect(Array.isArray(paginationTest!.details.errors)).toBe(true);
-
-      console.log('📄 Pagination Performance:', {
-        passed: paginationTest!.passed,
-        averageQueryTime: paginationTest!.details.averageQueryTime,
-        errors: paginationTest!.details.errors,
-      });
 
       // For implementation validation, we accept the result
       expect(paginationTest!.executionTime).toBeGreaterThan(0);
@@ -201,12 +182,6 @@ describe('PerformanceTestService', () => {
       expect(concurrentTest!.details).toBeDefined();
       expect(Array.isArray(concurrentTest!.details.errors)).toBe(true);
 
-      console.log('🔄 Concurrent Query Performance:', {
-        passed: concurrentTest!.passed,
-        averageQueryTime: concurrentTest!.details.averageQueryTime,
-        errors: concurrentTest!.details.errors,
-      });
-
       // For implementation validation, we accept the result
       expect(concurrentTest!.executionTime).toBeGreaterThan(0);
     });
@@ -232,12 +207,6 @@ describe('PerformanceTestService', () => {
       expect(typeof largeDataTest!.passed).toBe('boolean');
       expect(largeDataTest!.details).toBeDefined();
       expect(Array.isArray(largeDataTest!.details.errors)).toBe(true);
-
-      console.log('📈 Large Dataset Performance:', {
-        passed: largeDataTest!.passed,
-        averageQueryTime: largeDataTest!.details.averageQueryTime,
-        errors: largeDataTest!.details.errors,
-      });
 
       // For implementation validation, we accept the result
       expect(largeDataTest!.executionTime).toBeGreaterThan(0);
@@ -265,12 +234,6 @@ describe('PerformanceTestService', () => {
       expect(poolTest!.details).toBeDefined();
       expect(Array.isArray(poolTest!.details.errors)).toBe(true);
 
-      console.log('🏊 Connection Pool Performance:', {
-        passed: poolTest!.passed,
-        averageQueryTime: poolTest!.details.averageQueryTime,
-        errors: poolTest!.details.errors,
-      });
-
       // For implementation validation, we check that the test executed
       // (timing can be 0 for very fast operations, which is acceptable)
       expect(poolTest!.executionTime).toBeGreaterThanOrEqual(0);
@@ -297,22 +260,6 @@ describe('PerformanceTestService', () => {
       expect(Array.isArray(result.results)).toBe(true);
       expect(result.summary).toBeDefined();
       expect(typeof result.summary.totalTests).toBe('number');
-
-      console.log('🎯 Overall Performance Test Results:', {
-        overallPassed: result.overallPassed,
-        totalTests: result.summary.totalTests,
-        passedTests: result.summary.passedTests,
-        failedTests: result.summary.failedTests,
-        averageExecutionTime: result.summary.averageExecutionTime,
-        totalExecutionTime: result.summary.totalExecutionTime,
-      });
-
-      // Log individual test results for analysis
-      result.results.forEach((test) => {
-        console.log(
-          `${test.passed ? '✅' : '❌'} ${test.testName}: ${test.executionTime}ms`,
-        );
-      });
 
       // For implementation validation, we check that the suite executed
       expect(result.summary.totalTests).toBeGreaterThan(0);

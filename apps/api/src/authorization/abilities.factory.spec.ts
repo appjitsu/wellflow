@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { subject } from '@casl/ability';
 import { AbilitiesFactory } from './abilities.factory';
 import { Well } from '../domain/entities/well.entity';
 import { ApiNumber } from '../domain/value-objects/api-number';
@@ -489,6 +490,380 @@ describe('AbilitiesFactory', () => {
       expect(ability.can('read', 'User')).toBe(false);
       expect(ability.can('update', 'User')).toBe(false);
       expect(ability.can('delete', 'User')).toBe(false);
+    });
+  });
+
+  describe('Owner Role Permissions', () => {
+    it('should grant full access to resources within organization', () => {
+      const user = {
+        id: 'owner-1',
+        email: 'owner@example.com',
+        organizationId: 'org-123',
+        roles: ['OWNER'],
+      };
+
+      const ability = factory.createForUser(user);
+
+      // Well management - full access within organization
+      expect(
+        ability.can('create', subject('Well', { organizationId: 'org-123' })),
+      ).toBe(true);
+      expect(
+        ability.can('read', subject('Well', { organizationId: 'org-123' })),
+      ).toBe(true);
+      expect(
+        ability.can('update', subject('Well', { organizationId: 'org-123' })),
+      ).toBe(true);
+      expect(
+        ability.can('delete', subject('Well', { organizationId: 'org-123' })),
+      ).toBe(true);
+      expect(
+        ability.can('audit', subject('Well', { organizationId: 'org-123' })),
+      ).toBe(true);
+
+      // User management - full access within organization
+      expect(
+        ability.can('create', subject('User', { organizationId: 'org-123' })),
+      ).toBe(true);
+      expect(
+        ability.can(
+          'assignRole',
+          subject('User', { organizationId: 'org-123' }),
+        ),
+      ).toBe(true);
+      expect(
+        ability.can(
+          'inviteUser',
+          subject('User', { organizationId: 'org-123' }),
+        ),
+      ).toBe(true);
+
+      // Financial management - full access within organization
+      expect(
+        ability.can(
+          'create',
+          subject('OwnerPayment', { organizationId: 'org-123' }),
+        ),
+      ).toBe(true);
+      expect(
+        ability.can(
+          'approve',
+          subject('CashCall', { organizationId: 'org-123' }),
+        ),
+      ).toBe(true);
+      expect(
+        ability.can('manage', subject('Organization', { id: 'org-123' })),
+      ).toBe(true);
+    });
+
+    it('should deny access to resources outside organization', () => {
+      const user = {
+        id: 'owner-1',
+        email: 'owner@example.com',
+        organizationId: 'org-123',
+        roles: ['OWNER'],
+      };
+
+      const ability = factory.createForUser(user);
+
+      // Cannot access resources from different organization
+      expect(
+        ability.can('read', subject('Well', { organizationId: 'org-456' })),
+      ).toBe(false);
+      expect(
+        ability.can('create', subject('User', { organizationId: 'org-456' })),
+      ).toBe(false);
+      expect(
+        ability.can('manage', subject('Organization', { id: 'org-456' })),
+      ).toBe(false);
+    });
+  });
+
+  describe('Manager Role Permissions', () => {
+    it('should grant operational access within organization', () => {
+      const user = {
+        id: 'manager-1',
+        email: 'manager@example.com',
+        organizationId: 'org-123',
+        roles: ['MANAGER'],
+      };
+
+      const ability = factory.createForUser(user);
+
+      // Well management - read and update within organization
+      expect(
+        ability.can('read', subject('Well', { organizationId: 'org-123' })),
+      ).toBe(true);
+      expect(
+        ability.can('update', subject('Well', { organizationId: 'org-123' })),
+      ).toBe(true);
+      expect(
+        ability.can(
+          'updateStatus',
+          subject('Well', { organizationId: 'org-123' }),
+        ),
+      ).toBe(true);
+
+      // Cannot create or delete wells
+      expect(ability.can('create', 'Well')).toBe(false);
+      expect(ability.can('delete', 'Well')).toBe(false);
+
+      // Production data management
+      expect(
+        ability.can(
+          'read',
+          subject('Production', { organizationId: 'org-123' }),
+        ),
+      ).toBe(true);
+      expect(
+        ability.can(
+          'create',
+          subject('Production', { organizationId: 'org-123' }),
+        ),
+      ).toBe(true);
+
+      // AFE permissions - can approve/reject
+      expect(
+        ability.can('approve', subject('Afe', { organizationId: 'org-123' })),
+      ).toBe(true);
+      expect(
+        ability.can('reject', subject('Afe', { organizationId: 'org-123' })),
+      ).toBe(true);
+
+      // Limited financial access - read only
+      expect(
+        ability.can(
+          'read',
+          subject('OwnerPayment', { organizationId: 'org-123' }),
+        ),
+      ).toBe(true);
+      expect(ability.can('create', 'OwnerPayment')).toBe(false);
+      expect(ability.can('approve', 'OwnerPayment')).toBe(false);
+
+      // Cannot manage users or organization
+      expect(ability.can('create', 'User')).toBe(false);
+      expect(ability.can('assignRole', 'User')).toBe(false);
+      expect(ability.can('update', 'Organization')).toBe(false);
+    });
+
+    it('should deny access to resources outside organization', () => {
+      const user = {
+        id: 'manager-1',
+        email: 'manager@example.com',
+        organizationId: 'org-123',
+        roles: ['MANAGER'],
+      };
+
+      const ability = factory.createForUser(user);
+
+      // Cannot access resources from different organization
+      expect(
+        ability.can('read', subject('Well', { organizationId: 'org-456' })),
+      ).toBe(false);
+      expect(
+        ability.can(
+          'read',
+          subject('Production', { organizationId: 'org-456' }),
+        ),
+      ).toBe(false);
+      expect(
+        ability.can(
+          'read',
+          subject('OwnerPayment', { organizationId: 'org-456' }),
+        ),
+      ).toBe(false);
+    });
+  });
+
+  describe('Pumper Role Permissions', () => {
+    it('should grant limited access to assigned wells only', () => {
+      const user = {
+        id: 'pumper-1',
+        email: 'pumper@example.com',
+        organizationId: 'org-123',
+        roles: ['PUMPER'],
+      };
+
+      const ability = factory.createForUser(user);
+
+      // Can only read wells assigned to them
+      expect(
+        ability.can(
+          'read',
+          subject('Well', {
+            organizationId: 'org-123',
+            assignedPumperId: 'pumper-1',
+          }),
+        ),
+      ).toBe(true);
+
+      // Cannot read wells not assigned to them
+      expect(
+        ability.can(
+          'read',
+          subject('Well', {
+            organizationId: 'org-123',
+            assignedPumperId: 'other-pumper',
+          }),
+        ),
+      ).toBe(false);
+
+      // Can create/update production data for assigned wells
+      expect(
+        ability.can(
+          'create',
+          subject('Production', {
+            organizationId: 'org-123',
+            well: { assignedPumperId: 'pumper-1' },
+          }),
+        ),
+      ).toBe(true);
+
+      expect(
+        ability.can(
+          'update',
+          subject('Production', {
+            organizationId: 'org-123',
+            well: { assignedPumperId: 'pumper-1' },
+          }),
+        ),
+      ).toBe(true);
+
+      // Can read their own user profile
+      expect(
+        ability.can(
+          'read',
+          subject('User', {
+            id: 'pumper-1',
+            organizationId: 'org-123',
+          }),
+        ),
+      ).toBe(true);
+
+      // Cannot read other users
+      expect(
+        ability.can(
+          'read',
+          subject('User', {
+            id: 'other-user',
+            organizationId: 'org-123',
+          }),
+        ),
+      ).toBe(false);
+    });
+
+    it('should deny access to financial and administrative functions', () => {
+      const user = {
+        id: 'pumper-1',
+        email: 'pumper@example.com',
+        organizationId: 'org-123',
+        roles: ['PUMPER'],
+      };
+
+      const ability = factory.createForUser(user);
+
+      // Cannot access financial data
+      expect(ability.can('read', 'OwnerPayment')).toBe(false);
+      expect(ability.can('read', 'CashCall')).toBe(false);
+      expect(ability.can('read', 'JointOperatingAgreement')).toBe(false);
+
+      // Cannot access AFEs
+      expect(ability.can('read', 'Afe')).toBe(false);
+      expect(ability.can('create', 'Afe')).toBe(false);
+
+      // Cannot manage users or organization
+      expect(ability.can('create', 'User')).toBe(false);
+      expect(ability.can('assignRole', 'User')).toBe(false);
+      expect(ability.can('read', 'Organization')).toBe(false);
+
+      // Cannot access audit logs
+      expect(ability.can('read', 'AuditLog')).toBe(false);
+      expect(ability.can('audit', 'Well')).toBe(false);
+
+      // Cannot delete anything
+      expect(ability.can('delete', 'Well')).toBe(false);
+      expect(ability.can('delete', 'Production')).toBe(false);
+    });
+
+    it('should deny access to resources outside organization', () => {
+      const user = {
+        id: 'pumper-1',
+        email: 'pumper@example.com',
+        organizationId: 'org-123',
+        roles: ['PUMPER'],
+      };
+
+      const ability = factory.createForUser(user);
+
+      // Cannot access resources from different organization
+      expect(
+        ability.can(
+          'read',
+          subject('Well', {
+            organizationId: 'org-456',
+            assignedPumperId: 'pumper-1',
+          }),
+        ),
+      ).toBe(false);
+
+      expect(
+        ability.can(
+          'create',
+          subject('Production', {
+            organizationId: 'org-456',
+            well: { assignedPumperId: 'pumper-1' },
+          }),
+        ),
+      ).toBe(false);
+    });
+  });
+
+  describe('Multi-tenant Isolation', () => {
+    it('should enforce organization boundaries for all roles', () => {
+      const ownerUser = {
+        id: 'owner-1',
+        email: 'owner@org123.com',
+        organizationId: 'org-123',
+        roles: ['OWNER'],
+      };
+
+      const managerUser = {
+        id: 'manager-1',
+        email: 'manager@org456.com',
+        organizationId: 'org-456',
+        roles: ['MANAGER'],
+      };
+
+      const ownerAbility = factory.createForUser(ownerUser);
+      const managerAbility = factory.createForUser(managerUser);
+
+      // Owner can access their org resources but not other org
+      expect(
+        ownerAbility.can(
+          'read',
+          subject('Well', { organizationId: 'org-123' }),
+        ),
+      ).toBe(true);
+      expect(
+        ownerAbility.can(
+          'read',
+          subject('Well', { organizationId: 'org-456' }),
+        ),
+      ).toBe(false);
+
+      // Manager can access their org resources but not other org
+      expect(
+        managerAbility.can(
+          'read',
+          subject('Well', { organizationId: 'org-456' }),
+        ),
+      ).toBe(true);
+      expect(
+        managerAbility.can(
+          'read',
+          subject('Well', { organizationId: 'org-123' }),
+        ),
+      ).toBe(false);
     });
   });
 });

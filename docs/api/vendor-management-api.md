@@ -2,7 +2,9 @@
 
 ## Overview
 
-The Vendor Management API provides comprehensive functionality for managing vendors in the WellFlow oil & gas operations platform. This API follows RESTful principles and implements Clean Architecture with Domain-Driven Design patterns.
+The Vendor Management API provides comprehensive functionality for managing
+vendors in the WellFlow oil & gas operations platform. This API follows RESTful
+principles and implements Clean Architecture with Domain-Driven Design patterns.
 
 ## Base URL
 
@@ -85,10 +87,13 @@ Retrieves vendors for the organization with optional filtering and pagination.
 
 - `page` (number, optional) - Page number (default: 1)
 - `limit` (number, optional) - Items per page (default: 20, max: 100)
-- `status` (array, optional) - Filter by status: `pending`, `approved`, `rejected`, `suspended`, `inactive`
-- `vendorType` (array, optional) - Filter by type: `service_provider`, `drilling_contractor`, `equipment_supplier`, `consultant`, `transportation`
+- `status` (array, optional) - Filter by status: `pending`, `approved`,
+  `rejected`, `suspended`, `inactive`
+- `vendorType` (array, optional) - Filter by type: `service_provider`,
+  `drilling_contractor`, `equipment_supplier`, `consultant`, `transportation`
 - `isPrequalified` (boolean, optional) - Filter by qualification status
-- `performanceRating` (array, optional) - Filter by rating: `excellent`, `good`, `average`, `poor`, `not_rated`
+- `performanceRating` (array, optional) - Filter by rating: `excellent`, `good`,
+  `average`, `poor`, `not_rated`
 - `searchTerm` (string, optional) - Search in vendor name or code
 - `sortBy` (string, optional) - Sort field
 - `sortOrder` (string, optional) - Sort order: `ASC`, `DESC`

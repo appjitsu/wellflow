@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   ApiBearerAuth,
@@ -11,6 +11,8 @@ import { CreateOwnerPaymentCommand } from '../../application/commands/create-own
 import { GetOwnerPaymentByIdQuery } from '../../application/queries/get-owner-payment-by-id.query';
 import { CheckAbilities } from '../../authorization/abilities.decorator';
 import type { OwnerPaymentProps } from '../../domain/entities/owner-payment.entity';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { AbilitiesGuard } from '../../authorization/abilities.guard';
 
 function assertValidOwnerPaymentPayload(
   value: unknown,
@@ -37,6 +39,7 @@ function assertValidOwnerPaymentPayload(
 @ApiTags('owner-payments')
 @ApiBearerAuth()
 @Controller('owner-payments')
+@UseGuards(JwtAuthGuard, AbilitiesGuard)
 export class OwnerPaymentsController {
   constructor(
     private readonly commandBus: CommandBus,

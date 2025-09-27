@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { SentryModule } from './sentry.module';
-import { SentryService } from './sentry.service';
+import { SentryModule } from './sentry.service';
 import * as Sentry from '@sentry/nestjs';
 
 // Mock Sentry
@@ -14,7 +14,7 @@ jest.mock('@sentry/nestjs', () => ({
 
 describe('SentryModule', () => {
   let module: TestingModule;
-  let sentryService: SentryService;
+  let sentryService: SentryModule;
 
   const mockConfigService = {
     get: jest.fn(),
@@ -46,7 +46,7 @@ describe('SentryModule', () => {
       .useValue(mockConfigService)
       .compile();
 
-    sentryService = module.get<SentryService>(SentryService);
+    sentryService = module.get<SentryModule>(SentryModule);
   });
 
   afterEach(async () => {
@@ -60,9 +60,9 @@ describe('SentryModule', () => {
       expect(module).toBeDefined();
     });
 
-    it('should provide SentryService', () => {
+    it('should provide SentryModule', () => {
       expect(sentryService).toBeDefined();
-      expect(sentryService).toBeInstanceOf(SentryService);
+      expect(sentryService).toBeInstanceOf(SentryModule);
     });
 
     it('should be a global module', () => {
@@ -319,10 +319,10 @@ describe('SentryModule', () => {
   });
 
   describe('Module Exports', () => {
-    it('should export SentryService', () => {
-      // Check that SentryService is available from the module
+    it('should export SentryModule', () => {
+      // Check that SentryModule is available from the module
       expect(sentryService).toBeDefined();
-      expect(sentryService).toBeInstanceOf(SentryService);
+      expect(sentryService).toBeInstanceOf(SentryModule);
     });
   });
 

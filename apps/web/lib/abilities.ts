@@ -30,6 +30,7 @@ export type AppAbility = MongoAbility<[Actions, Subjects], MongoQuery>;
 export interface User {
   id: string;
   email: string;
+  organizationId: string; // Required for multi-tenant isolation
   roles: string[];
   operatorId?: string;
   allowedStates?: string[];
@@ -46,6 +47,118 @@ export function createAbilityForUser(user: User): AppAbility {
   // Admin permissions - can do everything
   if (user.roles.includes('ADMIN')) {
     can('manage', 'all');
+    return build({
+      detectSubjectType: (item) =>
+        (item as Record<string, unknown>).constructor as unknown as ExtractSubjectType<Subjects>,
+    }) as AppAbility;
+  }
+
+  // Owner permissions - full access within their organization
+  if (user.roles.includes('OWNER') || user.roles.includes('owner')) {
+    // Full well management within organization
+    can('create', 'Well', { organizationId: user.organizationId });
+    can('read', 'Well', { organizationId: user.organizationId });
+    can('update', 'Well', { organizationId: user.organizationId });
+    can('delete', 'Well', { organizationId: user.organizationId });
+    can('updateStatus', 'Well', { organizationId: user.organizationId });
+    can('submitReport', 'Well', { organizationId: user.organizationId });
+    can('export', 'Well', { organizationId: user.organizationId });
+    can('audit', 'Well', { organizationId: user.organizationId });
+    can('viewSensitive', 'Well', { organizationId: user.organizationId });
+
+    // Full production data management
+    can('create', 'Production', { organizationId: user.organizationId });
+    can('read', 'Production', { organizationId: user.organizationId });
+    can('update', 'Production', { organizationId: user.organizationId });
+    can('delete', 'Production', { organizationId: user.organizationId });
+    can('export', 'Production', { organizationId: user.organizationId });
+
+    // Full lease management
+    can('create', 'Lease', { organizationId: user.organizationId });
+    can('read', 'Lease', { organizationId: user.organizationId });
+    can('update', 'Lease', { organizationId: user.organizationId });
+    can('delete', 'Lease', { organizationId: user.organizationId });
+    can('export', 'Lease', { organizationId: user.organizationId });
+
+    return build({
+      detectSubjectType: (item) =>
+        (item as Record<string, unknown>).constructor as unknown as ExtractSubjectType<Subjects>,
+    }) as AppAbility;
+  }
+
+  // Manager permissions - operational access within organization
+  if (user.roles.includes('MANAGER') || user.roles.includes('manager')) {
+    // Well management - read and update within organization
+    can('read', 'Well', { organizationId: user.organizationId });
+    can('update', 'Well', { organizationId: user.organizationId });
+    can('updateStatus', 'Well', { organizationId: user.organizationId });
+    can('submitReport', 'Well', { organizationId: user.organizationId });
+    can('export', 'Well', { organizationId: user.organizationId });
+
+    // Cannot create or delete wells
+    cannot('create', 'Well');
+    cannot('delete', 'Well');
+
+    // Production data management
+    can('read', 'Production', { organizationId: user.organizationId });
+    can('update', 'Production', { organizationId: user.organizationId });
+    can('create', 'Production', { organizationId: user.organizationId });
+    can('export', 'Production', { organizationId: user.organizationId });
+
+    // Lease management - read and update only
+    can('read', 'Lease', { organizationId: user.organizationId });
+    can('update', 'Lease', { organizationId: user.organizationId });
+    can('export', 'Lease', { organizationId: user.organizationId });
+    cannot('create', 'Lease');
+    cannot('delete', 'Lease');
+
+    return build({
+      detectSubjectType: (item) =>
+        (item as Record<string, unknown>).constructor as unknown as ExtractSubjectType<Subjects>,
+    }) as AppAbility;
+  }
+
+  // Pumper permissions - limited to production data entry for assigned wells
+  if (user.roles.includes('PUMPER') || user.roles.includes('pumper')) {
+    // Can only read wells assigned to them within organization
+    can('read', 'Well', {
+      organizationId: user.organizationId,
+      assignedPumperId: user.id,
+    });
+
+    // Can create and update production data for assigned wells
+    can('create', 'Production', {
+      organizationId: user.organizationId,
+      'well.assignedPumperId': user.id,
+    });
+    can('read', 'Production', {
+      organizationId: user.organizationId,
+      'well.assignedPumperId': user.id,
+    });
+    can('update', 'Production', {
+      organizationId: user.organizationId,
+      'well.assignedPumperId': user.id,
+    });
+
+    // Can read basic lease information for context
+    can('read', 'Lease', {
+      organizationId: user.organizationId,
+      'wells.assignedPumperId': user.id,
+    });
+
+    // Cannot modify wells, leases, or delete anything
+    cannot('create', 'Well');
+    cannot('update', 'Well');
+    cannot('delete', 'Well');
+    cannot('updateStatus', 'Well');
+    cannot('create', 'Lease');
+    cannot('update', 'Lease');
+    cannot('delete', 'Lease');
+    cannot('delete', 'Production');
+    cannot('submitReport', 'Well');
+    cannot('export', 'Well');
+    cannot('audit', 'Well');
+
     return build({
       detectSubjectType: (item) =>
         (item as Record<string, unknown>).constructor as unknown as ExtractSubjectType<Subjects>,

@@ -32,9 +32,7 @@
         },
         {
           "version": "0.1.0",
-          "paths": [
-            ". > @lhci/cli@0.15.1 > tmp@0.1.0"
-          ]
+          "paths": [". > @lhci/cli@0.15.1 > tmp@0.1.0"]
         }
       ],
       "found_by": null,
@@ -47,9 +45,7 @@
       "reported_by": null,
       "title": "tmp allows arbitrary temporary file / directory write via symbolic link `dir` parameter",
       "metadata": null,
-      "cves": [
-        "CVE-2025-54798"
-      ],
+      "cves": ["CVE-2025-54798"],
       "access": "public",
       "severity": "low",
       "module_name": "tmp",
@@ -62,9 +58,7 @@
         "score": 2.5,
         "vectorString": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:N/I:L/A:N"
       },
-      "cwe": [
-        "CWE-59"
-      ],
+      "cwe": ["CWE-59"],
       "url": "https://github.com/advisories/GHSA-52f5-9888-hmc6"
     }
   },

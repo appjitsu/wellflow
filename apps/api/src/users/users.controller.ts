@@ -30,6 +30,7 @@ import {
   CanReadUser,
   CanUpdateUser,
   CanDeleteUser,
+  CheckAbilities,
 } from '../authorization/abilities.decorator';
 import { AuditLog } from '../presentation/decorators/audit-log.decorator';
 import { UserRecord } from './domain/users.repository';
@@ -205,5 +206,112 @@ export class UsersController {
       throw new HttpException(USER_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
     return { message: 'User deleted successfully' };
+  }
+
+  /**
+   * Role Management Endpoints
+   * Only owners can assign roles within their organization
+   */
+
+  @Put(':id/role')
+  @CheckAbilities({ action: 'assignRole', subject: 'User' })
+  @AuditLog({ action: 'ASSIGN_USER_ROLE' })
+  @ApiOperation({ summary: 'Assign role to user (Owner only)' })
+  @ApiParam({ name: 'id', description: 'User ID' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User role updated successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: USER_NOT_FOUND,
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Only owners can assign roles',
+  })
+  async assignUserRole(
+    @Param('id') id: string,
+    @Body() dto: { role: 'owner' | 'manager' | 'pumper' },
+  ) {
+    const roleSchema = z.object({
+      role: z.enum(['owner', 'manager', 'pumper']),
+    });
+
+    const validatedDto = this.validationService.validate(roleSchema, dto);
+
+    const user = await this.usersService.updateUser(id, {
+      role: validatedDto.role,
+    });
+
+    if (!user) {
+      throw new HttpException(USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+    }
+
+    return {
+      message: 'User role updated successfully',
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
+    };
+  }
+
+  @Post('invite')
+  @CheckAbilities({ action: 'inviteUser', subject: 'User' })
+  @AuditLog({ action: 'INVITE_USER' })
+  @ApiOperation({ summary: 'Invite new user to organization (Owner only)' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'User invitation sent successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Only owners can invite users',
+  })
+  async inviteUser(
+    @Body()
+    dto: {
+      email: string;
+      firstName: string;
+      lastName: string;
+      role: 'owner' | 'manager' | 'pumper';
+      organizationId: string;
+    },
+  ) {
+    const inviteSchema = z.object({
+      email: z.string().email('Invalid email format').max(255),
+      firstName: z.string().min(1, 'First name is required').max(100),
+      lastName: z.string().min(1, 'Last name is required').max(100),
+      role: z.enum(['owner', 'manager', 'pumper']),
+      organizationId: z.string().uuid('Invalid organization ID'),
+    });
+
+    const validatedDto = this.validationService.validate(inviteSchema, dto);
+
+    // Create user with inactive status (will be activated when they accept invitation)
+    const userData: NewUser = {
+      ...validatedDto,
+      isActive: false, // User must accept invitation to activate
+    };
+
+    const user = await this.usersService.createUser(userData);
+
+    // TODO: Send invitation email (implement in future sprint)
+
+    return {
+      message: 'User invitation sent successfully',
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        isActive: user.isActive,
+      },
+    };
   }
 }

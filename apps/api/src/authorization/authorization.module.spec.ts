@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthorizationModule } from './authorization.module';
-import { AbilitiesFactory } from './abilities.factory';
+import { AuthorizationModule } from './abilities.factory';
 import { AbilitiesGuard } from './abilities.guard';
 
 describe('AuthorizationModule', () => {
   let module: TestingModule;
-  let abilitiesFactory: AbilitiesFactory;
+  let abilitiesFactory: AuthorizationModule;
   let abilitiesGuard: AbilitiesGuard;
 
   beforeEach(async () => {
@@ -13,7 +13,7 @@ describe('AuthorizationModule', () => {
       imports: [AuthorizationModule],
     }).compile();
 
-    abilitiesFactory = module.get<AbilitiesFactory>(AbilitiesFactory);
+    abilitiesFactory = module.get<AuthorizationModule>(AuthorizationModule);
     abilitiesGuard = module.get<AbilitiesGuard>(AbilitiesGuard);
   });
 
@@ -28,9 +28,9 @@ describe('AuthorizationModule', () => {
       expect(module).toBeDefined();
     });
 
-    it('should provide AbilitiesFactory', () => {
+    it('should provide AuthorizationModule', () => {
       expect(abilitiesFactory).toBeDefined();
-      expect(abilitiesFactory).toBeInstanceOf(AbilitiesFactory);
+      expect(abilitiesFactory).toBeInstanceOf(AuthorizationModule);
     });
 
     it('should provide AbilitiesGuard', () => {
@@ -69,7 +69,7 @@ describe('AuthorizationModule', () => {
 
   describe('Oil & Gas Authorization Features', () => {
     it('should support well management permissions', () => {
-      // AbilitiesFactory should handle well-specific permissions
+      // AuthorizationModule should handle well-specific permissions
       expect(abilitiesFactory).toBeDefined();
       expect(typeof abilitiesFactory.createForUser).toBe('function');
     });
@@ -132,7 +132,7 @@ describe('AuthorizationModule', () => {
 
   describe('Permission Management', () => {
     it('should support dynamic permission creation', () => {
-      // AbilitiesFactory should create permissions dynamically based on user
+      // AuthorizationModule should create permissions dynamically based on user
       expect(abilitiesFactory).toBeDefined();
       expect(typeof abilitiesFactory.createForUser).toBe('function');
     });
@@ -172,7 +172,7 @@ describe('AuthorizationModule', () => {
 
   describe('Performance Considerations', () => {
     it('should cache abilities when possible', () => {
-      // AbilitiesFactory should be efficient for repeated calls
+      // AuthorizationModule should be efficient for repeated calls
       expect(abilitiesFactory).toBeDefined();
     });
 
@@ -190,7 +190,7 @@ describe('AuthorizationModule', () => {
     });
 
     it('should be available for injection', () => {
-      expect(() => module.get(AbilitiesFactory)).not.toThrow();
+      expect(() => module.get(AuthorizationModule)).not.toThrow();
       expect(() => module.get(AbilitiesGuard)).not.toThrow();
     });
   });

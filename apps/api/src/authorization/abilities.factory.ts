@@ -51,6 +51,8 @@ type Subjects =
       | 'JointOperatingAgreement'
       | 'JibStatement'
       | 'Vendor'
+      | 'WellTest'
+      | 'Financial'
     >
   | 'all';
 
@@ -69,6 +71,8 @@ export type Actions =
   | 'submit' // Can submit for approval
   | 'approve' // Can approve items
   | 'reject' // Can reject items
+  | 'assignRole' // Can assign roles to users
+  | 'inviteUser' // Can invite new users
   // Regulatory-specific actions
   | 'applyPermit' // Can apply for permits
   | 'renewPermit' // Can renew permits
@@ -93,6 +97,7 @@ export type AppAbility = MongoAbility<[Actions, Subjects]>;
 export interface User {
   id: string;
   email: string;
+  organizationId: string; // Required for multi-tenant isolation
   roles: string[];
   operatorId?: string;
   allowedStates?: string[];
@@ -115,6 +120,16 @@ export class AbilitiesFactory {
     if (item instanceof Permit) return 'Permit' as const;
     if (item instanceof EnvironmentalIncident) return 'Incident' as const;
     if (item instanceof Well) return 'Well' as const;
+
+    // Handle plain objects with __caslSubjectType__ property (created by subject() helper)
+    if (
+      typeof item === 'object' &&
+      item !== null &&
+      '__caslSubjectType__' in item
+    ) {
+      return (item as any).__caslSubjectType__;
+    }
+
     // Default to string subjects provided in decorators; fall back to 'Well' for unknowns
     return 'Well' as const;
   }
@@ -126,6 +141,194 @@ export class AbilitiesFactory {
     // Admin permissions - can do everything
     if (user.roles.indexOf('ADMIN') !== -1) {
       can('manage', 'all');
+      return createMongoAbility(rules, {
+        detectSubjectType: (item: unknown) => this.detectSubjectType(item),
+      });
+    }
+
+    // Owner permissions - full access within their organization
+    if (
+      user.roles.indexOf('OWNER') !== -1 ||
+      user.roles.indexOf('owner') !== -1
+    ) {
+      // Well management - full access within organization
+      can('create', 'Well', { organizationId: user.organizationId });
+      can('read', 'Well', { organizationId: user.organizationId });
+      can('update', 'Well', { organizationId: user.organizationId });
+      can('delete', 'Well', { organizationId: user.organizationId });
+      can('updateStatus', 'Well', { organizationId: user.organizationId });
+      can('submitReport', 'Well', { organizationId: user.organizationId });
+      can('export', 'Well', { organizationId: user.organizationId });
+      can('audit', 'Well', { organizationId: user.organizationId });
+      can('viewSensitive', 'Well', { organizationId: user.organizationId });
+
+      // Production data management - full access within organization
+      can('create', 'Production', { organizationId: user.organizationId });
+      can('read', 'Production', { organizationId: user.organizationId });
+      can('update', 'Production', { organizationId: user.organizationId });
+      can('delete', 'Production', { organizationId: user.organizationId });
+      can('export', 'Production', { organizationId: user.organizationId });
+
+      // Lease management - full access within organization
+      can('create', 'Lease', { organizationId: user.organizationId });
+      can('read', 'Lease', { organizationId: user.organizationId });
+      can('update', 'Lease', { organizationId: user.organizationId });
+      can('delete', 'Lease', { organizationId: user.organizationId });
+      can('export', 'Lease', { organizationId: user.organizationId });
+
+      // User management - full access within organization
+      can('create', 'User', { organizationId: user.organizationId });
+      can('read', 'User', { organizationId: user.organizationId });
+      can('update', 'User', { organizationId: user.organizationId });
+      can('delete', 'User', { organizationId: user.organizationId });
+      can('assignRole', 'User', { organizationId: user.organizationId });
+      can('inviteUser', 'User', { organizationId: user.organizationId });
+
+      // Organization management - only their own organization
+      can('read', 'Organization', { id: user.organizationId });
+      can('update', 'Organization', { id: user.organizationId });
+      can('manage', 'Organization', { id: user.organizationId });
+
+      // Financial management - full access within organization
+      can('create', 'OwnerPayment', { organizationId: user.organizationId });
+      can('read', 'OwnerPayment', { organizationId: user.organizationId });
+      can('update', 'OwnerPayment', { organizationId: user.organizationId });
+      can('delete', 'OwnerPayment', { organizationId: user.organizationId });
+      can('approve', 'OwnerPayment', { organizationId: user.organizationId });
+
+      can('create', 'CashCall', { organizationId: user.organizationId });
+      can('read', 'CashCall', { organizationId: user.organizationId });
+      can('update', 'CashCall', { organizationId: user.organizationId });
+      can('delete', 'CashCall', { organizationId: user.organizationId });
+      can('approve', 'CashCall', { organizationId: user.organizationId });
+
+      can('create', 'JointOperatingAgreement', {
+        organizationId: user.organizationId,
+      });
+      can('read', 'JointOperatingAgreement', {
+        organizationId: user.organizationId,
+      });
+      can('update', 'JointOperatingAgreement', {
+        organizationId: user.organizationId,
+      });
+      can('delete', 'JointOperatingAgreement', {
+        organizationId: user.organizationId,
+      });
+      can('approve', 'JointOperatingAgreement', {
+        organizationId: user.organizationId,
+      });
+
+      // AFE management - full access within organization
+      can('create', 'Afe', { organizationId: user.organizationId });
+      can('read', 'Afe', { organizationId: user.organizationId });
+      can('update', 'Afe', { organizationId: user.organizationId });
+      can('delete', 'Afe', { organizationId: user.organizationId });
+      can('submit', 'Afe', { organizationId: user.organizationId });
+      can('approve', 'Afe', { organizationId: user.organizationId });
+      can('reject', 'Afe', { organizationId: user.organizationId });
+      can('export', 'Afe', { organizationId: user.organizationId });
+      can('audit', 'Afe', { organizationId: user.organizationId });
+
+      // Audit access - full access within organization
+      can('read', 'AuditLog', { organizationId: user.organizationId });
+      can('audit', 'AuditLog', { organizationId: user.organizationId });
+      can('viewSensitive', 'AuditLog', { organizationId: user.organizationId });
+      can('export', 'AuditLog', { organizationId: user.organizationId });
+
+      return createMongoAbility(rules, {
+        detectSubjectType: (item: unknown) => this.detectSubjectType(item),
+      });
+    }
+
+    // Pumper permissions - limited to production data entry and assigned wells within organization
+    if (
+      user.roles.indexOf('PUMPER') !== -1 ||
+      user.roles.indexOf('pumper') !== -1
+    ) {
+      // Can only read wells within their organization and assigned to them
+      can('read', 'Well', {
+        organizationId: user.organizationId,
+        assignedPumperId: user.id,
+      });
+
+      // Can create and update production data for assigned wells within organization
+      can('create', 'Production', {
+        organizationId: user.organizationId,
+        'well.assignedPumperId': user.id,
+      });
+      can('read', 'Production', {
+        organizationId: user.organizationId,
+        'well.assignedPumperId': user.id,
+      });
+      can('update', 'Production', {
+        organizationId: user.organizationId,
+        'well.assignedPumperId': user.id,
+      });
+
+      // Can read basic lease information for context within organization
+      can('read', 'Lease', {
+        organizationId: user.organizationId,
+        'wells.assignedPumperId': user.id,
+      });
+
+      // Can read and update their own user profile only
+      can('read', 'User', {
+        id: user.id,
+        organizationId: user.organizationId,
+      });
+      can('update', 'User', {
+        id: user.id,
+        organizationId: user.organizationId,
+      });
+
+      // Can read and create well test data for assigned wells
+      can('read', 'WellTest', {
+        organizationId: user.organizationId,
+        'well.assignedPumperId': user.id,
+      });
+      can('create', 'WellTest', {
+        organizationId: user.organizationId,
+        'well.assignedPumperId': user.id,
+      });
+      can('update', 'WellTest', {
+        organizationId: user.organizationId,
+        'well.assignedPumperId': user.id,
+      });
+
+      // Explicitly deny access to financial data
+      cannot('read', 'OwnerPayment');
+      cannot('read', 'CashCall');
+      cannot('read', 'JointOperatingAgreement');
+      cannot('read', 'Financial');
+      cannot('viewSensitive', 'all');
+
+      // Explicitly deny access to AFEs
+      cannot('read', 'Afe');
+      cannot('create', 'Afe');
+      cannot('update', 'Afe');
+      cannot('approve', 'Afe');
+      cannot('reject', 'Afe');
+
+      // Explicitly deny user and organization management
+      cannot('create', 'User');
+      cannot('delete', 'User');
+      cannot('assignRole', 'User');
+      cannot('inviteUser', 'User');
+      cannot('read', 'Organization');
+      cannot('update', 'Organization');
+      cannot('manage', 'Organization');
+
+      // Explicitly deny audit access
+      cannot('read', 'AuditLog');
+      cannot('audit', 'all');
+      cannot('viewSensitive', 'AuditLog');
+
+      // Explicitly deny delete operations on all resources
+      cannot('delete', 'Well');
+      cannot('delete', 'Production');
+      cannot('delete', 'Lease');
+      cannot('delete', 'WellTest');
+
       return createMongoAbility(rules, {
         detectSubjectType: (item: unknown) => this.detectSubjectType(item),
       });
@@ -440,34 +643,84 @@ export class AbilitiesFactory {
       cannot('scheduleCompliance', 'ComplianceSchedule');
     }
 
-    // Manager permissions - can approve AFEs and manage operations
-    if (user.roles.indexOf('MANAGER') !== -1) {
-      // Can read and update wells
-      can('read', 'Well');
-      can('update', 'Well');
-      can('updateStatus', 'Well');
+    // Manager permissions - can approve AFEs and manage operations within organization
+    if (
+      user.roles.indexOf('MANAGER') !== -1 ||
+      user.roles.indexOf('manager') !== -1
+    ) {
+      // Well management - can read and update wells within organization
+      can('read', 'Well', { organizationId: user.organizationId });
+      can('update', 'Well', { organizationId: user.organizationId });
+      can('updateStatus', 'Well', { organizationId: user.organizationId });
+      can('submitReport', 'Well', { organizationId: user.organizationId });
+      can('export', 'Well', { organizationId: user.organizationId });
 
-      // Can submit reports
-      can('submitReport', 'Well');
-
-      // Can export data
-      can('export', 'Well');
-
-      // Cannot create or delete wells (requires operator role)
+      // Cannot create or delete wells (requires owner/operator role)
       cannot('create', 'Well');
       cannot('delete', 'Well');
 
-      // Can read User information
-      can('read', 'User');
+      // Production data management within organization
+      can('read', 'Production', { organizationId: user.organizationId });
+      can('update', 'Production', { organizationId: user.organizationId });
+      can('create', 'Production', { organizationId: user.organizationId });
+      can('export', 'Production', { organizationId: user.organizationId });
 
-      // AFE permissions for managers - can approve/reject
-      can('read', 'Afe');
-      can('update', 'Afe');
-      can('submit', 'Afe');
-      can('approve', 'Afe');
-      can('reject', 'Afe');
-      can('export', 'Afe');
-      can('audit', 'Afe');
+      // Lease management within organization
+      can('read', 'Lease', { organizationId: user.organizationId });
+      can('update', 'Lease', { organizationId: user.organizationId });
+      can('export', 'Lease', { organizationId: user.organizationId });
+      cannot('create', 'Lease'); // Requires owner role
+      cannot('delete', 'Lease');
+
+      // User management - limited to viewing team members within organization
+      can('read', 'User', { organizationId: user.organizationId });
+      cannot('create', 'User'); // Only owners can invite users
+      cannot('delete', 'User');
+      cannot('assignRole', 'User'); // Only owners can assign roles
+      cannot('inviteUser', 'User');
+
+      // Organization - read-only access to their own organization
+      can('read', 'Organization', { id: user.organizationId });
+      cannot('update', 'Organization'); // Only owners can modify org settings
+      cannot('manage', 'Organization');
+
+      // AFE permissions for managers - can approve/reject within organization
+      can('read', 'Afe', { organizationId: user.organizationId });
+      can('update', 'Afe', { organizationId: user.organizationId });
+      can('submit', 'Afe', { organizationId: user.organizationId });
+      can('approve', 'Afe', { organizationId: user.organizationId });
+      can('reject', 'Afe', { organizationId: user.organizationId });
+      can('export', 'Afe', { organizationId: user.organizationId });
+      can('audit', 'Afe', { organizationId: user.organizationId });
+      cannot('create', 'Afe'); // Only owners/operators can create AFEs
+      cannot('delete', 'Afe');
+
+      // Financial permissions for managers - limited read access within organization
+      can('read', 'OwnerPayment', { organizationId: user.organizationId }); // Can view payments for operational context
+      cannot('create', 'OwnerPayment'); // Only owners can create payments
+      cannot('update', 'OwnerPayment');
+      cannot('delete', 'OwnerPayment');
+      cannot('approve', 'OwnerPayment');
+
+      can('read', 'CashCall', { organizationId: user.organizationId }); // Can view cash calls for operational context
+      cannot('create', 'CashCall'); // Only owners can create cash calls
+      cannot('update', 'CashCall');
+      cannot('delete', 'CashCall');
+      cannot('approve', 'CashCall');
+
+      can('read', 'JointOperatingAgreement', {
+        organizationId: user.organizationId,
+      }); // Can view JOAs for operational context
+      cannot('create', 'JointOperatingAgreement'); // Only owners can create JOAs
+      cannot('update', 'JointOperatingAgreement');
+      cannot('delete', 'JointOperatingAgreement');
+      cannot('approve', 'JointOperatingAgreement');
+
+      // Limited audit access - can view operational audit logs within organization
+      can('read', 'AuditLog', { organizationId: user.organizationId });
+      can('audit', 'Well', { organizationId: user.organizationId });
+      can('audit', 'Production', { organizationId: user.organizationId });
+      cannot('viewSensitive', 'AuditLog'); // Cannot view sensitive financial audit data
 
       // Operational entities for managers
       can('read', 'DrillingProgram');
@@ -490,10 +743,6 @@ export class AbilitiesFactory {
       can('export', 'Incident');
       cannot('create', 'Incident');
       cannot('delete', 'Incident');
-
-      // Cannot create or delete AFEs (requires operator role)
-      cannot('create', 'Afe');
-      cannot('delete', 'Afe');
 
       // Regulatory compliance permissions for managers - approval authority
       // Permits - managers can approve/reject permits and manage compliance
