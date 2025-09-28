@@ -1,18 +1,36 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { EventBus } from '@nestjs/cqrs';
+import { UpdateVendorPerformanceHandler } from '../update-vendor-performance.handler';
 
 describe('UpdateVendorPerformanceHandler', () => {
-  let service: any;
+  let handler: UpdateVendorPerformanceHandler;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        UpdateVendorPerformanceHandler,
+        {
+          provide: 'VendorRepository',
+          useValue: {
+            findById: jest.fn(),
+            save: jest.fn(),
+          },
+        },
+        {
+          provide: EventBus,
+          useValue: {
+            publish: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
-    service =
-      module.get<UpdateVendorPerformanceHandler>(/* UpdateVendorPerformanceHandler */);
+    handler = module.get<UpdateVendorPerformanceHandler>(
+      UpdateVendorPerformanceHandler,
+    );
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(handler).toBeDefined();
   });
 });

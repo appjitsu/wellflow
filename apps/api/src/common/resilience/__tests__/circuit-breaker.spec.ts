@@ -1,17 +1,19 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { CircuitBreaker, CircuitBreakerConfig } from '../circuit-breaker';
 
 describe('CircuitBreaker', () => {
-  let service: any;
+  let circuitBreaker: CircuitBreaker;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
+  const config: CircuitBreakerConfig = {
+    failureThreshold: 5,
+    recoveryTimeoutMs: 60000,
+    halfOpenMaxCalls: 3,
+  };
 
-    service = module.get<CircuitBreaker>(/* CircuitBreaker */);
+  beforeEach(() => {
+    circuitBreaker = new CircuitBreaker(config);
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(circuitBreaker).toBeDefined();
   });
 });

@@ -260,7 +260,7 @@ export const vendorQualifications = pgTable(
   },
   (table) => ({
     vendorIdx: index('vendor_qualifications_vendor_id_idx').on(table.vendorId),
-    // eslint-disable-next-line no-secrets/no-secrets
+
     qualificationTypeIdx: index('vendor_qualifications_type_idx').on(
       table.qualificationType,
     ),

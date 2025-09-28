@@ -7,16 +7,13 @@ import {
   CurativePriority,
   CurativeStatus,
 } from '../../../domain/entities/curative-item.entity';
-
-const PRIORITY_HIGH: CurativePriority = 'high';
-const PRIORITY_MEDIUM: CurativePriority = 'medium';
-const PRIORITY_LOW: CurativePriority = 'low';
+import { randomUUID } from 'crypto';
 
 // Mock randomUUID
 jest.mock('crypto', () => ({
   randomUUID: jest.fn(),
 }));
-const mockRandomUUID = require('crypto').randomUUID;
+const mockRandomUUID = randomUUID as jest.MockedFunction<typeof randomUUID>;
 
 // Mock CurativeItem
 jest.mock('../../../domain/entities/curative-item.entity');

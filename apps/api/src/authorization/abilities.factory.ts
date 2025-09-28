@@ -127,7 +127,8 @@ export class AbilitiesFactory {
       item !== null &&
       '__caslSubjectType__' in item
     ) {
-      return (item as any).__caslSubjectType__;
+      return (item as { __caslSubjectType__: string })
+        .__caslSubjectType__ as ExtractSubjectType<Subjects>;
     }
 
     // Default to string subjects provided in decorators; fall back to 'Well' for unknowns

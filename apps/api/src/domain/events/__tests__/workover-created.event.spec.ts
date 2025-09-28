@@ -1,17 +1,29 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { WorkoverCreatedEvent } from '../workover-created.event';
 
 describe('WorkoverCreatedEvent', () => {
-  let service: any;
+  let event: WorkoverCreatedEvent;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<WorkoverCreatedEvent>(/* WorkoverCreatedEvent */);
+  beforeEach(() => {
+    event = new WorkoverCreatedEvent(
+      'workover-123',
+      'org-123',
+      'well-123',
+      'scheduled',
+    );
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(event).toBeDefined();
+  });
+
+  it('should have occurred at timestamp', () => {
+    expect(event.occurredAt).toBeInstanceOf(Date);
+  });
+
+  it('should store all constructor parameters', () => {
+    expect(event.id).toBe('workover-123');
+    expect(event.organizationId).toBe('org-123');
+    expect(event.wellId).toBe('well-123');
+    expect(event.status).toBe('scheduled');
   });
 });

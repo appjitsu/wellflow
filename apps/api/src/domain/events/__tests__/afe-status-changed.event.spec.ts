@@ -1,17 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { AfeStatusChangedEvent } from '../afe-status-changed.event';
 
 describe('AfeStatusChangedEvent', () => {
-  let service: any;
+  let event: AfeStatusChangedEvent;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [AfeStatusChangedEvent],
     }).compile();
 
-    service = module.get<AfeStatusChangedEvent>(/* AfeStatusChangedEvent */);
+    event = module.get<AfeStatusChangedEvent>(AfeStatusChangedEvent);
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(event).toBeDefined();
   });
 });

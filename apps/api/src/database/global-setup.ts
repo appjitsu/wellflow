@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+/* eslint-disable no-process-env */
 import { Client } from 'pg';
 
 export default async function globalSetup() {

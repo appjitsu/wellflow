@@ -1,18 +1,17 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { CurativeItemStatusChangedEvent } from '../curative-item-status-changed.event';
+import { CurativeStatus } from '../../entities/curative-item.entity';
 
 describe('CurativeItemStatusChangedEvent', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<CurativeItemStatusChangedEvent>(/* CurativeItemStatusChangedEvent */);
-  });
-
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should create a valid event', () => {
+    const event = new CurativeItemStatusChangedEvent(
+      'item-123',
+      CurativeStatus.OPEN,
+      CurativeStatus.IN_PROGRESS,
+      'user-456',
+      'Status updated for processing',
+    );
+    expect(event).toBeDefined();
+    expect(event.eventType).toBe('CurativeItemStatusChanged');
+    expect(event.curativeItemId).toBe('item-123');
   });
 });

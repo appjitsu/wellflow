@@ -1,17 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { IncidentReportedEvent } from '../incident-reported.event';
 
 describe('IncidentReportedEvent', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<IncidentReportedEvent>(/* IncidentReportedEvent */);
-  });
-
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should create a valid event', () => {
+    const event = new IncidentReportedEvent(
+      'incident-123',
+      'INC-001',
+      'SPILL',
+      'HIGH',
+    );
+    expect(event).toBeDefined();
+    expect(event.eventType).toBe('IncidentReported');
+    expect(event.aggregateId).toBe('incident-123');
   });
 });

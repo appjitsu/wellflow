@@ -13,10 +13,24 @@ import {
   AuditResourceType,
 } from '../../domain/entities/audit-log.entity';
 
+// Extended Request interface with custom properties
+interface EnhancedRequest extends Request {
+  user?: {
+    id: string;
+    organizationId: string;
+  };
+  requestId?: string;
+  sessionId?: string;
+  correlationId?: string;
+  route: {
+    path?: string;
+  };
+}
+
 interface ExtendedRequest extends Request {
   sessionId?: string;
   correlationId?: string;
-  user?: { userId?: string };
+  user?: { userId?: string; id?: string; organizationId?: string };
   userId?: string;
   requestId?: string;
 }
@@ -26,7 +40,7 @@ interface ExtendedRequest extends Request {
  */
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
-  private readonly logger = new Logger(AuditInterceptor.name);
+  private readonly logger = new Logger('AuditInterceptor');
 
   constructor(private readonly auditLogService: AuditLogService) {}
 
@@ -44,6 +58,22 @@ export class AuditInterceptor implements NestInterceptor {
     const startTime = Date.now();
     const requestId = this.getRequestId(request);
     const userId = this.getUserId(request);
+
+    // Set context for audit log service
+    const enhancedRequest = {
+      ...request,
+      user: request.user
+        ? {
+            id: request.user.id || request.user.userId || request.userId,
+            organizationId: request.user.organizationId || '',
+          }
+        : undefined,
+      route: {
+        path:
+          (request.route as { path?: string } | undefined)?.path || request.url,
+      },
+    };
+    this.auditLogService.setContext(enhancedRequest as EnhancedRequest);
 
     // Log the incoming request
     this.logger.debug(

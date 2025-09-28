@@ -1,17 +1,35 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { JobMetricsController } from '../job-metrics.controller';
+import { JobMetricsService } from '../../services/job-metrics.service';
 
 describe('JobMetricsController', () => {
-  let service: any;
+  let controller: JobMetricsController;
 
   beforeEach(async () => {
+    const mockJobMetricsService = {
+      getSystemMetrics: jest.fn(),
+      getAllQueueMetrics: jest.fn(),
+      getQueueMetrics: jest.fn(),
+      getJobMetrics: jest.fn(),
+      getJobMetricsByTimeRange: jest.fn(),
+      getJobMetricsByOrganization: jest.fn(),
+      clearOldMetrics: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      controllers: [JobMetricsController],
+      providers: [
+        {
+          provide: JobMetricsService,
+          useValue: mockJobMetricsService,
+        },
+      ],
     }).compile();
 
-    service = module.get<JobMetricsController>(/* JobMetricsController */);
+    controller = module.get<JobMetricsController>(JobMetricsController);
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(controller).toBeDefined();
   });
 });

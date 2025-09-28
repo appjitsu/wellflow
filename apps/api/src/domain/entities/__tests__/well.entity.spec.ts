@@ -1,9 +1,9 @@
 import { Well } from '../well.entity';
-import { ApiNumber } from '../value-objects/api-number';
-import { Location } from '../value-objects/location';
-import { Coordinates } from '../value-objects/coordinates';
-import { WellStatus, WellType } from '../enums/well-status.enum';
-import { WellStatusChangedEvent } from '../events/well-status-changed.event';
+import { ApiNumber } from '../../value-objects/api-number';
+import { Location } from '../../value-objects/location';
+import { Coordinates } from '../../value-objects/coordinates';
+import { WellStatus, WellType } from '../../enums/well-status.enum';
+import { WellStatusChangedEvent } from '../../events/well-status-changed.event';
 
 describe('Well', () => {
   const validApiNumber = new ApiNumber('42-123-45678');

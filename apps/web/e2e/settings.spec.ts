@@ -1,6 +1,6 @@
 // Settings E2E Tests
-// @jest-environment node
-import { test, expect } from '@playwright/test';
+/* eslint-disable sonarjs/no-hardcoded-ip */
+import { test, expect, Page } from '@playwright/test';
 
 // Mock user data
 const mockUser = {
@@ -79,10 +79,10 @@ test.describe('Settings Page', () => {
     await expect(page.getByRole('tabpanel')).toContainText('Profile Information');
 
     // Check form fields are populated
-    await expect(page.getByDisplayValue('John')).toBeVisible();
-    await expect(page.getByDisplayValue('Doe')).toBeVisible();
-    await expect(page.getByDisplayValue('john.doe@example.com')).toBeVisible();
-    await expect(page.getByDisplayValue('+1 (555) 123-4567')).toBeVisible();
+    await expect(page.locator('[value="John"]')).toBeVisible();
+    await expect(page.locator('[value="Doe"]')).toBeVisible();
+    await expect(page.locator('[value="john.doe@example.com"]')).toBeVisible();
+    await expect(page.locator('[value="+1 (555) 123-4567"]')).toBeVisible();
 
     // Check avatar initials
     await expect(page.getByText('JD')).toBeVisible();

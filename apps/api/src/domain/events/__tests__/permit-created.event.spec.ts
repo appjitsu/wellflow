@@ -1,17 +1,22 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { PermitCreatedEvent } from '../permit-created.event';
 
 describe('PermitCreatedEvent', () => {
-  let service: any;
+  let event: PermitCreatedEvent;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<PermitCreatedEvent>(/* PermitCreatedEvent */);
+  beforeEach(() => {
+    event = new PermitCreatedEvent('agg-123', 'permit-456', 'drilling');
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(event).toBeDefined();
+  });
+
+  it('should have correct properties', () => {
+    expect(event.aggregateId).toBe('agg-123');
+    expect(event.permitNumber).toBe('permit-456');
+    expect(event.permitType).toBe('drilling');
+    expect(event.eventType).toBe('PermitCreated');
+    expect(event.aggregateType).toBe('Permit');
+    expect(event.occurredOn).toBeInstanceOf(Date);
   });
 });

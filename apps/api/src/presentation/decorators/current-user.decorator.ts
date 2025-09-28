@@ -14,3 +14,12 @@ export const CurrentUser = createParamDecorator(
     return request.user;
   },
 );
+
+// Export the implementation for testing
+export const currentUserFactory = (
+  data: unknown,
+  ctx: ExecutionContext,
+): unknown => {
+  const request = ctx.switchToHttp().getRequest<RequestWithUser>();
+  return request.user;
+};

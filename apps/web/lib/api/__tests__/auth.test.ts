@@ -1,5 +1,7 @@
 // Auth API Tests
+/* eslint-disable sonarjs/no-hardcoded-passwords, sonarjs/no-hardcoded-ip */
 import { authApi, ApiError } from '../auth';
+import type { ActivityEvent } from '../../../types/user';
 
 // Mock fetch globally
 global.fetch = jest.fn();
@@ -201,9 +203,10 @@ describe('Auth API', () => {
 
       // Check that timestamps are converted to Date objects
       expect(result).toHaveLength(2);
-      expect(result[0].timestamp).toBeInstanceOf(Date);
-      expect(result[1].timestamp).toBeInstanceOf(Date);
-      expect(result[0].timestamp.toISOString()).toBe('2024-01-01T10:00:00.000Z');
+      const activities = result as ActivityEvent[];
+      expect(activities[0]!.timestamp).toBeInstanceOf(Date);
+      expect(activities[1]!.timestamp).toBeInstanceOf(Date);
+      expect(activities[0]!.timestamp.toISOString()).toBe('2024-01-01T10:00:00.000Z');
     });
   });
 
@@ -269,10 +272,8 @@ describe('Auth API', () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 500,
-        json: async () => {
-          throw new Error('Invalid JSON');
-        },
-      } as Response);
+        json: jest.fn().mockRejectedValue(new Error('Invalid JSON')),
+      } as any);
 
       await expect(authApi.getCurrentProfile()).rejects.toThrow(ApiError);
     });

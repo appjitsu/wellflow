@@ -1,18 +1,33 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { CurativeActivityRepositoryImpl } from '../curative-activity.repository';
 
 describe('CurativeActivityRepositoryImpl', () => {
-  let service: any;
+  let repository: CurativeActivityRepositoryImpl;
+
+  const mockDb = {
+    insert: jest.fn(),
+    select: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        CurativeActivityRepositoryImpl,
+        {
+          provide: 'DATABASE_CONNECTION',
+          useValue: mockDb,
+        },
+      ],
     }).compile();
 
-    service =
-      module.get<CurativeActivityRepositoryImpl>(/* CurativeActivityRepositoryImpl */);
+    repository = module.get<CurativeActivityRepositoryImpl>(
+      CurativeActivityRepositoryImpl,
+    );
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(repository).toBeDefined();
   });
 });

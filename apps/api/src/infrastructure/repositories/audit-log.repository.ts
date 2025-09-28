@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+
 import {
   eq,
   and,
@@ -57,10 +57,7 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
       requestId: auditLog.getRequestId(),
       endpoint: auditLog.getEndpoint(),
       method: auditLog.getMethod(),
-      duration:
-        auditLog.getDuration() !== null
-          ? auditLog.getDuration()!.toString()
-          : null,
+      duration: auditLog.getDuration()?.toString() ?? null,
       createdBy: auditLog.getUserId(), // Log who created this audit entry
     };
 
@@ -89,8 +86,7 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
       requestId: log.getRequestId(),
       endpoint: log.getEndpoint(),
       method: log.getMethod(),
-      duration:
-        log.getDuration() !== null ? log.getDuration()!.toString() : null,
+      duration: log.getDuration()?.toString() ?? null,
       createdBy: log.getUserId(),
     }));
 

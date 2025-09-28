@@ -1,15 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { MaintenanceScheduleRepository } from '../maintenance-schedule.repository';
 
 describe('MaintenanceScheduleRepository', () => {
-  let service: any;
+  let service: MaintenanceScheduleRepository;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [MaintenanceScheduleRepository],
     }).compile();
 
-    service =
-      module.get<MaintenanceScheduleRepository>(/* MaintenanceScheduleRepository */);
+    service = module.get<MaintenanceScheduleRepository>(
+      MaintenanceScheduleRepository,
+    );
   });
 
   it('should be defined', () => {

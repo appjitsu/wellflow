@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { WellStatusChangedHandler } from '../well-status-changed.handler';
 
 describe('WellStatusChangedHandler', () => {
-  let service: any;
+  let service: WellStatusChangedHandler;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [WellStatusChangedHandler],
     }).compile();
 
-    service =
-      module.get<WellStatusChangedHandler>(/* WellStatusChangedHandler */);
+    service = module.get<WellStatusChangedHandler>(WellStatusChangedHandler);
   });
 
   it('should be defined', () => {

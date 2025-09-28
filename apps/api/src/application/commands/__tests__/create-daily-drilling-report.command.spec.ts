@@ -1,5 +1,5 @@
 import { CreateDailyDrillingReportCommand } from '../create-daily-drilling-report.command';
-import { CreateDailyDrillingReportDto } from '../dtos/create-daily-drilling-report.dto';
+import { CreateDailyDrillingReportDto } from '../../dtos/create-daily-drilling-report.dto';
 
 describe('CreateDailyDrillingReportCommand', () => {
   const validDto: CreateDailyDrillingReportDto = {

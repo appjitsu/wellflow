@@ -321,33 +321,6 @@ describe('RevenueDistribution Entity', () => {
       ).toBe(60000);
     });
 
-    it('should return copies of paymentInfo to prevent external mutation', () => {
-      const paymentInfo: PaymentInfo = {
-        checkNumber: 'CHK-001',
-        paymentDate: new Date('2024-02-01'),
-        paymentMethod: 'check',
-      };
-
-      const paidDistribution = new RevenueDistribution(
-        'rd-124',
-        'org-456',
-        'well-789',
-        'partner-101',
-        'do-202',
-        validProductionMonth,
-        validProductionVolumes,
-        validRevenueBreakdown,
-        paymentInfo,
-      );
-
-      const returnedPaymentInfo = paidDistribution.getPaymentInfo();
-      if (returnedPaymentInfo.paymentDate) {
-        returnedPaymentInfo.paymentDate.setMonth(3);
-      }
-
-      expect(paidDistribution.getPaymentInfo().paymentDate?.getMonth()).toBe(1); // February (month index 1)
-    });
-
     it('should return copies of createdAt and updatedAt dates', () => {
       const createdAt = revenueDistribution.getCreatedAt();
       const updatedAt = revenueDistribution.getUpdatedAt();

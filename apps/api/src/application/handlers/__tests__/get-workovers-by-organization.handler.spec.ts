@@ -1,18 +1,28 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { GetWorkoversByOrganizationHandler } from '../get-workovers-by-organization.handler';
 
 describe('GetWorkoversByOrganizationHandler', () => {
-  let service: any;
+  let handler: GetWorkoversByOrganizationHandler;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        GetWorkoversByOrganizationHandler,
+        {
+          provide: 'WorkoverRepository',
+          useValue: {
+            findByOrganizationId: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
-    service =
-      module.get<GetWorkoversByOrganizationHandler>(/* GetWorkoversByOrganizationHandler */);
+    handler = module.get<GetWorkoversByOrganizationHandler>(
+      GetWorkoversByOrganizationHandler,
+    );
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(handler).toBeDefined();
   });
 });

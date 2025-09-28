@@ -1,12 +1,12 @@
 import { Afe } from '../afe.entity';
-import { AfeNumber } from '../value-objects/afe-number';
-import { Money } from '../value-objects/money';
-import { AfeStatus, AfeType } from '../enums/afe-status.enum';
-import { AfeCreatedEvent } from '../events/afe-created.event';
-import { AfeStatusChangedEvent } from '../events/afe-status-changed.event';
-import { AfeSubmittedEvent } from '../events/afe-submitted.event';
-import { AfeApprovedEvent } from '../events/afe-approved.event';
-import { AfeRejectedEvent } from '../events/afe-rejected.event';
+import { AfeNumber } from '../../value-objects/afe-number';
+import { Money } from '../../value-objects/money';
+import { AfeStatus, AfeType } from '../../enums/afe-status.enum';
+import { AfeCreatedEvent } from '../../events/afe-created.event';
+import { AfeStatusChangedEvent } from '../../events/afe-status-changed.event';
+import { AfeSubmittedEvent } from '../../events/afe-submitted.event';
+import { AfeApprovedEvent } from '../../events/afe-approved.event';
+import { AfeRejectedEvent } from '../../events/afe-rejected.event';
 
 describe('Afe Entity', () => {
   let afe: Afe;

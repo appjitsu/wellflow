@@ -1,17 +1,27 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { AuthUserRepositoryImpl } from '../auth-user.repository';
+import { DatabaseService } from '../../../database/database.service';
 
 describe('AuthUserRepositoryImpl', () => {
-  let service: any;
+  let repository: AuthUserRepositoryImpl;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        AuthUserRepositoryImpl,
+        {
+          provide: DatabaseService,
+          useValue: {
+            getDb: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
-    service = module.get<AuthUserRepositoryImpl>(/* AuthUserRepositoryImpl */);
+    repository = module.get<AuthUserRepositoryImpl>(AuthUserRepositoryImpl);
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(repository).toBeDefined();
   });
 });

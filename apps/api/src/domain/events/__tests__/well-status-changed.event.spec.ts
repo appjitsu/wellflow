@@ -1,5 +1,5 @@
 import { WellStatusChangedEvent } from '../well-status-changed.event';
-import { WellStatus } from '../enums/well-status.enum';
+import { WellStatus } from '../../enums/well-status.enum';
 
 describe('WellStatusChangedEvent', () => {
   const mockDate = new Date('2024-01-15T10:30:00.000Z');

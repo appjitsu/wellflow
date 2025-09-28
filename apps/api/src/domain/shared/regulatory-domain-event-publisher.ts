@@ -9,7 +9,6 @@ import type { RegulatoryEventPublisher } from '../../infrastructure/events/regul
 @Injectable()
 export class RegulatoryDomainEventPublisher {
   constructor(
-    // eslint-disable-next-line no-secrets/no-secrets
     @Inject(forwardRef(() => 'RegulatoryEventPublisher'))
     private readonly eventPublisher: RegulatoryEventPublisher,
   ) {}

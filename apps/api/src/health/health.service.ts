@@ -1,5 +1,4 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
 import { Redis } from 'ioredis';
 import { CircuitBreakerService } from '../common/resilience/circuit-breaker.service';

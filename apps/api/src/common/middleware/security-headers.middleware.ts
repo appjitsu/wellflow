@@ -1,6 +1,6 @@
 import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import { randomBytes } from 'crypto';
+import { randomUUID } from 'crypto';
 import { AppConfigService } from '../../config/app.config';
 
 export interface SecurityHeadersConfig {
@@ -246,6 +246,7 @@ export class SecurityHeadersMiddleware implements NestMiddleware {
   }
 
   private generateRequestId(): string {
-    return `req_${Date.now()}_${randomBytes(4).toString('hex')}`;
+    // Generate a proper UUID for request tracing
+    return randomUUID();
   }
 }

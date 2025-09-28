@@ -77,7 +77,7 @@ describe('AuditLogRepositoryImpl', () => {
     mockDb.returning = mockDb.insert().values.returning;
 
     // Reset query index for each test
-    (mockDb as any).queryIndex = 0;
+    mockDb.queryIndex = 0;
 
     mockDatabaseService = {
       getDb: jest.fn().mockReturnValue(mockDb),

@@ -1,10 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GetTitleOpinionByIdHandler } from '../get-title-opinion-by-id.handler';
-import { TitleOpinionRepository } from '../../../domain/repositories/title-opinion.repository.interface';
 
 describe('GetTitleOpinionByIdHandler', () => {
   let handler: GetTitleOpinionByIdHandler;
-  let titleOpinionRepository: TitleOpinionRepository;
 
   beforeEach(async () => {
     const mockTitleOpinionRepository = {
@@ -24,7 +22,6 @@ describe('GetTitleOpinionByIdHandler', () => {
     handler = module.get<GetTitleOpinionByIdHandler>(
       GetTitleOpinionByIdHandler,
     );
-    titleOpinionRepository = module.get('TitleOpinionRepository');
   });
 
   it('should be defined', () => {

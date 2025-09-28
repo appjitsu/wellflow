@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { APP_PIPE } from '@nestjs/core';
 import { EnhancedValidationPipe } from './enhanced-validation.pipe';
 import { SecurityValidationPipe } from './security-validation.pipe';
 import { ValidationService } from './validation.service';

@@ -1,17 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { ReportStatus } from '../report-status.vo';
 
 describe('ReportStatus', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<ReportStatus>(/* ReportStatus */);
+  it('should create a valid report status', () => {
+    const status = ReportStatus.DRAFT;
+    expect(status).toBeDefined();
+    expect(status.value).toBe('draft');
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should create status from string', () => {
+    const status = ReportStatus.fromString('approved');
+    expect(status).toBe(ReportStatus.APPROVED);
   });
 });

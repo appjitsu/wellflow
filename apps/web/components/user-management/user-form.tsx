@@ -1,11 +1,13 @@
 'use client';
 
+/* eslint-disable sonarjs/deprecation, sonarjs/prefer-read-only-props */
+
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Label } from '../ui/label';
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Switch } from '../ui/switch';
 import {
@@ -17,10 +19,11 @@ import {
   FormLabel,
   FormMessage,
 } from '../ui/form';
-import type { UserFormProps, UserFormData } from '../../types/user';
+import type { UserFormProps } from '../../types/user';
+type UserFormData = z.infer<typeof userFormSchema>;
 
 // Validation schema using Zod
-const userFormSchema = z.object({
+export const userFormSchema = z.object({
   email: z
     .string()
     .min(1, 'Email is required')
@@ -34,19 +37,13 @@ const userFormSchema = z.object({
     .string()
     .min(1, 'Last name is required')
     .max(100, 'Last name cannot exceed 100 characters'),
-  role: z.enum(['owner', 'manager', 'pumper'], {
-    required_error: 'Please select a role',
-  }),
-  phone: z
-    .string()
-    .max(20, 'Phone number cannot exceed 20 characters')
-    .optional()
-    .or(z.literal('')),
+  role: z.enum(['owner', 'manager', 'pumper']),
+  phone: z.string().max(20, 'Phone number cannot exceed 20 characters').optional(),
   organizationId: z
     .string()
     .min(1, 'Organization ID is required')
     .uuid('Invalid organization ID format'),
-  isActive: z.boolean().default(true),
+  isActive: z.boolean(),
 });
 
 /**
@@ -76,13 +73,15 @@ export function UserForm({ user, onSubmit, onCancel, loading = false }: UserForm
     try {
       await onSubmit(data);
       form.reset();
-    } catch (error) {
+    } catch {
       // Error handling is done in the parent component
-      console.error('Form submission error:', error);
     }
   };
 
   const isEditing = !!user;
+
+  const submitButtonText = isEditing ? 'Update User' : 'Create User';
+  const loadingButtonText = isEditing ? 'Updating...' : 'Creating...';
 
   return (
     <Form {...form}>
@@ -98,7 +97,7 @@ export function UserForm({ user, onSubmit, onCancel, loading = false }: UserForm
                 <Input type='email' placeholder='user@example.com' {...field} disabled={loading} />
               </FormControl>
               <FormDescription>
-                The user's email address for login and notifications.
+                The user&apos;s email address for login and notifications.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -156,7 +155,7 @@ export function UserForm({ user, onSubmit, onCancel, loading = false }: UserForm
                 </SelectContent>
               </Select>
               <FormDescription>
-                The user's role determines their permissions and access level.
+                The user&apos;s role determines their permissions and access level.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -227,12 +226,10 @@ export function UserForm({ user, onSubmit, onCancel, loading = false }: UserForm
             {loading ? (
               <>
                 <div className='mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
-                {isEditing ? 'Updating...' : 'Creating...'}
+                {loadingButtonText}
               </>
-            ) : isEditing ? (
-              'Update User'
             ) : (
-              'Create User'
+              submitButtonText
             )}
           </Button>
         </div>

@@ -1,14 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpException } from '@nestjs/common';
 import { MonitoringController } from '../monitoring.controller';
-import { SentryService } from '../sentry/sentry.service';
-import { LogRocketService } from '../logrocket/logrocket.service';
+import { SentryService } from '../../sentry/sentry.service';
+import { LogRocketService } from '../../logrocket/logrocket.service';
 import { MetricsService } from '../metrics.service';
-import { CircuitBreakerService } from '../common/resilience/circuit-breaker.service';
-import { RetryService } from '../common/resilience/retry.service';
-import { EnhancedEventBusService } from '../common/events/enhanced-event-bus.service';
-import { DatabasePerformanceService } from '../infrastructure/database/database-performance.service';
-import { AlertService } from '../infrastructure/monitoring/alert.service';
+import { CircuitBreakerService } from '../../common/resilience/circuit-breaker.service';
+import { RetryService } from '../../common/resilience/retry.service';
+import { EnhancedEventBusService } from '../../common/events/enhanced-event-bus.service';
+import { DatabasePerformanceService } from '../../infrastructure/database/database-performance.service';
+import { AlertService } from '../../infrastructure/monitoring/alert.service';
 
 describe('MonitoringController', () => {
   let controller: MonitoringController;

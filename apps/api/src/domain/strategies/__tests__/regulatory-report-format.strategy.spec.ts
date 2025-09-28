@@ -1,18 +1,10 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { JSONRegulatoryReportFormatStrategy } from '../regulatory-report-format.strategy';
 
 describe('JSONRegulatoryReportFormatStrategy', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<JSONRegulatoryReportFormatStrategy>(/* JSONRegulatoryReportFormatStrategy */);
-  });
-
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    const strategy = new JSONRegulatoryReportFormatStrategy();
+
+    expect(strategy).toBeDefined();
+    expect(strategy.getFormatType()).toBe('json');
   });
 });

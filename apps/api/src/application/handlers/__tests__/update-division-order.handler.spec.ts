@@ -5,8 +5,8 @@ import { IDivisionOrderRepository } from '../../../domain/repositories/division-
 
 describe('UpdateDivisionOrderHandler', () => {
   let handler: UpdateDivisionOrderHandler;
-  let divisionOrderRepository: IDivisionOrderRepository;
-  let eventBus: EventBus;
+  let _divisionOrderRepository: IDivisionOrderRepository;
+  let _eventBus: EventBus;
 
   beforeEach(async () => {
     const mockDivisionOrderRepository = {
@@ -36,8 +36,8 @@ describe('UpdateDivisionOrderHandler', () => {
     handler = module.get<UpdateDivisionOrderHandler>(
       UpdateDivisionOrderHandler,
     );
-    divisionOrderRepository = module.get('DivisionOrderRepository');
-    eventBus = module.get(EventBus);
+    _divisionOrderRepository = module.get('DivisionOrderRepository');
+    _eventBus = module.get(EventBus);
   });
 
   it('should be defined', () => {

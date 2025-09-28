@@ -42,6 +42,14 @@ import {
   ChangePasswordDto,
   ChangePasswordResponseDto,
 } from './dto/change-password.dto';
+import {
+  ForgotPasswordDto,
+  ForgotPasswordResponseDto,
+} from './dto/forgot-password.dto';
+import {
+  ResetPasswordDto,
+  ResetPasswordResponseDto,
+} from './dto/reset-password.dto';
 import { AuthenticatedUser } from './strategies/jwt.strategy';
 import { RATE_LIMIT_TIERS } from '../common/throttler';
 import { Public } from '../common/decorators/public.decorator';
@@ -190,7 +198,6 @@ export class AuthController {
   @ApiQuery({
     name: 'token',
     description: 'Email verification token',
-    // eslint-disable-next-line no-secrets/no-secrets
     example: 'abc123def456ghi789',
   })
   @ApiResponse({
@@ -468,5 +475,95 @@ export class AuthController {
     @Body() refreshTokenDto: RefreshTokenDto,
   ): Promise<RefreshTokenResponseDto> {
     return this.authService.refreshToken(refreshTokenDto.refreshToken);
+  }
+
+  /**
+   * Forgot Password
+   * Initiates password reset process by sending reset email
+   */
+  @Post('forgot-password')
+  @Public() // Public endpoint for password reset
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ [RATE_LIMIT_TIERS.STRICT]: { limit: 3, ttl: 300000 } }) // Very strict rate limiting - 3 per 5 minutes
+  @ApiOperation({
+    summary: 'Request password reset',
+    description:
+      'Initiates password reset process. If the email exists, a reset link will be sent. Rate limited to prevent abuse.',
+  })
+  @ApiBody({ type: ForgotPasswordDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Password reset email sent (if account exists)',
+    type: ForgotPasswordResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.TOO_MANY_REQUESTS,
+    description: 'Too many password reset requests',
+    type: AuthErrorResponseDto,
+  })
+  async forgotPassword(
+    @Body() forgotPasswordDto: ForgotPasswordDto,
+  ): Promise<ForgotPasswordResponseDto> {
+    await this.authService.forgotPassword(forgotPasswordDto.email);
+
+    return {
+      message:
+        'If an account with that email exists, a password reset link has been sent.',
+      sentAt: new Date(),
+    };
+  }
+
+  /**
+   * Reset Password
+   * Resets password using token from email
+   */
+  @Post('reset-password')
+  @Public() // Public endpoint for password reset
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ [RATE_LIMIT_TIERS.STRICT]: { limit: 5, ttl: 300000 } }) // 5 attempts per 5 minutes
+  @ApiOperation({
+    summary: 'Reset password with token',
+    description:
+      'Resets user password using the token from the reset email. Validates password complexity and history.',
+  })
+  @ApiBody({ type: ResetPasswordDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Password reset successfully',
+    type: ResetPasswordResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description:
+      'Invalid token, password validation failed, or password reused',
+    type: AuthErrorResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'User not found',
+    type: AuthErrorResponseDto,
+  })
+  async resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ): Promise<ResetPasswordResponseDto> {
+    // Validate password confirmation
+    if (resetPasswordDto.newPassword !== resetPasswordDto.confirmPassword) {
+      throw new HttpException(
+        'New password and confirmation do not match',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    await this.authService.resetPassword(
+      resetPasswordDto.userId,
+      resetPasswordDto.token,
+      resetPasswordDto.newPassword,
+    );
+
+    return {
+      message:
+        'Password has been reset successfully. You can now log in with your new password.',
+      resetAt: new Date(),
+    };
   }
 }

@@ -1,17 +1,7 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { partners } from '../partners';
 
-describe('partners', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<partners>(/* partners */);
-  });
-
+describe('partners schema', () => {
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(partners).toBeDefined();
   });
 });

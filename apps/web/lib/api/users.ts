@@ -8,6 +8,7 @@ import type {
   AssignRoleRequest,
   ApiResponse,
   UserRole,
+  ActivityEvent,
 } from '../../types/user';
 
 // API Configuration
@@ -29,7 +30,7 @@ export class ApiError extends Error {
 async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
 
-  const defaultHeaders = {
+  const defaultHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
   };
 
@@ -117,7 +118,7 @@ export const userApi = {
 
   // Delete user
   async deleteUser(id: string): Promise<void> {
-    return apiRequest<void>(`/users/${id}`, {
+    return apiRequest(`/users/${id}`, {
       method: 'DELETE',
     });
   },

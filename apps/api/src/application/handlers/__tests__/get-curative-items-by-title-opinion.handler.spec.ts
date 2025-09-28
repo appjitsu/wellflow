@@ -1,15 +1,25 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { GetCurativeItemsByTitleOpinionHandler } from '../get-curative-items-by-title-opinion.handler';
 
 describe('GetCurativeItemsByTitleOpinionHandler', () => {
-  let service: any;
+  let service: GetCurativeItemsByTitleOpinionHandler;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        GetCurativeItemsByTitleOpinionHandler,
+        {
+          provide: 'CurativeItemRepository',
+          useValue: {
+            findByTitleOpinionId: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
-    service =
-      module.get<GetCurativeItemsByTitleOpinionHandler>(/* GetCurativeItemsByTitleOpinionHandler */);
+    service = module.get<GetCurativeItemsByTitleOpinionHandler>(
+      GetCurativeItemsByTitleOpinionHandler,
+    );
   });
 
   it('should be defined', () => {

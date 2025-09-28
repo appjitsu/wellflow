@@ -7,10 +7,12 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { AuthUserRepositoryImpl } from './infrastructure/auth-user.repository';
+import { PasswordHistoryRepositoryImpl } from './infrastructure/password-history.repository';
 import { DatabaseModule } from '../database/database.module';
 import { DatabaseService } from '../database/database.service';
 import { AuditLogService } from '../application/services/audit-log.service';
 import { EmailService } from '../application/services/email.service';
+import { SuspiciousActivityDetectorService } from '../application/services/suspicious-activity-detector.service';
 import { JobsModule } from '../jobs/jobs.module';
 import { OrganizationsModule } from '../organizations/organizations.module';
 import { RepositoryModule } from '../infrastructure/repositories/repository.module';
@@ -83,11 +85,23 @@ import { AuthorizationModule } from '../authorization/authorization.module';
       inject: [DatabaseService],
     },
 
+    // Password history repository
+    {
+      provide: 'PasswordHistoryRepository',
+      useFactory: (databaseService: DatabaseService) => {
+        return new PasswordHistoryRepositoryImpl(databaseService);
+      },
+      inject: [DatabaseService],
+    },
+
     // Audit logging service (existing service)
     AuditLogService,
 
     // Email service for authentication workflows
     EmailService,
+
+    // Suspicious activity detection service
+    SuspiciousActivityDetectorService,
   ],
 
   controllers: [AuthController],

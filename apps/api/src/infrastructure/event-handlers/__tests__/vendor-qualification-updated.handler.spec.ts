@@ -1,15 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { VendorQualificationUpdatedHandler } from '../vendor-qualification-updated.handler';
 
 describe('VendorQualificationUpdatedHandler', () => {
-  let service: any;
+  let service: VendorQualificationUpdatedHandler;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [VendorQualificationUpdatedHandler],
     }).compile();
 
-    service =
-      module.get<VendorQualificationUpdatedHandler>(/* VendorQualificationUpdatedHandler */);
+    service = module.get<VendorQualificationUpdatedHandler>(
+      VendorQualificationUpdatedHandler,
+    );
   });
 
   it('should be defined', () => {

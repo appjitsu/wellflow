@@ -5,7 +5,6 @@ import {
   HttpException,
   HttpStatus,
   Logger,
-  Inject,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import {
@@ -14,16 +13,6 @@ import {
   RateLimitResult,
 } from './enhanced-rate-limiter.service';
 import { MetricsService } from '../../monitoring/metrics.service';
-
-// Interface for metrics service
-interface IMetricsService {
-  recordApiRequest(
-    endpoint: string,
-    method: string,
-    responseTime: number,
-    statusCode: number,
-  ): void;
-}
 
 interface ExtendedRequest extends Request {
   user?: {
@@ -117,18 +106,74 @@ export class EnhancedRateLimitGuard implements CanActivate {
       (request as { rateLimitInfo?: unknown }).rateLimitInfo = rateLimitResult;
 
       return true;
-    } catch (error) {
-      if (error instanceof HttpException && error.getStatus() === 429) {
-        throw error;
-      }
-
-      // Log error but allow request through (fail open) - fixed error handling
-      const errorMessage = error
-        ? (error as any).message || String(error)
-        : 'Unknown error';
-      this.logger.error(`Rate limiting check failed: ${errorMessage}`);
-      return true;
+    } catch (error: unknown) {
+      return this.handleRateLimitError(error);
     }
+  }
+
+  private async handleRateLimitExceeded(
+    userId: string | undefined,
+    userTier: UserTier,
+    endpoint: string,
+    method: string,
+    ipAddress: string,
+    rateLimitResult: {
+      remaining: number;
+      resetTime: number;
+      retryAfter: number;
+    },
+  ): Promise<never> {
+    // Record blocked request
+    await this.rateLimiter.recordBlockedRequest(
+      userId || 'anonymous',
+      ipAddress,
+      endpoint,
+      'Rate limit exceeded',
+    );
+
+    // Log rate limit violation
+    this.logger.warn(`Rate limit exceeded for user ${userId} (${userTier})`, {
+      userId,
+      userTier,
+      endpoint,
+      method,
+      ipAddress,
+      remaining: rateLimitResult.remaining,
+      resetTime: rateLimitResult.resetTime,
+    });
+
+    throw new HttpException(
+      {
+        error: 'Too Many Requests',
+        message: 'Rate limit exceeded. Please try again later.',
+        retryAfter: rateLimitResult.retryAfter,
+        tier: userTier,
+        limit: this.rateLimiter.getTierConfig(userTier).requests,
+        remaining: rateLimitResult.remaining,
+        resetTime: rateLimitResult.resetTime,
+      },
+      HttpStatus.TOO_MANY_REQUESTS,
+    );
+  }
+
+  private handleRateLimitError(error: unknown): boolean {
+    if (error instanceof HttpException && error.getStatus() === 429) {
+      throw error;
+    }
+
+    // Log error but allow request through (fail open) - fixed error handling
+    let errorMessage = 'Unknown error';
+    if (error) {
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else {
+        errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      }
+    }
+    this.logger.error(`Rate limiting check failed: ${errorMessage}`);
+    return true;
   }
 
   private getUserId(request: ExtendedRequest): string {

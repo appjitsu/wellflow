@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { Entity, UnitOfWork } from './unit-of-work';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import type * as schema from '../../database/schema';
 import { DatabaseService } from '../../database/database.service';
 import { RegulatoryDomainEventPublisher } from '../../domain/shared/regulatory-domain-event-publisher';
 

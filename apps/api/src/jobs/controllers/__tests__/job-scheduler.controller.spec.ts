@@ -1,17 +1,35 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { JobSchedulerController } from '../job-scheduler.controller';
+import { JobSchedulerService } from '../../services/job-scheduler.service';
 
 describe('JobSchedulerController', () => {
-  let service: any;
+  let controller: JobSchedulerController;
+
+  const mockJobSchedulerService = {
+    getScheduledJobs: jest.fn(),
+    getScheduledJob: jest.fn(),
+    scheduleJob: jest.fn(),
+    updateScheduledJob: jest.fn(),
+    unscheduleJob: jest.fn(),
+    toggleScheduledJob: jest.fn(),
+    getSchedulerStats: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      controllers: [JobSchedulerController],
+      providers: [
+        {
+          provide: JobSchedulerService,
+          useValue: mockJobSchedulerService,
+        },
+      ],
     }).compile();
 
-    service = module.get<JobSchedulerController>(/* JobSchedulerController */);
+    controller = module.get<JobSchedulerController>(JobSchedulerController);
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(controller).toBeDefined();
   });
 });

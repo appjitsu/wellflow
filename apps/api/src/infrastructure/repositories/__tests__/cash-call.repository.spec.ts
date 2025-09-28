@@ -1,12 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CashCallRepository } from '../cash-call.repository';
 import { DatabaseService } from '../../../database/database.service';
-import {
-  CashCall,
-  CashCallStatus,
-  CashCallType,
-  CashCallConsentStatus,
-} from '../../../domain/entities/cash-call.entity';
+import { CashCall } from '../../../domain/entities/cash-call.entity';
 import { cashCalls } from '../../../database/schemas/cash-calls';
 
 describe('CashCallRepository', () => {

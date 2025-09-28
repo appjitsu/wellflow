@@ -1,17 +1,21 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { PermitExpiredEvent } from '../permit-expired.event';
 
 describe('PermitExpiredEvent', () => {
-  let service: any;
+  let event: PermitExpiredEvent;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<PermitExpiredEvent>(/* PermitExpiredEvent */);
+  beforeEach(() => {
+    event = new PermitExpiredEvent('agg-123', 'permit-456');
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(event).toBeDefined();
+  });
+
+  it('should have correct properties', () => {
+    expect(event.aggregateId).toBe('agg-123');
+    expect(event.permitNumber).toBe('permit-456');
+    expect(event.eventType).toBe('PermitExpired');
+    expect(event.aggregateType).toBe('Permit');
+    expect(event.occurredOn).toBeInstanceOf(Date);
   });
 });

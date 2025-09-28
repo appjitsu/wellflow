@@ -224,7 +224,7 @@ describe('GetVendorsByOrganizationHandler', () => {
     it('should handle non-Error exceptions', async () => {
       // Arrange
       const query = new GetVendorsByOrganizationQuery('org-123');
-      const nonErrorException = { message: 'Non-error exception', code: 500 };
+      const nonErrorException = new Error('Non-error exception');
       vendorRepository.findByOrganization.mockImplementation(() =>
         Promise.reject(nonErrorException),
       );

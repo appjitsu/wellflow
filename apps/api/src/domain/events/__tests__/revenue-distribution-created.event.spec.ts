@@ -1,18 +1,19 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { RevenueDistributionCreatedEvent } from '../revenue-distribution-created.event';
 
 describe('RevenueDistributionCreatedEvent', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<RevenueDistributionCreatedEvent>(/* RevenueDistributionCreatedEvent */);
-  });
-
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    const event = new RevenueDistributionCreatedEvent(
+      'dist-123',
+      'org-456',
+      'well-789',
+      'partner-101',
+      '2024-01',
+      1500.5,
+    );
+
+    expect(event).toBeDefined();
+    expect(event.eventType).toBe('RevenueDistributionCreated');
+    expect(event.revenueDistributionId).toBe('dist-123');
+    expect(event.netRevenue).toBe(1500.5);
   });
 });

@@ -65,7 +65,7 @@ export {
 } from './maintenance-schedules';
 
 // AFE management
-export { afes } from './afes';
+export { afes, afeTypeEnum, afeStatusEnum } from './afes';
 export { afeLineItems } from './afe-line-items';
 export { afeApprovals } from './afe-approvals';
 
@@ -128,6 +128,7 @@ export { outboxEvents } from './outbox-events';
 
 // Audit and security
 export { auditLogs } from './audit-logs';
+export { passwordHistory } from './password-history';
 
 // Relations
 export * from './relations';

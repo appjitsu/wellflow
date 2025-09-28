@@ -1,15 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ExponentialBackoffRetryStrategy } from '../resilience-retry.service';
 
 describe('ExponentialBackoffRetryStrategy', () => {
-  let service: any;
+  let service: ExponentialBackoffRetryStrategy;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [ExponentialBackoffRetryStrategy],
     }).compile();
 
-    service =
-      module.get<ExponentialBackoffRetryStrategy>(/* ExponentialBackoffRetryStrategy */);
+    service = module.get<ExponentialBackoffRetryStrategy>(
+      ExponentialBackoffRetryStrategy,
+    );
   });
 
   it('should be defined', () => {

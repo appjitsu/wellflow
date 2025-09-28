@@ -1,16 +1,11 @@
 'use client';
 
-import { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Users, Settings, Home, Menu } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '../../components/ui/sheet';
 import { cn } from '../../lib/utils';
-
-interface DashboardLayoutProps {
-  children: ReactNode;
-}
 
 const navigation = [
   {
@@ -29,6 +24,10 @@ const navigation = [
     icon: Settings,
   },
 ];
+
+interface DashboardLayoutProps {
+  readonly children: React.ReactNode;
+}
 
 /**
  * Dashboard Layout Component

@@ -539,7 +539,6 @@ describe('AfeApprovalDomainRepository', () => {
     });
   });
 
-  // eslint-disable-next-line no-secrets/no-secrets
   describe('hasSufficientApprovals', () => {
     it('should return true when approved > rejected', async () => {
       const mockApprovals = [

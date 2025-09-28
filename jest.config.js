@@ -102,7 +102,15 @@ module.exports = {
   testMatch: ['**/__tests__/**/*.(js|jsx|ts|tsx)', '**/*.(test|spec).(js|jsx|ts|tsx)'],
 
   // Test path ignore patterns
-  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/build/', '/.next/', '/coverage/'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/dist/',
+    '/build/',
+    '/.next/',
+    '/coverage/',
+    '/tests/e2e/',
+    'apps/*/e2e/',
+  ],
 
   // Global setup and teardown
   globalSetup: '<rootDir>/jest.global-setup.js',

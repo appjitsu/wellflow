@@ -6,7 +6,6 @@ import { UpdateVendorInsuranceCommand } from '../../commands/update-vendor-insur
 import { VendorRepository } from '../../../domain/repositories/vendor.repository.interface';
 import { Vendor } from '../../../domain/entities/vendor.entity';
 import { VendorType } from '../../../domain/enums/vendor-status.enum';
-import { VendorStatusChangedEvent } from '../../../domain/events/vendor-status-changed.event';
 
 describe('UpdateVendorInsuranceHandler', () => {
   let handler: UpdateVendorInsuranceHandler;
@@ -207,7 +206,7 @@ describe('UpdateVendorInsuranceHandler', () => {
       expect(eventBus.publish).toHaveBeenCalledTimes(0);
     });
 
-    it('should handle event publishing errors', async () => {
+    it('should handle event publishing errors', () => {
       // Arrange - Since insurance updates don't publish events, this test is not applicable
       // This test would be relevant if insurance updates triggered events (e.g., auto-approval)
       expect(true).toBe(true); // Placeholder test

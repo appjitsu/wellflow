@@ -1,14 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { JibLinkingService } from '../jib-linking.service';
 
 describe('JibLinkingService', () => {
-  let service: any;
+  let service: JibLinkingService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [JibLinkingService],
     }).compile();
 
-    service = module.get<JibLinkingService>(/* JibLinkingService */);
+    service = module.get<JibLinkingService>(JibLinkingService);
   });
 
   it('should be defined', () => {

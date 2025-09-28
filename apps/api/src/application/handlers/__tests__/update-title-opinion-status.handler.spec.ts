@@ -1,15 +1,26 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { UpdateTitleOpinionStatusHandler } from '../update-title-opinion-status.handler';
 
 describe('UpdateTitleOpinionStatusHandler', () => {
-  let service: any;
+  let service: UpdateTitleOpinionStatusHandler;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        UpdateTitleOpinionStatusHandler,
+        {
+          provide: 'TitleOpinionRepository',
+          useValue: {
+            findById: jest.fn(),
+            save: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
-    service =
-      module.get<UpdateTitleOpinionStatusHandler>(/* UpdateTitleOpinionStatusHandler */);
+    service = module.get<UpdateTitleOpinionStatusHandler>(
+      UpdateTitleOpinionStatusHandler,
+    );
   });
 
   it('should be defined', () => {

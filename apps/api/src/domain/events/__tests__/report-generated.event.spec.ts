@@ -1,17 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ReportGeneratedEvent } from '../report-generated.event';
 
 describe('ReportGeneratedEvent', () => {
-  let service: any;
+  let event: ReportGeneratedEvent;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [ReportGeneratedEvent],
     }).compile();
 
-    service = module.get<ReportGeneratedEvent>(/* ReportGeneratedEvent */);
+    event = module.get<ReportGeneratedEvent>(ReportGeneratedEvent);
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(event).toBeDefined();
   });
 });

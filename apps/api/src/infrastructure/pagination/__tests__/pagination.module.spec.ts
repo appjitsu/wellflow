@@ -1,17 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { PaginationModule } from '../pagination.module';
 
 describe('PaginationModule', () => {
-  let service: any;
-
-  beforeEach(async () => {
+  it('should compile the module', async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      imports: [PaginationModule],
     }).compile();
 
-    service = module.get<PaginationModule>(/* PaginationModule */);
-  });
-
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(module).toBeDefined();
   });
 });

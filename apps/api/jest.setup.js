@@ -22,6 +22,7 @@ jest.mock('@sentry/nestjs', () => ({
   setExtra: jest.fn(),
   setUser: jest.fn(),
   startSpan: jest.fn(),
+  generateInstrumentOnce: jest.fn(),
   withScope: jest.fn((callback) => {
     const mockScope = {
       setTag: jest.fn(),

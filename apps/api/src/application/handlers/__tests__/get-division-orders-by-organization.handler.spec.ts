@@ -1,18 +1,29 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { GetDivisionOrdersByOrganizationHandler } from '../get-division-orders-by-organization.handler';
 
 describe('GetDivisionOrdersByOrganizationHandler', () => {
-  let service: any;
+  let handler: GetDivisionOrdersByOrganizationHandler;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        GetDivisionOrdersByOrganizationHandler,
+        {
+          provide: 'DivisionOrderRepository',
+          useValue: {
+            findByOrganizationId: jest.fn(),
+            count: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
-    service =
-      module.get<GetDivisionOrdersByOrganizationHandler>(/* GetDivisionOrdersByOrganizationHandler */);
+    handler = module.get<GetDivisionOrdersByOrganizationHandler>(
+      GetDivisionOrdersByOrganizationHandler,
+    );
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(handler).toBeDefined();
   });
 });

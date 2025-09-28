@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable sonarjs/deprecation, sonarjs/prefer-read-only-props */
+
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -34,9 +36,7 @@ const inviteUserSchema = z.object({
     .string()
     .min(1, 'Last name is required')
     .max(100, 'Last name cannot exceed 100 characters'),
-  role: z.enum(['owner', 'manager', 'pumper'], {
-    required_error: 'Please select a role',
-  }),
+  role: z.enum(['owner', 'manager', 'pumper'] as const),
   organizationId: z
     .string()
     .min(1, 'Organization ID is required')
@@ -68,9 +68,8 @@ export function InviteUserForm({ onSubmit, onCancel, loading = false }: InviteUs
     try {
       await onSubmit(data);
       form.reset();
-    } catch (error) {
+    } catch {
       // Error handling is done in the parent component
-      console.error('Invitation submission error:', error);
     }
   };
 
@@ -186,7 +185,7 @@ export function InviteUserForm({ onSubmit, onCancel, loading = false }: InviteUs
                   </SelectContent>
                 </Select>
                 <FormDescription>
-                  The role determines the user's permissions and access level.
+                  The role determines the user&apos;s permissions and access level.
                 </FormDescription>
                 <FormMessage />
               </FormItem>

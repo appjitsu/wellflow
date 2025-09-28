@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { PartnersService } from '../partners.service';
 import { PartnersRepository } from '../domain/partners.repository';
-import { TenantContextService } from '../common/tenant/tenant-context.service';
+import { TenantContextService } from '../../common/tenant/tenant-context.service';
 
 describe('PartnersService', () => {
   let service: PartnersService;

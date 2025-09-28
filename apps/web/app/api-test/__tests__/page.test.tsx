@@ -61,14 +61,14 @@ describe('ApiTestPage', () => {
       });
     };
 
-    mockFetch.mockImplementation(createDelayedResponse);
-
     render(<ApiTestPage />);
 
     // Wait for initial loading to complete and button to be available
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /test health endpoint/i })).toBeInTheDocument();
     });
+
+    mockFetch.mockImplementation(createDelayedResponse);
 
     const button = screen.getByRole('button', { name: /test health endpoint/i });
     fireEvent.click(button);

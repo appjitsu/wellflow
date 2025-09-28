@@ -272,7 +272,7 @@ describe('JobMetricsService', () => {
       const result = {
         success: true,
         data: 'test-result',
-        // eslint-disable-next-line sonarjs/no-hardcoded-passwords
+
         password: 'test-password-123',
         apiKey: 'key-456',
         token: 'token-789',

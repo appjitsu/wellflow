@@ -513,7 +513,7 @@ describe('OperatorsController', () => {
 
       const mockResult = {
         wells: [],
-        total: 0,
+        total: 1,
       };
 
       mockQueryBus.execute.mockResolvedValue(mockResult);

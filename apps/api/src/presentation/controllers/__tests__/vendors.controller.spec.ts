@@ -695,19 +695,19 @@ describe('VendorsController', () => {
   });
 
   describe('error handling', () => {
-    it('should handle invalid UUID in getVendorById', async () => {
+    it('should handle invalid UUID in getVendorById', () => {
       // ParseUUIDPipe will throw BadRequestException for invalid UUIDs
       // This would be tested in e2e tests
       expect(controller).toBeDefined();
     });
 
-    it('should handle validation errors in DTOs', async () => {
+    it('should handle validation errors in DTOs', () => {
       // ValidationPipe will throw BadRequestException for invalid data
       // This would be tested in e2e tests
       expect(controller).toBeDefined();
     });
 
-    it('should handle authorization failures', async () => {
+    it('should handle authorization failures', () => {
       // Guards will throw ForbiddenException for unauthorized access
       // This would be tested in e2e tests
       expect(controller).toBeDefined();

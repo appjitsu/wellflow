@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
-import * as schema from '../database/schema';
 import { DatabaseService } from '../database/database.service';
 
 @Injectable()

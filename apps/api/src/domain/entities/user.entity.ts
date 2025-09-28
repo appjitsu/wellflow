@@ -1,6 +1,7 @@
 import { Email } from '../value-objects/email';
 import { Password } from '../value-objects/password';
 import { AuthToken } from '../value-objects/auth-token';
+import { timingSafeEqual } from 'crypto';
 import { UserRegisteredEvent } from '../events/user-registered.event';
 import { UserLoggedInEvent } from '../events/user-logged-in.event';
 import { UserPasswordChangedEvent } from '../events/user-password-changed.event';
@@ -145,6 +146,41 @@ export class User {
     return this.passwordResetExpiresAt;
   }
 
+  /**
+   * Set password reset token and expiration
+   */
+  setPasswordResetToken(token: string, expiresAt: Date): void {
+    this.passwordResetToken = token;
+    this.passwordResetExpiresAt = expiresAt;
+    this.updatedAt = new Date();
+  }
+
+  /**
+   * Validate password reset token
+   */
+  validatePasswordResetToken(token: string): boolean {
+    if (!this.passwordResetToken || !this.passwordResetExpiresAt) {
+      return false;
+    }
+
+    // Use constant-time comparison to prevent timing attacks
+    if (!this.constantTimeStringCompare(this.passwordResetToken, token)) {
+      return false;
+    }
+
+    // Check if token is expired
+    return new Date() <= this.passwordResetExpiresAt;
+  }
+
+  /**
+   * Clear password reset token after use
+   */
+  clearPasswordResetToken(): void {
+    this.passwordResetToken = undefined;
+    this.passwordResetExpiresAt = undefined;
+    this.updatedAt = new Date();
+  }
+
   // Factory method for reconstructing users from database
   static fromDatabase(
     id: string,
@@ -266,6 +302,30 @@ export class User {
     );
   }
 
+  /**
+   * Change password with history validation to prevent reuse
+   */
+  async changePasswordWithHistory(
+    newPlainTextPassword: string,
+    passwordHistory: string[],
+  ): Promise<void> {
+    const newPassword = await Password.createWithHistoryValidation(
+      newPlainTextPassword,
+      passwordHistory,
+    );
+    this.passwordHash = newPassword.getHashedValue();
+    this.updatedAt = new Date();
+
+    // Raise domain event for password change
+    this.addDomainEvent(
+      new UserPasswordChangedEvent(
+        this.id,
+        this.organizationId,
+        this.email.getValue(),
+      ),
+    );
+  }
+
   recordSuccessfulLogin(ipAddress?: string, userAgent?: string): void {
     if (this.isAccountLocked()) {
       throw new Error('Cannot login: account is locked');
@@ -351,8 +411,7 @@ export class User {
       throw new Error('No email verification token found');
     }
 
-    // eslint-disable-next-line security/detect-possible-timing-attacks
-    if (this.emailVerificationToken !== token) {
+    if (!this.constantTimeStringCompare(this.emailVerificationToken, token)) {
       throw new Error('Invalid email verification token');
     }
 
@@ -398,8 +457,7 @@ export class User {
       throw new Error('No password reset token found');
     }
 
-    // eslint-disable-next-line security/detect-possible-timing-attacks
-    if (this.passwordResetToken !== token) {
+    if (!this.constantTimeStringCompare(this.passwordResetToken, token)) {
       throw new Error('Invalid password reset token');
     }
 
@@ -427,6 +485,22 @@ export class User {
 
   clearDomainEvents(): void {
     this.domainEvents = [];
+  }
+
+  /**
+   * Constant-time string comparison to prevent timing attacks
+   */
+  private constantTimeStringCompare(a: string, b: string): boolean {
+    if (a.length !== b.length) {
+      return false;
+    }
+
+    try {
+      return timingSafeEqual(Buffer.from(a, 'utf8'), Buffer.from(b, 'utf8'));
+    } catch {
+      // Fallback to regular comparison if timingSafeEqual fails
+      return a === b;
+    }
   }
 }
 

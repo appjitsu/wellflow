@@ -1,9 +1,11 @@
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from '../../../database/database.module';
 import { DatabaseService } from '../../../database/database.service';
-import { RepositoryModule } from '../repository.module';
 import { ProductionRepository } from '../production.repository';
 import { Test, TestingModule } from '@nestjs/testing';
+import { organizations } from '../../../database/schemas/organizations';
+import { wells } from '../../../database/schemas/wells';
+import { eq } from 'drizzle-orm';
 
 /**
  * Production Repository Integration Tests
@@ -47,6 +49,81 @@ describe('ProductionRepository Integration', () => {
     // Initialize the database
     await databaseService.onModuleInit();
     db = databaseService.getDb();
+
+    // Clean up any existing test data more thoroughly
+    try {
+      // First clean up production records that might reference the well
+      await db
+        .delete(require('../../../database/schema').productionRecords)
+        .where(
+          require('drizzle-orm').eq(
+            require('../../../database/schema').productionRecords.wellId,
+            TEST_WELL_ID,
+          ),
+        );
+    } catch (error) {
+      // Ignore cleanup errors
+      console.warn('Cleanup error (ignored):', error);
+    }
+
+    try {
+      // Then clean up the well
+      await db.delete(wells).where(eq(wells.id, TEST_WELL_ID));
+    } catch (error) {
+      // Ignore cleanup errors
+      console.warn('Cleanup error (ignored):', error);
+    }
+
+    try {
+      // Finally clean up the organization
+      await db.delete(organizations).where(eq(organizations.id, TEST_ORG_ID));
+    } catch (error) {
+      // Ignore cleanup errors
+      console.warn('Cleanup error (ignored):', error);
+    }
+
+    // Create test organization with upsert-like behavior
+    try {
+      await db.insert(organizations).values({
+        id: TEST_ORG_ID,
+        name: 'Test Organization LLC',
+        taxId: '12-3456789',
+      });
+    } catch (error) {
+      // If organization already exists, that's fine - we'll use it
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      if (
+        !errorMessage.includes('duplicate key') &&
+        !errorMessage.includes('unique constraint')
+      ) {
+        throw error;
+      }
+      // Organization already exists, continue with the test
+    }
+
+    // Create test well with upsert-like behavior
+    try {
+      await db.insert(wells).values({
+        id: TEST_WELL_ID,
+        organizationId: TEST_ORG_ID,
+        wellName: 'Test Well #1',
+        apiNumber: '4212345678',
+        status: 'active',
+        wellType: 'oil',
+      });
+    } catch (error) {
+      // If well already exists, that's fine - we'll use it
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      if (
+        !errorMessage.includes('duplicate key') &&
+        !errorMessage.includes('unique constraint')
+      ) {
+        throw error;
+      }
+      // Well already exists, continue with the test
+    }
   });
 
   beforeEach(async () => {
@@ -63,6 +140,7 @@ describe('ProductionRepository Integration', () => {
         );
     } catch (error) {
       // Ignore cleanup errors
+      console.warn('Cleanup error (ignored):', error);
     }
   });
 
@@ -80,6 +158,23 @@ describe('ProductionRepository Integration', () => {
         );
     } catch (error) {
       // Ignore cleanup errors
+      console.warn('Cleanup error (ignored):', error);
+    }
+
+    // Clean up test well
+    try {
+      await db.delete(wells).where(eq(wells.id, TEST_WELL_ID));
+    } catch (error) {
+      // Ignore cleanup errors
+      console.warn('Cleanup error (ignored):', error);
+    }
+
+    // Clean up test organization
+    try {
+      await db.delete(organizations).where(eq(organizations.id, TEST_ORG_ID));
+    } catch (error) {
+      // Ignore cleanup errors
+      console.warn('Cleanup error (ignored):', error);
     }
   });
 
@@ -208,7 +303,7 @@ describe('ProductionRepository Integration', () => {
 
       // Then - Only records in date range should be found
       expect(found).toHaveLength(1);
-      expect(found[0].productionDate).toBe('2024-01-20');
+      expect(found[0]?.productionDate).toBe('2024-01-20');
     });
   });
 

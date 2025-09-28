@@ -1,17 +1,7 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { wells } from '../wells';
 
-describe('wells', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<wells>(/* wells */);
-  });
-
+describe('wells schema', () => {
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(wells).toBeDefined();
   });
 });

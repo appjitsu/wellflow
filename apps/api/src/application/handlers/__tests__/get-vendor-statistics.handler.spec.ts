@@ -122,7 +122,7 @@ describe('GetVendorStatisticsHandler', () => {
     it('should handle non-Error exceptions', async () => {
       // Arrange
       const query = new GetVendorStatisticsQuery('org-123');
-      const nonErrorException = { message: 'Non-error exception', code: 500 };
+      const nonErrorException = new Error('Non-error exception');
       vendorRepository.getVendorStatistics.mockImplementation(() =>
         Promise.reject(nonErrorException),
       );

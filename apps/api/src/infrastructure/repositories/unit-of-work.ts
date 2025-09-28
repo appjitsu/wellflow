@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DatabaseService } from '../../database/database.service';
-import * as schema from '../../database/schema';
 
 /**
  * Base Entity interface for change tracking

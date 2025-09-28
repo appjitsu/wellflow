@@ -1,14 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { RetryService } from '../retry.service';
 
 describe('RetryService', () => {
-  let service: any;
+  let service: RetryService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [RetryService],
     }).compile();
 
-    service = module.get<RetryService>(/* RetryService */);
+    service = module.get<RetryService>(RetryService);
   });
 
   it('should be defined', () => {

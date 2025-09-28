@@ -1,11 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { OwnerPaymentRepository } from '../owner-payment.repository';
 import { DatabaseService } from '../../../database/database.service';
-import {
-  OwnerPayment,
-  OwnerPaymentStatus,
-  OwnerPaymentMethod,
-} from '../../../domain/entities/owner-payment.entity';
+import { OwnerPayment } from '../../../domain/entities/owner-payment.entity';
 import { ownerPayments } from '../../../database/schemas/owner-payments';
 
 describe('OwnerPaymentRepository', () => {
@@ -268,8 +264,6 @@ describe('OwnerPaymentRepository', () => {
     });
 
     it('should apply pagination options', async () => {
-      const mockRows = [mockOwnerPaymentRow];
-
       const result = await repository.findByOrganizationId('org-456', {
         limit: 10,
         offset: 20,

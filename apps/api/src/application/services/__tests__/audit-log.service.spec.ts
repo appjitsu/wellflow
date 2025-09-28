@@ -23,6 +23,10 @@ describe('AuditLogService', () => {
         organizationId: 'org-456',
       },
       ip: '192.168.1.1',
+      headers: {
+        'user-agent': 'TestAgent/1.0',
+        'x-forwarded-for': '192.168.1.1',
+      },
       get: jest.fn((header: string) => {
         if (header === 'User-Agent') return 'TestAgent/1.0';
         if (header === 'X-Forwarded-For') return '192.168.1.1';
@@ -50,6 +54,9 @@ describe('AuditLogService', () => {
     }).compile();
 
     service = await module.resolve<AuditLogService>(AuditLogService);
+
+    // Initialize context like the audit interceptor would
+    service.setContext(mockRequest);
   });
 
   afterEach(() => {

@@ -1,17 +1,7 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import * as types from '../types';
 
-describe('types', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<types>(/* types */);
-  });
-
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+describe('types schema exports', () => {
+  it('should export types', () => {
+    expect(types).toBeDefined();
   });
 });

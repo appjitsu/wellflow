@@ -32,6 +32,28 @@ jest.mock('@sentry/node', () => ({
   addBreadcrumb: jest.fn(),
 }));
 
+jest.mock('@sentry/nestjs', () => ({
+  init: jest.fn(),
+  configureScope: jest.fn(),
+  captureException: jest.fn(),
+  captureMessage: jest.fn(),
+  withScope: jest.fn(),
+  setUser: jest.fn(),
+  setExtra: jest.fn(),
+  setTag: jest.fn(),
+  startSpan: jest.fn(),
+  addBreadcrumb: jest.fn(),
+  flush: jest.fn(),
+  SeverityLevel: {
+    fatal: 'fatal',
+    error: 'error',
+    warning: 'warning',
+    info: 'info',
+    debug: 'debug',
+  },
+  Breadcrumb: {},
+}));
+
 describe('Comprehensive Coverage Tests', () => {
   describe('Value Objects', () => {
     describe('StatementMonth', () => {

@@ -11,9 +11,7 @@ import {
   sql,
   SQL,
   AnyColumn,
-  inArray,
 } from 'drizzle-orm';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import {
   VendorRepository,
   VendorFilters,
@@ -27,8 +25,7 @@ import {
   VendorType,
   VendorRating,
 } from '../../domain/enums/vendor-status.enum';
-import { vendors } from '../../database/schemas/vendors';
-import * as schema from '../../database/schemas';
+import { vendors, vendorStatusEnum } from '../../database/schemas/vendors';
 import { DatabaseService } from '../../database/database.service';
 
 // Type for database row from Drizzle
@@ -221,12 +218,23 @@ export class VendorRepositoryImpl implements VendorRepository {
   ): void {
     if (filters.status && filters.status.length > 0) {
       if (filters.status.length === 1) {
-        conditions.push(eq(vendors.status, filters.status[0] as any));
+        conditions.push(
+          eq(
+            vendors.status,
+            filters.status[0] as (typeof vendorStatusEnum.enumValues)[number],
+          ),
+        );
       } else {
         const statusConditions = filters.status.map((status) =>
-          eq(vendors.status, status as any),
+          eq(
+            vendors.status,
+            status as (typeof vendorStatusEnum.enumValues)[number],
+          ),
         );
-        conditions.push(or(...statusConditions)!);
+        const orCondition = or(...statusConditions);
+        if (orCondition) {
+          conditions.push(orCondition);
+        }
       }
     }
   }
@@ -237,9 +245,12 @@ export class VendorRepositoryImpl implements VendorRepository {
   ): void {
     if (filters.vendorType && filters.vendorType.length > 0) {
       const typeConditions = filters.vendorType.map((type) =>
-        eq(vendors.vendorType, type as any),
+        eq(vendors.vendorType, type),
       );
-      conditions.push(or(...typeConditions)!);
+      const orCondition = or(...typeConditions);
+      if (orCondition) {
+        conditions.push(orCondition);
+      }
     }
   }
 
@@ -258,9 +269,12 @@ export class VendorRepositoryImpl implements VendorRepository {
   ): void {
     if (filters.performanceRating && filters.performanceRating.length > 0) {
       const ratingConditions = filters.performanceRating.map((rating) =>
-        eq(vendors.overallRating, rating as any),
+        eq(vendors.overallRating, rating),
       );
-      conditions.push(or(...ratingConditions)!);
+      const orCondition = or(...ratingConditions);
+      if (orCondition) {
+        conditions.push(orCondition);
+      }
     }
   }
 
@@ -611,8 +625,8 @@ export class VendorRepositoryImpl implements VendorRepository {
       organizationId: vendor.getOrganizationId(),
       vendorName: vendor.getVendorName(),
       vendorCode: vendor.getVendorCode(),
+      taxId: vendor.getTaxId(),
       vendorType: vendor.getVendorType(),
-
       status: vendor.getStatus() as
         | 'pending'
         | 'approved'
@@ -620,8 +634,7 @@ export class VendorRepositoryImpl implements VendorRepository {
         | 'suspended'
         | 'inactive', // Cast to match database enum
       billingAddress: vendor.getBillingAddress(),
-      insurance: vendor.getInsurance(),
-      certifications: vendor.getCertifications(),
+      paymentTerms: vendor.getPaymentTerms(),
       isPrequalified: vendor.isQualified(),
       overallRating: vendor.getPerformanceMetrics().overallRating,
       safetyRating: vendor.getPerformanceMetrics().safetyRating,
@@ -649,8 +662,8 @@ export class VendorRepositoryImpl implements VendorRepository {
     try {
       billingAddress =
         typeof row.billingAddress === 'string'
-          ? JSON.parse(row.billingAddress)
-          : row.billingAddress;
+          ? (JSON.parse(row.billingAddress) as VendorAddress)
+          : (row.billingAddress as VendorAddress);
     } catch {
       // Fallback for invalid JSON
       billingAddress = {
@@ -675,7 +688,8 @@ export class VendorRepositoryImpl implements VendorRepository {
     );
 
     // Set status from database (bypass business rules for loading)
-    (vendor as any).status = row.status as VendorStatus;
+    (vendor as unknown as { status: VendorStatus }).status =
+      row.status as VendorStatus;
 
     return vendor;
   }

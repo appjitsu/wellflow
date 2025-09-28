@@ -3,7 +3,7 @@ import {
   IncidentSeverity,
   IncidentStatus,
   IncidentType,
-} from '../enums/environmental-incident.enums';
+} from '../../enums/environmental-incident.enums';
 
 const base = {
   id: '00000000-0000-0000-0000-000000000001',

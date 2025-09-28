@@ -11,6 +11,7 @@ describe('Abilities', () => {
         email: 'admin@example.com',
         roles: ['ADMIN'],
         operatorId: 'operator-1',
+        organizationId: 'org-1',
       };
 
       const ability = createAbilityForUser(user);
@@ -42,6 +43,7 @@ describe('Abilities', () => {
         email: 'operator@example.com',
         roles: ['OPERATOR'],
         operatorId: 'operator-1',
+        organizationId: 'org-1',
       };
 
       const ability = createAbilityForUser(user);
@@ -70,6 +72,7 @@ describe('Abilities', () => {
         email: 'viewer@example.com',
         roles: ['VIEWER'],
         operatorId: 'operator-1',
+        organizationId: 'org-1',
       };
 
       const ability = createAbilityForUser(user);
@@ -94,6 +97,7 @@ describe('Abilities', () => {
         email: 'regulator@example.com',
         roles: ['REGULATOR'],
         allowedStates: ['TX', 'OK'],
+        organizationId: 'org-1',
       };
 
       const ability = createAbilityForUser(user);
@@ -115,6 +119,7 @@ describe('Abilities', () => {
         id: 'auditor-1',
         email: 'auditor@example.com',
         roles: ['AUDITOR'],
+        organizationId: 'org-1',
       };
 
       const ability = createAbilityForUser(user);
@@ -136,6 +141,7 @@ describe('Abilities', () => {
         id: 'user-1',
         email: 'user@example.com',
         roles: [],
+        organizationId: 'org-1',
       };
 
       const ability = createAbilityForUser(user);
@@ -148,7 +154,7 @@ describe('Abilities', () => {
     });
 
     it('should handle detectSubjectType function for admin', () => {
-      const user = { id: '1', email: 'admin@test.com', roles: ['ADMIN'] };
+      const user = { id: '1', email: 'admin@test.com', roles: ['ADMIN'], organizationId: 'org-1' };
       const ability = createAbilityForUser(user);
 
       // Test detectSubjectType with mock object
@@ -162,6 +168,7 @@ describe('Abilities', () => {
         email: 'operator@test.com',
         roles: ['OPERATOR'],
         operatorId: 'operator-1',
+        organizationId: 'org-1',
       };
       const ability = createAbilityForUser(user);
 
@@ -177,6 +184,7 @@ describe('Abilities', () => {
         email: 'regulator@test.com',
         roles: ['REGULATOR'],
         allowedStates: ['TX', 'OK'],
+        organizationId: 'org-1',
       };
       const ability = createAbilityForUser(user);
 
@@ -193,6 +201,7 @@ describe('Abilities', () => {
         email: 'operator2@test.com',
         roles: ['OPERATOR'],
         operatorId: 'operator-1',
+        organizationId: 'org-1',
       };
       const ability = createAbilityForUser(user);
 

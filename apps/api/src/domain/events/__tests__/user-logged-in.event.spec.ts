@@ -1,17 +1,19 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { UserLoggedInEvent } from '../user-logged-in.event';
 
 describe('UserLoggedInEvent', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<UserLoggedInEvent>(/* UserLoggedInEvent */);
-  });
-
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    const event = new UserLoggedInEvent(
+      'user-123',
+      'org-456',
+      'user@example.com',
+      '192.168.1.1',
+      'Mozilla/5.0',
+      'session-789',
+    );
+
+    expect(event).toBeDefined();
+    expect(event.eventType).toBe('UserLoggedIn');
+    expect(event.userId).toBe('user-123');
+    expect(event.email).toBe('user@example.com');
   });
 });

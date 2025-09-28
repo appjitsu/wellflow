@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable sonarjs/deprecation */
+
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -33,20 +35,21 @@ const profileSchema = z.object({
   email: z
     .string()
     .min(1, 'Email is required')
-    .email('Please enter a valid email address')
+    .email({ message: 'Please enter a valid email address' })
     .max(255, 'Email cannot exceed 255 characters'),
   phone: z
     .string()
     .optional()
-    .refine((val) => !val || /^\+?[\d\s\-\(\)]+$/.test(val), {
+    .refine((val) => !val || /^\+?[\d\s\-()]+$/.test(val), {
       message: 'Please enter a valid phone number',
-    }),
+    })
+    .or(z.literal('')),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
 interface ProfileSettingsProps {
-  className?: string;
+  readonly className?: string;
 }
 
 /**

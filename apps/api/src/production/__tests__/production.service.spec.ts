@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { ProductionService } from '../production.service';
-import type { ProductionRepository } from '../domain/repositories/production.repository.interface';
-import { TenantContextService } from '../common/tenant/tenant-context.service';
+import type { ProductionRepository } from '../../domain/repositories/production.repository.interface';
+import { TenantContextService } from '../../common/tenant/tenant-context.service';
 
 describe('ProductionService', () => {
   let service: ProductionService;

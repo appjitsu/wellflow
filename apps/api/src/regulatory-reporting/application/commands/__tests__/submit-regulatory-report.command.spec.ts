@@ -1,18 +1,18 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { SubmitRegulatoryReportCommand } from '../submit-regulatory-report.command';
 
 describe('SubmitRegulatoryReportCommand', () => {
-  let service: any;
+  let command: SubmitRegulatoryReportCommand;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<SubmitRegulatoryReportCommand>(/* SubmitRegulatoryReportCommand */);
+  beforeEach(() => {
+    command = new SubmitRegulatoryReportCommand('test-report-id', 'ORIGINAL');
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(command).toBeDefined();
+  });
+
+  it('should have correct properties', () => {
+    expect(command.reportId).toBe('test-report-id');
+    expect(command.amendmentType).toBe('ORIGINAL');
   });
 });

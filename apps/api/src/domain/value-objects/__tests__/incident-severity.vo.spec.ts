@@ -1,17 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { IncidentSeverity } from '../incident-severity.vo';
 
 describe('IncidentSeverity', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<IncidentSeverity>(/* IncidentSeverity */);
+  it('should create a valid incident severity', () => {
+    const severity = IncidentSeverity.HIGH;
+    expect(severity).toBeDefined();
+    expect(severity.toString()).toBe('high');
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should create severity from string', () => {
+    const severity = IncidentSeverity.fromString('critical');
+    expect(severity).toBe(IncidentSeverity.CRITICAL);
   });
 });

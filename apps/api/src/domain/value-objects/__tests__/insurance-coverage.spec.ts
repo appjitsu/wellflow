@@ -1,17 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { InsuranceCoverage } from '../insurance-coverage';
+import { InsuranceType } from '../../enums/vendor-status.enum';
 
 describe('InsuranceCoverage', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<InsuranceCoverage>(/* InsuranceCoverage */);
-  });
-
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    const coverage = new InsuranceCoverage(
+      InsuranceType.GENERAL_LIABILITY,
+      'Test Carrier',
+      'POL123',
+      1000000,
+      new Date('2025-12-31'),
+    );
+    expect(coverage).toBeDefined();
   });
 });

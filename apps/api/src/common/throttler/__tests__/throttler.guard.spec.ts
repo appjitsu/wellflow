@@ -10,7 +10,7 @@ describe('ThrottlerGuard', () => {
   // Test constants for IP addresses - these are safe in test context
   const TEST_IP = '127.0.0.1';
 
-  const FORWARDED_IP = '10.0.0.1'; // eslint-disable-line sonarjs/no-hardcoded-ip
+  const FORWARDED_IP = '10.0.0.1';
 
   beforeEach(() => {
     // Mock Express request
@@ -287,7 +287,7 @@ describe('ThrottlerGuard', () => {
 
   describe('Error Handling', () => {
     it('should handle storage errors gracefully', () => {
-      const handleStorageError = (error: Error) => {
+      const handleStorageError = (_error: Error) => {
         // Fail open - allow request when storage fails
         return true;
       };

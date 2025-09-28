@@ -1,4 +1,3 @@
-/* eslint-disable no-secrets/no-secrets */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 /**

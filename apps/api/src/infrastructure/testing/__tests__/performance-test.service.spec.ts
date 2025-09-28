@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { PerformanceTestService } from '../performance-test.service';
-import { QueryPerformanceService } from '../monitoring/query-performance.service';
+import { QueryPerformanceService } from '../../monitoring/query-performance.service';
 import {
   ConnectionPoolConfigService,
   DevelopmentPoolStrategy,
   ProductionPoolStrategy,
   TestPoolStrategy,
-} from '../database/connection-pool-config.service';
+} from '../../database/connection-pool-config.service';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import * as schema from '../../database/schema';
+import * as schema from '../../../database/schemas';
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 

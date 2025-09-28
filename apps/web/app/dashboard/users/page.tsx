@@ -3,7 +3,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Search, Filter, RefreshCw } from 'lucide-react';
+import { Plus, Search, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
@@ -22,7 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '../../../components/ui/dialog';
-import { Badge } from '../../../components/ui/badge';
+
 import { useUsers } from '../../../hooks/use-users';
 import { UserList } from '../../../components/user-management/user-list';
 import { UserForm } from '../../../components/user-management/user-form';
@@ -40,6 +40,8 @@ import type { User, UserFormData, InviteFormData, UserRole } from '../../../type
  * - Account status management
  * - CASL-based permission controls
  */
+const DEFAULT_ERROR_MESSAGE = 'Please try again later';
+
 export default function UserManagementPage() {
   // Mock user for testing - in a real app this would come from authentication
   const mockUser = {
@@ -59,21 +61,12 @@ export default function UserManagementPage() {
 function UserManagementPageContent() {
   const { Can } = useAbilities();
 
-  const {
-    users,
-    loading,
-    error,
-    refetch,
-    createUser,
-    updateUser,
-    deleteUser,
-    inviteUser,
-    assignRole,
-  } = useUsers();
+  const { users, loading, error, refetch, updateUser, deleteUser, inviteUser, assignRole } =
+    useUsers();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,28 +82,6 @@ function UserManagementPageContent() {
       user.role?.toLowerCase().includes(searchLower)
     );
   });
-
-  // Handle user creation
-  const handleCreateUser = async (data: UserFormData) => {
-    try {
-      setIsSubmitting(true);
-      await createUser({
-        organizationId: data.organizationId,
-        email: data.email,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        role: data.role,
-        phone: data.phone,
-        isActive: data.isActive,
-      });
-      setIsCreateDialogOpen(false);
-    } catch (error) {
-      console.error('Failed to create user:', error);
-      // Error is handled by the hook and displayed in the UI
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   // Handle user update
   const handleUpdateUser = async (data: UserFormData) => {
@@ -132,9 +103,8 @@ function UserManagementPageContent() {
         description: `${data.firstName} ${data.lastName}'s information has been updated`,
       });
     } catch (error) {
-      console.error('Failed to update user:', error);
       toast.error('Failed to update user', {
-        description: error instanceof Error ? error.message : 'Please try again later',
+        description: error instanceof Error ? error.message : DEFAULT_ERROR_MESSAGE,
       });
     } finally {
       setIsSubmitting(false);
@@ -151,9 +121,8 @@ function UserManagementPageContent() {
         description: `Invitation sent to ${data.email}`,
       });
     } catch (error) {
-      console.error('Failed to invite user:', error);
       toast.error('Failed to send invitation', {
-        description: error instanceof Error ? error.message : 'Please try again later',
+        description: error instanceof Error ? error.message : DEFAULT_ERROR_MESSAGE,
       });
     } finally {
       setIsSubmitting(false);
@@ -162,17 +131,12 @@ function UserManagementPageContent() {
 
   // Handle user deletion
   const handleDeleteUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-      return;
-    }
-
     try {
       await deleteUser(userId);
       toast.success('User deleted successfully!');
     } catch (error) {
-      console.error('Failed to delete user:', error);
       toast.error('Failed to delete user', {
-        description: error instanceof Error ? error.message : 'Please try again later',
+        description: error instanceof Error ? error.message : DEFAULT_ERROR_MESSAGE,
       });
     }
   };
@@ -185,9 +149,8 @@ function UserManagementPageContent() {
         description: `User role changed to ${role}`,
       });
     } catch (error) {
-      console.error('Failed to assign role:', error);
       toast.error('Failed to update role', {
-        description: error instanceof Error ? error.message : 'Please try again later',
+        description: error instanceof Error ? error.message : DEFAULT_ERROR_MESSAGE,
       });
     }
   };
@@ -198,9 +161,8 @@ function UserManagementPageContent() {
       await updateUser(userId, { isActive });
       toast.success(`User ${isActive ? 'activated' : 'deactivated'} successfully!`);
     } catch (error) {
-      console.error('Failed to toggle user status:', error);
       toast.error('Failed to update user status', {
-        description: error instanceof Error ? error.message : 'Please try again later',
+        description: error instanceof Error ? error.message : DEFAULT_ERROR_MESSAGE,
       });
     }
   };
@@ -216,8 +178,7 @@ function UserManagementPageContent() {
     try {
       await refetch();
       toast.success('User list refreshed successfully!');
-    } catch (error) {
-      console.error('Failed to refresh user list:', error);
+    } catch {
       toast.error('Failed to refresh user list', {
         description: 'Please try again later',
       });

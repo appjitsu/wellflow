@@ -11,11 +11,11 @@ process.env.TZ = 'UTC';
 // Oil & gas specific test environment variables
 process.env.WELLFLOW_ENV = 'test';
 process.env.API_URL = 'http://localhost:3001';
-process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/wellflow_test';
+process.env.DATABASE_URL = 'postgresql://jason:password@localhost:5432/wellflow_test';
 process.env.DB_HOST = 'localhost';
 process.env.DB_PORT = '5432';
 process.env.DB_USER = 'jason';
-process.env.DB_PASSWORD = '';
+process.env.DB_PASSWORD = 'password';
 process.env.DB_NAME = 'wellflow_test';
 process.env.REDIS_URL = 'redis://localhost:6379/1';
 

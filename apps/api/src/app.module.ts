@@ -15,6 +15,7 @@ import { ConfigModule } from './config/config.module';
 import { DatabaseModule } from './database/database.module';
 import { RedisModule } from './redis/redis.module';
 import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 import { SentryModule } from './sentry/sentry.module';
 import { LogRocketModule } from './logrocket/logrocket.module';
 import { LogRocketMiddleware } from './logrocket/logrocket.middleware';
@@ -52,7 +53,6 @@ import { CacheModule } from './common/cache/cache.module';
 import { ValidationModule } from './common/validation/validation.module';
 import { RateLimitingModule } from './common/rate-limiting/rate-limiting.module';
 import { EnhancedRateLimitGuard } from './common/rate-limiting/enhanced-rate-limit.guard';
-import { AuthModule } from './auth/auth.module';
 @Module({
   imports: [
     NestConfigModule.forRoot({

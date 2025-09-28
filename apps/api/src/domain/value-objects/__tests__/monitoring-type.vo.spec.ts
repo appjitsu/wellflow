@@ -1,17 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { MonitoringType } from '../monitoring-type.vo';
 
 describe('MonitoringType', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<MonitoringType>(/* MonitoringType */);
+  it('should create a valid monitoring type', () => {
+    const type = MonitoringType.AIR;
+    expect(type).toBeDefined();
+    expect(type.toString()).toBe('air');
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should create type from string', () => {
+    const type = MonitoringType.fromString('water');
+    expect(type).toBe(MonitoringType.WATER);
   });
 });

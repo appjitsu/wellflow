@@ -3,32 +3,10 @@ import { AfeDomainRepository } from '../afe-domain.repository';
 import { DatabaseService } from '../../../database/database.service';
 import { Afe } from '../../../domain/entities/afe.entity';
 import { AfeStatus, AfeType } from '../../../domain/enums/afe-status.enum';
-import { afes } from '../../../database/schemas/afes';
 
 describe('AfeDomainRepository', () => {
   let repository: AfeDomainRepository;
   let mockDatabaseService: any;
-  let mockDb: any;
-
-  const mockAfeRow = {
-    id: 'afe-123',
-    organizationId: 'org-456',
-    afeNumber: 'AFE-2024-0001',
-    wellId: 'well-789',
-    leaseId: 'lease-101',
-    afeType: 'drilling',
-    status: 'draft',
-    totalEstimatedCost: '150000.00',
-    approvedAmount: null,
-    actualCost: null,
-    description: 'Drilling operations for Well A-1',
-    effectiveDate: '2024-01-15',
-    approvalDate: null,
-    submittedAt: null,
-    version: 1,
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
-  };
 
   beforeAll(async () => {
     // Create simplified mock database service

@@ -1,17 +1,21 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { AfeRejectedEvent } from '../afe-rejected.event';
 
 describe('AfeRejectedEvent', () => {
-  let service: any;
+  let event: AfeRejectedEvent;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<AfeRejectedEvent>(/* AfeRejectedEvent */);
+  beforeEach(() => {
+    event = new AfeRejectedEvent('test-afe-id', 'test-org-id', 'AFE-001');
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(event).toBeDefined();
+  });
+
+  it('should have correct properties', () => {
+    expect(event.afeId).toBe('test-afe-id');
+    expect(event.organizationId).toBe('test-org-id');
+    expect(event.afeNumber).toBe('AFE-001');
+    expect(event.eventType).toBe('AfeRejected');
+    expect(event.occurredAt).toBeInstanceOf(Date);
   });
 });

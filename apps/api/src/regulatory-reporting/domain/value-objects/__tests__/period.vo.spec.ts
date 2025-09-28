@@ -1,17 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Period } from '../period.vo';
 
 describe('Period', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<Period>(/* Period */);
+  it('should create a valid period', () => {
+    const period = new Period('2023-01');
+    expect(period).toBeDefined();
+    expect(period.toString()).toBe('2023-01');
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should throw error for invalid format', () => {
+    expect(() => new Period('invalid')).toThrow(
+      'Invalid period format, expected YYYY-MM',
+    );
   });
 });

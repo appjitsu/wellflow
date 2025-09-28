@@ -1,15 +1,26 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ModuleRef } from '@nestjs/core';
+import { RegulatoryFactoryManagerService } from '../regulatory-factory-manager.service';
 
 describe('RegulatoryFactoryManagerService', () => {
-  let service: any;
+  let service: RegulatoryFactoryManagerService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        RegulatoryFactoryManagerService,
+        {
+          provide: ModuleRef,
+          useValue: {
+            create: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
-    service =
-      module.get<RegulatoryFactoryManagerService>(/* RegulatoryFactoryManagerService */);
+    service = module.get<RegulatoryFactoryManagerService>(
+      RegulatoryFactoryManagerService,
+    );
   });
 
   it('should be defined', () => {

@@ -1,18 +1,30 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { GetDrillingProgramsByOrganizationHandler } from '../get-drilling-programs-by-organization.handler';
 
 describe('GetDrillingProgramsByOrganizationHandler', () => {
-  let service: any;
+  let handler: GetDrillingProgramsByOrganizationHandler;
 
   beforeEach(async () => {
+    const mockRepository = {
+      findByOrganizationId: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        GetDrillingProgramsByOrganizationHandler,
+        {
+          provide: 'DrillingProgramRepository',
+          useValue: mockRepository,
+        },
+      ],
     }).compile();
 
-    service =
-      module.get<GetDrillingProgramsByOrganizationHandler>(/* GetDrillingProgramsByOrganizationHandler */);
+    handler = module.get<GetDrillingProgramsByOrganizationHandler>(
+      GetDrillingProgramsByOrganizationHandler,
+    );
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(handler).toBeDefined();
   });
 });

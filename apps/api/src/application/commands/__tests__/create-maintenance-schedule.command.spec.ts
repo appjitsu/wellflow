@@ -1,5 +1,5 @@
 import { CreateMaintenanceScheduleCommand } from '../create-maintenance-schedule.command';
-import { CreateMaintenanceScheduleDto } from '../dtos/create-maintenance-schedule.dto';
+import { CreateMaintenanceScheduleDto } from '../../dtos/create-maintenance-schedule.dto';
 
 describe('CreateMaintenanceScheduleCommand', () => {
   const validDto: CreateMaintenanceScheduleDto = {

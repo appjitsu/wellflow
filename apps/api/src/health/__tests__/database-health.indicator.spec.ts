@@ -1,15 +1,26 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { DatabaseHealthIndicator } from '../database-health.indicator';
+import { DatabaseService } from '../../database/database.service';
 
 describe('DatabaseHealthIndicator', () => {
-  let service: any;
+  let service: DatabaseHealthIndicator;
 
   beforeEach(async () => {
+    const mockDatabaseService = {
+      getDb: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        DatabaseHealthIndicator,
+        {
+          provide: DatabaseService,
+          useValue: mockDatabaseService,
+        },
+      ],
     }).compile();
 
-    service =
-      module.get<DatabaseHealthIndicator>(/* DatabaseHealthIndicator */);
+    service = module.get<DatabaseHealthIndicator>(DatabaseHealthIndicator);
   });
 
   it('should be defined', () => {

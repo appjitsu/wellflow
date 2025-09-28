@@ -1,17 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { WellNotFoundError } from '../domain-errors';
 
 describe('WellNotFoundError', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<WellNotFoundError>(/* WellNotFoundError */);
-  });
-
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    const error = new WellNotFoundError('test-id');
+    expect(error).toBeDefined();
+    expect(error.message).toBe("Well with ID 'test-id' was not found");
+    expect(error.code).toBe('WELL_NOT_FOUND');
+    expect(error.statusCode).toBe(404);
   });
 });

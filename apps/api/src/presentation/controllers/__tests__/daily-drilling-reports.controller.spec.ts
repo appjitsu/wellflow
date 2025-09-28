@@ -1,15 +1,32 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { DailyDrillingReportsController } from '../daily-drilling-reports.controller';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 
 describe('DailyDrillingReportsController', () => {
-  let service: any;
+  let service: DailyDrillingReportsController;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        DailyDrillingReportsController,
+        {
+          provide: CommandBus,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
+        {
+          provide: QueryBus,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
-    service =
-      module.get<DailyDrillingReportsController>(/* DailyDrillingReportsController */);
+    service = module.get<DailyDrillingReportsController>(
+      DailyDrillingReportsController,
+    );
   });
 
   it('should be defined', () => {

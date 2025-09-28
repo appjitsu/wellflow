@@ -6,7 +6,6 @@ import {
   Delete,
   Body,
   Param,
-  UseGuards,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
@@ -21,8 +20,6 @@ import {
 import { UsersService } from './users.service';
 import type { NewUser } from '../database/schema';
 import { RATE_LIMIT_TIERS } from '../common/throttler';
-import { JwtAuthGuard } from '../presentation/guards/jwt-auth.guard';
-import { AbilitiesGuard } from '../authorization/abilities.guard';
 import {
   CanCreateUser,
   CanReadUser,
@@ -246,8 +243,6 @@ export class UsersController {
     };
 
     const user = await this.usersService.createUser(userData);
-
-    // TODO: Send invitation email (implement in future sprint)
 
     return {
       message: 'User invitation sent successfully',

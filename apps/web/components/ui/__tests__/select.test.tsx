@@ -1,4 +1,6 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React from 'react';
+import { render, screen } from '@testing-library/react';
 import {
   Select,
   SelectContent,
@@ -17,11 +19,22 @@ jest.mock('@radix-ui/react-select', () => ({
       {children}
     </div>
   ),
-  Trigger: ({ children, className, ...props }: any) => (
-    <button data-testid='select-trigger' className={className} {...props}>
-      {children}
-    </button>
-  ),
+  Trigger: ({ children, className, asChild, ...props }: any) => {
+    if (asChild) {
+      return React.cloneElement(children, {
+        'data-testid': 'select-trigger',
+        className: className
+          ? `${children.props.className || ''} ${className}`.trim()
+          : children.props.className,
+        ...props,
+      });
+    }
+    return (
+      <button data-testid='select-trigger' className={className} {...props}>
+        {children}
+      </button>
+    );
+  },
   Value: ({ placeholder }: any) => (
     <span data-testid='select-value' data-placeholder={placeholder}>
       {placeholder}
@@ -64,11 +77,19 @@ jest.mock('@radix-ui/react-select', () => ({
       {children}
     </div>
   ),
-  Icon: ({ children, asChild, ...props }: any) => (
-    <span data-testid='select-icon' {...props}>
-      {children}
-    </span>
-  ),
+  Icon: ({ children, asChild, ...props }: any) => {
+    if (asChild) {
+      return React.cloneElement(children, {
+        'data-testid': 'select-icon',
+        ...props,
+      });
+    }
+    return (
+      <span data-testid='select-icon' {...props}>
+        {children}
+      </span>
+    );
+  },
 }));
 
 // Mock lucide-react icons

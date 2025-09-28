@@ -41,8 +41,14 @@ const passwordChangeSchema = z
 type PasswordChangeFormData = z.infer<typeof passwordChangeSchema>;
 
 interface SecuritySettingsProps {
-  className?: string;
+  readonly className?: string;
 }
+
+const getStrengthColor = (strength: number) => {
+  if (strength <= 2) return 'bg-red-500';
+  if (strength <= 3) return 'bg-yellow-500';
+  return 'bg-green-500';
+};
 
 /**
  * SecuritySettings Component
@@ -199,11 +205,7 @@ export function SecuritySettings({ className }: SecuritySettingsProps) {
                                 key={level}
                                 className={`h-2 w-4 rounded-full ${
                                   level <= passwordStrength
-                                    ? passwordStrength <= 2
-                                      ? 'bg-red-500'
-                                      : passwordStrength <= 3
-                                        ? 'bg-yellow-500'
-                                        : 'bg-green-500'
+                                    ? getStrengthColor(passwordStrength)
                                     : 'bg-gray-200'
                                 }`}
                               />
@@ -293,8 +295,8 @@ export function SecuritySettings({ className }: SecuritySettingsProps) {
                 <div>
                   <h4 className='font-medium'>Strong Password</h4>
                   <p className='text-sm text-muted-foreground'>
-                    Use a unique password that's at least 8 characters long with a mix of letters,
-                    numbers, and symbols.
+                    Use a unique password that&apos;s at least 8 characters long with a mix of
+                    letters, numbers, and symbols.
                   </p>
                 </div>
               </div>

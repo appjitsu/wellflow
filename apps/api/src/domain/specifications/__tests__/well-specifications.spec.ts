@@ -1,15 +1,10 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { ActiveWellsSpecification } from '../well-specifications';
 
 describe('ActiveWellsSpecification', () => {
-  let service: any;
+  let service: ActiveWellsSpecification;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<ActiveWellsSpecification>(/* ActiveWellsSpecification */);
+  beforeEach(() => {
+    service = new ActiveWellsSpecification();
   });
 
   it('should be defined', () => {

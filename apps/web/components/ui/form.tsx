@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
+
 import * as React from 'react';
 import * as LabelPrimitive from '@radix-ui/react-label';
 import { Slot } from '@radix-ui/react-slot';
@@ -15,7 +17,7 @@ import {
 import { cn } from '../../lib/utils';
 import { Label } from './label';
 
-const Form = FormProvider;
+const Form = FormProvider as any;
 
 type FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,
