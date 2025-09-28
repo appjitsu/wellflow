@@ -503,6 +503,59 @@ export class AuthService {
   }
 
   /**
+   * Change user password
+   */
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await user.validatePassword(currentPassword);
+    if (!isCurrentPasswordValid) {
+      await this.auditLogService.logFailure(
+        AuditAction.UPDATE,
+        AuditResourceType.USER,
+        userId,
+        'Invalid current password provided for password change',
+        {},
+      );
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    // Check if new password is different from current
+    const isSamePassword = await user.validatePassword(newPassword);
+    if (isSamePassword) {
+      throw new ConflictException(
+        'New password must be different from current password',
+      );
+    }
+
+    // Update password
+    await user.changePassword(newPassword);
+    await this.userRepository.save(user);
+
+    // Log successful password change
+    await this.auditLogService.logSuccess(
+      AuditAction.UPDATE,
+      AuditResourceType.USER,
+      userId,
+      {},
+      {
+        businessContext: {
+          action: 'password_changed',
+          email: user.getEmail().getValue(),
+        },
+      },
+    );
+  }
+
+  /**
    * Refresh access token using refresh token
    */
   async refreshToken(

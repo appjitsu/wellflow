@@ -1,20 +1,16 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { eq, and } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import type * as schema from '../../database/schema';
 import { chainOfTitleEntries } from '../../database/schemas/chain-of-title';
 import {
   ChainOfTitleEntry,
   type RecordingInfo,
 } from '../../domain/entities/chain-of-title-entry.entity';
 import type { ChainOfTitleRepository } from '../../domain/repositories/chain-of-title.repository.interface';
+import { DatabaseService } from '../../database/database.service';
 
 @Injectable()
 export class ChainOfTitleRepositoryImpl implements ChainOfTitleRepository {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   private toDomain(
     row: typeof chainOfTitleEntries.$inferSelect,
@@ -53,7 +49,8 @@ export class ChainOfTitleRepositoryImpl implements ChainOfTitleRepository {
       updatedAt: new Date(),
     };
 
-    const inserted = await this.db
+    const db = this.databaseService.getDb();
+    const inserted = await db
       .insert(chainOfTitleEntries)
       .values(values)
       .returning();
@@ -67,7 +64,8 @@ export class ChainOfTitleRepositoryImpl implements ChainOfTitleRepository {
     organizationId: string,
     options?: { limit?: number; offset?: number },
   ): Promise<ChainOfTitleEntry[]> {
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(chainOfTitleEntries)
       .where(

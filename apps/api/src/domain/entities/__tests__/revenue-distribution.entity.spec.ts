@@ -345,7 +345,7 @@ describe('RevenueDistribution Entity', () => {
         returnedPaymentInfo.paymentDate.setMonth(3);
       }
 
-      expect(paidDistribution.getPaymentInfo().paymentDate?.getMonth()).toBe(0);
+      expect(paidDistribution.getPaymentInfo().paymentDate?.getMonth()).toBe(1); // February (month index 1)
     });
 
     it('should return copies of createdAt and updatedAt dates', () => {

@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CashCallsController } from '../cash-calls.controller';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { RecordCashCallConsentDto } from '../../dtos/record-cash-call-consent.dto';
+import { Reflector } from '@nestjs/core';
+import { AbilitiesFactory } from '../../../authorization/abilities.factory';
 
 class CommandBusMock {
   execute = jest.fn(() => Promise.resolve('consented-id'));
@@ -23,6 +25,14 @@ describe('CashCallsController consent', () => {
       providers: [
         { provide: CommandBus, useValue: commandBus },
         { provide: QueryBus, useValue: queryBus },
+        {
+          provide: AbilitiesFactory,
+          useValue: { createForUser: jest.fn() },
+        },
+        {
+          provide: Reflector,
+          useValue: { get: jest.fn() },
+        },
       ],
     }).compile();
 

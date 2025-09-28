@@ -241,7 +241,7 @@ export class Afe {
           this.id,
           this.organizationId,
           this.afeNumber.getValue(),
-          this.approvedAmount?.getAmount() ||
+          this.approvedAmount?.getAmount() ??
             this.totalEstimatedCost?.getAmount(),
           updatedBy,
         ),

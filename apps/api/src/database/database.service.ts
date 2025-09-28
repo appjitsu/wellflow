@@ -14,13 +14,23 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   public db!: NodePgDatabase<typeof schema>;
   public queryBuilder!: QueryBuilderFactory;
   public queryUtils!: QueryUtils;
+  private initializationPromise: Promise<void> | null = null;
 
   constructor(private configService: ConfigService) {}
 
   async onModuleInit() {
+    if (this.initializationPromise) {
+      return this.initializationPromise;
+    }
+
+    this.initializationPromise = this.initialize();
+    return this.initializationPromise;
+  }
+
+  private async initialize() {
     this.pool = new Pool({
       host: this.configService.get<string>('DB_HOST', 'localhost'),
-      port: this.configService.get<number>('DB_PORT', 5432),
+      port: this.configService.get<number>('DB_PORT', 5433),
       user: this.configService.get<string>('DB_USER', 'postgres'),
       password: this.configService.get<string>('DB_PASSWORD'),
       database: this.configService.get<string>('DB_NAME', 'wellflow'),
@@ -59,6 +69,11 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   }
 
   getDb() {
+    if (!this.db) {
+      throw new Error(
+        'Database not initialized. Make sure DatabaseService.onModuleInit() has been called.',
+      );
+    }
     return this.db;
   }
 

@@ -1,0 +1,21 @@
+{
+  "testSuiteStart": "2025-09-28T00:20:00.299Z",
+  "standards": ["API_1164", "NIST_CSF", "IEC_62443"],
+  "environment": "test",
+  "coverageRequirements": {
+    "minimum": 80,
+    "target": 85
+  },
+  "securityTests": {
+    "enabled": true,
+    "patterns": ["authentication", "authorization", "encryption", "audit"]
+  },
+  "performanceTests": {
+    "enabled": true,
+    "thresholds": {
+      "apiResponseTime": 500,
+      "pageLoadTime": 2000,
+      "databaseQueryTime": 100
+    }
+  }
+}

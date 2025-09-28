@@ -13,9 +13,19 @@ import { CircuitBreaker } from '../common/resilience/circuit-breaker';
 import { RepositoryModule } from '../infrastructure/repositories/repository.module';
 import { NormalizedProductionService } from './application/services/normalized-production.service';
 import { DrizzleReportInstanceRepository } from './infrastructure/repositories/drizzle-report-instance.repository';
+import { DatabaseModule } from '../database/database.module';
+import { DatabaseService } from '../database/database.service';
+import { TenantInfrastructureModule } from '../infrastructure/tenant/tenant-infrastructure.module';
+import { AuthorizationModule } from '../authorization/authorization.module';
 
 @Module({
-  imports: [CqrsModule, RepositoryModule],
+  imports: [
+    CqrsModule,
+    RepositoryModule,
+    DatabaseModule,
+    TenantInfrastructureModule,
+    AuthorizationModule,
+  ],
   controllers: [RegulatoryReportingController],
   providers: [
     // Services & Handlers
@@ -32,7 +42,10 @@ import { DrizzleReportInstanceRepository } from './infrastructure/repositories/d
     // Repository binding (Drizzle-backed)
     {
       provide: 'ReportInstanceRepository',
-      useClass: DrizzleReportInstanceRepository,
+      useFactory: (databaseService: DatabaseService) => {
+        return new DrizzleReportInstanceRepository(databaseService);
+      },
+      inject: [DatabaseService],
     },
     // Circuit breaker with simple defaults (refine per env)
     {

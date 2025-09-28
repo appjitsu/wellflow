@@ -193,7 +193,7 @@ export class ConnectionPoolConfigService {
     const commonConfig: Partial<PoolConfig> = {
       // Database connection details
       host: this.configService.get<string>('DB_HOST', 'localhost'),
-      port: this.configService.get<number>('DB_PORT', 5432),
+      port: this.configService.get<number>('DB_PORT', 5433),
       user: this.configService.get<string>('DB_USER', 'postgres'),
       password: this.configService.get<string>('DB_PASSWORD'),
       database: this.configService.get<string>('DB_NAME', 'wellflow'),

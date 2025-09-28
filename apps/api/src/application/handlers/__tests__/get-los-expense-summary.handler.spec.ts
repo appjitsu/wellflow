@@ -1,18 +1,33 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { GetLosExpenseSummaryHandler } from '../get-los-expense-summary.handler';
+import { ILosRepository } from '../../../domain/repositories/lease-operating-statement.repository.interface';
 
 describe('GetLosExpenseSummaryHandler', () => {
-  let service: any;
+  let handler: GetLosExpenseSummaryHandler;
+  let losRepository: ILosRepository;
 
   beforeEach(async () => {
+    const mockLosRepository = {
+      getExpenseSummaryByLease: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        GetLosExpenseSummaryHandler,
+        {
+          provide: 'LosRepository',
+          useValue: mockLosRepository,
+        },
+      ],
     }).compile();
 
-    service =
-      module.get<GetLosExpenseSummaryHandler>(/* GetLosExpenseSummaryHandler */);
+    handler = module.get<GetLosExpenseSummaryHandler>(
+      GetLosExpenseSummaryHandler,
+    );
+    losRepository = module.get('LosRepository');
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(handler).toBeDefined();
   });
 });

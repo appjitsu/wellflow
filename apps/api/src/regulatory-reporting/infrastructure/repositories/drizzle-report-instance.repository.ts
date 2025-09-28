@@ -1,7 +1,7 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { complianceReports } from '../../../database/schemas/compliance-reports';
+import { DatabaseService } from '../../../database/database.service';
 import { RegulatoryReportInstance } from '../../domain/entities/regulatory-report-instance.entity';
 import { ReportInstanceRepository } from '../../domain/repositories/report-instance.repository';
 import { Period } from '../../domain/value-objects/period.vo';
@@ -12,11 +12,7 @@ import type { RegulatoryReportFormData } from '../../domain/value-objects/regula
 export class DrizzleReportInstanceRepository
   implements ReportInstanceRepository
 {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private readonly db: NodePgDatabase<any>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   async save(
     instance: RegulatoryReportInstance,
@@ -46,7 +42,8 @@ export class DrizzleReportInstanceRepository
       calculatedValues: null,
     } as const;
 
-    await this.db
+    const db = this.databaseService.getDb();
+    await db
       .insert(complianceReports)
       .values(values)
       .onConflictDoUpdate({
@@ -58,7 +55,8 @@ export class DrizzleReportInstanceRepository
   }
 
   async findById(id: string): Promise<RegulatoryReportInstance | null> {
-    const [row] = await this.db
+    const db = this.databaseService.getDb();
+    const [row] = await db
       .select()
       .from(complianceReports)
       .where(eq(complianceReports.id, id))
@@ -80,7 +78,8 @@ export class DrizzleReportInstanceRepository
     id: string,
     formDataPatch: Partial<RegulatoryReportFormData>,
   ): Promise<void> {
-    const [row] = await this.db
+    const db = this.databaseService.getDb();
+    const [row] = await db
       .select({
         id: complianceReports.id,
         formData: complianceReports.formData,
@@ -96,13 +95,14 @@ export class DrizzleReportInstanceRepository
       ...current,
       ...formDataPatch,
     };
-    await this.db
+    await db
       .update(complianceReports)
       .set({ formData: merged, updatedAt: new Date() })
       .where(eq(complianceReports.id, id));
   }
   async getFormData(id: string): Promise<RegulatoryReportFormData | null> {
-    const [row] = await this.db
+    const db = this.databaseService.getDb();
+    const [row] = await db
       .select({ formData: complianceReports.formData })
       .from(complianceReports)
       .where(eq(complianceReports.id, id))

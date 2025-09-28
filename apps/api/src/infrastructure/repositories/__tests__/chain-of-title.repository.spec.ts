@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ChainOfTitleRepositoryImpl } from '../chain-of-title.repository';
 import { ChainOfTitleEntry } from '../../../domain/entities/chain-of-title-entry.entity';
+import { DatabaseService } from '../../../database/database.service';
 
 // Mock the database schema
 jest.mock('../../../database/schemas/chain-of-title', () => ({
@@ -25,6 +26,10 @@ jest.mock('drizzle-orm', () => ({
   eq: jest.fn((field, value) => ({ field, value })),
   and: jest.fn((...conditions) => ({ conditions })),
   desc: jest.fn((field) => ({ field, direction: 'desc' })),
+  relations: jest.fn((table, relationsFn) => ({
+    table,
+    relations: relationsFn,
+  })),
 }));
 
 describe('ChainOfTitleRepository', () => {
@@ -35,7 +40,7 @@ describe('ChainOfTitleRepository', () => {
   const mockLeaseId = 'lease-456';
 
   beforeEach(async () => {
-    mockDb = {
+    const dbMock = {
       insert: jest.fn(),
       select: jest.fn(),
       from: jest.fn(),
@@ -45,11 +50,18 @@ describe('ChainOfTitleRepository', () => {
       offset: jest.fn(),
     };
 
+    mockDb = {
+      getDb: jest.fn().mockReturnValue(dbMock),
+      onModuleInit: jest.fn(),
+      onModuleDestroy: jest.fn(),
+      ...dbMock, // Also expose methods directly for convenience
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ChainOfTitleRepositoryImpl,
         {
-          provide: 'DATABASE_CONNECTION',
+          provide: DatabaseService,
           useValue: mockDb,
         },
       ],

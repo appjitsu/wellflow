@@ -1,12 +1,11 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { eq, and, desc, count } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { IAfeApprovalRepository } from '../../domain/repositories/afe-approval.repository.interface';
 import { AfeApproval } from '../../domain/entities/afe-approval.entity';
 import { AfeApprovalStatus } from '../../domain/enums/afe-status.enum';
+import { DatabaseService } from '../../database/database.service';
 
 import { afeApprovals } from '../../database/schemas/afe-approvals';
-import * as schema from '../../database/schema';
 
 /**
  * AFE Approval Domain Repository Implementation
@@ -14,10 +13,7 @@ import * as schema from '../../database/schema';
  */
 @Injectable()
 export class AfeApprovalDomainRepository implements IAfeApprovalRepository {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   /**
    * Save an AFE approval entity
@@ -26,7 +22,8 @@ export class AfeApprovalDomainRepository implements IAfeApprovalRepository {
     const persistenceData = approval.toPersistence();
 
     // Check if approval exists
-    const existing = await this.db
+    const db = this.databaseService.getDb();
+    const existing = await db
       .select()
       .from(afeApprovals)
       .where(eq(afeApprovals.id, persistenceData.id))
@@ -34,7 +31,7 @@ export class AfeApprovalDomainRepository implements IAfeApprovalRepository {
 
     if (existing.length > 0) {
       // Update existing approval
-      const updated = await this.db
+      const updated = await db
         .update(afeApprovals)
         .set({
           approvalStatus: persistenceData.approvalStatus,
@@ -57,7 +54,7 @@ export class AfeApprovalDomainRepository implements IAfeApprovalRepository {
       return this.toDomainEntity(firstUpdated);
     } else {
       // Create new approval
-      const created = await this.db
+      const created = await db
         .insert(afeApprovals)
         .values({
           id: persistenceData.id,
@@ -88,7 +85,8 @@ export class AfeApprovalDomainRepository implements IAfeApprovalRepository {
    * Find approval by ID
    */
   async findById(id: string): Promise<AfeApproval | null> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select()
       .from(afeApprovals)
       .where(eq(afeApprovals.id, id))
@@ -105,7 +103,8 @@ export class AfeApprovalDomainRepository implements IAfeApprovalRepository {
     afeId: string,
     partnerId: string,
   ): Promise<AfeApproval | null> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select()
       .from(afeApprovals)
       .where(
@@ -124,7 +123,8 @@ export class AfeApprovalDomainRepository implements IAfeApprovalRepository {
    * Find all approvals for an AFE
    */
   async findByAfeId(afeId: string): Promise<AfeApproval[]> {
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(afeApprovals)
       .where(eq(afeApprovals.afeId, afeId))
@@ -137,7 +137,8 @@ export class AfeApprovalDomainRepository implements IAfeApprovalRepository {
    * Find approvals by partner
    */
   async findByPartnerId(partnerId: string): Promise<AfeApproval[]> {
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(afeApprovals)
       .where(eq(afeApprovals.partnerId, partnerId))
@@ -150,7 +151,8 @@ export class AfeApprovalDomainRepository implements IAfeApprovalRepository {
    * Find approvals by status
    */
   async findByStatus(status: AfeApprovalStatus): Promise<AfeApproval[]> {
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(afeApprovals)
       .where(eq(afeApprovals.approvalStatus, status))
@@ -163,7 +165,8 @@ export class AfeApprovalDomainRepository implements IAfeApprovalRepository {
    * Find pending approvals for partner
    */
   async findPendingByPartnerId(partnerId: string): Promise<AfeApproval[]> {
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(afeApprovals)
       .where(
@@ -181,21 +184,24 @@ export class AfeApprovalDomainRepository implements IAfeApprovalRepository {
    * Delete approval by ID
    */
   async delete(id: string): Promise<void> {
-    await this.db.delete(afeApprovals).where(eq(afeApprovals.id, id));
+    const db = this.databaseService.getDb();
+    await db.delete(afeApprovals).where(eq(afeApprovals.id, id));
   }
 
   /**
    * Delete all approvals for an AFE
    */
   async deleteByAfeId(afeId: string): Promise<void> {
-    await this.db.delete(afeApprovals).where(eq(afeApprovals.afeId, afeId));
+    const db = this.databaseService.getDb();
+    await db.delete(afeApprovals).where(eq(afeApprovals.afeId, afeId));
   }
 
   /**
    * Find overdue approvals (pending beyond deadline)
    */
   async findOverdueApprovals(deadlineDate: Date): Promise<AfeApproval[]> {
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(afeApprovals)
       .where(
@@ -237,7 +243,8 @@ export class AfeApprovalDomainRepository implements IAfeApprovalRepository {
       conditions.push(eq(afeApprovals.approvalStatus, criteria.status));
     }
 
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select({ count: count() })
       .from(afeApprovals)
       .where(conditions.length > 0 ? and(...conditions) : undefined);

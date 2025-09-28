@@ -18,6 +18,7 @@ import {
   ExpenseCategory,
   ExpenseType,
 } from '../../../domain/enums/los-status.enum';
+import { DatabaseService } from '../../../database/database.service';
 
 // Mock drizzle-orm functions
 jest.mock('drizzle-orm', () => ({
@@ -69,21 +70,30 @@ describe('LosRepository', () => {
   let repository: LosRepository;
   let mockLos: LeaseOperatingStatement;
   let mockDb: any;
+  let mockDatabaseService: { getDb: jest.Mock };
 
   beforeEach(async () => {
     mockDb = createMockDb();
+
+    // Mock DatabaseService
+    mockDatabaseService = {
+      getDb: jest.fn().mockReturnValue(mockDb),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LosRepository,
         {
-          provide: 'DATABASE_CONNECTION',
-          useValue: mockDb,
+          provide: DatabaseService,
+          useValue: mockDatabaseService,
         },
       ],
     }).compile();
 
     repository = module.get<LosRepository>(LosRepository);
+
+    // Verify repository is properly instantiated
+    expect(repository).toBeDefined();
 
     // Create mock LOS for testing
     mockLos = new LeaseOperatingStatement(
@@ -206,7 +216,10 @@ describe('LosRepository', () => {
           where: jest.fn().mockResolvedValue([]),
         }),
       };
-      const testRepository = new LosRepository(testMockDb as any);
+      const testDatabaseService = {
+        getDb: jest.fn().mockReturnValue(testMockDb),
+      };
+      const testRepository = new LosRepository(testDatabaseService as any);
 
       // Act
       const result = await testRepository.findById('los-123');
@@ -241,7 +254,10 @@ describe('LosRepository', () => {
           where: jest.fn().mockResolvedValue([]),
         }),
       };
-      const testRepository = new LosRepository(testMockDb as any);
+      const testDatabaseService = {
+        getDb: jest.fn().mockReturnValue(testMockDb),
+      };
+      const testRepository = new LosRepository(testDatabaseService as any);
 
       // Act
       const result = await testRepository.findById('non-existent');

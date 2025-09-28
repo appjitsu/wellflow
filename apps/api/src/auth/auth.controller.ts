@@ -9,6 +9,7 @@ import {
   Get,
   Param,
   Query,
+  HttpException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
@@ -37,6 +38,10 @@ import {
   RefreshTokenDto,
   RefreshTokenResponseDto,
 } from './dto/refresh-token.dto';
+import {
+  ChangePasswordDto,
+  ChangePasswordResponseDto,
+} from './dto/change-password.dto';
 import { AuthenticatedUser } from './strategies/jwt.strategy';
 import { RATE_LIMIT_TIERS } from '../common/throttler';
 import { Public } from '../common/decorators/public.decorator';
@@ -379,6 +384,60 @@ export class AuthController {
   ): Promise<{ message: string }> {
     await this.authService.unlockUserAccount(userId);
     return { message: 'Account unlocked successfully' };
+  }
+
+  /**
+   * Change Password
+   * Allows authenticated users to change their password
+   */
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ [RATE_LIMIT_TIERS.STRICT]: { limit: 5, ttl: 300000 } }) // 5 attempts per 5 minutes
+  @ApiOperation({
+    summary: 'Change user password',
+    description:
+      'Allows authenticated users to change their password by providing current password and new password.',
+  })
+  @ApiBody({ type: ChangePasswordDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Password changed successfully',
+    type: ChangePasswordResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Current password is incorrect',
+    type: AuthErrorResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid password data or passwords do not match',
+    type: AuthErrorResponseDto,
+  })
+  async changePassword(
+    @Request() req: { user: AuthenticatedUser },
+    @Body() changePasswordDto: ChangePasswordDto,
+  ): Promise<ChangePasswordResponseDto> {
+    // Validate password confirmation
+    if (changePasswordDto.newPassword !== changePasswordDto.confirmPassword) {
+      throw new HttpException(
+        'New password and confirmation do not match',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    await this.authService.changePassword(
+      req.user.id,
+      changePasswordDto.currentPassword,
+      changePasswordDto.newPassword,
+    );
+
+    return {
+      message: 'Password changed successfully',
+      changedAt: new Date(),
+    };
   }
 
   /**

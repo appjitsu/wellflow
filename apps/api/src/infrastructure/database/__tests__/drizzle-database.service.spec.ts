@@ -1,10 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { DrizzleDatabaseService } from '../drizzle-database.service';
+import { DatabaseConnectionService } from '../../tenant/database-connection.service';
 
 // Mock dependencies
 const mockConfigService = {
   get: jest.fn(),
+};
+
+const mockDatabaseConnectionService = {
+  getConnectionPool: jest.fn(),
 };
 
 describe('DrizzleDatabaseService', () => {
@@ -17,6 +22,10 @@ describe('DrizzleDatabaseService', () => {
         {
           provide: ConfigService,
           useValue: mockConfigService,
+        },
+        {
+          provide: DatabaseConnectionService,
+          useValue: mockDatabaseConnectionService,
         },
       ],
     }).compile();

@@ -1,5 +1,6 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { DatabaseService } from '../../database/database.service';
 import * as schema from '../../database/schema';
 
 /**
@@ -57,10 +58,7 @@ export class UnitOfWork implements IUnitOfWork {
   // Repository factory map
   private repositoryFactories = new Map<string, (db: unknown) => unknown>();
 
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    protected readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(protected readonly databaseService: DatabaseService) {}
 
   /**
    * Register a repository factory for an entity type
@@ -83,7 +81,7 @@ export class UnitOfWork implements IUnitOfWork {
       );
     }
 
-    const dbConnection = this.db;
+    const dbConnection = this.databaseService.getDb();
     return factory(dbConnection);
   }
 
@@ -108,7 +106,8 @@ export class UnitOfWork implements IUnitOfWork {
 
     try {
       // Execute all changes within a database transaction
-      await this.db.transaction(async (tx) => {
+      const db = this.databaseService.getDb();
+      await db.transaction(async (tx) => {
         // Process changes in order: new, dirty, deleted
         await this.commitNewInTransaction(tx);
         await this.commitDirtyInTransaction(tx);
@@ -195,7 +194,7 @@ export class UnitOfWork implements IUnitOfWork {
    * Get current transaction (for legacy compatibility)
    */
   getCurrentTransaction(): unknown {
-    return this.db;
+    return this.databaseService.getDb();
   }
 
   /**
@@ -215,7 +214,7 @@ export class UnitOfWork implements IUnitOfWork {
         throw new Error('Transaction rolled back');
       },
       getTransaction: (): unknown => {
-        return this.db;
+        return this.databaseService.getDb();
       },
     };
 

@@ -27,6 +27,7 @@ import { VendorRepositoryImpl } from '../infrastructure/repositories/vendor.repo
 
 // Database Module
 import { DatabaseModule } from '../database/database.module';
+import { DatabaseService } from '../database/database.service';
 
 /**
  * Vendor Module
@@ -63,7 +64,10 @@ import { DatabaseModule } from '../database/database.module';
     // Repository Implementation
     {
       provide: 'VendorRepository',
-      useClass: VendorRepositoryImpl,
+      useFactory: (databaseService: DatabaseService) => {
+        return new VendorRepositoryImpl(databaseService);
+      },
+      inject: [DatabaseService],
     },
   ],
   exports: ['VendorRepository'],

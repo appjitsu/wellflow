@@ -1,21 +1,17 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import type * as schema from '../../database/schema';
 import { titleOpinionDocuments } from '../../database/schemas/title-opinion-documents';
 import type {
   TitleOpinionDocumentRepository,
   TitleOpinionDocumentLink,
 } from '../../domain/repositories/title-opinion-document.repository.interface';
+import { DatabaseService } from '../../database/database.service';
 
 @Injectable()
 export class TitleOpinionDocumentRepositoryImpl
   implements TitleOpinionDocumentRepository
 {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   async linkDocument(
     link: Omit<TitleOpinionDocumentLink, 'id' | 'createdAt'>,
@@ -29,7 +25,8 @@ export class TitleOpinionDocumentRepositoryImpl
       createdAt: new Date(),
     };
 
-    const inserted = await this.db
+    const db = this.databaseService.getDb();
+    const inserted = await db
       .insert(titleOpinionDocuments)
       .values(values)
       .returning();
@@ -49,7 +46,8 @@ export class TitleOpinionDocumentRepositoryImpl
   async listByTitleOpinionId(
     titleOpinionId: string,
   ): Promise<TitleOpinionDocumentLink[]> {
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(titleOpinionDocuments)
       .where(eq(titleOpinionDocuments.titleOpinionId, titleOpinionId));

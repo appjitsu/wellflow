@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsUUID,
   IsString,
+  IsNotEmpty,
   IsOptional,
   IsEnum,
   IsInt,
@@ -25,6 +26,7 @@ export class CreateDrillingProgramDto {
 
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   programName!: string;
 
   @ApiProperty({ enum: DrillingProgramStatus, required: false })

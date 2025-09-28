@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../../database/database.module';
+import { DatabaseService } from '../../database/database.service';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type * as schema from '../../database/schema';
 import { UnitOfWork } from './unit-of-work';
@@ -64,11 +65,17 @@ import { RegulatoryOutboxService } from '../events/regulatory-outbox.service';
     // Financial Repositories
     {
       provide: 'OwnerPaymentRepository',
-      useClass: OwnerPaymentRepository,
+      useFactory: (databaseService: DatabaseService) => {
+        return new OwnerPaymentRepository(databaseService);
+      },
+      inject: [DatabaseService],
     },
     {
       provide: 'CashCallRepository',
-      useClass: CashCallRepository,
+      useFactory: (databaseService: DatabaseService) => {
+        return new CashCallRepository(databaseService);
+      },
+      inject: [DatabaseService],
     },
     {
       provide: 'JoaRepository',
@@ -76,132 +83,138 @@ import { RegulatoryOutboxService } from '../events/regulatory-outbox.service';
     },
     {
       provide: 'JibStatementRepository',
-      useClass: JibStatementRepository,
+      useFactory: (databaseService: DatabaseService) => {
+        return new JibStatementRepository(databaseService);
+      },
+      inject: [DatabaseService],
     },
     // Core Repositories
     {
       provide: 'OrganizationRepository',
-      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
-        return new OrganizationRepository(databaseConnection);
+      useFactory: (databaseService: DatabaseService) => {
+        return new OrganizationRepository(databaseService);
       },
-      inject: ['DATABASE_CONNECTION'],
+      inject: [DatabaseService],
     },
     {
       provide: 'WellRepository',
       useFactory: (
-        databaseConnection: NodePgDatabase<typeof schema>,
+        databaseService: DatabaseService,
         auditLogService: AuditLogService,
       ) => {
-        return new WellRepositoryImpl(databaseConnection, auditLogService);
+        return new WellRepositoryImpl(databaseService, auditLogService);
       },
-      inject: ['DATABASE_CONNECTION', AuditLogService],
+      inject: [DatabaseService, AuditLogService],
     },
     {
       provide: 'AfeRepository',
-      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
-        return new AfeDomainRepository(databaseConnection);
+      useFactory: (databaseService: DatabaseService) => {
+        return new AfeDomainRepository(databaseService);
       },
-      inject: ['DATABASE_CONNECTION'],
+      inject: [DatabaseService],
     },
     {
       provide: 'AfeApprovalRepository',
-      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
-        return new AfeApprovalDomainRepository(databaseConnection);
+      useFactory: (databaseService: DatabaseService) => {
+        return new AfeApprovalDomainRepository(databaseService);
       },
-      inject: ['DATABASE_CONNECTION'],
+      inject: [DatabaseService],
     },
     {
       provide: 'ProductionRepository',
-      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
-        return new ProductionRepository(databaseConnection);
+      useFactory: (databaseService: DatabaseService) => {
+        return new ProductionRepository(databaseService);
       },
-      inject: ['DATABASE_CONNECTION'],
+      inject: [DatabaseService],
     },
 
     // Additional repositories can be added here as needed
     {
       provide: 'LeaseRepository',
-      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
-        return new LeaseRepository(databaseConnection);
+      useFactory: (databaseService: DatabaseService) => {
+        return new LeaseRepository(databaseService);
       },
-      inject: ['DATABASE_CONNECTION'],
+      inject: [DatabaseService],
     },
     {
       provide: 'PartnersRepository',
-      useClass: PartnersRepositoryImpl,
+      useFactory: (databaseService: DatabaseService) => {
+        return new PartnersRepositoryImpl(databaseService);
+      },
+      inject: [DatabaseService],
     },
 
     // Title Management Repositories
     {
       provide: 'TitleOpinionRepository',
-      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
-        return new TitleOpinionRepositoryImpl(databaseConnection);
+      useFactory: (databaseService: DatabaseService) => {
+        return new TitleOpinionRepositoryImpl(databaseService);
       },
-      inject: ['DATABASE_CONNECTION'],
+      inject: [DatabaseService],
     },
     {
       provide: 'CurativeItemRepository',
-      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
-        return new CurativeItemRepositoryImpl(databaseConnection);
+      useFactory: (databaseService: DatabaseService) => {
+        return new CurativeItemRepositoryImpl(databaseService);
       },
-      inject: ['DATABASE_CONNECTION'],
+      inject: [DatabaseService],
     },
     {
       provide: 'ChainOfTitleRepository',
-      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
-        return new ChainOfTitleRepositoryImpl(databaseConnection);
+      useFactory: (databaseService: DatabaseService) => {
+        return new ChainOfTitleRepositoryImpl(databaseService);
       },
-      inject: ['DATABASE_CONNECTION'],
+      inject: [DatabaseService],
     },
     {
       provide: 'TitleOpinionDocumentRepository',
-      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
-        return new TitleOpinionDocumentRepositoryImpl(databaseConnection);
+      useFactory: (databaseService: DatabaseService) => {
+        return new TitleOpinionDocumentRepositoryImpl(databaseService);
       },
-      inject: ['DATABASE_CONNECTION'],
+      inject: [DatabaseService],
     },
     {
       provide: 'CurativeItemDocumentRepository',
-      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
-        return new CurativeItemDocumentRepositoryImpl(databaseConnection);
+      useFactory: (databaseService: DatabaseService) => {
+        return new CurativeItemDocumentRepositoryImpl(databaseService);
       },
-      inject: ['DATABASE_CONNECTION'],
+      inject: [DatabaseService],
     },
     {
       provide: 'LosRepository',
-      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
-        return new LosRepository(databaseConnection);
+      useFactory: (databaseService: DatabaseService) => {
+        return new LosRepository(databaseService);
       },
-      inject: ['DATABASE_CONNECTION'],
+      inject: [DatabaseService],
     },
     // Operational Entities Repositories
     {
       provide: 'DrillingProgramRepository',
-      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
-        return new DrillingProgramRepository(databaseConnection);
+      useFactory: (databaseService: DatabaseService) => {
+        return new DrillingProgramRepository(databaseService);
       },
-      inject: ['DATABASE_CONNECTION'],
+      inject: [DatabaseService],
     },
     {
       provide: 'WorkoverRepository',
-      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
-        return new WorkoverRepository(databaseConnection);
+      useFactory: (databaseService: DatabaseService) => {
+        return new WorkoverRepository(databaseService);
       },
-      inject: ['DATABASE_CONNECTION'],
+      inject: [DatabaseService],
     },
     {
       provide: 'DailyDrillingReportRepository',
-      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
-        return new DailyDrillingReportRepository(databaseConnection);
+      useFactory: (databaseService: DatabaseService) => {
+        return new DailyDrillingReportRepository(databaseService);
       },
-      inject: ['DATABASE_CONNECTION'],
+      inject: [DatabaseService],
     },
     {
       provide: 'MaintenanceScheduleRepository',
-      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
-        return new MaintenanceScheduleRepository(databaseConnection);
+      useFactory: (databaseService: DatabaseService) => {
+        return new MaintenanceScheduleRepository(databaseService);
       },
-      inject: ['DATABASE_CONNECTION'],
+      inject: [DatabaseService],
     },
 
     // Regulatory Repositories
@@ -209,33 +222,33 @@ import { RegulatoryOutboxService } from '../events/regulatory-outbox.service';
       // eslint-disable-next-line no-secrets/no-secrets
       provide: 'RegulatoryUnitOfWork',
       useFactory: (
-        databaseConnection: NodePgDatabase<typeof schema>,
+        databaseService: DatabaseService,
         eventPublisher: RegulatoryDomainEventPublisher,
       ) => {
-        return new RegulatoryUnitOfWork(databaseConnection, eventPublisher);
+        return new RegulatoryUnitOfWork(databaseService, eventPublisher);
       },
-      inject: ['DATABASE_CONNECTION', RegulatoryDomainEventPublisher],
+      inject: [DatabaseService, RegulatoryDomainEventPublisher],
     },
     {
       provide: 'HSEIncidentRepository',
-      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
-        return new HSEIncidentRepositoryImpl(databaseConnection);
+      useFactory: (databaseService: DatabaseService) => {
+        return new HSEIncidentRepositoryImpl(databaseService);
       },
-      inject: ['DATABASE_CONNECTION'],
+      inject: [DatabaseService],
     },
     {
       provide: 'EnvironmentalMonitoringRepository',
-      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
-        return new EnvironmentalMonitoringRepositoryImpl(databaseConnection);
+      useFactory: (databaseService: DatabaseService) => {
+        return new EnvironmentalMonitoringRepositoryImpl(databaseService);
       },
-      inject: ['DATABASE_CONNECTION'],
+      inject: [DatabaseService],
     },
     {
       provide: 'RegulatoryReportRepository',
-      useFactory: (databaseConnection: NodePgDatabase<typeof schema>) => {
-        return new RegulatoryReportRepositoryImpl(databaseConnection);
+      useFactory: (databaseService: DatabaseService) => {
+        return new RegulatoryReportRepositoryImpl(databaseService);
       },
-      inject: ['DATABASE_CONNECTION'],
+      inject: [DatabaseService],
     },
   ],
   exports: [

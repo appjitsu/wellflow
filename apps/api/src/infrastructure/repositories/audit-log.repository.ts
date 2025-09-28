@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   eq,
@@ -12,6 +12,7 @@ import {
   like,
   SQL,
 } from 'drizzle-orm';
+import { DatabaseService } from '../../database/database.service';
 import * as schema from '../../database/schema';
 import {
   AuditLogRepository,
@@ -29,10 +30,7 @@ import { auditLogs } from '../../database/schemas/audit-logs';
 
 @Injectable()
 export class AuditLogRepositoryImpl implements AuditLogRepository {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   async save(auditLog: AuditLog): Promise<void> {
     const data = {
@@ -59,11 +57,15 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
       requestId: auditLog.getRequestId(),
       endpoint: auditLog.getEndpoint(),
       method: auditLog.getMethod(),
-      duration: auditLog.getDuration()?.toString(),
+      duration:
+        auditLog.getDuration() !== null
+          ? auditLog.getDuration()!.toString()
+          : null,
       createdBy: auditLog.getUserId(), // Log who created this audit entry
     };
 
-    await this.db.insert(auditLogs).values(data);
+    const db = this.databaseService.getDb();
+    await db.insert(auditLogs).values(data);
   }
 
   async saveBatch(auditLogs: AuditLog[]): Promise<void> {
@@ -87,15 +89,18 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
       requestId: log.getRequestId(),
       endpoint: log.getEndpoint(),
       method: log.getMethod(),
-      duration: log.getDuration()?.toString(),
+      duration:
+        log.getDuration() !== null ? log.getDuration()!.toString() : null,
       createdBy: log.getUserId(),
     }));
 
-    await this.db.insert(schema.auditLogs).values(data);
+    const db = this.databaseService.getDb();
+    await db.insert(schema.auditLogs).values(data);
   }
 
   async findById(id: string): Promise<AuditLog | null> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select()
       .from(auditLogs)
       .where(eq(auditLogs.id, id))
@@ -124,15 +129,16 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
 
     const offset = (page - 1) * limit;
 
+    const db = this.databaseService.getDb();
     const [logs, totalResult] = await Promise.all([
-      this.db
+      db
         .select()
         .from(auditLogs)
         .where(and(...conditions))
         .orderBy(orderBy)
         .limit(limit)
         .offset(offset),
-      this.db
+      db
         .select({ count: count() })
         .from(auditLogs)
         .where(and(...conditions)),
@@ -168,15 +174,16 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
 
     const offset = (page - 1) * limit;
 
+    const db = this.databaseService.getDb();
     const [logs, totalResult] = await Promise.all([
-      this.db
+      db
         .select()
         .from(auditLogs)
         .where(and(...conditions))
         .orderBy(orderBy)
         .limit(limit)
         .offset(offset),
-      this.db
+      db
         .select({ count: count() })
         .from(auditLogs)
         .where(and(...conditions)),
@@ -216,15 +223,16 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
 
     const offset = (page - 1) * limit;
 
+    const db = this.databaseService.getDb();
     const [logs, totalResult] = await Promise.all([
-      this.db
+      db
         .select()
         .from(auditLogs)
         .where(and(...conditions))
         .orderBy(orderBy)
         .limit(limit)
         .offset(offset),
-      this.db
+      db
         .select({ count: count() })
         .from(auditLogs)
         .where(and(...conditions)),
@@ -289,15 +297,16 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
 
     const offset = (page - 1) * limit;
 
+    const db = this.databaseService.getDb();
     const [logs, totalResult] = await Promise.all([
-      this.db
+      db
         .select()
         .from(auditLogs)
         .where(whereClause)
         .orderBy(orderBy)
         .limit(limit)
         .offset(offset),
-      this.db.select({ count: count() }).from(auditLogs).where(whereClause),
+      db.select({ count: count() }).from(auditLogs).where(whereClause),
     ]);
 
     const total = totalResult[0]?.count ?? 0;
@@ -337,6 +346,7 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     // Get basic statistics
+    const db = this.databaseService.getDb();
     const [
       statsResult,
       actionsResult,
@@ -344,7 +354,7 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
       usersResult,
       recentResult,
     ] = await Promise.all([
-      this.db
+      db
         .select({
           total: count(),
           successful: sql<number>`count(case when ${auditLogs.success} = true then 1 end)`,
@@ -353,7 +363,7 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
         .from(auditLogs)
         .where(whereClause),
 
-      this.db
+      db
         .select({
           action: auditLogs.action,
           count: count(),
@@ -362,7 +372,7 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
         .where(whereClause)
         .groupBy(auditLogs.action),
 
-      this.db
+      db
         .select({
           resourceType: auditLogs.resourceType,
           count: count(),
@@ -371,7 +381,7 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
         .where(whereClause)
         .groupBy(auditLogs.resourceType),
 
-      this.db
+      db
         .select({
           userId: auditLogs.userId,
           count: count(),
@@ -382,7 +392,7 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
         .orderBy(desc(count()))
         .limit(10),
 
-      this.db
+      db
         .select()
         .from(auditLogs)
         .where(whereClause)
@@ -430,7 +440,8 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
   async archiveLogs(olderThan: Date): Promise<number> {
     // This would typically move logs to a separate archive table/database
     // For now, we'll just return the count that would be archived
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select({ count: count() })
       .from(auditLogs)
       .where(lte(auditLogs.timestamp, olderThan));
@@ -439,7 +450,8 @@ export class AuditLogRepositoryImpl implements AuditLogRepository {
   }
 
   async deleteLogs(olderThan: Date): Promise<number> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .delete(auditLogs)
       .where(lte(auditLogs.timestamp, olderThan));
 

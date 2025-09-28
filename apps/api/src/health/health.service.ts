@@ -6,6 +6,7 @@ import { CircuitBreakerService } from '../common/resilience/circuit-breaker.serv
 import { RetryService } from '../common/resilience/retry.service';
 import { AuditLogService } from '../application/services/audit-log.service';
 import { AuditAction } from '../domain/entities/audit-log.entity';
+import { DatabaseService } from '../database/database.service';
 import * as schema from '../database/schema';
 
 type HealthStatus = 'healthy' | 'unhealthy' | 'degraded';
@@ -60,8 +61,7 @@ export class HealthCheckService {
   private readonly startTime = Date.now();
 
   constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
+    private readonly databaseService: DatabaseService,
     @Inject('REDIS_CONNECTION')
     private readonly redis: Redis,
     private readonly circuitBreakerService: CircuitBreakerService,
@@ -176,11 +176,13 @@ export class HealthCheckService {
     const startTime = Date.now();
 
     try {
+      const db = this.databaseService.getDb();
+
       // Test basic connectivity
-      await this.db.execute(sql`SELECT 1`);
+      await db.execute(sql`SELECT 1`);
 
       // Test a more complex query
-      const result = await this.db
+      const result = await db
         .select({ count: schema.organizations.id })
         .from(schema.organizations)
         .limit(1);
@@ -447,7 +449,8 @@ export class HealthCheckService {
 
   private async checkDatabaseConnection(): Promise<boolean> {
     try {
-      await this.db.execute(sql`SELECT 1`);
+      const db = this.databaseService.getDb();
+      await db.execute(sql`SELECT 1`);
       return true;
     } catch {
       return false;

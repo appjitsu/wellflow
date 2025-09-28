@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { eq, and } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../../database/schema';
@@ -8,18 +8,17 @@ import type {
   PartnerRecord,
 } from '../domain/partners.repository';
 import type { CreatePartnerDto, UpdatePartnerDto } from '../partners.service';
+import { DatabaseService } from '../../database/database.service';
 
 @Injectable()
 export class PartnersRepositoryImpl implements PartnersRepository {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   async create(
     data: CreatePartnerDto & { organizationId: string },
   ): Promise<PartnerRecord> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .insert(partners)
       .values({
         ...data,
@@ -35,7 +34,8 @@ export class PartnersRepositoryImpl implements PartnersRepository {
     id: string,
     organizationId: string,
   ): Promise<PartnerRecord | null> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select()
       .from(partners)
       .where(
@@ -47,7 +47,8 @@ export class PartnersRepositoryImpl implements PartnersRepository {
   }
 
   async findAll(organizationId: string): Promise<PartnerRecord[]> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select()
       .from(partners)
       .where(eq(partners.organizationId, organizationId));
@@ -65,7 +66,8 @@ export class PartnersRepositoryImpl implements PartnersRepository {
       updatedAt: new Date(),
     };
 
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .update(partners)
       .set(updateData)
       .where(
@@ -77,7 +79,8 @@ export class PartnersRepositoryImpl implements PartnersRepository {
   }
 
   async delete(id: string, organizationId: string): Promise<boolean> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .delete(partners)
       .where(
         and(eq(partners.id, id), eq(partners.organizationId, organizationId)),

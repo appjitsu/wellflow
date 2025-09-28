@@ -1,18 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { GetDrillingProgramByIdQuery } from '../get-drilling-program-by-id.query';
 
 describe('GetDrillingProgramByIdQuery', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<GetDrillingProgramByIdQuery>(/* GetDrillingProgramByIdQuery */);
+  it('should create query with id', () => {
+    const id = 'test-id';
+    const query = new GetDrillingProgramByIdQuery(id);
+    expect(query.id).toBe(id);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should be an instance of GetDrillingProgramByIdQuery', () => {
+    const query = new GetDrillingProgramByIdQuery('test');
+    expect(query).toBeInstanceOf(GetDrillingProgramByIdQuery);
   });
 });

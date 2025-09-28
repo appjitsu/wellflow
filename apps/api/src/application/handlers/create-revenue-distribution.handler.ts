@@ -105,10 +105,15 @@ export class CreateRevenueDistributionHandler
     // Save revenue distribution
     await this.revenueDistributionRepository.save(revenueDistribution);
 
-    // Publish domain events
+    // Publish domain events (fire-and-forget)
     const events = revenueDistribution.getDomainEvents();
     for (const event of events) {
-      this.eventBus.publish(event);
+      try {
+        this.eventBus.publish(event);
+      } catch (error: unknown) {
+        // Log error but don't fail the operation
+        console.error('Failed to publish event:', error);
+      }
     }
     revenueDistribution.clearDomainEvents();
 

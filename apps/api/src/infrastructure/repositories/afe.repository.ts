@@ -1,7 +1,8 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { eq, and, gte, lte, desc, sum } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { BaseRepository } from './base.repository';
+import { DatabaseService } from '../../database/database.service';
 import { AuditResourceType } from '../../domain/entities/audit-log.entity';
 import { afes, afeLineItems, afeApprovals } from '../../database/schema';
 import * as schema from '../../database/schema';
@@ -12,11 +13,8 @@ import * as schema from '../../database/schema';
  */
 @Injectable()
 export class AfeRepository extends BaseRepository<typeof afes> {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    db: NodePgDatabase<typeof schema>,
-  ) {
-    super(db, afes);
+  constructor(databaseService: DatabaseService) {
+    super(databaseService, afes);
   }
 
   protected getResourceType(): AuditResourceType {

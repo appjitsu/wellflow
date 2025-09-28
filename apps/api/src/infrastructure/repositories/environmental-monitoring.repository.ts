@@ -1,11 +1,10 @@
-import { Inject, Injectable } from '@nestjs/common';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { Injectable } from '@nestjs/common';
 import { eq, and, sql, desc, asc, gte, lte, lt } from 'drizzle-orm';
 import type { EnvironmentalMonitoringRepository } from '../../domain/repositories/environmental-monitoring.repository';
 import { EnvironmentalMonitoring } from '../../domain/entities/environmental-monitoring.entity';
 import { MonitoringType } from '../../domain/value-objects/monitoring-type.vo';
 import { environmentalMonitoring as environmentalMonitoringTable } from '../../database/schemas/environmental-monitoring';
-import type * as schema from '../../database/schema';
+import { DatabaseService } from '../../database/database.service';
 
 /**
  * Drizzle-based Environmental Monitoring Repository Implementation
@@ -15,10 +14,7 @@ import type * as schema from '../../database/schema';
 export class EnvironmentalMonitoringRepositoryImpl
   implements EnvironmentalMonitoringRepository
 {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   /**
    * Save environmental monitoring data to the repository
@@ -69,7 +65,8 @@ export class EnvironmentalMonitoringRepositoryImpl
       updatedAt: monitoring.updatedAt,
     };
 
-    await this.db
+    const db = this.databaseService.getDb();
+    await db
       .insert(environmentalMonitoringTable)
       .values(data)
       .onConflictDoUpdate({
@@ -94,7 +91,8 @@ export class EnvironmentalMonitoringRepositoryImpl
    * Find environmental monitoring record by its ID
    */
   async findById(id: string): Promise<EnvironmentalMonitoring | null> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select()
       .from(environmentalMonitoringTable)
       .where(eq(environmentalMonitoringTable.id, id))
@@ -115,7 +113,8 @@ export class EnvironmentalMonitoringRepositoryImpl
     parameter: string,
     monitoringDate: Date,
   ): Promise<EnvironmentalMonitoring | null> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select()
       .from(environmentalMonitoringTable)
       .where(
@@ -183,7 +182,8 @@ export class EnvironmentalMonitoringRepositoryImpl
       );
     }
 
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(environmentalMonitoringTable)
       .where(and(...conditions))
@@ -198,7 +198,8 @@ export class EnvironmentalMonitoringRepositoryImpl
    * Find environmental monitoring records associated with a well
    */
   async findByWellId(wellId: string): Promise<EnvironmentalMonitoring[]> {
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(environmentalMonitoringTable)
       .where(eq(environmentalMonitoringTable.wellId, wellId))
@@ -221,7 +222,8 @@ export class EnvironmentalMonitoringRepositoryImpl
       );
     }
 
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(environmentalMonitoringTable)
       .where(and(...conditions))
@@ -249,7 +251,8 @@ export class EnvironmentalMonitoringRepositoryImpl
       );
     }
 
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(environmentalMonitoringTable)
       .where(and(...conditions))
@@ -276,7 +279,8 @@ export class EnvironmentalMonitoringRepositoryImpl
       );
     }
 
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(environmentalMonitoringTable)
       .where(and(...conditions))
@@ -302,7 +306,8 @@ export class EnvironmentalMonitoringRepositoryImpl
       );
     }
 
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(environmentalMonitoringTable)
       .where(and(...conditions))
@@ -326,7 +331,8 @@ export class EnvironmentalMonitoringRepositoryImpl
       );
     }
 
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(environmentalMonitoringTable)
       .where(and(...conditions))
@@ -341,7 +347,8 @@ export class EnvironmentalMonitoringRepositoryImpl
   async countByComplianceStatus(
     organizationId: string,
   ): Promise<Record<string, number>> {
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select({
         isCompliant: environmentalMonitoringTable.isCompliant,
         count: sql<number>`count(*)`,
@@ -366,7 +373,8 @@ export class EnvironmentalMonitoringRepositoryImpl
   async countByMonitoringType(
     organizationId: string,
   ): Promise<Record<string, number>> {
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select({
         monitoringType: environmentalMonitoringTable.monitoringType,
         count: sql<number>`count(*)`,
@@ -387,7 +395,8 @@ export class EnvironmentalMonitoringRepositoryImpl
    * Delete an environmental monitoring record by ID
    */
   async delete(id: string): Promise<void> {
-    await this.db
+    const db = this.databaseService.getDb();
+    await db
       .delete(environmentalMonitoringTable)
       .where(eq(environmentalMonitoringTable.id, id));
   }
@@ -411,7 +420,8 @@ export class EnvironmentalMonitoringRepositoryImpl
       conditions.push(sql`${environmentalMonitoringTable.id} != ${excludeId}`);
     }
 
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select({ count: sql<number>`count(*)` })
       .from(environmentalMonitoringTable)
       .where(and(...conditions))

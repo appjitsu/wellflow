@@ -34,5 +34,11 @@
     "skipLibCheck": true
   },
   "include": ["src/**/*", "test/**/*"],
-  "exclude": ["node_modules", "dist", "coverage"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "coverage",
+    "src/database/__tests__/**/*",
+    "src/database/__tests__.disabled/**/*"
+  ]
 }

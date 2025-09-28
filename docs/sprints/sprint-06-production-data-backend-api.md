@@ -91,6 +91,29 @@ validation engine, and API endpoints to support mobile and web applications.
   - Operating cost modeling
   - Abandonment cost estimates
 
+### 6. Production Allocation System (CRITICAL ADDITION)
+
+- **Working Interest Allocation**
+  - Production allocation by ownership percentages
+  - Multi-well and multi-lease allocation algorithms
+  - Partner share calculations
+  - Net revenue interest computations
+- **Gas Balancing & Measurement**
+  - Gas balancing tracking and reporting
+  - Custody transfer measurements
+  - Pipeline allocation statements
+  - Over/under production tracking
+- **Allocation Methods**
+  - Well test based allocation
+  - Theoretical calculation methods
+  - Back-allocation processing
+  - Allocation statement generation
+- **Measurement & Custody Transfer**
+  - Meter reading integration
+  - Run ticket processing
+  - Pipeline statement reconciliation
+  - Volume correction factors (temperature, pressure)
+
 ### 7. Background Job Processing
 
 - **Job Queue System**

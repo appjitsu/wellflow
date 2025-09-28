@@ -1,20 +1,16 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { eq, and } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import type * as schema from '../../database/schema';
 import { titleOpinions } from '../../database/schemas/title-opinions';
 import {
   TitleOpinion,
   TitleStatus,
 } from '../../domain/entities/title-opinion.entity';
 import type { TitleOpinionRepository } from '../../domain/repositories/title-opinion.repository.interface';
+import { DatabaseService } from '../../database/database.service';
 
 @Injectable()
 export class TitleOpinionRepositoryImpl implements TitleOpinionRepository {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   private toDomain(row: typeof titleOpinions.$inferSelect): TitleOpinion {
     return new TitleOpinion({
@@ -62,17 +58,16 @@ export class TitleOpinionRepositoryImpl implements TitleOpinionRepository {
     };
 
     if (existing) {
-      await this.db
+      const db = this.databaseService.getDb();
+      await db
         .update(titleOpinions)
         .set(values)
         .where(eq(titleOpinions.id, opinion.getId()));
       return opinion;
     }
 
-    const inserted = await this.db
-      .insert(titleOpinions)
-      .values(values)
-      .returning();
+    const db = this.databaseService.getDb();
+    const inserted = await db.insert(titleOpinions).values(values).returning();
     const row = inserted[0];
     if (!row) throw new Error('Failed to insert title opinion');
     return this.toDomain(row);
@@ -82,7 +77,8 @@ export class TitleOpinionRepositoryImpl implements TitleOpinionRepository {
     id: string,
     organizationId: string,
   ): Promise<TitleOpinion | null> {
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(titleOpinions)
       .where(
@@ -106,7 +102,8 @@ export class TitleOpinionRepositoryImpl implements TitleOpinionRepository {
         )
       : eq(titleOpinions.leaseId, leaseId);
 
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(titleOpinions)
       .where(where)
@@ -120,7 +117,8 @@ export class TitleOpinionRepositoryImpl implements TitleOpinionRepository {
     organizationId: string,
     opinionNumber: string,
   ): Promise<TitleOpinion | null> {
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(titleOpinions)
       .where(

@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersRepositoryImpl } from '../users.repository';
 import type { NewUser } from '../../../database/schema';
-import type { UserRecord } from '../../domain/users.repository';
+import type { UserRecord } from '../../../domain/users.repository';
 
 // Create a mock query builder that supports chaining and is awaitable
 const createMockQueryBuilder = (result: any = []) => {

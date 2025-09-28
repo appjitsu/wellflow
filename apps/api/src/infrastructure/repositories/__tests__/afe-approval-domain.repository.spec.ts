@@ -3,6 +3,7 @@ import { AfeApprovalDomainRepository } from '../afe-approval-domain.repository';
 import { AfeApproval } from '../../../domain/entities/afe-approval.entity';
 import { AfeApprovalStatus } from '../../../domain/enums/afe-status.enum';
 import { Money } from '../../../domain/value-objects/money';
+import { DatabaseService } from '../../../database/database.service';
 
 // Mock the database schema
 jest.mock('../../../database/schemas/afe-approvals', () => ({
@@ -26,6 +27,10 @@ jest.mock('drizzle-orm', () => ({
   and: jest.fn((...conditions) => ({ conditions })),
   desc: jest.fn((field) => ({ field, desc: true })),
   count: jest.fn(() => ({ count: true })),
+  relations: jest.fn((table, relationsFn) => ({
+    table,
+    relations: relationsFn,
+  })),
 }));
 
 describe('AfeApprovalDomainRepository', () => {
@@ -47,7 +52,7 @@ describe('AfeApprovalDomainRepository', () => {
 
   beforeEach(async () => {
     // Create mock database
-    mockDb = {
+    const mockDatabaseMethods = {
       select: jest.fn().mockReturnThis(),
       from: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
@@ -61,12 +66,23 @@ describe('AfeApprovalDomainRepository', () => {
       delete: jest.fn().mockReturnThis(),
     };
 
+    mockDb = {
+      getDb: jest.fn().mockReturnValue(mockDatabaseMethods),
+      ...mockDatabaseMethods,
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AfeApprovalDomainRepository,
         {
-          provide: 'DATABASE_CONNECTION',
+          provide: DatabaseService,
           useValue: mockDb,
+        },
+        {
+          provide: 'ConfigService',
+          useValue: {
+            get: jest.fn(),
+          },
         },
       ],
     }).compile();

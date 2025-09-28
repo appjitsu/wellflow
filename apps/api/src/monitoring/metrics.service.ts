@@ -3,10 +3,10 @@ import { CircuitBreakerService } from '../common/resilience/circuit-breaker.serv
 import { RetryService } from '../common/resilience/retry.service';
 import { HealthCheckService } from '../health/health.service';
 import { EnhancedEventBusService } from '../common/events/enhanced-event-bus.service';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Redis } from 'ioredis';
-import * as schema from '../database/schema';
 import { sql } from 'drizzle-orm';
+import { DatabaseService } from '../database/database.service';
+import * as schema from '../database/schema';
 
 export interface SystemMetrics {
   timestamp: string;
@@ -108,8 +108,7 @@ export class MetricsService {
   >();
 
   constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
+    private readonly databaseService: DatabaseService,
     @Inject('REDIS_CONNECTION')
     private readonly redis: Redis,
     private readonly circuitBreakerService: CircuitBreakerService,
@@ -290,7 +289,8 @@ export class MetricsService {
   private async getDatabaseMetrics() {
     try {
       // Get active connection count
-      const result = (await this.db.execute(
+      const db = this.databaseService.getDb();
+      const result = (await db.execute(
         sql`SELECT count(*) as active_connections FROM pg_stat_activity WHERE state = 'active'`,
       )) as unknown as Array<Record<string, unknown>>;
 
@@ -398,7 +398,8 @@ export class MetricsService {
   private async getBusinessMetrics() {
     try {
       // Get well counts by status
-      const wellsResult = await this.db
+      const db = this.databaseService.getDb();
+      const wellsResult = await db
         .select({
           status: schema.wells.status,
           count: schema.wells.id,

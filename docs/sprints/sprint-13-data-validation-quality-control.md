@@ -83,6 +83,29 @@ WellFlow operations.
   - Alert acknowledgment and resolution
   - Quality incident tracking
 
+### 6. Reserves Management System (CRITICAL ADDITION)
+
+- **Reserves Estimation**
+  - SEC reserves classification (Proved, Probable, Possible)
+  - Decline curve analysis
+  - Type curve generation
+  - EUR (Estimated Ultimate Recovery) calculations
+- **Economic Evaluation**
+  - PV10 and PV15 calculations
+  - NPV with multiple discount rates
+  - Working interest and net revenue interest application
+  - Price deck management and scenarios
+- **Reserve Reporting**
+  - Annual SEC reserves reporting
+  - Reserve reconciliation (roll-forward)
+  - Reserve audit trail and documentation
+  - Bank engineering reports
+- **Production Forecasting**
+  - Decline rate analysis (Arps equations)
+  - Forecast scenario management
+  - Probabilistic forecasting (P10, P50, P90)
+  - Reserve replacement ratio tracking
+
 ## Technical Requirements
 
 ### Data Validation Framework

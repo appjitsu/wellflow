@@ -42,9 +42,9 @@ module.exports = async () => {
 
   // Individual database environment variables for DatabaseService
   process.env.DB_HOST = process.env.TEST_DB_HOST || 'localhost';
-  process.env.DB_PORT = process.env.TEST_DB_PORT || '5433';
-  process.env.DB_USER = process.env.TEST_DB_USER || 'postgres';
-  process.env.DB_PASSWORD = process.env.TEST_DB_PASSWORD || 'please_set_secure_password';
+  process.env.DB_PORT = process.env.TEST_DB_PORT || '5432';
+  process.env.DB_USER = process.env.TEST_DB_USER || 'jason';
+  process.env.DB_PASSWORD = process.env.TEST_DB_PASSWORD || '';
   process.env.DB_NAME = process.env.TEST_DB_NAME || 'wellflow_test';
 
   // Security test configuration
@@ -119,16 +119,165 @@ module.exports = async () => {
     }
   });
 
-  // Initialize test database if needed
-  if (process.env.INIT_TEST_DB === 'true') {
-    console.log('🗄️  Initializing test database...');
+  // Initialize test database
+  console.log('🗄️  Initializing test database...');
+  try {
+    const { Client } = require('pg');
+    const client = new Client({
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT),
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: 'postgres', // Connect to default postgres database first
+    });
+
+    await client.connect();
+
+    // Drop and recreate test database to ensure clean state
     try {
-      // This would typically run database migrations or seed data
-      // For now, we'll just log the intent
-      console.log('✅ Test database initialization completed');
+      await client.query(`DROP DATABASE IF EXISTS ${process.env.DB_NAME};`);
+      console.log(`🗑️  Dropped existing test database: ${process.env.DB_NAME}`);
     } catch (error) {
-      console.warn('⚠️  Test database initialization failed:', error.message);
+      // Database might not exist, that's ok
     }
+
+    await client.query(`CREATE DATABASE ${process.env.DB_NAME} OWNER ${process.env.DB_USER};`);
+    console.log(`✅ Created fresh test database: ${process.env.DB_NAME}`);
+
+    await client.end();
+
+    // Create necessary tables for well repository tests
+    console.log('🗄️  Creating test database tables...');
+
+    const testClient = new Client({
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT),
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+    });
+
+    await testClient.connect();
+
+    // Create minimal schema for well repository tests
+    const createTablesSQL = `
+      -- Create enums
+      CREATE TYPE well_type AS ENUM ('OIL', 'GAS', 'OIL_AND_GAS', 'INJECTION', 'DISPOSAL', 'WATER', 'OTHER', 'oil', 'gas', 'injection', 'disposal');
+      CREATE TYPE well_status AS ENUM ('active', 'inactive', 'plugged', 'drilling');
+
+      -- Create organizations table (minimal)
+      CREATE TABLE organizations (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      );
+
+      -- Create leases table
+      CREATE TABLE leases (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID NOT NULL REFERENCES organizations(id),
+        name VARCHAR(255) NOT NULL,
+        lease_number VARCHAR(100),
+        lessor VARCHAR(255) NOT NULL,
+        lessee VARCHAR(255) NOT NULL,
+        acreage DECIMAL(10,4),
+        royalty_rate DECIMAL(5,4),
+        effective_date DATE,
+        expiration_date DATE,
+        status VARCHAR(20) NOT NULL DEFAULT 'active',
+        legal_description TEXT,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        CONSTRAINT leases_royalty_rate_range_check CHECK (royalty_rate IS NULL OR (royalty_rate >= 0 AND royalty_rate <= 1)),
+        CONSTRAINT leases_acreage_positive_check CHECK (acreage IS NULL OR acreage > 0),
+        CONSTRAINT leases_date_range_check CHECK (expiration_date IS NULL OR effective_date IS NULL OR effective_date <= expiration_date)
+      );
+
+      -- Create wells table
+      CREATE TABLE wells (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID NOT NULL REFERENCES organizations(id),
+        lease_id UUID REFERENCES leases(id),
+        api_number VARCHAR(10) NOT NULL UNIQUE,
+        well_name VARCHAR(255) NOT NULL,
+        well_number VARCHAR(50),
+        well_type well_type NOT NULL,
+        status well_status NOT NULL DEFAULT 'active',
+        spud_date DATE,
+        completion_date DATE,
+        total_depth DECIMAL(8,2),
+        latitude DECIMAL(10,7),
+        longitude DECIMAL(10,7),
+        operator VARCHAR(255),
+        field VARCHAR(255),
+        formation VARCHAR(255),
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        CONSTRAINT api_format CHECK (LENGTH(api_number) = 10 AND api_number ~ '^[0-9]+$'),
+        CONSTRAINT wells_total_depth_positive_check CHECK (total_depth IS NULL OR total_depth >= 0)
+      );
+
+       -- Create production_records table
+       CREATE TABLE production_records (
+         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+         organization_id UUID NOT NULL REFERENCES organizations(id),
+         well_id UUID NOT NULL REFERENCES wells(id),
+         production_date DATE NOT NULL,
+         oil_volume DECIMAL(10,2),
+         gas_volume DECIMAL(12,2),
+         water_volume DECIMAL(10,2),
+         oil_price DECIMAL(8,4),
+         gas_price DECIMAL(8,4),
+         run_ticket VARCHAR(100),
+         comments TEXT,
+         created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+         updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
+         CONSTRAINT production_records_positive_volumes_check CHECK (
+           (oil_volume IS NULL OR oil_volume >= 0) AND
+           (gas_volume IS NULL OR gas_volume >= 0) AND
+           (water_volume IS NULL OR water_volume >= 0)
+         ),
+         CONSTRAINT production_records_positive_prices_check CHECK (
+           (oil_price IS NULL OR oil_price >= 0) AND
+           (gas_price IS NULL OR gas_price >= 0)
+         ),
+         UNIQUE(well_id, production_date)
+       );
+
+       -- Create indexes
+       CREATE INDEX wells_organization_id_idx ON wells(organization_id);
+       CREATE INDEX wells_lease_id_idx ON wells(lease_id);
+       CREATE INDEX production_records_organization_id_idx ON production_records(organization_id);
+       CREATE INDEX production_records_well_id_idx ON production_records(well_id);
+       CREATE INDEX production_records_production_date_idx ON production_records(production_date);
+    `;
+
+    try {
+      await testClient.query(createTablesSQL);
+
+      // Insert test data
+      await testClient.query(`
+          -- Insert test organization
+          INSERT INTO organizations (id, name) VALUES
+          ('550e8400-e29b-41d4-a716-446655440000', 'Test Organization');
+
+          -- Insert test well
+          INSERT INTO wells (id, organization_id, api_number, well_name, well_type, status) VALUES
+          ('550e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440000', '1234567890', 'Test Well', 'OIL', 'active');
+        `);
+
+      console.log('✅ Test database tables and data created successfully');
+    } catch (error) {
+      console.warn('⚠️  Table/data creation failed:', error.message);
+      // Try to continue anyway
+    }
+
+    await testClient.end();
+
+    console.log('✅ Test database initialization completed');
+  } catch (error) {
+    console.warn('⚠️  Test database initialization failed:', error.message);
   }
 
   // Start test services if needed

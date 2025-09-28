@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Inject } from '@nestjs/common';
 import {
   eq,
   and,
@@ -12,6 +11,7 @@ import {
   sql,
   SQL,
   AnyColumn,
+  inArray,
 } from 'drizzle-orm';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import {
@@ -29,6 +29,7 @@ import {
 } from '../../domain/enums/vendor-status.enum';
 import { vendors } from '../../database/schemas/vendors';
 import * as schema from '../../database/schemas';
+import { DatabaseService } from '../../database/database.service';
 
 // Type for database row from Drizzle
 type VendorRow = typeof vendors.$inferSelect;
@@ -43,10 +44,7 @@ type VendorInsert = typeof vendors.$inferInsert;
 export class VendorRepositoryImpl implements VendorRepository {
   private readonly logger = new Logger(VendorRepositoryImpl.name);
 
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: PostgresJsDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   async save(vendor: Vendor): Promise<Vendor> {
     this.logger.log(`Saving vendor: ${vendor.getId()}`);
@@ -55,7 +53,8 @@ export class VendorRepositoryImpl implements VendorRepository {
       const vendorData = this.mapVendorToDatabase(vendor);
 
       // Check if vendor exists
-      const existingVendor = await this.db
+      const db = this.databaseService.getDb();
+      const existingVendor = await db
         .select()
         .from(vendors)
         .where(eq(vendors.id, vendor.getId()))
@@ -63,7 +62,7 @@ export class VendorRepositoryImpl implements VendorRepository {
 
       if (existingVendor.length > 0) {
         // Update existing vendor
-        await this.db
+        await db
           .update(vendors)
           .set({
             ...vendorData,
@@ -73,7 +72,7 @@ export class VendorRepositoryImpl implements VendorRepository {
           .where(eq(vendors.id, vendor.getId()));
       } else {
         // Insert new vendor
-        await this.db.insert(vendors).values(vendorData);
+        await db.insert(vendors).values(vendorData);
       }
 
       return vendor;
@@ -90,7 +89,8 @@ export class VendorRepositoryImpl implements VendorRepository {
     this.logger.log(`Finding vendor by ID: ${id}`);
 
     try {
-      const result = await this.db
+      const db = this.databaseService.getDb();
+      const result = await db
         .select()
         .from(vendors)
         .where(eq(vendors.id, id))
@@ -126,7 +126,8 @@ export class VendorRepositoryImpl implements VendorRepository {
     );
 
     try {
-      const result = await this.db
+      const db = this.databaseService.getDb();
+      const result = await db
         .select()
         .from(vendors)
         .where(
@@ -219,7 +220,14 @@ export class VendorRepositoryImpl implements VendorRepository {
     filters: VendorFilters,
   ): void {
     if (filters.status && filters.status.length > 0) {
-      conditions.push(sql`${vendors.status} = ANY(${filters.status})`);
+      if (filters.status.length === 1) {
+        conditions.push(eq(vendors.status, filters.status[0] as any));
+      } else {
+        const statusConditions = filters.status.map((status) =>
+          eq(vendors.status, status as any),
+        );
+        conditions.push(or(...statusConditions)!);
+      }
     }
   }
 
@@ -228,7 +236,10 @@ export class VendorRepositoryImpl implements VendorRepository {
     filters: VendorFilters,
   ): void {
     if (filters.vendorType && filters.vendorType.length > 0) {
-      conditions.push(sql`${vendors.vendorType} = ANY(${filters.vendorType})`);
+      const typeConditions = filters.vendorType.map((type) =>
+        eq(vendors.vendorType, type as any),
+      );
+      conditions.push(or(...typeConditions)!);
     }
   }
 
@@ -246,9 +257,10 @@ export class VendorRepositoryImpl implements VendorRepository {
     filters: VendorFilters,
   ): void {
     if (filters.performanceRating && filters.performanceRating.length > 0) {
-      conditions.push(
-        sql`${vendors.overallRating} = ANY(${filters.performanceRating})`,
+      const ratingConditions = filters.performanceRating.map((rating) =>
+        eq(vendors.overallRating, rating as any),
       );
+      conditions.push(or(...ratingConditions)!);
     }
   }
 
@@ -268,7 +280,8 @@ export class VendorRepositoryImpl implements VendorRepository {
   }
 
   private async getTotalCount(whereClause: SQL<unknown>): Promise<number> {
-    const totalResult = await this.db
+    const db = this.databaseService.getDb();
+    const totalResult = await db
       .select({ count: count() })
       .from(vendors)
       .where(whereClause);
@@ -280,7 +293,8 @@ export class VendorRepositoryImpl implements VendorRepository {
     whereClause: SQL<unknown>,
     pagination?: PaginationOptions,
   ) {
-    let query = this.db.select().from(vendors).where(whereClause);
+    const db = this.databaseService.getDb();
+    let query = db.select().from(vendors).where(whereClause);
 
     // Apply sorting
     if (pagination?.sortBy) {
@@ -443,7 +457,8 @@ export class VendorRepositoryImpl implements VendorRepository {
     this.logger.log(`Deleting vendor: ${id}`);
 
     try {
-      await this.db.delete(vendors).where(eq(vendors.id, id));
+      const db = this.databaseService.getDb();
+      await db.delete(vendors).where(eq(vendors.id, id));
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
@@ -460,12 +475,13 @@ export class VendorRepositoryImpl implements VendorRepository {
 
     try {
       // Get basic counts
-      const totalVendorsResult = await this.db
+      const db = this.databaseService.getDb();
+      const totalVendorsResult = await db
         .select({ count: count() })
         .from(vendors)
         .where(eq(vendors.organizationId, organizationId));
 
-      const activeVendorsResult = await this.db
+      const activeVendorsResult = await db
         .select({ count: count() })
         .from(vendors)
         .where(
@@ -475,7 +491,7 @@ export class VendorRepositoryImpl implements VendorRepository {
           ),
         );
 
-      const pendingApprovalResult = await this.db
+      const pendingApprovalResult = await db
         .select({ count: count() })
         .from(vendors)
         .where(
@@ -485,7 +501,7 @@ export class VendorRepositoryImpl implements VendorRepository {
           ),
         );
 
-      const suspendedVendorsResult = await this.db
+      const suspendedVendorsResult = await db
         .select({ count: count() })
         .from(vendors)
         .where(
@@ -495,7 +511,7 @@ export class VendorRepositoryImpl implements VendorRepository {
           ),
         );
 
-      const qualifiedVendorsResult = await this.db
+      const qualifiedVendorsResult = await db
         .select({ count: count() })
         .from(vendors)
         .where(
@@ -509,7 +525,7 @@ export class VendorRepositoryImpl implements VendorRepository {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      const recentlyAddedResult = await this.db
+      const recentlyAddedResult = await db
         .select({ count: count() })
         .from(vendors)
         .where(
@@ -562,7 +578,8 @@ export class VendorRepositoryImpl implements VendorRepository {
     );
 
     try {
-      await this.db
+      const db = this.databaseService.getDb();
+      await db
         .update(vendors)
         .set({
           status: status as
@@ -627,18 +644,40 @@ export class VendorRepositoryImpl implements VendorRepository {
     // you would need to properly reconstruct the Vendor entity
     // with all its business logic and domain events
 
-    // For now, return a basic vendor instance
-    // In practice, you'd need a factory method or builder pattern
-    return new Vendor(
+    // Parse billing address from JSON
+    let billingAddress: VendorAddress;
+    try {
+      billingAddress =
+        typeof row.billingAddress === 'string'
+          ? JSON.parse(row.billingAddress)
+          : row.billingAddress;
+    } catch {
+      // Fallback for invalid JSON
+      billingAddress = {
+        street: 'Unknown',
+        city: 'Unknown',
+        state: 'Unknown',
+        zipCode: '00000',
+        country: 'Unknown',
+      };
+    }
+
+    // Create vendor instance
+    const vendor = new Vendor(
       row.id,
       row.organizationId,
       row.vendorCode,
       row.vendorName,
       row.vendorType as VendorType,
-      row.billingAddress as VendorAddress,
+      billingAddress,
       row.paymentTerms || 'Net 30',
       row.taxId || undefined,
     );
+
+    // Set status from database (bypass business rules for loading)
+    (vendor as any).status = row.status as VendorStatus;
+
+    return vendor;
   }
 
   async findWithExpiringQualifications(

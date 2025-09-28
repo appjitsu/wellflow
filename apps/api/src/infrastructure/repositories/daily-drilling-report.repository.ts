@@ -1,14 +1,13 @@
 import { and, desc, eq, gte, lte } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import * as schema from '../../database/schema';
 import { dailyDrillingReports } from '../../database/schemas/daily-drilling-reports';
 import { DailyDrillingReport } from '../../domain/entities/daily-drilling-report.entity';
 import type { IDailyDrillingReportRepository } from '../../domain/repositories/daily-drilling-report.repository.interface';
+import { DatabaseService } from '../../database/database.service';
 
 export class DailyDrillingReportRepository
   implements IDailyDrillingReportRepository
 {
-  constructor(private readonly db: NodePgDatabase<typeof schema>) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   async save(entity: DailyDrillingReport): Promise<DailyDrillingReport> {
     const values: typeof dailyDrillingReports.$inferInsert = {
@@ -19,7 +18,8 @@ export class DailyDrillingReportRepository
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    await this.db
+    const db = this.databaseService.getDb();
+    await db
       .insert(dailyDrillingReports)
       .values(values)
       .onConflictDoUpdate({
@@ -30,7 +30,8 @@ export class DailyDrillingReportRepository
   }
 
   async findById(id: string): Promise<DailyDrillingReport | null> {
-    const [row] = await this.db
+    const db = this.databaseService.getDb();
+    const [row] = await db
       .select()
       .from(dailyDrillingReports)
       .where(eq(dailyDrillingReports.id, id))
@@ -66,7 +67,8 @@ export class DailyDrillingReportRepository
       clauses.push(lte(dailyDrillingReports.reportDate, toStr));
     }
 
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(dailyDrillingReports)
       .where(and(...clauses))

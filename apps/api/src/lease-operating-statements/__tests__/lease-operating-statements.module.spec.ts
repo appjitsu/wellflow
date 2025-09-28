@@ -1,18 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { LeaseOperatingStatementsModule } from '../lease-operating-statements.module';
 
 describe('LeaseOperatingStatementsModule', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<LeaseOperatingStatementsModule>(/* LeaseOperatingStatementsModule */);
+  it('should be defined', () => {
+    expect(LeaseOperatingStatementsModule).toBeDefined();
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should be a valid NestJS module', () => {
+    expect(LeaseOperatingStatementsModule).toBeInstanceOf(Function);
+    expect(typeof LeaseOperatingStatementsModule).toBe('function');
   });
 });

@@ -1,7 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Entity, UnitOfWork } from './unit-of-work';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type * as schema from '../../database/schema';
+import { DatabaseService } from '../../database/database.service';
 import { RegulatoryDomainEventPublisher } from '../../domain/shared/regulatory-domain-event-publisher';
 
 // Import regulatory entities
@@ -33,11 +34,10 @@ export class RegulatoryUnitOfWork extends UnitOfWork {
   private _regulatoryReportRepository?: RegulatoryReportRepository;
 
   constructor(
-    @Inject('DATABASE_CONNECTION')
-    db: NodePgDatabase<typeof schema>,
+    databaseService: DatabaseService,
     private readonly eventPublisher: RegulatoryDomainEventPublisher,
   ) {
-    super(db);
+    super(databaseService);
 
     // Register regulatory repository factories
 
@@ -56,7 +56,8 @@ export class RegulatoryUnitOfWork extends UnitOfWork {
    */
   getPermitRepository(): PermitRepository {
     if (!this._permitRepository) {
-      this._permitRepository = new PermitRepositoryImpl(this.db);
+      const db = this.databaseService.getDb();
+      this._permitRepository = new PermitRepositoryImpl(db);
     }
     return this._permitRepository;
   }
@@ -66,7 +67,9 @@ export class RegulatoryUnitOfWork extends UnitOfWork {
    */
   getHSEIncidentRepository(): HSEIncidentRepository {
     if (!this._hseIncidentRepository) {
-      this._hseIncidentRepository = new HSEIncidentRepositoryImpl(this.db);
+      this._hseIncidentRepository = new HSEIncidentRepositoryImpl(
+        this.databaseService,
+      );
     }
     return this._hseIncidentRepository;
   }
@@ -77,7 +80,7 @@ export class RegulatoryUnitOfWork extends UnitOfWork {
   getEnvironmentalMonitoringRepository(): EnvironmentalMonitoringRepository {
     if (!this._environmentalMonitoringRepository) {
       this._environmentalMonitoringRepository =
-        new EnvironmentalMonitoringRepositoryImpl(this.db);
+        new EnvironmentalMonitoringRepositoryImpl(this.databaseService);
     }
     return this._environmentalMonitoringRepository;
   }

@@ -1,17 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { AuthModule } from '../auth.module';
 
 describe('AuthModule', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<AuthModule>(/* AuthModule */);
+  it('should be defined', () => {
+    expect(AuthModule).toBeDefined();
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should be a valid NestJS module', () => {
+    expect(AuthModule).toBeInstanceOf(Function);
+    expect(typeof AuthModule).toBe('function');
   });
 });

@@ -20,9 +20,9 @@ export interface CashCallProps {
   organizationId: string;
   leaseId: string;
   partnerId: string;
-  billingMonth: string; // YYYY-MM-DD
-  dueDate?: string | null; // YYYY-MM-DD
-  amount: string; // decimal(15,2) as string
+  billingMonth: string;
+  dueDate?: string | null;
+  amount: string;
   type: CashCallType;
   status: CashCallStatus;
   interestRatePercent?: string | null; // up to 5,2

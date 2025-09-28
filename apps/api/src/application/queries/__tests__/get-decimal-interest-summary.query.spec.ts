@@ -1,18 +1,23 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { GetDecimalInterestSummaryQuery } from '../get-decimal-interest-summary.query';
 
 describe('GetDecimalInterestSummaryQuery', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<GetDecimalInterestSummaryQuery>(/* GetDecimalInterestSummaryQuery */);
+  it('should create query with wellId and no effectiveDate', () => {
+    const wellId = 'test-well-id';
+    const query = new GetDecimalInterestSummaryQuery(wellId);
+    expect(query.wellId).toBe(wellId);
+    expect(query.effectiveDate).toBeUndefined();
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should create query with effectiveDate', () => {
+    const wellId = 'test-well-id';
+    const effectiveDate = new Date('2023-01-01');
+    const query = new GetDecimalInterestSummaryQuery(wellId, effectiveDate);
+    expect(query.wellId).toBe(wellId);
+    expect(query.effectiveDate).toBe(effectiveDate);
+  });
+
+  it('should be an instance of GetDecimalInterestSummaryQuery', () => {
+    const query = new GetDecimalInterestSummaryQuery('well');
+    expect(query).toBeInstanceOf(GetDecimalInterestSummaryQuery);
   });
 });

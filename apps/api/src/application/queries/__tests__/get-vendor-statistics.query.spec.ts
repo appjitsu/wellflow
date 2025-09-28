@@ -1,18 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { GetVendorStatisticsQuery } from '../get-vendor-statistics.query';
 
 describe('GetVendorStatisticsQuery', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<GetVendorStatisticsQuery>(/* GetVendorStatisticsQuery */);
+  it('should create query with organizationId', () => {
+    const organizationId = 'test-org-id';
+    const query = new GetVendorStatisticsQuery(organizationId);
+    expect(query.organizationId).toBe(organizationId);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should be an instance of GetVendorStatisticsQuery', () => {
+    const query = new GetVendorStatisticsQuery('test');
+    expect(query).toBeInstanceOf(GetVendorStatisticsQuery);
   });
 });

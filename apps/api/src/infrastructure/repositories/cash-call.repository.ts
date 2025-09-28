@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { and, desc, eq } from 'drizzle-orm';
 import * as schema from '../../database/schema';
@@ -10,15 +10,13 @@ import {
   CashCallConsentStatus,
 } from '../../domain/entities/cash-call.entity';
 import type { ICashCallRepository } from '../../domain/repositories/cash-call.repository.interface';
+import { DatabaseService } from '../../database/database.service';
 
 type Row = typeof cashCalls.$inferSelect;
 
 @Injectable()
 export class CashCallRepository implements ICashCallRepository {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
   private mapRow(row: Row): CashCall {
     return CashCall.fromPersistence({
       id: row.id,
@@ -50,7 +48,8 @@ export class CashCallRepository implements ICashCallRepository {
       if (!recordId) {
         throw new Error('CashCall ID is required for updates');
       }
-      await this.db
+      const db = this.databaseService.getDb();
+      await db
         .update(cashCalls)
         .set({
           organizationId: data.organizationId,
@@ -74,7 +73,8 @@ export class CashCallRepository implements ICashCallRepository {
       return entity;
     }
 
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .insert(cashCalls)
       .values({
         organizationId: data.organizationId,
@@ -99,7 +99,8 @@ export class CashCallRepository implements ICashCallRepository {
     return this.mapRow(rows[0] as Row);
   }
   async findById(id: string): Promise<CashCall | null> {
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(cashCalls)
       .where(eq(cashCalls.id, id))
@@ -125,7 +126,8 @@ export class CashCallRepository implements ICashCallRepository {
       conditions.push(eq(cashCalls.partnerId, options.partnerId));
     if (options?.status) conditions.push(eq(cashCalls.status, options.status));
 
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(cashCalls)
       .where(and(...conditions))

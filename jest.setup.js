@@ -2,7 +2,7 @@
 // Global test configuration for oil & gas production monitoring platform
 
 // Extend Jest matchers
-import '@testing-library/jest-dom';
+// import '@testing-library/jest-dom';
 
 // Set test environment variables
 process.env.NODE_ENV = 'test';
@@ -12,6 +12,11 @@ process.env.TZ = 'UTC';
 process.env.WELLFLOW_ENV = 'test';
 process.env.API_URL = 'http://localhost:3001';
 process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/wellflow_test';
+process.env.DB_HOST = 'localhost';
+process.env.DB_PORT = '5432';
+process.env.DB_USER = 'jason';
+process.env.DB_PASSWORD = '';
+process.env.DB_NAME = 'wellflow_test';
 process.env.REDIS_URL = 'redis://localhost:6379/1';
 
 // Mock external services for testing
@@ -84,38 +89,44 @@ global.ResizeObserver = jest.fn().mockImplementation(() => ({
   disconnect: jest.fn(),
 }));
 
-// Mock matchMedia for responsive design tests
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: jest.fn().mockImplementation((query) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: jest.fn(), // deprecated
-    removeListener: jest.fn(), // deprecated
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  })),
-});
+// Browser-specific mocks (only if window exists)
+if (typeof window !== 'undefined') {
+  // Mock matchMedia for responsive design tests
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: jest.fn().mockImplementation((query) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(), // deprecated
+      removeListener: jest.fn(), // deprecated
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    })),
+  });
 
-// Mock localStorage for client-side storage tests
-const localStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
-  length: 0,
-  key: jest.fn(),
-};
-Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock,
-});
+  // Mock localStorage for client-side storage tests
+  const localStorageMock = {
+    getItem: jest.fn(),
+    setItem: jest.fn(),
+    removeItem: jest.fn(),
+    clear: jest.fn(),
+    length: 0,
+    key: jest.fn(),
+  };
 
-// Mock sessionStorage
-Object.defineProperty(window, 'sessionStorage', {
-  value: localStorageMock,
-});
+  if (typeof window !== 'undefined') {
+    Object.defineProperty(window, 'localStorage', {
+      value: localStorageMock,
+    });
+
+    // Mock sessionStorage
+    Object.defineProperty(window, 'sessionStorage', {
+      value: localStorageMock,
+    });
+  }
+}
 
 // Mock URL.createObjectURL for file upload tests
 global.URL.createObjectURL = jest.fn(() => 'mocked-url');
@@ -207,8 +218,10 @@ beforeEach(() => {
     global.fetch.mockClear();
   }
 
-  // Clear localStorage
-  localStorageMock.clear();
+  // Clear localStorage (only if it exists)
+  if (typeof window !== 'undefined' && localStorageMock) {
+    localStorageMock.clear();
+  }
 
   // Reset console mocks
   if (jest.isMockFunction(console.log)) {

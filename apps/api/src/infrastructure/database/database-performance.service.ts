@@ -1,6 +1,7 @@
-import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
+import { DatabaseService } from '../../database/database.service';
 import * as schema from '../../database/schema';
 
 export interface QueryMetrics {
@@ -54,11 +55,12 @@ export class DatabasePerformanceService {
   private metricsRetentionPeriod = 24 * 60 * 60 * 1000; // 24 hours
   private maxMetricsStored = 10000;
 
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {
+  constructor(private readonly databaseService: DatabaseService) {
     this.startMonitoring();
+  }
+
+  private get db(): NodePgDatabase<typeof schema> {
+    return this.databaseService.getDb();
   }
 
   /**

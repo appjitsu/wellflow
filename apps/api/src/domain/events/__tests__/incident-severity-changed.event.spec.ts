@@ -1,18 +1,22 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { IncidentSeverityChangedEvent } from '../incident-severity-changed.event';
 
 describe('IncidentSeverityChangedEvent', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<IncidentSeverityChangedEvent>(/* IncidentSeverityChangedEvent */);
+  it('should be defined', () => {
+    expect(IncidentSeverityChangedEvent).toBeDefined();
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should create event with required properties', () => {
+    const event = new IncidentSeverityChangedEvent(
+      'incident-123',
+      'LOW',
+      'HIGH',
+    );
+
+    expect(event.aggregateId).toBe('incident-123');
+    expect(event.oldSeverity).toBe('LOW');
+    expect(event.newSeverity).toBe('HIGH');
+    expect(event.eventType).toBe('IncidentSeverityChanged');
+    expect(event.aggregateType).toBe('HSEIncident');
+    expect(event.occurredOn).toBeInstanceOf(Date);
   });
 });

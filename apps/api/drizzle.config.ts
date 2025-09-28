@@ -8,7 +8,7 @@ export default defineConfig({
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5433'),
     user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || 'password',
+    password: process.env.DB_PASSWORD || 'please_set_secure_password',
     database: process.env.DB_NAME || 'wellflow',
     ssl: false,
   },

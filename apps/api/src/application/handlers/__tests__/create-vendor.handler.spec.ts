@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EventBus } from '@nestjs/cqrs';
+import { Logger } from '@nestjs/common';
 import { CreateVendorHandler } from '../create-vendor.handler';
 import { CreateVendorCommand } from '../../commands/create-vendor.command';
 import { VendorRepository } from '../../../domain/repositories/vendor.repository.interface';
@@ -60,6 +61,10 @@ describe('CreateVendorHandler', () => {
     handler = module.get<CreateVendorHandler>(CreateVendorHandler);
     vendorRepository = module.get('VendorRepository');
     eventBus = module.get(EventBus);
+
+    // Mock logger to suppress console output in tests
+    jest.spyOn(Logger.prototype, 'error').mockImplementation();
+    jest.spyOn(Logger.prototype, 'log').mockImplementation();
   });
 
   describe('execute', () => {
@@ -334,6 +339,501 @@ describe('CreateVendorHandler', () => {
         const result = await handler.execute(command);
         expect(result).toBe(`vendor-${vendorType}`);
       }
+    });
+
+    it('should handle different organization IDs correctly', async () => {
+      // Test various organization ID formats
+      const testCases = [
+        'org-123',
+        '123e4567-e89b-12d3-a456-426614174000',
+        'simple-org',
+        'org_with_underscores',
+        'org-with-dashes',
+      ];
+
+      for (const orgId of testCases) {
+        const command = new CreateVendorCommand(
+          orgId,
+          'Test Vendor',
+          'TEST-001',
+          VendorType.SERVICE,
+          mockAddress,
+          'Net 30',
+        );
+
+        vendorRepository.findByVendorCode.mockResolvedValue(null);
+
+        const mockVendor = new Vendor(
+          'vendor-123',
+          orgId,
+          'TEST-001',
+          'Test Vendor',
+          VendorType.SERVICE,
+          mockAddress,
+          'Net 30',
+        );
+
+        vendorRepository.save.mockResolvedValue(mockVendor);
+
+        const result = await handler.execute(command);
+        expect(result).toBe('vendor-123');
+        expect(vendorRepository.findByVendorCode).toHaveBeenCalledWith(
+          orgId,
+          'TEST-001',
+        );
+      }
+    });
+
+    it('should handle empty organization ID', async () => {
+      // Arrange
+      const command = new CreateVendorCommand(
+        '',
+        'Test Vendor',
+        'TEST-001',
+        VendorType.SERVICE,
+        mockAddress,
+        'Net 30',
+      );
+
+      vendorRepository.findByVendorCode.mockResolvedValue(null);
+
+      const mockVendor = new Vendor(
+        'vendor-123',
+        '',
+        'TEST-001',
+        'Test Vendor',
+        VendorType.SERVICE,
+        mockAddress,
+        'Net 30',
+      );
+
+      vendorRepository.save.mockResolvedValue(mockVendor);
+
+      // Act
+      const result = await handler.execute(command);
+
+      // Assert
+      expect(result).toBe('vendor-123');
+      expect(vendorRepository.findByVendorCode).toHaveBeenCalledWith(
+        '',
+        'TEST-001',
+      );
+    });
+
+    it('should handle null organization ID', async () => {
+      // Arrange
+      const command = new CreateVendorCommand(
+        null as any,
+        'Test Vendor',
+        'TEST-001',
+        VendorType.SERVICE,
+        mockAddress,
+        'Net 30',
+      );
+
+      vendorRepository.findByVendorCode.mockResolvedValue(null);
+
+      const mockVendor = new Vendor(
+        'vendor-123',
+        null as any,
+        'TEST-001',
+        'Test Vendor',
+        VendorType.SERVICE,
+        mockAddress,
+        'Net 30',
+      );
+
+      vendorRepository.save.mockResolvedValue(mockVendor);
+
+      // Act
+      const result = await handler.execute(command);
+
+      // Assert
+      expect(result).toBe('vendor-123');
+      expect(vendorRepository.findByVendorCode).toHaveBeenCalledWith(
+        null,
+        'TEST-001',
+      );
+    });
+
+    it('should handle undefined organization ID', async () => {
+      // Arrange
+      const command = new CreateVendorCommand(
+        undefined as any,
+        'Test Vendor',
+        'TEST-001',
+        VendorType.SERVICE,
+        mockAddress,
+        'Net 30',
+      );
+
+      vendorRepository.findByVendorCode.mockResolvedValue(null);
+
+      const mockVendor = new Vendor(
+        'vendor-123',
+        undefined as any,
+        'TEST-001',
+        'Test Vendor',
+        VendorType.SERVICE,
+        mockAddress,
+        'Net 30',
+      );
+
+      vendorRepository.save.mockResolvedValue(mockVendor);
+
+      // Act
+      const result = await handler.execute(command);
+
+      // Assert
+      expect(result).toBe('vendor-123');
+      expect(vendorRepository.findByVendorCode).toHaveBeenCalledWith(
+        undefined,
+        'TEST-001',
+      );
+    });
+
+    it('should handle non-Error exceptions', async () => {
+      // Arrange
+      const command = new CreateVendorCommand(
+        'org-123',
+        'Test Vendor',
+        'TEST-001',
+        VendorType.SERVICE,
+        mockAddress,
+        'Net 30',
+      );
+
+      const nonErrorException = { message: 'Non-error exception', code: 500 };
+      vendorRepository.findByVendorCode.mockRejectedValue(nonErrorException);
+
+      // Act & Assert
+      try {
+        await handler.execute(command);
+        fail('Expected handler to throw an exception');
+      } catch (error) {
+        expect(error).toBe(nonErrorException);
+      }
+
+      expect(vendorRepository.findByVendorCode).toHaveBeenCalledWith(
+        'org-123',
+        'TEST-001',
+      );
+      expect(vendorRepository.save).not.toHaveBeenCalled();
+      expect(eventBus.publish).not.toHaveBeenCalled();
+    });
+
+    it('should handle vendor code uniqueness check errors', async () => {
+      // Arrange
+      const command = new CreateVendorCommand(
+        'org-123',
+        'Test Vendor',
+        'TEST-001',
+        VendorType.SERVICE,
+        mockAddress,
+        'Net 30',
+      );
+
+      vendorRepository.findByVendorCode.mockRejectedValue(
+        new Error('Database query failed'),
+      );
+
+      // Act & Assert
+      await expect(handler.execute(command)).rejects.toThrow(
+        'Database query failed',
+      );
+
+      expect(vendorRepository.findByVendorCode).toHaveBeenCalledWith(
+        'org-123',
+        'TEST-001',
+      );
+      expect(vendorRepository.save).not.toHaveBeenCalled();
+      expect(eventBus.publish).not.toHaveBeenCalled();
+    });
+
+    it('should handle event publishing errors', async () => {
+      // Arrange
+      const command = new CreateVendorCommand(
+        'org-123',
+        'Test Vendor',
+        'TEST-001',
+        VendorType.SERVICE,
+        mockAddress,
+        'Net 30',
+      );
+
+      vendorRepository.findByVendorCode.mockResolvedValue(null);
+
+      const mockVendor = new Vendor(
+        'vendor-123',
+        'org-123',
+        'TEST-001',
+        'Test Vendor',
+        VendorType.SERVICE,
+        mockAddress,
+        'Net 30',
+      );
+
+      vendorRepository.save.mockResolvedValue(mockVendor);
+      eventBus.publish.mockRejectedValue(new Error('Event bus failed'));
+
+      // Act & Assert
+      await expect(handler.execute(command)).rejects.toThrow(
+        'Event bus failed',
+      );
+
+      expect(vendorRepository.findByVendorCode).toHaveBeenCalledWith(
+        'org-123',
+        'TEST-001',
+      );
+      expect(vendorRepository.save).toHaveBeenCalled();
+      // Event publishing was attempted
+      expect(eventBus.publish).toHaveBeenCalled();
+    });
+
+    it('should create vendor with tax ID', async () => {
+      // Arrange
+      const command = new CreateVendorCommand(
+        'org-123',
+        'Test Vendor',
+        'TEST-001',
+        VendorType.SERVICE,
+        mockAddress,
+        'Net 30',
+        '12-3456789',
+      );
+
+      vendorRepository.findByVendorCode.mockResolvedValue(null);
+
+      const mockVendor = new Vendor(
+        'vendor-123',
+        'org-123',
+        'TEST-001',
+        'Test Vendor',
+        VendorType.SERVICE,
+        mockAddress,
+        'Net 30',
+        '12-3456789',
+      );
+
+      vendorRepository.save.mockResolvedValue(mockVendor);
+
+      // Act
+      const result = await handler.execute(command);
+
+      // Assert
+      expect(result).toBe('vendor-123');
+      expect(vendorRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          getTaxId: expect.any(Function),
+        }),
+      );
+    });
+
+    it('should create vendor without tax ID', async () => {
+      // Arrange
+      const command = new CreateVendorCommand(
+        'org-123',
+        'Test Vendor',
+        'TEST-001',
+        VendorType.SERVICE,
+        mockAddress,
+        'Net 30',
+        undefined, // No tax ID
+      );
+
+      vendorRepository.findByVendorCode.mockResolvedValue(null);
+
+      const mockVendor = new Vendor(
+        'vendor-123',
+        'org-123',
+        'TEST-001',
+        'Test Vendor',
+        VendorType.SERVICE,
+        mockAddress,
+        'Net 30',
+        undefined,
+      );
+
+      vendorRepository.save.mockResolvedValue(mockVendor);
+
+      // Act
+      const result = await handler.execute(command);
+
+      // Assert
+      expect(result).toBe('vendor-123');
+      expect(vendorRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          getTaxId: expect.any(Function),
+        }),
+      );
+    });
+
+    it('should handle vendor code validation errors', async () => {
+      // Test various invalid vendor codes
+      const invalidCodes = ['', 'A', 'AB', 'A'.repeat(21)]; // Empty, too short, too long
+
+      for (const invalidCode of invalidCodes) {
+        const command = new CreateVendorCommand(
+          'org-123',
+          'Test Vendor',
+          invalidCode,
+          VendorType.SERVICE,
+          mockAddress,
+          'Net 30',
+        );
+
+        vendorRepository.findByVendorCode.mockResolvedValue(null);
+
+        // Act & Assert
+        await expect(handler.execute(command)).rejects.toThrow();
+
+        expect(vendorRepository.save).not.toHaveBeenCalled();
+        expect(eventBus.publish).not.toHaveBeenCalled();
+      }
+    });
+
+    it('should handle vendor name validation errors', async () => {
+      // Arrange
+      const command = new CreateVendorCommand(
+        'org-123',
+        '', // Empty vendor name
+        'TEST-001',
+        VendorType.SERVICE,
+        mockAddress,
+        'Net 30',
+      );
+
+      vendorRepository.findByVendorCode.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(handler.execute(command)).rejects.toThrow(
+        'Vendor name is required',
+      );
+
+      expect(vendorRepository.save).not.toHaveBeenCalled();
+      expect(eventBus.publish).not.toHaveBeenCalled();
+    });
+
+    it('should handle address validation errors', async () => {
+      // Arrange
+      const invalidAddress = {
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '77001',
+        country: 'USA',
+      };
+
+      const command = new CreateVendorCommand(
+        'org-123',
+        'Test Vendor',
+        'TEST-001',
+        VendorType.SERVICE,
+        invalidAddress,
+        'Net 30',
+      );
+
+      vendorRepository.findByVendorCode.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(handler.execute(command)).rejects.toThrow();
+
+      expect(vendorRepository.save).not.toHaveBeenCalled();
+      expect(eventBus.publish).not.toHaveBeenCalled();
+    });
+
+    it('should generate unique vendor IDs', async () => {
+      // Arrange
+      const command1 = new CreateVendorCommand(
+        'org-123',
+        'Vendor 1',
+        'VEND-001',
+        VendorType.SERVICE,
+        mockAddress,
+        'Net 30',
+      );
+
+      const command2 = new CreateVendorCommand(
+        'org-123',
+        'Vendor 2',
+        'VEND-002',
+        VendorType.SERVICE,
+        mockAddress,
+        'Net 30',
+      );
+
+      vendorRepository.findByVendorCode.mockResolvedValue(null);
+
+      const mockVendor1 = new Vendor(
+        'vendor-uuid-1',
+        'org-123',
+        'VEND-001',
+        'Vendor 1',
+        VendorType.SERVICE,
+        mockAddress,
+        'Net 30',
+      );
+
+      const mockVendor2 = new Vendor(
+        'vendor-uuid-2',
+        'org-123',
+        'VEND-002',
+        'Vendor 2',
+        VendorType.SERVICE,
+        mockAddress,
+        'Net 30',
+      );
+
+      vendorRepository.save
+        .mockResolvedValueOnce(mockVendor1)
+        .mockResolvedValueOnce(mockVendor2);
+
+      // Act
+      const result1 = await handler.execute(command1);
+      const result2 = await handler.execute(command2);
+
+      // Assert
+      expect(result1).toBe('vendor-uuid-1');
+      expect(result2).toBe('vendor-uuid-2');
+      expect(result1).not.toBe(result2);
+    });
+
+    it('should handle optional command fields', async () => {
+      // Arrange
+      const command = new CreateVendorCommand(
+        'org-123',
+        'Test Vendor',
+        'TEST-001',
+        VendorType.SERVICE,
+        mockAddress,
+        'Net 30',
+        undefined, // taxId
+        undefined, // serviceAddress
+        undefined, // website
+        undefined, // notes
+        undefined, // createdBy
+      );
+
+      vendorRepository.findByVendorCode.mockResolvedValue(null);
+
+      const mockVendor = new Vendor(
+        'vendor-123',
+        'org-123',
+        'TEST-001',
+        'Test Vendor',
+        VendorType.SERVICE,
+        mockAddress,
+        'Net 30',
+      );
+
+      vendorRepository.save.mockResolvedValue(mockVendor);
+
+      // Act
+      const result = await handler.execute(command);
+
+      // Assert
+      expect(result).toBe('vendor-123');
+      expect(vendorRepository.save).toHaveBeenCalledWith(expect.any(Vendor));
     });
   });
 });

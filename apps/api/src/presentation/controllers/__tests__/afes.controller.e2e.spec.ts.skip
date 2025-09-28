@@ -1,0 +1,516 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { AfesController } from '../afes.controller';
+import { CreateAfeCommand } from '../../../application/commands/create-afe.command';
+import { SubmitAfeCommand } from '../../../application/commands/submit-afe.command';
+import { ApproveAfeCommand } from '../../../application/commands/approve-afe.command';
+import { RejectAfeCommand } from '../../../application/commands/reject-afe.command';
+import { UpdateAfeCostCommand } from '../../../application/commands/update-afe-cost.command';
+import { GetAfeByIdQuery } from '../../../application/queries/get-afe-by-id.query';
+import { GetAfesByOrganizationQuery } from '../../../application/queries/get-afes-by-organization.query';
+import { GetAfesRequiringApprovalQuery } from '../../../application/queries/get-afes-requiring-approval.query';
+import { CreateAfeDto } from '../../../application/dtos/create-afe.dto';
+import { ApproveAfeDto } from '../../../application/dtos/approve-afe.dto';
+import { RejectAfeDto } from '../../../application/dtos/reject-afe.dto';
+import { UpdateAfeCostDto } from '../../../application/dtos/update-afe-cost.dto';
+import { AfeDto } from '../../../application/dtos/afe.dto';
+import { AfeStatus, AfeType } from '../../../domain/enums/afe-status.enum';
+
+describe('AfesController', () => {
+  let controller: AfesController;
+  let commandBus: CommandBus;
+  let queryBus: QueryBus;
+
+  const mockUser = {
+    id: 'user-123',
+    email: 'test@example.com',
+    organizationId: 'org-456',
+  };
+
+  const mockRequest = {
+    user: mockUser,
+  } as any;
+
+  const mockAfeDto: AfeDto = {
+    id: 'afe-123',
+    organizationId: 'org-456',
+    afeNumber: 'AFE-2024-0001',
+    afeType: AfeType.DRILLING,
+    status: AfeStatus.DRAFT,
+    wellId: 'well-789',
+    leaseId: 'lease-101',
+    totalEstimatedCost: { amount: 150000, currency: 'USD' },
+    approvedAmount: undefined,
+    actualCost: undefined,
+    description: 'Drilling operations',
+    effectiveDate: new Date('2024-01-15'),
+    approvalDate: undefined,
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
+    version: 1,
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [AfesController],
+      providers: [
+        {
+          provide: CommandBus,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
+        {
+          provide: QueryBus,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
+      ],
+    }).compile();
+
+    controller = module.get<AfesController>(AfesController);
+    commandBus = module.get<CommandBus>(CommandBus);
+    queryBus = module.get<QueryBus>(QueryBus);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('createAfe', () => {
+    it('should create a new AFE successfully', async () => {
+      const createAfeDto: CreateAfeDto = {
+        afeNumber: 'AFE-2024-0001',
+        afeType: AfeType.DRILLING,
+        wellId: 'well-789',
+        leaseId: 'lease-101',
+        totalEstimatedCost: 150000.0,
+        description: 'Drilling operations',
+      };
+
+      const expectedCommand = new CreateAfeCommand(
+        'org-456',
+        'AFE-2024-0001',
+        AfeType.DRILLING,
+        'well-789',
+        'lease-101',
+        150000.0,
+        'Drilling operations',
+        'user-123',
+      );
+
+      jest.spyOn(commandBus, 'execute').mockResolvedValue('afe-123');
+
+      const result = await controller.createAfe(createAfeDto, mockRequest);
+
+      expect(commandBus.execute).toHaveBeenCalledWith(expectedCommand);
+      expect(result).toEqual({
+        id: 'afe-123',
+        message: 'AFE created successfully',
+      });
+    });
+
+    it('should handle command execution errors', async () => {
+      const createAfeDto: CreateAfeDto = {
+        afeNumber: 'AFE-2024-0001',
+        afeType: AfeType.DRILLING,
+        wellId: 'well-789',
+        totalEstimatedCost: 150000.0,
+      };
+
+      jest
+        .spyOn(commandBus, 'execute')
+        .mockRejectedValue(new Error('Command failed'));
+
+      await expect(
+        controller.createAfe(createAfeDto, mockRequest),
+      ).rejects.toThrow('Command failed');
+    });
+  });
+
+  describe('getAfeById', () => {
+    it('should get AFE by ID successfully', async () => {
+      const expectedQuery = new GetAfeByIdQuery('afe-123');
+
+      jest.spyOn(queryBus, 'execute').mockResolvedValue(mockAfeDto);
+
+      const result = await controller.getAfeById('afe-123');
+
+      expect(queryBus.execute).toHaveBeenCalledWith(expectedQuery);
+      expect(result).toEqual(mockAfeDto);
+    });
+
+    it('should handle query execution errors', async () => {
+      jest
+        .spyOn(queryBus, 'execute')
+        .mockRejectedValue(new Error('Query failed'));
+
+      await expect(controller.getAfeById('afe-123')).rejects.toThrow(
+        'Query failed',
+      );
+    });
+  });
+
+  describe('getAfes', () => {
+    it('should get AFEs with default pagination', async () => {
+      const expectedQuery = new GetAfesByOrganizationQuery(
+        'org-456',
+        1,
+        10,
+        {},
+      );
+      const mockResult = {
+        afes: [mockAfeDto],
+        total: 1,
+        page: 1,
+        limit: 10,
+      };
+
+      jest.spyOn(queryBus, 'execute').mockResolvedValue(mockResult);
+
+      const result = await controller.getAfes(mockRequest);
+
+      expect(queryBus.execute).toHaveBeenCalledWith(expectedQuery);
+      expect(result).toEqual(mockResult);
+    });
+
+    it('should get AFEs with custom pagination and filters', async () => {
+      const expectedQuery = new GetAfesByOrganizationQuery('org-456', 2, 20, {
+        status: AfeStatus.APPROVED,
+        afeType: AfeType.COMPLETION,
+        wellId: 'well-789',
+        leaseId: 'lease-101',
+      });
+      const mockResult = {
+        afes: [mockAfeDto],
+        total: 1,
+        page: 2,
+        limit: 20,
+      };
+
+      jest.spyOn(queryBus, 'execute').mockResolvedValue(mockResult);
+
+      const result = await controller.getAfes(
+        mockRequest,
+        2,
+        20,
+        AfeStatus.APPROVED,
+        AfeType.COMPLETION,
+        'well-789',
+        'lease-101',
+      );
+
+      expect(queryBus.execute).toHaveBeenCalledWith(expectedQuery);
+      expect(result).toEqual(mockResult);
+    });
+
+    it('should handle query execution errors', async () => {
+      jest
+        .spyOn(queryBus, 'execute')
+        .mockRejectedValue(new Error('Query failed'));
+
+      await expect(controller.getAfes(mockRequest)).rejects.toThrow(
+        'Query failed',
+      );
+    });
+  });
+
+  describe('getAfesRequiringApproval', () => {
+    it('should get AFEs requiring approval successfully', async () => {
+      const expectedQuery = new GetAfesRequiringApprovalQuery('org-456');
+      const mockResult: AfeDto[] = [mockAfeDto];
+
+      jest.spyOn(queryBus, 'execute').mockResolvedValue(mockResult);
+
+      const result = await controller.getAfesRequiringApproval(mockRequest);
+
+      expect(queryBus.execute).toHaveBeenCalledWith(expectedQuery);
+      expect(result).toEqual(mockResult);
+    });
+
+    it('should handle query execution errors', async () => {
+      jest
+        .spyOn(queryBus, 'execute')
+        .mockRejectedValue(new Error('Query failed'));
+
+      await expect(
+        controller.getAfesRequiringApproval(mockRequest),
+      ).rejects.toThrow('Query failed');
+    });
+  });
+
+  describe('submitAfe', () => {
+    it('should submit AFE successfully', async () => {
+      const expectedCommand = new SubmitAfeCommand('afe-123', 'user-123');
+
+      jest.spyOn(commandBus, 'execute').mockResolvedValue(undefined);
+
+      const result = await controller.submitAfe('afe-123', mockRequest);
+
+      expect(commandBus.execute).toHaveBeenCalledWith(expectedCommand);
+      expect(result).toEqual({
+        message: 'AFE submitted successfully',
+      });
+    });
+
+    it('should handle command execution errors', async () => {
+      jest
+        .spyOn(commandBus, 'execute')
+        .mockRejectedValue(new Error('Command failed'));
+
+      await expect(
+        controller.submitAfe('afe-123', mockRequest),
+      ).rejects.toThrow('Command failed');
+    });
+  });
+
+  describe('approveAfe', () => {
+    it('should approve AFE successfully', async () => {
+      const approveAfeDto: ApproveAfeDto = {
+        approvedAmount: 140000.0,
+        comments: 'Approved with minor adjustments',
+      };
+      const expectedCommand = new ApproveAfeCommand(
+        'afe-123',
+        'user-123',
+        140000.0,
+        'Approved with minor adjustments',
+      );
+
+      jest.spyOn(commandBus, 'execute').mockResolvedValue(undefined);
+
+      const result = await controller.approveAfe(
+        'afe-123',
+        approveAfeDto,
+        mockRequest,
+      );
+
+      expect(commandBus.execute).toHaveBeenCalledWith(expectedCommand);
+      expect(result).toEqual({
+        message: 'AFE approved successfully',
+      });
+    });
+
+    it('should approve AFE without comments', async () => {
+      const approveAfeDto: ApproveAfeDto = {
+        approvedAmount: 150000.0,
+      };
+      const expectedCommand = new ApproveAfeCommand(
+        'afe-123',
+        'user-123',
+        150000.0,
+        undefined,
+      );
+
+      jest.spyOn(commandBus, 'execute').mockResolvedValue(undefined);
+
+      const result = await controller.approveAfe(
+        'afe-123',
+        approveAfeDto,
+        mockRequest,
+      );
+
+      expect(commandBus.execute).toHaveBeenCalledWith(expectedCommand);
+      expect(result).toEqual({
+        message: 'AFE approved successfully',
+      });
+    });
+
+    it('should handle command execution errors', async () => {
+      const approveAfeDto: ApproveAfeDto = {
+        approvedAmount: 150000.0,
+      };
+
+      jest
+        .spyOn(commandBus, 'execute')
+        .mockRejectedValue(new Error('Command failed'));
+
+      await expect(
+        controller.approveAfe('afe-123', approveAfeDto, mockRequest),
+      ).rejects.toThrow('Command failed');
+    });
+  });
+
+  describe('rejectAfe', () => {
+    it('should reject AFE successfully', async () => {
+      const rejectAfeDto: RejectAfeDto = {
+        reason: 'Insufficient budget allocation',
+      };
+      const expectedCommand = new RejectAfeCommand(
+        'afe-123',
+        'user-123',
+        'Insufficient budget allocation',
+      );
+
+      jest.spyOn(commandBus, 'execute').mockResolvedValue(undefined);
+
+      const result = await controller.rejectAfe(
+        'afe-123',
+        rejectAfeDto,
+        mockRequest,
+      );
+
+      expect(commandBus.execute).toHaveBeenCalledWith(expectedCommand);
+      expect(result).toEqual({
+        message: 'AFE rejected successfully',
+      });
+    });
+
+    it('should handle command execution errors', async () => {
+      const rejectAfeDto: RejectAfeDto = {
+        reason: 'Budget constraints',
+      };
+
+      jest
+        .spyOn(commandBus, 'execute')
+        .mockRejectedValue(new Error('Command failed'));
+
+      await expect(
+        controller.rejectAfe('afe-123', rejectAfeDto, mockRequest),
+      ).rejects.toThrow('Command failed');
+    });
+  });
+
+  describe('updateAfeCost', () => {
+    it('should update AFE cost successfully', async () => {
+      const updateAfeCostDto: UpdateAfeCostDto = {
+        estimatedCost: 160000.0,
+        actualCost: 155000.0,
+      };
+      const expectedCommand = new UpdateAfeCostCommand(
+        'afe-123',
+        160000.0,
+        155000.0,
+        'user-123',
+      );
+
+      jest.spyOn(commandBus, 'execute').mockResolvedValue(undefined);
+
+      const result = await controller.updateAfeCost(
+        'afe-123',
+        updateAfeCostDto,
+        mockRequest,
+      );
+
+      expect(commandBus.execute).toHaveBeenCalledWith(expectedCommand);
+      expect(result).toEqual({
+        message: 'AFE costs updated successfully',
+      });
+    });
+
+    it('should update AFE cost with system user when request is undefined', async () => {
+      const updateAfeCostDto: UpdateAfeCostDto = {
+        estimatedCost: 160000.0,
+      };
+      const expectedCommand = new UpdateAfeCostCommand(
+        'afe-123',
+        160000.0,
+        undefined,
+        'system',
+      );
+
+      jest.spyOn(commandBus, 'execute').mockResolvedValue(undefined);
+
+      const result = await controller.updateAfeCost(
+        'afe-123',
+        updateAfeCostDto,
+      );
+
+      expect(commandBus.execute).toHaveBeenCalledWith(expectedCommand);
+      expect(result).toEqual({
+        message: 'AFE costs updated successfully',
+      });
+    });
+
+    it('should handle command execution errors', async () => {
+      const updateAfeCostDto: UpdateAfeCostDto = {
+        estimatedCost: 160000.0,
+      };
+
+      jest
+        .spyOn(commandBus, 'execute')
+        .mockRejectedValue(new Error('Command failed'));
+
+      await expect(
+        controller.updateAfeCost('afe-123', updateAfeCostDto, mockRequest),
+      ).rejects.toThrow('Command failed');
+    });
+  });
+
+  describe('error handling', () => {
+    it('should handle invalid AFE data in createAfe', async () => {
+      const invalidDto = {} as CreateAfeDto;
+
+      jest
+        .spyOn(commandBus, 'execute')
+        .mockRejectedValue(new Error('Validation failed'));
+
+      await expect(
+        controller.createAfe(invalidDto, mockRequest),
+      ).rejects.toThrow('Validation failed');
+    });
+
+    it('should handle AFE not found in getAfeById', async () => {
+      jest
+        .spyOn(queryBus, 'execute')
+        .mockRejectedValue(new Error('AFE not found'));
+
+      await expect(controller.getAfeById('non-existent')).rejects.toThrow(
+        'AFE not found',
+      );
+    });
+
+    it('should handle invalid status transitions', async () => {
+      jest
+        .spyOn(commandBus, 'execute')
+        .mockRejectedValue(new Error('Invalid status transition'));
+
+      await expect(
+        controller.submitAfe('afe-123', mockRequest),
+      ).rejects.toThrow('Invalid status transition');
+    });
+  });
+
+  describe('authorization and guards', () => {
+    it('should require authentication for all endpoints', () => {
+      // This would be tested with e2e tests or integration tests
+      // The guards are applied at the controller level with @UseGuards
+      expect(controller).toBeDefined();
+    });
+
+    it('should require appropriate permissions for each endpoint', () => {
+      // This would be tested with e2e tests or integration tests
+      // The abilities are applied with decorators like @CanCreateAfe, @CanReadAfe, etc.
+      expect(controller).toBeDefined();
+    });
+  });
+
+  describe('audit logging', () => {
+    it('should log create AFE operations', () => {
+      // Audit logging is handled by the @AuditLog decorator
+      // This would be tested with integration tests
+      expect(controller).toBeDefined();
+    });
+
+    it('should log submit AFE operations', () => {
+      // Audit logging is handled by the @AuditLog decorator
+      expect(controller).toBeDefined();
+    });
+
+    it('should log approve AFE operations', () => {
+      // Audit logging is handled by the @AuditLog decorator
+      expect(controller).toBeDefined();
+    });
+
+    it('should log reject AFE operations', () => {
+      // Audit logging is handled by the @AuditLog decorator
+      expect(controller).toBeDefined();
+    });
+
+    it('should log update AFE cost operations', () => {
+      // Audit logging is handled by the @AuditLog decorator
+      expect(controller).toBeDefined();
+    });
+  });
+});

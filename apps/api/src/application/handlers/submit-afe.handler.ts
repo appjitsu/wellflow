@@ -32,7 +32,7 @@ export class SubmitAfeHandler implements ICommandHandler<SubmitAfeCommand> {
       // Publish domain events
       const events = afe.getDomainEvents();
       for (const event of events) {
-        this.eventBus.publish(event);
+        await Promise.resolve(this.eventBus.publish(event)).catch(() => {}); // Ignore publishing errors
       }
       afe.clearDomainEvents();
     } catch (error) {

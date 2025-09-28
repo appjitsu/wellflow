@@ -69,7 +69,30 @@ mobile-web integration testing, and create data management workflows.
   - Well-specific data exports
   - Regulatory report preparation
 
-### 5. Integration Testing Framework
+### 5. Chemical Treatment Tracking (CRITICAL ADDITION)
+
+- **Chemical Inventory Management**
+  - Chemical product database
+  - Inventory tracking by location
+  - Usage rates and consumption tracking
+  - MSDS documentation management
+- **Treatment Programs**
+  - Well treatment schedules
+  - Chemical injection rates
+  - Treatment effectiveness monitoring
+  - Cost tracking per treatment
+- **Regulatory Compliance**
+  - Chemical reporting requirements
+  - Environmental compliance tracking
+  - Disposal and waste management
+  - Safety data sheet management
+- **Performance Analysis**
+  - Treatment effectiveness metrics
+  - Before/after production analysis
+  - Cost-benefit calculations
+  - Optimization recommendations
+
+### 6. Integration Testing Framework
 
 - **Automated Testing**
   - API integration tests

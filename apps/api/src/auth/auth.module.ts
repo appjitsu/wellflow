@@ -8,10 +8,13 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { AuthUserRepositoryImpl } from './infrastructure/auth-user.repository';
 import { DatabaseModule } from '../database/database.module';
+import { DatabaseService } from '../database/database.service';
 import { AuditLogService } from '../application/services/audit-log.service';
 import { EmailService } from '../application/services/email.service';
 import { JobsModule } from '../jobs/jobs.module';
 import { OrganizationsModule } from '../organizations/organizations.module';
+import { RepositoryModule } from '../infrastructure/repositories/repository.module';
+import { AuthorizationModule } from '../authorization/authorization.module';
 
 /**
  * Authentication Module
@@ -57,6 +60,8 @@ import { OrganizationsModule } from '../organizations/organizations.module';
     // Required modules
     ConfigModule,
     DatabaseModule, // For database access
+    RepositoryModule, // For AuditLogRepository
+    AuthorizationModule, // For AbilitiesFactory
     JobsModule, // For email notifications
     OrganizationsModule, // For organization creation
   ],
@@ -72,7 +77,10 @@ import { OrganizationsModule } from '../organizations/organizations.module';
     // Repository implementation (following Repository pattern)
     {
       provide: 'UserRepository',
-      useClass: AuthUserRepositoryImpl,
+      useFactory: (databaseService: DatabaseService) => {
+        return new AuthUserRepositoryImpl(databaseService);
+      },
+      inject: [DatabaseService],
     },
 
     // Audit logging service (existing service)

@@ -1,21 +1,17 @@
-import { Injectable, Inject } from '@nestjs/common';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { Injectable } from '@nestjs/common';
 import { eq, and, desc } from 'drizzle-orm';
-import * as schema from '../../database/schema';
 import { workovers } from '../../database/schemas/workovers';
 
 import { Workover } from '../../domain/entities/workover.entity';
 import { IWorkoverRepository } from '../../domain/repositories/workover.repository.interface';
 import { WorkoverStatus } from '../../domain/enums/workover-status.enum';
+import { DatabaseService } from '../../database/database.service';
 
 type Row = typeof workovers.$inferSelect;
 
 @Injectable()
 export class WorkoverRepository implements IWorkoverRepository {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   private mapRowToEntity(row: Row): Workover {
     return Workover.fromPersistence({
@@ -45,7 +41,8 @@ export class WorkoverRepository implements IWorkoverRepository {
     const existing = await this.findById(data.id);
 
     if (existing) {
-      await this.db
+      const db = this.databaseService.getDb();
+      await db
         .update(workovers)
         .set({
           organizationId: data.organizationId,
@@ -73,7 +70,8 @@ export class WorkoverRepository implements IWorkoverRepository {
       return entity;
     }
 
-    const insertedRows = await this.db
+    const db = this.databaseService.getDb();
+    const insertedRows = await db
       .insert(workovers)
       .values({
         id: data.id,
@@ -103,7 +101,8 @@ export class WorkoverRepository implements IWorkoverRepository {
   }
 
   async findById(id: string): Promise<Workover | null> {
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(workovers)
       .where(eq(workovers.id, id))
@@ -131,7 +130,8 @@ export class WorkoverRepository implements IWorkoverRepository {
     if (filters.status) conditions.push(eq(workovers.status, filters.status));
     if (filters.wellId) conditions.push(eq(workovers.wellId, filters.wellId));
 
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(workovers)
       .where(and(...conditions))
@@ -143,7 +143,8 @@ export class WorkoverRepository implements IWorkoverRepository {
   }
 
   async findByWellId(wellId: string): Promise<Workover[]> {
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(workovers)
       .where(eq(workovers.wellId, wellId));

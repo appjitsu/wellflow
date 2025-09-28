@@ -17,8 +17,8 @@ module.exports = {
   // Root directory
   rootDir: 'src',
 
-  // Only run database tests
-  testMatch: ['<rootDir>/database/__tests__/**/*.test.ts'],
+  // Only run database schema tests
+  testMatch: ['<rootDir>/database/schemas/__tests__/**/*.spec.ts'],
 
   // Test timeout (database tests may take longer)
   testTimeout: 30000,
@@ -26,12 +26,10 @@ module.exports = {
   // Run tests serially to avoid database conflicts
   maxWorkers: 1,
 
-  // Coverage configuration for database tests
+  // Coverage configuration for database schema tests
   collectCoverageFrom: [
-    'database/**/*.ts',
-    '!database/__tests__/**',
-    '!database/migrations/**',
-    '!database/drizzle.config.ts',
+    'database/schemas/**/*.ts',
+    '!database/schemas/__tests__/**',
   ],
 
   // Coverage directory

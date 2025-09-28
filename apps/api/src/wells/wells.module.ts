@@ -7,7 +7,9 @@ import { GetWellByIdHandler } from '../application/handlers/get-well-by-id.handl
 import { GetWellsByOperatorHandler } from '../application/handlers/get-wells-by-operator.handler';
 import { WellRepositoryImpl } from '../infrastructure/repositories/well.repository';
 import { DatabaseModule } from '../database/database.module';
+import { DatabaseService } from '../database/database.service';
 import { AuthorizationModule } from '../authorization/authorization.module';
+import { RepositoryModule } from '../infrastructure/repositories/repository.module';
 
 const CommandHandlers = [CreateWellHandler, UpdateWellStatusHandler];
 
@@ -16,7 +18,10 @@ const QueryHandlers = [GetWellByIdHandler, GetWellsByOperatorHandler];
 const Repositories = [
   {
     provide: 'WellRepository',
-    useClass: WellRepositoryImpl,
+    useFactory: (databaseService: DatabaseService) => {
+      return new WellRepositoryImpl(databaseService);
+    },
+    inject: [DatabaseService],
   },
 ];
 
@@ -25,7 +30,7 @@ const Repositories = [
  * Aggregates all well-related functionality
  */
 @Module({
-  imports: [CqrsModule, DatabaseModule, AuthorizationModule],
+  imports: [CqrsModule, DatabaseModule, AuthorizationModule, RepositoryModule],
   controllers: [WellsController],
   providers: [...CommandHandlers, ...QueryHandlers, ...Repositories],
   exports: [...Repositories],

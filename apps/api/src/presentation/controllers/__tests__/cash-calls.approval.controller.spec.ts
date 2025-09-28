@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CashCallsController } from '../cash-calls.controller';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { Reflector } from '@nestjs/core';
+import { AbilitiesFactory } from '../../../authorization/abilities.factory';
+import { AbilitiesGuard } from '../../../authorization/abilities.guard';
+import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 
 class CommandBusMock {
   execute = jest.fn(() => Promise.resolve('approved-id'));
@@ -14,6 +18,19 @@ describe('CashCallsController approval', () => {
   let commandBus: CommandBusMock;
   let queryBus: QueryBusMock;
 
+  const mockAbilitiesFactory = {
+    createForUser: jest.fn(),
+    createForWellOperation: jest.fn(),
+    createForGuest: jest.fn(),
+  };
+
+  const mockReflector = {
+    get: jest.fn(),
+    getAll: jest.fn(),
+    getAllAndOverride: jest.fn(),
+    getAllAndMerge: jest.fn(),
+  };
+
   beforeEach(async () => {
     commandBus = new CommandBusMock();
     queryBus = new QueryBusMock();
@@ -22,8 +39,21 @@ describe('CashCallsController approval', () => {
       providers: [
         { provide: CommandBus, useValue: commandBus },
         { provide: QueryBus, useValue: queryBus },
+        {
+          provide: AbilitiesFactory,
+          useValue: mockAbilitiesFactory,
+        },
+        {
+          provide: Reflector,
+          useValue: mockReflector,
+        },
       ],
-    }).compile();
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(AbilitiesGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<CashCallsController>(CashCallsController);
   });
