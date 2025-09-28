@@ -93,6 +93,29 @@ regulatory compliance features, asset relationships, and management interfaces.
   - Asset performance metrics
   - Compliance status reporting
 
+### 6. Well Logs & Completion Data (CRITICAL ADDITION)
+
+- **Drilling & Completion Reports**
+  - Daily drilling reports (DDR)
+  - Completion report management
+  - Perforation interval tracking
+  - Fracture treatment data
+- **Well Log Management**
+  - Mud logs and wireline logs
+  - Formation tops and markers
+  - Core data and analysis
+  - Log curve data storage (LAS files)
+- **Technical Well Data**
+  - Casing and tubing specifications
+  - Wellbore schematic diagrams
+  - Deviation surveys and directional data
+  - Formation pressure and temperature data
+- **Document Management**
+  - Well file organization
+  - Regulatory filing documentation
+  - Engineering reports and studies
+  - Historical well workover records
+
 ### 7. Web Interface
 
 - **Lease Management Dashboard**

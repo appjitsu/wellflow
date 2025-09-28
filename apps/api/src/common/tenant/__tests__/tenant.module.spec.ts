@@ -1,17 +1,31 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { TenantModule } from '../tenant.module';
+import { TenantContextService } from '../tenant-context.service';
 
 describe('TenantModule', () => {
-  let service: any;
+  let module: TestingModule;
+  let tenantContextService: TenantContextService;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+    module = await Test.createTestingModule({
+      imports: [TenantModule],
     }).compile();
 
-    service = module.get<TenantModule>(/* TenantModule */);
+    tenantContextService =
+      await module.resolve<TenantContextService>(TenantContextService);
+  });
+
+  afterEach(async () => {
+    if (module) {
+      await module.close();
+    }
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(module).toBeDefined();
+  });
+
+  it('should provide TenantContextService', () => {
+    expect(tenantContextService).toBeDefined();
   });
 });

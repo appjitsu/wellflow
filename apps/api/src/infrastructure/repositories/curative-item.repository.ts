@@ -1,7 +1,5 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { and, eq } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import type * as schema from '../../database/schema';
 import { curativeItems } from '../../database/schemas/curative-items';
 import { titleOpinions } from '../../database/schemas/title-opinions';
 import {
@@ -10,13 +8,11 @@ import {
   type CurativePriority,
 } from '../../domain/entities/curative-item.entity';
 import type { CurativeItemRepository } from '../../domain/repositories/curative-item.repository.interface';
+import { DatabaseService } from '../../database/database.service';
 
 @Injectable()
 export class CurativeItemRepositoryImpl implements CurativeItemRepository {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   private toDomain(row: typeof curativeItems.$inferSelect): CurativeItem {
     return new CurativeItem({
@@ -62,17 +58,16 @@ export class CurativeItemRepositoryImpl implements CurativeItemRepository {
     };
 
     if (existing) {
-      await this.db
+      const db = this.databaseService.getDb();
+      await db
         .update(curativeItems)
         .set(values)
         .where(eq(curativeItems.id, item.getId()));
       return item;
     }
 
-    const inserted = await this.db
-      .insert(curativeItems)
-      .values(values)
-      .returning();
+    const db = this.databaseService.getDb();
+    const inserted = await db.insert(curativeItems).values(values).returning();
     const row = inserted[0];
     if (!row) throw new Error('Failed to insert curative item');
     return this.toDomain(row);
@@ -82,7 +77,8 @@ export class CurativeItemRepositoryImpl implements CurativeItemRepository {
     id: string,
     organizationId: string,
   ): Promise<CurativeItem | null> {
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(curativeItems)
       .innerJoin(
@@ -115,7 +111,8 @@ export class CurativeItemRepositoryImpl implements CurativeItemRepository {
           eq(titleOpinions.organizationId, organizationId),
         );
 
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(curativeItems)
       .innerJoin(

@@ -13,6 +13,7 @@ import {
   UserTier,
   RateLimitResult,
 } from './enhanced-rate-limiter.service';
+import { MetricsService } from '../../monitoring/metrics.service';
 
 // Interface for metrics service
 interface IMetricsService {
@@ -41,7 +42,7 @@ export class EnhancedRateLimitGuard implements CanActivate {
 
   constructor(
     private readonly rateLimiter: EnhancedRateLimiterService,
-    @Inject('MetricsService') private readonly metricsService: IMetricsService,
+    private readonly metricsService: MetricsService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -121,8 +122,11 @@ export class EnhancedRateLimitGuard implements CanActivate {
         throw error;
       }
 
-      // Log error but allow request through (fail open)
-      this.logger.error('Rate limiting check failed:', error);
+      // Log error but allow request through (fail open) - fixed error handling
+      const errorMessage = error
+        ? (error as any).message || String(error)
+        : 'Unknown error';
+      this.logger.error(`Rate limiting check failed: ${errorMessage}`);
       return true;
     }
   }

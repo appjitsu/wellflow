@@ -1,11 +1,10 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { User, UserRole } from '../../domain/entities/user.entity';
 import { Email } from '../../domain/value-objects/email';
 import { AuthUserRepository } from '../auth.service';
 import { users } from '../../database/schemas/users';
-import * as schema from '../../database/schema';
+import { DatabaseService } from '../../database/database.service';
 
 /**
  * Authentication User Repository Implementation
@@ -16,10 +15,7 @@ import * as schema from '../../database/schema';
  */
 @Injectable()
 export class AuthUserRepositoryImpl implements AuthUserRepository {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   /**
    * Find user by email address
@@ -28,7 +24,8 @@ export class AuthUserRepositoryImpl implements AuthUserRepository {
     try {
       const emailVO = Email.create(email);
 
-      const result = await this.db
+      const db = this.databaseService.getDb();
+      const result = await db
         .select()
         .from(users)
         .where(eq(users.email, emailVO.getValue()))
@@ -55,7 +52,8 @@ export class AuthUserRepositoryImpl implements AuthUserRepository {
    */
   async findById(id: string): Promise<User | null> {
     try {
-      const result = await this.db
+      const db = this.databaseService.getDb();
+      const result = await db
         .select()
         .from(users)
         .where(eq(users.id, id))
@@ -87,9 +85,10 @@ export class AuthUserRepositoryImpl implements AuthUserRepository {
       // Check if user exists
       const existing = await this.findById(user.getId());
 
+      const db = this.databaseService.getDb();
       if (existing) {
         // Update existing user
-        await this.db
+        await db
           .update(users)
           .set({
             ...userData,
@@ -98,7 +97,7 @@ export class AuthUserRepositoryImpl implements AuthUserRepository {
           .where(eq(users.id, user.getId()));
       } else {
         // Insert new user
-        await this.db.insert(users).values(userData);
+        await db.insert(users).values(userData);
       }
 
       // Return the saved user
@@ -123,7 +122,8 @@ export class AuthUserRepositoryImpl implements AuthUserRepository {
     try {
       const emailVO = Email.create(email);
 
-      const result = await this.db
+      const db = this.databaseService.getDb();
+      const result = await db
         .select({ id: users.id })
         .from(users)
         .where(eq(users.email, emailVO.getValue()))

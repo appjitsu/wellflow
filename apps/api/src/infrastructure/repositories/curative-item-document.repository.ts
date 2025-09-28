@@ -1,21 +1,17 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import type * as schema from '../../database/schema';
 import { curativeItemDocuments } from '../../database/schemas/curative-item-documents';
 import type {
   CurativeItemDocumentRepository,
   CurativeItemDocumentLink,
 } from '../../domain/repositories/curative-item-document.repository.interface';
+import { DatabaseService } from '../../database/database.service';
 
 @Injectable()
 export class CurativeItemDocumentRepositoryImpl
   implements CurativeItemDocumentRepository
 {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   async linkDocument(
     link: Omit<CurativeItemDocumentLink, 'id' | 'createdAt'>,
@@ -29,7 +25,8 @@ export class CurativeItemDocumentRepositoryImpl
       createdAt: new Date(),
     };
 
-    const inserted = await this.db
+    const db = this.databaseService.getDb();
+    const inserted = await db
       .insert(curativeItemDocuments)
       .values(values)
       .returning();
@@ -49,7 +46,8 @@ export class CurativeItemDocumentRepositoryImpl
   async listByCurativeItemId(
     curativeItemId: string,
   ): Promise<CurativeItemDocumentLink[]> {
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(curativeItemDocuments)
       .where(eq(curativeItemDocuments.curativeItemId, curativeItemId));

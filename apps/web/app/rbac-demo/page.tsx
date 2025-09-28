@@ -32,7 +32,7 @@ const mockUsers: User[] = [
 ];
 
 export default function RBACDemo() {
-  const [selectedUser, setSelectedUser] = useState<User>(mockUsers[0]);
+  const [selectedUser, setSelectedUser] = useState<User>(mockUsers[0]!);
   const ability = createAbilityForUser(selectedUser);
 
   const testPermissions = [
@@ -70,7 +70,7 @@ export default function RBACDemo() {
                 cursor: 'pointer',
               }}
             >
-              {user.roles[0].toUpperCase()} ({user.email})
+              {user.roles[0]?.toUpperCase()} ({user.email})
             </button>
           ))}
         </div>

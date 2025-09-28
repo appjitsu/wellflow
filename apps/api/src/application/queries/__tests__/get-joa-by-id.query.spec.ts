@@ -1,17 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { GetJoaByIdQuery } from '../get-joa-by-id.query';
 
 describe('GetJoaByIdQuery', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<GetJoaByIdQuery>(/* GetJoaByIdQuery */);
+  it('should create query with organizationId and id', () => {
+    const organizationId = 'test-org-id';
+    const id = 'test-id';
+    const query = new GetJoaByIdQuery(organizationId, id);
+    expect(query.organizationId).toBe(organizationId);
+    expect(query.id).toBe(id);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should be an instance of GetJoaByIdQuery', () => {
+    const query = new GetJoaByIdQuery('org', 'id');
+    expect(query).toBeInstanceOf(GetJoaByIdQuery);
   });
 });

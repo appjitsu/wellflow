@@ -3,6 +3,7 @@ import { Password } from '../value-objects/password';
 import { AuthToken } from '../value-objects/auth-token';
 import { UserRegisteredEvent } from '../events/user-registered.event';
 import { UserLoggedInEvent } from '../events/user-logged-in.event';
+import { UserPasswordChangedEvent } from '../events/user-password-changed.event';
 import { UserAccountLockedEvent } from '../events/user-account-locked.event';
 import { UserEmailVerifiedEvent } from '../events/user-email-verified.event';
 
@@ -248,6 +249,21 @@ export class User {
 
     const password = Password.fromHash(this.passwordHash);
     return password.verify(plainTextPassword);
+  }
+
+  async changePassword(newPlainTextPassword: string): Promise<void> {
+    const newPassword = await Password.create(newPlainTextPassword);
+    this.passwordHash = newPassword.getHashedValue();
+    this.updatedAt = new Date();
+
+    // Raise domain event for password change
+    this.addDomainEvent(
+      new UserPasswordChangedEvent(
+        this.id,
+        this.organizationId,
+        this.email.getValue(),
+      ),
+    );
   }
 
   recordSuccessfulLogin(ipAddress?: string, userAgent?: string): void {

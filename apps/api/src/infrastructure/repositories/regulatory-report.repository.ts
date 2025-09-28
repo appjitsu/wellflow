@@ -1,10 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { Injectable } from '@nestjs/common';
 import { eq, and, sql, desc, asc, gte, lte, lt, or } from 'drizzle-orm';
 import type { RegulatoryReportRepository } from '../../domain/repositories/regulatory-report.repository';
 import { RegulatoryReport } from '../../domain/entities/regulatory-report.entity';
 import { regulatoryReports as regulatoryReportsTable } from '../../database/schemas/regulatory-reports';
-import type * as schema from '../../database/schema';
+import { DatabaseService } from '../../database/database.service';
 
 /**
  * Drizzle-based Regulatory Report Repository Implementation
@@ -14,10 +13,7 @@ import type * as schema from '../../database/schema';
 export class RegulatoryReportRepositoryImpl
   implements RegulatoryReportRepository
 {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   /**
    * Save a regulatory report to the repository
@@ -74,7 +70,8 @@ export class RegulatoryReportRepositoryImpl
       wasteManagementId: report.wasteManagementId || null,
     };
 
-    await this.db
+    const db = this.databaseService.getDb();
+    await db
       .insert(regulatoryReportsTable)
       .values(data)
       .onConflictDoUpdate({
@@ -120,7 +117,8 @@ export class RegulatoryReportRepositoryImpl
    * Find a regulatory report by its ID
    */
   async findById(id: string): Promise<RegulatoryReport | null> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select()
       .from(regulatoryReportsTable)
       .where(eq(regulatoryReportsTable.id, id))
@@ -208,7 +206,8 @@ export class RegulatoryReportRepositoryImpl
       );
     }
 
-    let query = this.db
+    const db = this.databaseService.getDb();
+    let query = db
       .select()
       .from(regulatoryReportsTable)
       .where(and(...conditions))
@@ -230,7 +229,8 @@ export class RegulatoryReportRepositoryImpl
    * Find regulatory reports by well ID
    */
   async findByWellId(wellId: string): Promise<RegulatoryReport[]> {
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(regulatoryReportsTable)
       .where(eq(regulatoryReportsTable.wellId, wellId))
@@ -254,7 +254,8 @@ export class RegulatoryReportRepositoryImpl
       );
     }
 
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(regulatoryReportsTable)
       .where(and(...conditions))
@@ -280,7 +281,8 @@ export class RegulatoryReportRepositoryImpl
       );
     }
 
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(regulatoryReportsTable)
       .where(and(...conditions))
@@ -304,7 +306,8 @@ export class RegulatoryReportRepositoryImpl
       );
     }
 
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(regulatoryReportsTable)
       .where(and(...conditions))
@@ -339,7 +342,8 @@ export class RegulatoryReportRepositoryImpl
       );
     }
 
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(regulatoryReportsTable)
       .where(and(...conditions))
@@ -374,7 +378,8 @@ export class RegulatoryReportRepositoryImpl
       );
     }
 
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(regulatoryReportsTable)
       .where(and(...conditions))
@@ -406,7 +411,8 @@ export class RegulatoryReportRepositoryImpl
       );
     }
 
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(regulatoryReportsTable)
       .where(and(...conditions))
@@ -433,7 +439,8 @@ export class RegulatoryReportRepositoryImpl
       );
     }
 
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(regulatoryReportsTable)
       .where(and(...conditions))
@@ -465,7 +472,8 @@ export class RegulatoryReportRepositoryImpl
       );
     }
 
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(regulatoryReportsTable)
       .where(and(...conditions))
@@ -478,7 +486,8 @@ export class RegulatoryReportRepositoryImpl
    * Find regulatory reports by permit ID
    */
   async findByPermitId(permitId: string): Promise<RegulatoryReport[]> {
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(regulatoryReportsTable)
       .where(eq(regulatoryReportsTable.permitId, permitId))
@@ -491,7 +500,8 @@ export class RegulatoryReportRepositoryImpl
    * Find regulatory reports by incident ID
    */
   async findByIncidentId(incidentId: string): Promise<RegulatoryReport[]> {
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(regulatoryReportsTable)
       .where(eq(regulatoryReportsTable.incidentId, incidentId))
@@ -506,7 +516,8 @@ export class RegulatoryReportRepositoryImpl
   async findByEnvironmentalMonitoringId(
     monitoringId: string,
   ): Promise<RegulatoryReport[]> {
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(regulatoryReportsTable)
       .where(eq(regulatoryReportsTable.environmentalMonitoringId, monitoringId))
@@ -519,7 +530,8 @@ export class RegulatoryReportRepositoryImpl
    * Find regulatory reports by waste management ID
    */
   async findByWasteManagementId(wasteId: string): Promise<RegulatoryReport[]> {
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(regulatoryReportsTable)
       .where(eq(regulatoryReportsTable.wasteManagementId, wasteId))
@@ -532,7 +544,8 @@ export class RegulatoryReportRepositoryImpl
    * Count regulatory reports by status for an organization
    */
   async countByStatus(organizationId: string): Promise<Record<string, number>> {
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select({
         status: regulatoryReportsTable.status,
         count: sql<number>`count(*)`,
@@ -555,7 +568,8 @@ export class RegulatoryReportRepositoryImpl
   async countByReportType(
     organizationId: string,
   ): Promise<Record<string, number>> {
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select({
         reportType: regulatoryReportsTable.reportType,
         count: sql<number>`count(*)`,
@@ -578,7 +592,8 @@ export class RegulatoryReportRepositoryImpl
   async countByRegulatoryAgency(
     organizationId: string,
   ): Promise<Record<string, number>> {
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select({
         regulatoryAgency: regulatoryReportsTable.regulatoryAgency,
         count: sql<number>`count(*)`,
@@ -616,7 +631,8 @@ export class RegulatoryReportRepositoryImpl
       conditions.push(sql`${regulatoryReportsTable.id} != ${excludeId}`);
     }
 
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select({ count: sql<number>`count(*)` })
       .from(regulatoryReportsTable)
       .where(and(...conditions))
@@ -629,7 +645,8 @@ export class RegulatoryReportRepositoryImpl
    * Delete a regulatory report by ID
    */
   async delete(id: string): Promise<void> {
-    await this.db
+    const db = this.databaseService.getDb();
+    await db
       .delete(regulatoryReportsTable)
       .where(eq(regulatoryReportsTable.id, id));
   }
@@ -669,7 +686,8 @@ export class RegulatoryReportRepositoryImpl
 
     const whereCondition = and(...conditions);
 
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(regulatoryReportsTable)
       .where(whereCondition);

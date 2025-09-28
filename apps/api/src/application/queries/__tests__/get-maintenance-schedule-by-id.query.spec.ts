@@ -1,18 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { GetMaintenanceScheduleByIdQuery } from '../get-maintenance-schedule-by-id.query';
 
 describe('GetMaintenanceScheduleByIdQuery', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<GetMaintenanceScheduleByIdQuery>(/* GetMaintenanceScheduleByIdQuery */);
+  it('should create query with id', () => {
+    const id = 'test-id';
+    const query = new GetMaintenanceScheduleByIdQuery(id);
+    expect(query.id).toBe(id);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should be an instance of GetMaintenanceScheduleByIdQuery', () => {
+    const query = new GetMaintenanceScheduleByIdQuery('test');
+    expect(query).toBeInstanceOf(GetMaintenanceScheduleByIdQuery);
   });
 });

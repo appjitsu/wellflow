@@ -1,20 +1,19 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../../database/schema';
 import { users } from '../../database/schemas/users';
 import type { UsersRepository, UserRecord } from '../domain/users.repository';
 import type { NewUser } from '../../database/schema';
+import { DatabaseService } from '../../database/database.service';
 
 @Injectable()
 export class UsersRepositoryImpl implements UsersRepository {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   async create(data: NewUser): Promise<UserRecord> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .insert(users)
       .values({
         ...data,
@@ -27,7 +26,8 @@ export class UsersRepositoryImpl implements UsersRepository {
   }
 
   async findById(id: string): Promise<UserRecord | null> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select()
       .from(users)
       .where(eq(users.id, id))
@@ -37,7 +37,8 @@ export class UsersRepositoryImpl implements UsersRepository {
   }
 
   async findByEmail(email: string): Promise<UserRecord | null> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select()
       .from(users)
       .where(eq(users.email, email))
@@ -47,11 +48,13 @@ export class UsersRepositoryImpl implements UsersRepository {
   }
 
   async findAll(): Promise<UserRecord[]> {
-    return await this.db.select().from(users);
+    const db = this.databaseService.getDb();
+    return await db.select().from(users);
   }
 
   async update(id: string, data: Partial<NewUser>): Promise<UserRecord | null> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .update(users)
       .set({
         ...data,
@@ -64,7 +67,8 @@ export class UsersRepositoryImpl implements UsersRepository {
   }
 
   async delete(id: string): Promise<boolean> {
-    const result = await this.db.delete(users).where(eq(users.id, id));
+    const db = this.databaseService.getDb();
+    const result = await db.delete(users).where(eq(users.id, id));
 
     return (result.rowCount ?? 0) > 0;
   }

@@ -1,0 +1,27 @@
+{
+  "timestamp": "2025-09-28T00:20:00.205Z",
+  "environment": "test",
+  "nodeVersion": "v22.15.0",
+  "platform": "darwin",
+  "arch": "arm64",
+  "ci": false,
+  "coverage": {
+    "enabled": true,
+    "thresholds": {
+      "statements": 80,
+      "branches": 80,
+      "functions": 80,
+      "lines": 80
+    }
+  },
+  "compliance": {
+    "standards": ["API_1164", "NIST_CSF", "IEC_62443"],
+    "dataRetentionDays": 2555,
+    "auditTrail": true
+  },
+  "performance": {
+    "apiResponseTime": 500,
+    "pageLoadTime": 2000,
+    "databaseQueryTime": 100
+  }
+}

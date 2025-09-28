@@ -1,10 +1,11 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { eq, and, desc, like, sql } from 'drizzle-orm';
 import { IAfeRepository } from '../../domain/repositories/afe.repository.interface';
 import { Afe } from '../../domain/entities/afe.entity';
 import { AfeStatus, AfeType } from '../../domain/enums/afe-status.enum';
 import { AfeRepository } from './afe.repository';
+import { DatabaseService } from '../../database/database.service';
 import { afes } from '../../database/schema';
 import * as schema from '../../database/schema';
 
@@ -17,11 +18,8 @@ import * as schema from '../../database/schema';
 export class AfeDomainRepository implements IAfeRepository {
   private afeRepository: AfeRepository;
 
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {
-    this.afeRepository = new AfeRepository(this.db);
+  constructor(private readonly databaseService: DatabaseService) {
+    this.afeRepository = new AfeRepository(this.databaseService);
   }
 
   /**
@@ -228,7 +226,8 @@ export class AfeDomainRepository implements IAfeRepository {
   ): Promise<string> {
     // Find the highest sequential number for this organization and year
     const yearPrefix = `AFE-${year}-`;
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select({ afeNumber: afes.afeNumber })
       .from(afes)
       .where(
@@ -306,7 +305,8 @@ export class AfeDomainRepository implements IAfeRepository {
       conditions.push(eq(afes.leaseId, criteria.leaseId));
     }
 
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select({ count: sql<number>`count(*)` })
       .from(afes)
       .where(and(...conditions));

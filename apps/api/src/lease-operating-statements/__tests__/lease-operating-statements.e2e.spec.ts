@@ -7,14 +7,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { LeaseOperatingStatementsModule } from '../lease-operating-statements.module';
-import { DatabaseModule } from '../../database/database.module';
 import { AuthorizationModule } from '../../authorization/authorization.module';
 import { JwtAuthGuard } from '../../presentation/guards/jwt-auth.guard';
 import { AbilitiesGuard } from '../../authorization/abilities.guard';
+import { DatabaseService } from '../../database/database.service';
 import {
   ExpenseCategory,
   ExpenseType,
-} from '../../domain/enums/los-status.enum';
+} from '../../../domain/enums/los-status.enum';
 import { TestingModule, Test } from '@nestjs/testing';
 import request from 'supertest';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
@@ -28,21 +28,8 @@ describe('LeaseOperatingStatements (e2e)', () => {
   let finalizeCallCount = 0;
 
   beforeAll(async () => {
-    // Set up test environment variables
-    process.env.NODE_ENV = 'test';
-    process.env.DB_HOST = 'localhost';
-    process.env.DB_PORT = '5433';
-    process.env.DB_USER = 'postgres';
-    // eslint-disable-next-line sonarjs/no-hardcoded-passwords
-    process.env.DB_PASSWORD = 'please_set_secure_password';
-    process.env.DB_NAME = 'wellflow_test';
-
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        LeaseOperatingStatementsModule,
-        DatabaseModule,
-        AuthorizationModule,
-      ],
+      imports: [LeaseOperatingStatementsModule, AuthorizationModule],
     })
       .overrideGuard(JwtAuthGuard)
       .useValue({
@@ -204,6 +191,12 @@ describe('LeaseOperatingStatements (e2e)', () => {
         registerHandler: jest.fn(),
         bind: jest.fn(),
         unbind: jest.fn(),
+      })
+      .overrideProvider(DatabaseService)
+      .useValue({
+        onModuleInit: jest.fn(),
+        onModuleDestroy: jest.fn(),
+        getDb: () => ({}),
       })
       .compile();
 

@@ -1,18 +1,33 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { GetMaintenanceSchedulesByOrganizationHandler } from '../get-maintenance-schedules-by-organization.handler';
+import { IMaintenanceScheduleRepository } from '../../../domain/repositories/maintenance-schedule.repository.interface';
 
 describe('GetMaintenanceSchedulesByOrganizationHandler', () => {
-  let service: any;
+  let handler: GetMaintenanceSchedulesByOrganizationHandler;
+  let maintenanceScheduleRepository: IMaintenanceScheduleRepository;
 
   beforeEach(async () => {
+    const mockMaintenanceScheduleRepository = {
+      findByOrganizationId: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        GetMaintenanceSchedulesByOrganizationHandler,
+        {
+          provide: 'MaintenanceScheduleRepository',
+          useValue: mockMaintenanceScheduleRepository,
+        },
+      ],
     }).compile();
 
-    service =
-      module.get<GetMaintenanceSchedulesByOrganizationHandler>(/* GetMaintenanceSchedulesByOrganizationHandler */);
+    handler = module.get<GetMaintenanceSchedulesByOrganizationHandler>(
+      GetMaintenanceSchedulesByOrganizationHandler,
+    );
+    maintenanceScheduleRepository = module.get('MaintenanceScheduleRepository');
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(handler).toBeDefined();
   });
 });

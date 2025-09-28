@@ -5,8 +5,8 @@ import {
   CallHandler,
   Logger,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
 
 interface RequestWithUser {
   method: string;
@@ -39,6 +39,13 @@ export class AuditInterceptor implements NestInterceptor {
         this.logger.log(
           `Audit: ${method} ${url} - User: ${user?.id || 'anonymous'} - Completed in: ${duration}ms`,
         );
+      }),
+      catchError((error) => {
+        const duration = Date.now() - now;
+        this.logger.log(
+          `Audit: ${method} ${url} - User: ${user?.id || 'anonymous'} - Completed in: ${duration}ms`,
+        );
+        return throwError(() => error);
       }),
     );
   }

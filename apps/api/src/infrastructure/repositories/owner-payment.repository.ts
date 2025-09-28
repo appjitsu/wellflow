@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { and, desc, eq } from 'drizzle-orm';
 import * as schema from '../../database/schema';
@@ -9,16 +9,14 @@ import {
   OwnerPaymentMethod,
 } from '../../domain/entities/owner-payment.entity';
 import type { IOwnerPaymentRepository } from '../../domain/repositories/owner-payment.repository.interface';
+import { DatabaseService } from '../../database/database.service';
 
 // Row type
 type Row = typeof ownerPayments.$inferSelect;
 
 @Injectable()
 export class OwnerPaymentRepository implements IOwnerPaymentRepository {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   private mapRow(row: Row): OwnerPayment {
     return OwnerPayment.fromPersistence({
@@ -54,7 +52,8 @@ export class OwnerPaymentRepository implements IOwnerPaymentRepository {
       if (!recordId) {
         throw new Error('OwnerPayment ID is required for updates');
       }
-      await this.db
+      const db = this.databaseService.getDb();
+      await db
         .update(ownerPayments)
         .set({
           organizationId: data.organizationId,
@@ -75,7 +74,8 @@ export class OwnerPaymentRepository implements IOwnerPaymentRepository {
       return entity;
     }
 
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .insert(ownerPayments)
       .values({
         organizationId: data.organizationId,
@@ -98,7 +98,8 @@ export class OwnerPaymentRepository implements IOwnerPaymentRepository {
   }
 
   async findById(id: string): Promise<OwnerPayment | null> {
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(ownerPayments)
       .where(eq(ownerPayments.id, id))
@@ -122,7 +123,8 @@ export class OwnerPaymentRepository implements IOwnerPaymentRepository {
     if (options?.status)
       conditions.push(eq(ownerPayments.status, options.status));
 
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(ownerPayments)
       .where(and(...conditions))

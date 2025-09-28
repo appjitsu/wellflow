@@ -112,6 +112,18 @@ export interface UserFilters {
   organizationId?: string;
 }
 
+// Activity Event interface
+export interface ActivityEvent {
+  id: string;
+  type: 'login' | 'logout' | 'password_change' | 'profile_update' | 'security_event';
+  description: string;
+  timestamp: Date;
+  ipAddress?: string;
+  userAgent?: string;
+  location?: string;
+  success: boolean;
+}
+
 export type UserSortField =
   | 'email'
   | 'firstName'

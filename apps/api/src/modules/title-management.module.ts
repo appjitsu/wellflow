@@ -3,6 +3,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { DatabaseModule } from '../database/database.module';
 import { AuthorizationModule } from '../authorization/authorization.module';
 import { RepositoryModule } from '../infrastructure/repositories/repository.module';
+import { TenantInfrastructureModule } from '../infrastructure/tenant/tenant-infrastructure.module';
 import { TitleManagementController } from '../presentation/controllers/title-management.controller';
 
 // Handlers
@@ -32,7 +33,13 @@ const QueryHandlers = [
 ];
 
 @Module({
-  imports: [CqrsModule, DatabaseModule, AuthorizationModule, RepositoryModule],
+  imports: [
+    CqrsModule,
+    DatabaseModule,
+    AuthorizationModule,
+    RepositoryModule,
+    TenantInfrastructureModule,
+  ],
   controllers: [TitleManagementController],
   providers: [...CommandHandlers, ...QueryHandlers],
 })

@@ -1,12 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { Injectable } from '@nestjs/common';
 import { eq, and, sql, desc, asc, lt, or } from 'drizzle-orm';
 import type { HSEIncidentRepository } from '../../domain/repositories/hse-incident.repository';
 import { HSEIncident } from '../../domain/entities/hse-incident.entity';
 import { IncidentType } from '../../domain/value-objects/incident-type.vo';
 import { IncidentSeverity } from '../../domain/value-objects/incident-severity.vo';
 import { hseIncidents as hseIncidentsTable } from '../../database/schemas/hse-incidents';
-import type * as schema from '../../database/schema';
+import { DatabaseService } from '../../database/database.service';
 
 /**
  * Drizzle-based HSE Incident Repository Implementation
@@ -14,10 +13,7 @@ import type * as schema from '../../database/schema';
  */
 @Injectable()
 export class HSEIncidentRepositoryImpl implements HSEIncidentRepository {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   /**
    * Save an HSE incident to the repository
@@ -63,7 +59,8 @@ export class HSEIncidentRepositoryImpl implements HSEIncidentRepository {
       updatedAt: incident.updatedAt,
     };
 
-    await this.db
+    const db = this.databaseService.getDb();
+    await db
       .insert(hseIncidentsTable)
       .values(data)
       .onConflictDoUpdate({
@@ -88,7 +85,8 @@ export class HSEIncidentRepositoryImpl implements HSEIncidentRepository {
    * Find an HSE incident by its ID
    */
   async findById(id: string): Promise<HSEIncident | null> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select()
       .from(hseIncidentsTable)
       .where(eq(hseIncidentsTable.id, id))
@@ -107,7 +105,8 @@ export class HSEIncidentRepositoryImpl implements HSEIncidentRepository {
   async findByIncidentNumber(
     incidentNumber: string,
   ): Promise<HSEIncident | null> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select()
       .from(hseIncidentsTable)
       .where(eq(hseIncidentsTable.incidentNumber, incidentNumber))
@@ -154,7 +153,8 @@ export class HSEIncidentRepositoryImpl implements HSEIncidentRepository {
       );
     }
 
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(hseIncidentsTable)
       .where(and(...conditions))
@@ -168,7 +168,8 @@ export class HSEIncidentRepositoryImpl implements HSEIncidentRepository {
    * Find HSE incidents associated with a well
    */
   async findByWellId(wellId: string): Promise<HSEIncident[]> {
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(hseIncidentsTable)
       .where(eq(hseIncidentsTable.wellId, wellId))
@@ -195,7 +196,8 @@ export class HSEIncidentRepositoryImpl implements HSEIncidentRepository {
       conditions.push(eq(hseIncidentsTable.organizationId, organizationId));
     }
 
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(hseIncidentsTable)
       .where(and(...conditions))
@@ -225,7 +227,8 @@ export class HSEIncidentRepositoryImpl implements HSEIncidentRepository {
       conditions.push(eq(hseIncidentsTable.organizationId, organizationId));
     }
 
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(hseIncidentsTable)
       .where(and(...conditions))
@@ -247,7 +250,8 @@ export class HSEIncidentRepositoryImpl implements HSEIncidentRepository {
       conditions.push(eq(hseIncidentsTable.organizationId, organizationId));
     }
 
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(hseIncidentsTable)
       .where(and(...conditions))
@@ -269,7 +273,8 @@ export class HSEIncidentRepositoryImpl implements HSEIncidentRepository {
       conditions.push(eq(hseIncidentsTable.organizationId, organizationId));
     }
 
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(hseIncidentsTable)
       .where(and(...conditions))
@@ -282,7 +287,8 @@ export class HSEIncidentRepositoryImpl implements HSEIncidentRepository {
    * Count HSE incidents by status for an organization
    */
   async countByStatus(organizationId: string): Promise<Record<string, number>> {
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select({
         status: hseIncidentsTable.status,
         count: sql<number>`count(*)`,
@@ -305,7 +311,8 @@ export class HSEIncidentRepositoryImpl implements HSEIncidentRepository {
   async countBySeverity(
     organizationId: string,
   ): Promise<Record<string, number>> {
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select({
         severity: hseIncidentsTable.severity,
         count: sql<number>`count(*)`,
@@ -326,7 +333,8 @@ export class HSEIncidentRepositoryImpl implements HSEIncidentRepository {
    * Delete an HSE incident by ID
    */
   async delete(id: string): Promise<void> {
-    await this.db.delete(hseIncidentsTable).where(eq(hseIncidentsTable.id, id));
+    const db = this.databaseService.getDb();
+    await db.delete(hseIncidentsTable).where(eq(hseIncidentsTable.id, id));
   }
 
   /**
@@ -342,7 +350,8 @@ export class HSEIncidentRepositoryImpl implements HSEIncidentRepository {
       conditions.push(sql`${hseIncidentsTable.id} != ${excludeId}`);
     }
 
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select({ count: sql<number>`count(*)` })
       .from(hseIncidentsTable)
       .where(and(...conditions))

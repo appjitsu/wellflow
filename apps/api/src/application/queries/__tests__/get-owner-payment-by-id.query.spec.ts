@@ -1,18 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { GetOwnerPaymentByIdQuery } from '../get-owner-payment-by-id.query';
 
 describe('GetOwnerPaymentByIdQuery', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<GetOwnerPaymentByIdQuery>(/* GetOwnerPaymentByIdQuery */);
+  it('should create query with id', () => {
+    const id = 'test-id';
+    const query = new GetOwnerPaymentByIdQuery(id);
+    expect(query.id).toBe(id);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should be an instance of GetOwnerPaymentByIdQuery', () => {
+    const query = new GetOwnerPaymentByIdQuery('test');
+    expect(query).toBeInstanceOf(GetOwnerPaymentByIdQuery);
   });
 });

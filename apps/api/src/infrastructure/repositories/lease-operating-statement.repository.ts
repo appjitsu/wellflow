@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   eq,
   and,
@@ -9,9 +9,7 @@ import {
   sql,
   type InferSelectModel,
 } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { leaseOperatingStatements } from '../../database/schema';
-import * as schema from '../../database/schema';
 import {
   ILosRepository,
   ExpenseLineItemData,
@@ -19,6 +17,7 @@ import {
 import { LeaseOperatingStatement } from '../../domain/entities/lease-operating-statement.entity';
 import { StatementMonth } from '../../domain/value-objects/statement-month';
 import { LosStatus } from '../../domain/enums/los-status.enum';
+import { DatabaseService } from '../../database/database.service';
 
 /**
  * Lease Operating Statement Repository Implementation
@@ -26,10 +25,7 @@ import { LosStatus } from '../../domain/enums/los-status.enum';
  */
 @Injectable()
 export class LosRepository implements ILosRepository {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   /**
    * Save a lease operating statement entity
@@ -42,7 +38,8 @@ export class LosRepository implements ILosRepository {
 
     if (existing) {
       // Update existing
-      await this.db
+      const db = this.databaseService.getDb();
+      await db
         .update(leaseOperatingStatements)
         .set({
           totalExpenses: persistenceData.totalExpenses,
@@ -56,7 +53,8 @@ export class LosRepository implements ILosRepository {
         .where(eq(leaseOperatingStatements.id, los.getId()));
     } else {
       // Create new
-      await this.db.insert(leaseOperatingStatements).values({
+      const db = this.databaseService.getDb();
+      await db.insert(leaseOperatingStatements).values({
         id: persistenceData.id,
         organizationId: persistenceData.organizationId,
         leaseId: persistenceData.leaseId,
@@ -79,7 +77,8 @@ export class LosRepository implements ILosRepository {
    * Find LOS by ID
    */
   async findById(id: string): Promise<LeaseOperatingStatement | null> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select()
       .from(leaseOperatingStatements)
       .where(eq(leaseOperatingStatements.id, id))
@@ -111,7 +110,8 @@ export class LosRepository implements ILosRepository {
       whereConditions.push(eq(leaseOperatingStatements.status, options.status));
     }
 
-    let query = this.db
+    const db = this.databaseService.getDb();
+    let query = db
       .select()
       .from(leaseOperatingStatements)
       .where(and(...whereConditions))
@@ -145,7 +145,8 @@ export class LosRepository implements ILosRepository {
       whereConditions.push(eq(leaseOperatingStatements.status, options.status));
     }
 
-    const query = this.db
+    const db = this.databaseService.getDb();
+    const query = db
       .select()
       .from(leaseOperatingStatements)
       .where(and(...whereConditions))
@@ -172,7 +173,8 @@ export class LosRepository implements ILosRepository {
     leaseId: string,
     statementMonth: StatementMonth,
   ): Promise<LeaseOperatingStatement | null> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select()
       .from(leaseOperatingStatements)
       .where(
@@ -204,7 +206,8 @@ export class LosRepository implements ILosRepository {
       offset?: number;
     },
   ): Promise<LeaseOperatingStatement[]> {
-    const query = this.db
+    const db = this.databaseService.getDb();
+    const query = db
       .select()
       .from(leaseOperatingStatements)
       .where(
@@ -260,7 +263,8 @@ export class LosRepository implements ILosRepository {
       conditions.push(eq(leaseOperatingStatements.status, options.status));
     }
 
-    const query = this.db
+    const db = this.databaseService.getDb();
+    const query = db
       .select()
       .from(leaseOperatingStatements)
       .where(and(...conditions))
@@ -298,7 +302,8 @@ export class LosRepository implements ILosRepository {
       conditions.push(lte(leaseOperatingStatements.createdAt, cutoffDate));
     }
 
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(leaseOperatingStatements)
       .where(and(...conditions))
@@ -313,7 +318,8 @@ export class LosRepository implements ILosRepository {
   async findReadyForDistribution(
     organizationId: string,
   ): Promise<LeaseOperatingStatement[]> {
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select()
       .from(leaseOperatingStatements)
       .where(
@@ -334,7 +340,8 @@ export class LosRepository implements ILosRepository {
     leaseId: string,
     statementMonth: StatementMonth,
   ): Promise<boolean> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select({ count: count() })
       .from(leaseOperatingStatements)
       .where(
@@ -366,7 +373,8 @@ export class LosRepository implements ILosRepository {
       statementCount: number;
     }[]
   > {
-    return await this.db
+    const db = this.databaseService.getDb();
+    return await db
       .select({
         leaseId: leaseOperatingStatements.leaseId,
         totalOperatingExpenses: sql<number>`COALESCE(SUM(CAST(${leaseOperatingStatements.operatingExpenses} AS DECIMAL)), 0)`,
@@ -409,7 +417,8 @@ export class LosRepository implements ILosRepository {
     const startDate = new Date();
     startDate.setMonth(startDate.getMonth() - months);
 
-    return await this.db
+    const db = this.databaseService.getDb();
+    return await db
       .select({
         month: sql<string>`TO_CHAR(${leaseOperatingStatements.statementMonth}, 'YYYY-MM')`,
         totalOperatingExpenses: sql<number>`COALESCE(SUM(CAST(${leaseOperatingStatements.operatingExpenses} AS DECIMAL)), 0)`,
@@ -439,7 +448,8 @@ export class LosRepository implements ILosRepository {
    * Delete LOS by ID (only if in draft status)
    */
   async delete(id: string): Promise<void> {
-    await this.db
+    const db = this.databaseService.getDb();
+    await db
       .delete(leaseOperatingStatements)
       .where(
         and(
@@ -458,7 +468,8 @@ export class LosRepository implements ILosRepository {
     distributed: number;
     archived: number;
   }> {
-    const results = await this.db
+    const db = this.databaseService.getDb();
+    const results = await db
       .select({
         status: leaseOperatingStatements.status,
         count: count(),

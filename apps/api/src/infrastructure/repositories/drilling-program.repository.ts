@@ -1,22 +1,18 @@
-import { Injectable, Inject } from '@nestjs/common';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { Injectable } from '@nestjs/common';
 import { eq, and, desc } from 'drizzle-orm';
-import * as schema from '../../database/schema';
 import { drillingPrograms } from '../../database/schemas/drilling-programs';
 
 import { DrillingProgram } from '../../domain/entities/drilling-program.entity';
 import { IDrillingProgramRepository } from '../../domain/repositories/drilling-program.repository.interface';
 import { DrillingProgramStatus } from '../../domain/enums/drilling-program-status.enum';
+import { DatabaseService } from '../../database/database.service';
 
 // Row types
 type Row = typeof drillingPrograms.$inferSelect;
 
 @Injectable()
 export class DrillingProgramRepository implements IDrillingProgramRepository {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   private mapRowToEntity(row: Row): DrillingProgram {
     // Map specific schema fields into a compact domain shape
@@ -52,7 +48,8 @@ export class DrillingProgramRepository implements IDrillingProgramRepository {
     const existing = await this.findById(data.id);
 
     if (existing) {
-      await this.db
+      const db = this.databaseService.getDb();
+      await db
         .update(drillingPrograms)
         .set({
           organizationId: data.organizationId,
@@ -67,7 +64,8 @@ export class DrillingProgramRepository implements IDrillingProgramRepository {
       return program;
     }
 
-    const insertedRows = await this.db
+    const db = this.databaseService.getDb();
+    const insertedRows = await db
       .insert(drillingPrograms)
       .values({
         id: data.id,
@@ -86,7 +84,8 @@ export class DrillingProgramRepository implements IDrillingProgramRepository {
   }
 
   async findById(id: string): Promise<DrillingProgram | null> {
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(drillingPrograms)
       .where(eq(drillingPrograms.id, id))
@@ -118,7 +117,8 @@ export class DrillingProgramRepository implements IDrillingProgramRepository {
     if (filters.wellId)
       conditions.push(eq(drillingPrograms.wellId, filters.wellId));
 
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(drillingPrograms)
       .where(and(...conditions))
@@ -130,7 +130,8 @@ export class DrillingProgramRepository implements IDrillingProgramRepository {
   }
 
   async findByWellId(wellId: string): Promise<DrillingProgram[]> {
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(drillingPrograms)
       .where(eq(drillingPrograms.wellId, wellId));

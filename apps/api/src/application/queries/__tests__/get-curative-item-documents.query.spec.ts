@@ -1,18 +1,19 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { GetCurativeItemDocumentsQuery } from '../get-curative-item-documents.query';
 
 describe('GetCurativeItemDocumentsQuery', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<GetCurativeItemDocumentsQuery>(/* GetCurativeItemDocumentsQuery */);
+  it('should create query with curativeItemId and organizationId', () => {
+    const curativeItemId = 'test-curative-id';
+    const organizationId = 'test-org-id';
+    const query = new GetCurativeItemDocumentsQuery(
+      curativeItemId,
+      organizationId,
+    );
+    expect(query.curativeItemId).toBe(curativeItemId);
+    expect(query.organizationId).toBe(organizationId);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should be an instance of GetCurativeItemDocumentsQuery', () => {
+    const query = new GetCurativeItemDocumentsQuery('item', 'org');
+    expect(query).toBeInstanceOf(GetCurativeItemDocumentsQuery);
   });
 });

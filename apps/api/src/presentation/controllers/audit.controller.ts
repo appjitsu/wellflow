@@ -6,6 +6,7 @@ import {
   UseGuards,
   ParseUUIDPipe,
   ParseIntPipe,
+  Inject,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -65,7 +66,10 @@ class AuditStatisticsDto {
 @Controller('audit')
 @UseGuards(JwtAuthGuard, AbilitiesGuard)
 export class AuditController {
-  constructor(private readonly auditLogRepository: AuditLogRepository) {}
+  constructor(
+    @Inject('AuditLogRepository')
+    private readonly auditLogRepository: AuditLogRepository,
+  ) {}
 
   @Get('logs')
   @ApiOperation({ summary: 'Search audit logs with filters' })

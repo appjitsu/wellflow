@@ -99,6 +99,9 @@
     ]
   },
   "dependencies": {
+    "@tanstack/react-query": "5.90.2",
+    "@tanstack/react-query-devtools": "5.90.2",
+    "@tanstack/react-table": "8.21.3",
     "bcrypt": "6.0.0",
     "passport-local": "1.0.0"
   }

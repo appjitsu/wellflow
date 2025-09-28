@@ -1,17 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { HealthModule } from '../health.module';
 
 describe('HealthModule', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<HealthModule>(/* HealthModule */);
+  it('should be defined', () => {
+    expect(HealthModule).toBeDefined();
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should be a valid NestJS module', () => {
+    expect(HealthModule).toBeInstanceOf(Function);
+    expect(typeof HealthModule).toBe('function');
   });
 });

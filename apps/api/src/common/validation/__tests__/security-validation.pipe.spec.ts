@@ -1,17 +1,29 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { SecurityValidationPipe } from '../security-validation.pipe';
+import { AuditLogService } from '../../../application/services/audit-log.service';
 
 describe('SecurityValidationPipe', () => {
-  let service: any;
+  let pipe: SecurityValidationPipe;
 
   beforeEach(async () => {
+    const mockAuditLogService = {
+      logAction: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        SecurityValidationPipe,
+        {
+          provide: AuditLogService,
+          useValue: mockAuditLogService,
+        },
+      ],
     }).compile();
 
-    service = module.get<SecurityValidationPipe>(/* SecurityValidationPipe */);
+    pipe = module.get<SecurityValidationPipe>(SecurityValidationPipe);
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(pipe).toBeDefined();
   });
 });

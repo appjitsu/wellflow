@@ -23,6 +23,10 @@ import { CreateJibStatementHandler } from '../application/handlers/create-jib-st
 import { CreateJoaHandler } from '../application/handlers/create-joa.handler';
 import { GetJoaByIdHandler } from '../application/handlers/get-joa-by-id.handler';
 
+// Services
+import { JibBalanceService } from './jib-balance.service';
+import { JibLinkingService } from './jib-linking.service';
+
 const CommandHandlers = [
   CreateOwnerPaymentHandler,
   CreateCashCallHandler,
@@ -46,6 +50,12 @@ const QueryHandlers = [
     JoasController,
     JibStatementsController,
   ],
-  providers: [...CommandHandlers, ...QueryHandlers, OutboxService],
+  providers: [
+    ...CommandHandlers,
+    ...QueryHandlers,
+    OutboxService,
+    JibBalanceService,
+    JibLinkingService,
+  ],
 })
 export class FinancialModule {}

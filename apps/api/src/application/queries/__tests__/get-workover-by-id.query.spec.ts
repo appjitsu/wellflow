@@ -1,17 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { GetWorkoverByIdQuery } from '../get-workover-by-id.query';
 
 describe('GetWorkoverByIdQuery', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<GetWorkoverByIdQuery>(/* GetWorkoverByIdQuery */);
+  it('should create query with id', () => {
+    const id = 'test-id';
+    const query = new GetWorkoverByIdQuery(id);
+    expect(query.id).toBe(id);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should be an instance of GetWorkoverByIdQuery', () => {
+    const query = new GetWorkoverByIdQuery('test');
+    expect(query).toBeInstanceOf(GetWorkoverByIdQuery);
   });
 });

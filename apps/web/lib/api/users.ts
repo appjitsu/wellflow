@@ -146,6 +146,29 @@ export const userApi = {
       body: JSON.stringify({ isActive }),
     });
   },
+
+  // Get current user profile
+  async getCurrentProfile(): Promise<User> {
+    return apiRequest<User>('/auth/profile');
+  },
+
+  // Update current user profile
+  async updateProfile(profileData: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+  }): Promise<User> {
+    return apiRequest<User>('/users/profile', {
+      method: 'PUT',
+      body: JSON.stringify(profileData),
+    });
+  },
+
+  // Get user activity history
+  async getActivityHistory(): Promise<ActivityEvent[]> {
+    return apiRequest<ActivityEvent[]>('/users/activity');
+  },
 };
 
 // Export individual functions for easier importing

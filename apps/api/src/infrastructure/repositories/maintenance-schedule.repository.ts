@@ -1,17 +1,16 @@
 import { and, desc, eq } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import * as schema from '../../database/schema';
 import { maintenanceSchedules } from '../../database/schemas/maintenance-schedules';
 import {
   MaintenanceSchedule,
   type MaintenanceStatus,
 } from '../../domain/entities/maintenance-schedule.entity';
 import type { IMaintenanceScheduleRepository } from '../../domain/repositories/maintenance-schedule.repository.interface';
+import { DatabaseService } from '../../database/database.service';
 
 export class MaintenanceScheduleRepository
   implements IMaintenanceScheduleRepository
 {
-  constructor(private readonly db: NodePgDatabase<typeof schema>) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   async save(entity: MaintenanceSchedule): Promise<MaintenanceSchedule> {
     const values: typeof maintenanceSchedules.$inferInsert = {
@@ -23,7 +22,8 @@ export class MaintenanceScheduleRepository
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    await this.db
+    const db = this.databaseService.getDb();
+    await db
       .insert(maintenanceSchedules)
       .values(values)
       .onConflictDoUpdate({
@@ -34,7 +34,8 @@ export class MaintenanceScheduleRepository
   }
 
   async findById(id: string): Promise<MaintenanceSchedule | null> {
-    const [row] = await this.db
+    const db = this.databaseService.getDb();
+    const [row] = await db
       .select()
       .from(maintenanceSchedules)
       .where(eq(maintenanceSchedules.id, id))
@@ -64,7 +65,8 @@ export class MaintenanceScheduleRepository
     if (options?.status)
       clauses.push(eq(maintenanceSchedules.status, options.status));
 
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(maintenanceSchedules)
       .where(and(...clauses))

@@ -3,26 +3,14 @@ import { RateLimitingController } from './rate-limiting.controller';
 import { EnhancedRateLimiterService } from './enhanced-rate-limiter.service';
 import { EnhancedRateLimitGuard } from './enhanced-rate-limit.guard';
 import { CacheModule } from '../cache/cache.module';
-
-// Mock MetricsService for rate limiting
-class MockMetricsService {
-  recordApiRequest(): void {
-    // Mock implementation - does nothing
-  }
-}
+import { MonitoringModule } from '../../monitoring/monitoring.module';
+import { AuthorizationModule } from '../../authorization/authorization.module';
 
 @Global()
 @Module({
-  imports: [CacheModule],
+  imports: [CacheModule, MonitoringModule, AuthorizationModule],
   controllers: [RateLimitingController],
-  providers: [
-    EnhancedRateLimiterService,
-    EnhancedRateLimitGuard,
-    {
-      provide: 'MetricsService',
-      useClass: MockMetricsService,
-    },
-  ],
+  providers: [EnhancedRateLimiterService, EnhancedRateLimitGuard],
   exports: [EnhancedRateLimiterService, EnhancedRateLimitGuard],
 })
 export class RateLimitingModule {}

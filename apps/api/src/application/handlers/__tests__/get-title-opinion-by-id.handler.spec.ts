@@ -1,17 +1,33 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { GetTitleOpinionByIdHandler } from '../get-title-opinion-by-id.handler';
+import { TitleOpinionRepository } from '../../../domain/repositories/title-opinion.repository.interface';
 
-describe('TitleOpinionView', () => {
-  let service: any;
+describe('GetTitleOpinionByIdHandler', () => {
+  let handler: GetTitleOpinionByIdHandler;
+  let titleOpinionRepository: TitleOpinionRepository;
 
   beforeEach(async () => {
+    const mockTitleOpinionRepository = {
+      findById: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        GetTitleOpinionByIdHandler,
+        {
+          provide: 'TitleOpinionRepository',
+          useValue: mockTitleOpinionRepository,
+        },
+      ],
     }).compile();
 
-    service = module.get<TitleOpinionView>(/* TitleOpinionView */);
+    handler = module.get<GetTitleOpinionByIdHandler>(
+      GetTitleOpinionByIdHandler,
+    );
+    titleOpinionRepository = module.get('TitleOpinionRepository');
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(handler).toBeDefined();
   });
 });

@@ -1,4 +1,4 @@
-import { Injectable, Inject, Optional } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { eq, and, sql, count, desc, asc } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type {
@@ -8,6 +8,7 @@ import type {
   PgSelect,
 } from 'drizzle-orm/pg-core';
 import * as schema from '../../database/schema';
+import { DatabaseService } from '../../database/database.service';
 import type { UnitOfWorkTransaction } from './unit-of-work';
 import type { ISpecification } from '../../domain/specifications/specification.interface';
 import type { SQL } from 'drizzle-orm';
@@ -37,11 +38,14 @@ export abstract class BaseRepository<
   T extends PgTable<TableConfig> & { id: AnyPgColumn },
 > {
   constructor(
-    @Inject('DATABASE_CONNECTION')
-    protected readonly db: NodePgDatabase<typeof schema>,
+    protected readonly databaseService: DatabaseService,
     protected readonly table: T,
     @Optional() protected readonly auditLogService?: AuditLogService,
   ) {}
+
+  protected get db(): NodePgDatabase<typeof schema> {
+    return this.databaseService.getDb();
+  }
 
   /**
    * Safely access a column by key name

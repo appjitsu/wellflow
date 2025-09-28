@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { and, desc, eq } from 'drizzle-orm';
 import * as schema from '../../database/schema';
@@ -8,15 +8,13 @@ import {
   JoaStatus,
 } from '../../domain/entities/joint-operating-agreement.entity';
 import type { IJoaRepository } from '../../domain/repositories/joa.repository.interface';
+import { DatabaseService } from '../../database/database.service';
 
 type Row = typeof jointOperatingAgreements.$inferSelect;
 
 @Injectable()
 export class JoaRepository implements IJoaRepository {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   private mapRow(row: Row): JointOperatingAgreement {
     return JointOperatingAgreement.fromPersistence({
@@ -45,7 +43,8 @@ export class JoaRepository implements IJoaRepository {
       if (!data.id) {
         throw new Error('JointOperatingAgreement ID is required for updates');
       }
-      await this.db
+      const db = this.databaseService.getDb();
+      await db
         .update(jointOperatingAgreements)
         .set({
           agreementNumber: data.agreementNumber,
@@ -62,7 +61,8 @@ export class JoaRepository implements IJoaRepository {
       return entity;
     }
 
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .insert(jointOperatingAgreements)
       .values({
         organizationId: data.organizationId,
@@ -82,7 +82,8 @@ export class JoaRepository implements IJoaRepository {
   }
 
   async findById(id: string): Promise<JointOperatingAgreement | null> {
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(jointOperatingAgreements)
       .where(eq(jointOperatingAgreements.id, id))
@@ -101,7 +102,8 @@ export class JoaRepository implements IJoaRepository {
     if (options?.status)
       conditions.push(eq(jointOperatingAgreements.status, options.status));
 
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(jointOperatingAgreements)
       .where(and(...conditions))

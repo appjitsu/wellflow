@@ -1,12 +1,12 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { eq, and, sql, count } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { WellRepository } from '../../domain/repositories/well.repository.interface';
 import { Well } from '../../domain/entities/well.entity';
 import { ApiNumber } from '../../domain/value-objects/api-number';
 import { WellStatus, WellType } from '../../domain/enums/well-status.enum';
 import { AuditLogService } from '../../application/services/audit-log.service';
 import { AuditResourceType } from '../../domain/entities/audit-log.entity';
+import { DatabaseService } from '../../database/database.service';
 
 import { wells } from '../../database/schema';
 import * as schema from '../../database/schema';
@@ -18,8 +18,7 @@ import * as schema from '../../database/schema';
 @Injectable()
 export class WellRepositoryImpl implements WellRepository {
   constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
+    private readonly databaseService: DatabaseService,
     private readonly auditLogService?: AuditLogService,
   ) {}
 
@@ -100,7 +99,7 @@ export class WellRepositoryImpl implements WellRepository {
     const wellData = {
       id: well.getId().getValue(),
       organizationId: well.getOperatorId(), // Map operatorId to organizationId in schema
-      apiNumber: well.getApiNumber().getValue(),
+      apiNumber: well.getApiNumber().getValue().replace(/-/g, ''), // Store without dashes
       wellName: well.getName(), // Map name to wellName in schema
       leaseId: well.getLeaseId(),
       wellType: well.getWellType(),
@@ -115,7 +114,8 @@ export class WellRepositoryImpl implements WellRepository {
     };
 
     // Check if well exists
-    const existing = await this.db
+    const db = this.databaseService.getDb();
+    const existing = await db
       .select()
       .from(wells)
       .where(eq(wells.id, well.getId().getValue()))
@@ -125,7 +125,7 @@ export class WellRepositoryImpl implements WellRepository {
 
     if (existingWell) {
       // Update existing well
-      await this.db
+      await db
         .update(wells)
         .set(wellData)
         .where(eq(wells.id, well.getId().getValue()));
@@ -137,7 +137,7 @@ export class WellRepositoryImpl implements WellRepository {
       });
     } else {
       // Insert new well
-      await this.db.insert(wells).values({
+      await db.insert(wells).values({
         ...wellData,
       });
 
@@ -147,7 +147,8 @@ export class WellRepositoryImpl implements WellRepository {
   }
 
   async findById(id: string): Promise<Well | null> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select()
       .from(wells)
       .where(eq(wells.id, id))
@@ -166,10 +167,11 @@ export class WellRepositoryImpl implements WellRepository {
   }
 
   async findByApiNumber(apiNumber: ApiNumber): Promise<Well | null> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select()
       .from(wells)
-      .where(eq(wells.apiNumber, apiNumber.getValue()))
+      .where(eq(wells.apiNumber, apiNumber.getValue().replace(/-/g, '')))
       .limit(1);
 
     if (result.length === 0) {
@@ -185,7 +187,8 @@ export class WellRepositoryImpl implements WellRepository {
   }
 
   async findByOperatorId(operatorId: string): Promise<Well[]> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select()
       .from(wells)
       .where(eq(wells.organizationId, operatorId)); // Use organizationId instead of operatorId
@@ -194,7 +197,8 @@ export class WellRepositoryImpl implements WellRepository {
   }
 
   async findByLeaseId(leaseId: string): Promise<Well[]> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select()
       .from(wells)
       .where(eq(wells.leaseId, leaseId));
@@ -209,7 +213,8 @@ export class WellRepositoryImpl implements WellRepository {
   ): Promise<Well[]> {
     // Using PostGIS-style distance calculation
     // This is a simplified version - in production, you'd use proper PostGIS functions
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select()
       .from(wells)
       .where(
@@ -266,18 +271,14 @@ export class WellRepositoryImpl implements WellRepository {
     }
 
     // Execute queries
+    const db = this.databaseService.getDb();
     const wellsQuery = whereClause
-      ? this.db
-          .select()
-          .from(wells)
-          .where(whereClause)
-          .offset(offset)
-          .limit(limit)
-      : this.db.select().from(wells).offset(offset).limit(limit);
+      ? db.select().from(wells).where(whereClause).offset(offset).limit(limit)
+      : db.select().from(wells).offset(offset).limit(limit);
 
     const countQuery = whereClause
-      ? this.db.select({ count: count() }).from(wells).where(whereClause)
-      : this.db.select({ count: count() }).from(wells);
+      ? db.select({ count: count() }).from(wells).where(whereClause)
+      : db.select({ count: count() }).from(wells);
 
     const [wellsResult, totalResult] = await Promise.all([
       wellsQuery,
@@ -291,17 +292,42 @@ export class WellRepositoryImpl implements WellRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await this.db.delete(wells).where(eq(wells.id, id));
+    const db = this.databaseService.getDb();
+    await db.delete(wells).where(eq(wells.id, id));
   }
 
   async existsByApiNumber(apiNumber: ApiNumber): Promise<boolean> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select({ id: wells.id })
       .from(wells)
-      .where(eq(wells.apiNumber, apiNumber.getValue()))
+      .where(eq(wells.apiNumber, apiNumber.getValue().replace(/-/g, '')))
       .limit(1);
 
     return result.length > 0;
+  }
+
+  private formatApiNumber(apiNumber: string): string {
+    // Format: XX-XXX-XXXXX
+    if (apiNumber.length === 10) {
+      return `${apiNumber.substring(0, 2)}-${apiNumber.substring(2, 5)}-${apiNumber.substring(5)}`;
+    }
+    return apiNumber; // Return as-is if not 10 digits
+  }
+
+  private mapDatabaseStatusToEnum(status: string): WellStatus {
+    switch (status) {
+      case 'active':
+        return WellStatus.ACTIVE;
+      case 'inactive':
+        return WellStatus.INACTIVE;
+      case 'plugged':
+        return WellStatus.PLUGGED;
+      case 'drilling':
+        return WellStatus.DRILLING;
+      default:
+        return WellStatus.ACTIVE; // Default fallback
+    }
   }
 
   private mapToEntity(row: Record<string, unknown>): Well {
@@ -319,12 +345,12 @@ export class WellRepositoryImpl implements WellRepository {
 
     return Well.fromPersistence({
       id: row.id as string,
-      apiNumber: row.apiNumber as string,
+      apiNumber: this.formatApiNumber(row.apiNumber as string),
       name: row.wellName as string, // Map wellName to name
       operatorId: row.organizationId as string, // Map organizationId to operatorId
       leaseId: row.leaseId as string | undefined,
       wellType: row.wellType as WellType,
-      status: row.status as WellStatus,
+      status: this.mapDatabaseStatusToEnum(row.status as string),
       location: locationData,
       spudDate: row.spudDate ? new Date(row.spudDate as string) : undefined,
       completionDate: row.completionDate

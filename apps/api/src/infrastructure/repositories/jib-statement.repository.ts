@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { eq } from 'drizzle-orm';
 import * as schema from '../../database/schema';
@@ -9,16 +9,14 @@ import {
 } from '../../domain/entities/jib-statement.entity';
 import type { JibLineItem } from '../../domain/entities/jib-statement.entity';
 import type { IJibStatementRepository } from '../../domain/repositories/jib-statement.repository.interface';
+import { DatabaseService } from '../../database/database.service';
 
 // Row type
 type Row = typeof jibStatements.$inferSelect;
 
 @Injectable()
 export class JibStatementRepository implements IJibStatementRepository {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   private mapRow(row: Row): JibStatement {
     return new JibStatement({
@@ -46,7 +44,8 @@ export class JibStatementRepository implements IJibStatementRepository {
   }
 
   async findById(id: string): Promise<JibStatement | null> {
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .select()
       .from(jibStatements)
       .where(eq(jibStatements.id, id))
@@ -73,7 +72,8 @@ export class JibStatementRepository implements IJibStatementRepository {
     sentAt?: Date;
     paidAt?: Date;
   }): Promise<JibStatement> {
-    const rows = await this.db
+    const db = this.databaseService.getDb();
+    const rows = await db
       .insert(jibStatements)
       .values({
         organizationId: input.organizationId,
@@ -107,7 +107,8 @@ export class JibStatementRepository implements IJibStatementRepository {
       );
     }
 
-    await this.db
+    const db = this.databaseService.getDb();
+    await db
       .update(jibStatements)
       .set({
         currentBalance: data.currentBalance,

@@ -25,9 +25,10 @@ export class ApproveAfeHandler implements ICommandHandler<ApproveAfeCommand> {
       }
 
       // Create approved amount if provided
-      const approvedAmount = command.approvedAmount
-        ? new Money(command.approvedAmount)
-        : undefined;
+      const approvedAmount =
+        command.approvedAmount !== undefined
+          ? new Money(command.approvedAmount)
+          : undefined;
 
       // Approve AFE (domain logic handles validation)
       afe.approve(command.approvedBy, approvedAmount);
@@ -38,7 +39,7 @@ export class ApproveAfeHandler implements ICommandHandler<ApproveAfeCommand> {
       // Publish domain events
       const events = afe.getDomainEvents();
       for (const event of events) {
-        this.eventBus.publish(event);
+        await Promise.resolve(this.eventBus.publish(event)).catch(() => {}); // Ignore publishing errors
       }
       afe.clearDomainEvents();
     } catch (error) {

@@ -4,9 +4,9 @@ import { AuditResourceType } from '../../../domain/entities/audit-log.entity';
 
 // Create a test repository class that bypasses NestJS dependency injection
 class TestRepository extends BaseRepository<typeof organizations> {
-  constructor(db: unknown) {
+  constructor(databaseService: unknown) {
     // Bypass the @Inject decorator by calling the parent constructor directly
-    super(db as never, organizations);
+    super(databaseService as never, organizations);
   }
 
   protected getResourceType(): AuditResourceType {
@@ -22,6 +22,7 @@ describe('BaseRepository - Simple Tests', () => {
     update: jest.Mock;
     delete: jest.Mock;
   };
+  let mockDatabaseService: { getDb: jest.Mock };
 
   beforeEach(() => {
     // Simple mock database that returns resolved promises
@@ -58,8 +59,13 @@ describe('BaseRepository - Simple Tests', () => {
       }),
     };
 
+    // Mock DatabaseService
+    mockDatabaseService = {
+      getDb: jest.fn().mockReturnValue(mockDb),
+    };
+
     // Create repository instance without NestJS dependency injection
-    repository = new TestRepository(mockDb);
+    repository = new TestRepository(mockDatabaseService);
   });
 
   describe('create', () => {
@@ -81,10 +87,13 @@ describe('BaseRepository - Simple Tests', () => {
     });
 
     it('should return null if record not found', async () => {
-      mockDb.select.mockReturnValue({
-        from: jest.fn().mockReturnValue({
-          where: jest.fn().mockReturnValue({
-            limit: jest.fn().mockResolvedValue([]),
+      mockDatabaseService.getDb.mockReturnValue({
+        ...mockDb,
+        select: jest.fn().mockReturnValue({
+          from: jest.fn().mockReturnValue({
+            where: jest.fn().mockReturnValue({
+              limit: jest.fn().mockResolvedValue([]),
+            }),
           }),
         }),
       });

@@ -44,10 +44,28 @@ export function UserList({
   const getUserInitials = (user: User): string => {
     const firstName = user.firstName || '';
     const lastName = user.lastName || '';
-    return (
-      `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() ||
-      user.email.charAt(0).toUpperCase()
-    );
+
+    // If we have both first and last name, use their initials
+    if (firstName && lastName) {
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    }
+
+    // If we have only first name, use first two characters or first + email initial
+    if (firstName) {
+      return firstName.length > 1
+        ? `${firstName.charAt(0)}${firstName.charAt(1)}`.toUpperCase()
+        : `${firstName.charAt(0)}${user.email?.charAt(0) || 'U'}`.toUpperCase();
+    }
+
+    // If we have only last name, use first two characters or last + email initial
+    if (lastName) {
+      return lastName.length > 1
+        ? `${lastName.charAt(0)}${lastName.charAt(1)}`.toUpperCase()
+        : `${lastName.charAt(0)}${user.email?.charAt(0) || 'U'}`.toUpperCase();
+    }
+
+    // Fallback to email initial or 'U' for User
+    return user.email?.charAt(0).toUpperCase() || 'U';
   };
 
   // Get role badge variant

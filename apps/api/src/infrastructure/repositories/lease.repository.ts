@@ -1,8 +1,7 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { eq, and, lte, gte } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { leases } from '../../database/schema';
-import * as schema from '../../database/schema';
+import { DatabaseService } from '../../database/database.service';
 import {
   LeaseRepository as ILeaseRepository,
   CreateLeaseDto,
@@ -16,16 +15,14 @@ import {
  */
 @Injectable()
 export class LeaseRepository implements ILeaseRepository {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    protected readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   /**
    * Create a new lease
    */
   async create(data: CreateLeaseDto): Promise<LeaseRecord> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .insert(leases)
       .values({
         ...data,
@@ -41,7 +38,8 @@ export class LeaseRepository implements ILeaseRepository {
    * Find lease by ID
    */
   async findById(id: string): Promise<LeaseRecord | null> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select()
       .from(leases)
       .where(eq(leases.id, id))
@@ -54,7 +52,8 @@ export class LeaseRepository implements ILeaseRepository {
    * Find all leases for an organization
    */
   async findAll(organizationId: string): Promise<LeaseRecord[]> {
-    return this.db
+    const db = this.databaseService.getDb();
+    return db
       .select()
       .from(leases)
       .where(eq(leases.organizationId, organizationId));
@@ -67,7 +66,8 @@ export class LeaseRepository implements ILeaseRepository {
     organizationId: string,
     status: string,
   ): Promise<LeaseRecord[]> {
-    return this.db
+    const db = this.databaseService.getDb();
+    return db
       .select()
       .from(leases)
       .where(
@@ -89,7 +89,8 @@ export class LeaseRepository implements ILeaseRepository {
     futureDate.setDate(futureDate.getDate() + days);
     const today = new Date();
 
-    return this.db
+    const db = this.databaseService.getDb();
+    return db
       .select()
       .from(leases)
       .where(
@@ -124,7 +125,8 @@ export class LeaseRepository implements ILeaseRepository {
       updatedAt: new Date(),
     };
 
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .update(leases)
       .set(updateData)
       .where(eq(leases.id, id))
@@ -137,10 +139,8 @@ export class LeaseRepository implements ILeaseRepository {
    * Delete lease
    */
   async delete(id: string): Promise<boolean> {
-    const result = await this.db
-      .delete(leases)
-      .where(eq(leases.id, id))
-      .returning();
+    const db = this.databaseService.getDb();
+    const result = await db.delete(leases).where(eq(leases.id, id)).returning();
 
     return result.length > 0;
   }

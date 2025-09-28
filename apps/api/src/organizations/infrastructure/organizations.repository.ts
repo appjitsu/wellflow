@@ -1,8 +1,7 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import * as schema from '../../database/schema';
 import { organizations } from '../../database/schemas/organizations';
+import { DatabaseService } from '../../database/database.service';
 import type {
   OrganizationsRepository,
   OrganizationRecord,
@@ -14,13 +13,11 @@ import type {
 
 @Injectable()
 export class OrganizationsRepositoryImpl implements OrganizationsRepository {
-  constructor(
-    @Inject('DATABASE_CONNECTION')
-    private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   async create(dto: CreateOrganizationDto): Promise<OrganizationRecord> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .insert(organizations)
       .values({
         name: dto.name,
@@ -35,7 +32,8 @@ export class OrganizationsRepositoryImpl implements OrganizationsRepository {
   }
 
   async findById(id: string): Promise<OrganizationRecord | null> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .select()
       .from(organizations)
       .where(eq(organizations.id, id))
@@ -56,7 +54,8 @@ export class OrganizationsRepositoryImpl implements OrganizationsRepository {
     if (dto.contactEmail !== undefined) updateData.email = dto.contactEmail;
     if (dto.contactPhone !== undefined) updateData.phone = dto.contactPhone;
 
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .update(organizations)
       .set(updateData)
       .where(eq(organizations.id, id))
@@ -66,7 +65,8 @@ export class OrganizationsRepositoryImpl implements OrganizationsRepository {
   }
 
   async delete(id: string): Promise<OrganizationRecord | null> {
-    const result = await this.db
+    const db = this.databaseService.getDb();
+    const result = await db
       .delete(organizations)
       .where(eq(organizations.id, id))
       .returning();
