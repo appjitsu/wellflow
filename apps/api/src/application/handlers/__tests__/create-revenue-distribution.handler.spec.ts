@@ -6,7 +6,6 @@ import { CreateRevenueDistributionCommand } from '../../commands/create-revenue-
 import { IRevenueDistributionRepository } from '../../../domain/repositories/revenue-distribution.repository.interface';
 import { RevenueDistribution } from '../../../domain/entities/revenue-distribution.entity';
 import { ProductionMonth } from '../../../domain/value-objects/production-month';
-import { Money } from '../../../domain/value-objects/money';
 import { RevenueDistributionCreatedEvent } from '../../../domain/events/revenue-distribution-created.event';
 
 describe('CreateRevenueDistributionHandler', () => {

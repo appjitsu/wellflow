@@ -1,17 +1,26 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
+import { CacheModule } from '../cache.module';
 
 describe('CacheModule', () => {
-  let service: any;
+  let module: TestingModule;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<CacheModule>(/* CacheModule */);
+    module = await Test.createTestingModule({
+      imports: [CacheModule],
+    })
+      .overrideProvider(ConfigService)
+      .useValue({
+        get: jest.fn((key: string, defaultValue?: any) => {
+          if (key === 'CACHE_MAX_SIZE') return defaultValue || 1000;
+          if (key === 'CACHE_DEFAULT_TTL') return defaultValue || 300;
+          return defaultValue;
+        }),
+      })
+      .compile();
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(module).toBeDefined();
   });
 });

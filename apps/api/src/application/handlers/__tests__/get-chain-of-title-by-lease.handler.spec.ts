@@ -1,15 +1,27 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { GetChainOfTitleByLeaseHandler } from '../get-chain-of-title-by-lease.handler';
 
 describe('GetChainOfTitleByLeaseHandler', () => {
-  let service: any;
+  let service: GetChainOfTitleByLeaseHandler;
 
   beforeEach(async () => {
+    const mockRepo = {
+      findByLeaseId: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        GetChainOfTitleByLeaseHandler,
+        {
+          provide: 'ChainOfTitleRepository',
+          useValue: mockRepo,
+        },
+      ],
     }).compile();
 
-    service =
-      module.get<GetChainOfTitleByLeaseHandler>(/* GetChainOfTitleByLeaseHandler */);
+    service = module.get<GetChainOfTitleByLeaseHandler>(
+      GetChainOfTitleByLeaseHandler,
+    );
   });
 
   it('should be defined', () => {

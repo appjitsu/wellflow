@@ -3,7 +3,7 @@ import { IncidentsService } from '../incidents.service';
 import {
   IncidentSeverity,
   IncidentType,
-} from '../domain/enums/environmental-incident.enums';
+} from '../../domain/enums/environmental-incident.enums';
 
 describe('IncidentsController', () => {
   let controller: IncidentsController;

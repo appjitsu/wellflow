@@ -16,3 +16,12 @@ export const CurrentOrganization = createParamDecorator(
     return request.user?.organizationId;
   },
 );
+
+// Export the implementation for testing
+export const currentOrganizationFactory = (
+  data: unknown,
+  ctx: ExecutionContext,
+): string | undefined => {
+  const request = ctx.switchToHttp().getRequest<RequestWithUser>();
+  return request.user?.organizationId;
+};

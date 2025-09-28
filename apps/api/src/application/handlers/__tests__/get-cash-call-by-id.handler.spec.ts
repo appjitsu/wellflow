@@ -1,17 +1,26 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { GetCashCallByIdHandler } from '../get-cash-call-by-id.handler';
 
 describe('GetCashCallByIdHandler', () => {
-  let service: any;
+  let handler: GetCashCallByIdHandler;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        GetCashCallByIdHandler,
+        {
+          provide: 'CashCallRepository',
+          useValue: {
+            findById: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
-    service = module.get<GetCashCallByIdHandler>(/* GetCashCallByIdHandler */);
+    handler = module.get<GetCashCallByIdHandler>(GetCashCallByIdHandler);
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(handler).toBeDefined();
   });
 });

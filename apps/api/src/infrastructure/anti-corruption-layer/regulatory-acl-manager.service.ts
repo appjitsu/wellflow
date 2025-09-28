@@ -81,7 +81,7 @@ export class RegulatoryACLManagerService
       }
 
       // NOTE: Future enhancement - Initialize other state agency ACLs as needed
-      // eslint-disable-next-line no-secrets/no-secrets
+
       // const nmocdAcl = await this.moduleRef.create(NMOCDRegulatoryACL);
       // const cogccAcl = await this.moduleRef.create(COGCCRegulatoryACL);
       // etc.

@@ -1,5 +1,6 @@
 // SecuritySettings Component Tests
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+/* eslint-disable sonarjs/no-hardcoded-passwords, no-secrets/no-secrets, @typescript-eslint/no-explicit-any */
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SecuritySettings } from '../security-settings';
@@ -18,9 +19,11 @@ const createWrapper = () => {
     },
   });
 
-  return ({ children }: { children: React.ReactNode }) => (
+  const TestWrapper = ({ children }: { children: React.ReactNode | any }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
+  TestWrapper.displayName = 'TestWrapper';
+  return TestWrapper;
 };
 
 describe('SecuritySettings', () => {
@@ -60,19 +63,24 @@ describe('SecuritySettings', () => {
     render(<SecuritySettings />, { wrapper: createWrapper() });
 
     const currentPasswordInput = screen.getByPlaceholderText('Enter your current password');
-    const toggleButtons = screen
-      .getAllByRole('button')
-      .filter((button) => button.querySelector('svg'));
+    const toggleButtons = screen.getAllByRole('button').filter((button) => {
+      const svg = button.querySelector('svg');
+      return (
+        svg && (svg.classList.contains('lucide-eye') || svg.classList.contains('lucide-eye-off'))
+      );
+    });
+
+    expect(toggleButtons).toHaveLength(3); // Should have 3 password toggle buttons
 
     // Initially password should be hidden
     expect(currentPasswordInput).toHaveAttribute('type', 'password');
 
     // Click first toggle button (current password)
-    await user.click(toggleButtons[0]);
+    await user.click(toggleButtons[0]!);
     expect(currentPasswordInput).toHaveAttribute('type', 'text');
 
     // Click again to hide
-    await user.click(toggleButtons[0]);
+    await user.click(toggleButtons[0]!);
     expect(currentPasswordInput).toHaveAttribute('type', 'password');
   });
 
@@ -236,11 +244,6 @@ describe('SecuritySettings', () => {
     await waitFor(() => {
       expect(screen.getByText('Current password is required')).toBeInTheDocument();
     });
-  });
-
-  it.skip('should show password strength colors correctly', async () => {
-    // Skipped due to form state update issues in test environment
-    // The functionality works correctly in the actual component
   });
 
   it('should display password requirements help text', () => {

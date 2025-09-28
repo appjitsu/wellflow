@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpException, HttpStatus, ArgumentsHost } from '@nestjs/common';
 import { SentryExceptionFilter } from '../sentry-exception.filter';
-import { SentryService } from '../../sentry/sentry.service';
+import { SentryService } from '@/sentry/sentry.service';
 
 describe('SentryExceptionFilter', () => {
   let filter: SentryExceptionFilter;

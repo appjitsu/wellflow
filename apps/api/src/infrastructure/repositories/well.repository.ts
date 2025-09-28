@@ -9,7 +9,6 @@ import { AuditResourceType } from '../../domain/entities/audit-log.entity';
 import { DatabaseService } from '../../database/database.service';
 
 import { wells } from '../../database/schema';
-import * as schema from '../../database/schema';
 
 /**
  * Well Repository Implementation

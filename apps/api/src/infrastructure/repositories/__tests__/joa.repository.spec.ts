@@ -1,10 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JoaRepository } from '../joa.repository';
 import { DatabaseService } from '../../../database/database.service';
-import {
-  JointOperatingAgreement,
-  JoaStatus,
-} from '../../../domain/entities/joint-operating-agreement.entity';
+import { JointOperatingAgreement } from '../../../domain/entities/joint-operating-agreement.entity';
 import { jointOperatingAgreements } from '../../../database/schemas/joint-operating-agreements';
 
 describe('JoaRepository', () => {

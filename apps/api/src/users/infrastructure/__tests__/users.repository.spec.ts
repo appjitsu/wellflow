@@ -1,7 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersRepositoryImpl } from '../users.repository';
 import type { NewUser } from '../../../database/schema';
-import type { UserRecord } from '../../../domain/users.repository';
+import type { UserRecord } from '../../domain/users.repository';
+import { DatabaseService } from '../../../database/database.service';
 
 // Create a mock query builder that supports chaining and is awaitable
 const createMockQueryBuilder = (result: any = []) => {
@@ -61,12 +62,16 @@ describe('UsersRepositoryImpl', () => {
   beforeEach(async () => {
     mockDb = createMockDb();
 
+    const mockDatabaseService = {
+      getDb: jest.fn().mockReturnValue(mockDb),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UsersRepositoryImpl,
         {
-          provide: 'DATABASE_CONNECTION',
-          useValue: mockDb,
+          provide: DatabaseService,
+          useValue: mockDatabaseService,
         },
       ],
     }).compile();

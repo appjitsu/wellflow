@@ -1,15 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { DivisionOrderDeactivatedEvent } from '../division-order-deactivated.event';
 
 describe('DivisionOrderDeactivatedEvent', () => {
-  let service: any;
+  let service: DivisionOrderDeactivatedEvent;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [DivisionOrderDeactivatedEvent],
     }).compile();
 
-    service =
-      module.get<DivisionOrderDeactivatedEvent>(/* DivisionOrderDeactivatedEvent */);
+    service = module.get<DivisionOrderDeactivatedEvent>(
+      DivisionOrderDeactivatedEvent,
+    );
   });
 
   it('should be defined', () => {

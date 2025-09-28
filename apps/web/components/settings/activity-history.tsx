@@ -13,6 +13,7 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import { Calendar, Clock, MapPin, Monitor, RefreshCw, Filter, ArrowUpDown } from 'lucide-react';
+
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -25,7 +26,7 @@ import type { ActivityEvent } from '../../types/user';
 const columnHelper = createColumnHelper<ActivityEvent>();
 
 interface ActivityHistoryProps {
-  className?: string;
+  readonly className?: string;
 }
 
 /**

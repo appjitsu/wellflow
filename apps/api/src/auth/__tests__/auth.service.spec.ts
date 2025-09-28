@@ -3,12 +3,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from '../auth.service';
-import { User, UserRole } from '../domain/entities/user.entity';
-import { Email } from '../domain/value-objects/email';
-import { Password } from '../domain/value-objects/password';
-import { AuditLogService } from '../application/services/audit-log.service';
-import { EmailService } from '../application/services/email.service';
-import { OrganizationsService } from '../organizations/organizations.service';
+import { User, UserRole } from '../../domain/entities/user.entity';
+import { Email } from '../../domain/value-objects/email';
+import { Password } from '../../domain/value-objects/password';
+import { AuditLogService } from '../../application/services/audit-log.service';
+import { EmailService } from '../../application/services/email.service';
+import { OrganizationsService } from '../../organizations/organizations.service';
+import { SuspiciousActivityDetectorService } from '../../application/services/suspicious-activity-detector.service';
 
 /**
  * Unit Tests for AuthService
@@ -68,6 +69,21 @@ describe('AuthService', () => {
       createOrganization: jest.fn(),
     };
 
+    const mockPasswordHistoryRepository = {
+      save: jest.fn(),
+      getPasswordHashesByUserId: jest.fn(),
+      cleanupOldEntries: jest.fn(),
+    };
+
+    const mockSuspiciousActivityDetectorService = {
+      analyzeLoginAttempt: jest.fn().mockResolvedValue({
+        isSuspicious: false,
+        riskLevel: 'LOW',
+        reasons: [],
+        recommendedActions: [],
+      }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -94,6 +110,14 @@ describe('AuthService', () => {
         {
           provide: OrganizationsService,
           useValue: mockOrganizationsService,
+        },
+        {
+          provide: 'PasswordHistoryRepository',
+          useValue: mockPasswordHistoryRepository,
+        },
+        {
+          provide: SuspiciousActivityDetectorService,
+          useValue: mockSuspiciousActivityDetectorService,
         },
       ],
     }).compile();
@@ -228,7 +252,7 @@ describe('AuthService', () => {
     it('should register a new user successfully', async () => {
       const registerData = {
         email: 'newuser@example.com',
-        // eslint-disable-next-line sonarjs/no-hardcoded-passwords
+
         password: 'MyStr0ngP@ssw0rd2024!',
         firstName: 'Jane',
         lastName: 'Smith',
@@ -273,7 +297,7 @@ describe('AuthService', () => {
     it('should throw error for duplicate email', async () => {
       const registerData = {
         email: 'existing@example.com',
-        // eslint-disable-next-line sonarjs/no-hardcoded-passwords
+
         password: 'MyStr0ngP@ssw0rd2024!',
         firstName: 'Jane',
         lastName: 'Smith',

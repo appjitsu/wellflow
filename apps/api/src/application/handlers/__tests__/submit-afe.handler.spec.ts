@@ -15,14 +15,6 @@ describe('SubmitAfeHandler', () => {
   let afeRepository: jest.Mocked<IAfeRepository>;
   let eventBus: jest.Mocked<EventBus>;
 
-  const mockAddress = {
-    street: '123 Main St',
-    city: 'Houston',
-    state: 'TX',
-    zipCode: '77001',
-    country: 'USA',
-  };
-
   // Helper function to create a fresh AFE instance
   const createMockAfe = (status: AfeStatus = AfeStatus.DRAFT) => {
     const afe = new Afe(

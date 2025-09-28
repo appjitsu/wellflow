@@ -9,15 +9,6 @@ import { ApproveCashCallCommand } from '../../../application/commands/approve-ca
 import { RecordCashCallConsentCommand } from '../../../application/commands/record-cash-call-consent.command';
 import { AbilitiesGuard } from '../../../authorization/abilities.guard';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
-// CashCallStatus and CashCallType are defined as types in the entity file
-type CashCallStatus =
-  | 'DRAFT'
-  | 'SENT'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'PAID'
-  | 'DEFAULTED';
-type CashCallType = 'MONTHLY' | 'SUPPLEMENTAL';
 
 describe('CashCallsController', () => {
   let controller: CashCallsController;
@@ -390,19 +381,19 @@ describe('CashCallsController', () => {
   });
 
   describe('error handling', () => {
-    it('should handle invalid UUID in getById', async () => {
+    it('should handle invalid UUID in getById', () => {
       // ParseUUIDPipe will throw BadRequestException for invalid UUIDs
       // This would be tested in e2e tests
       expect(controller).toBeDefined();
     });
 
-    it('should handle validation errors in DTOs', async () => {
+    it('should handle validation errors in DTOs', () => {
       // ValidationPipe will throw BadRequestException for invalid data
       // This would be tested in e2e tests
       expect(controller).toBeDefined();
     });
 
-    it('should handle authorization failures', async () => {
+    it('should handle authorization failures', () => {
       // Guards will throw ForbiddenException for unauthorized access
       // This would be tested in e2e tests
       expect(controller).toBeDefined();

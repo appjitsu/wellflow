@@ -5,7 +5,7 @@ import {
   OrganizationRecord,
   OrganizationsRepository,
 } from '../domain/organizations.repository';
-import { TenantContextService } from '../common/tenant/tenant-context.service';
+import { TenantContextService } from '../../common/tenant/tenant-context.service';
 
 describe('OrganizationsService', () => {
   let service: OrganizationsService;

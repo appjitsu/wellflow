@@ -1,6 +1,5 @@
 import { SubmitRegulatoryReportCommand } from '../submit-regulatory-report.command';
 
-// eslint-disable-next-line no-secrets/no-secrets
 describe('SubmitRegulatoryReportCommand', () => {
   const validReportId = 'report-123';
   const validSubmittedByUserId = 'user-456';

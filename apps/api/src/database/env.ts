@@ -1,5 +1,6 @@
 // Database test environment setup
 // Sets up environment variables for database integration tests
+/* eslint-disable no-process-env */
 
 process.env.NODE_ENV = 'test';
 process.env.DB_HOST = 'localhost';

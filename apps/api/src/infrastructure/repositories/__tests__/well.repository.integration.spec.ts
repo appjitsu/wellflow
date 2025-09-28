@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from '../../../database/database.module';
 import { DatabaseService } from '../../../database/database.service';
-import { RepositoryModule } from '../repository.module';
 import { WellRepositoryImpl } from '../well.repository';
 import { Well } from '../../../domain/entities/well.entity';
 import { ApiNumber } from '../../../domain/value-objects/api-number';
@@ -10,6 +9,8 @@ import { Location } from '../../../domain/value-objects/location';
 import { Coordinates } from '../../../domain/value-objects/coordinates';
 import { WellStatus, WellType } from '../../../domain/enums/well-status.enum';
 import { wells } from '../../../database/schemas/wells';
+import { leases } from '../../../database/schemas/leases';
+import { organizations } from '../../../database/schemas/organizations';
 import { eq } from 'drizzle-orm';
 
 /**
@@ -101,6 +102,13 @@ describe('WellRepository Integration', () => {
     // Initialize the database
     await databaseService.onModuleInit();
     db = databaseService.getDb();
+
+    // Create test organization
+    await db.insert(organizations).values({
+      id: TEST_ORG_ID,
+      name: 'Test Organization LLC',
+      taxId: '12-3456789',
+    });
   });
 
   beforeEach(async () => {
@@ -109,6 +117,7 @@ describe('WellRepository Integration', () => {
       await db.delete(wells).where(eq(wells.organizationId, TEST_ORG_ID));
     } catch (error) {
       // Ignore cleanup errors
+      console.warn('Cleanup error (ignored):', error);
     }
   });
 
@@ -118,6 +127,7 @@ describe('WellRepository Integration', () => {
       await db.delete(wells).where(eq(wells.organizationId, TEST_ORG_ID));
     } catch (error) {
       // Ignore cleanup errors
+      console.warn('Cleanup error (ignored):', error);
     }
   });
 
@@ -261,8 +271,20 @@ describe('WellRepository Integration', () => {
 
   describe('findByLeaseId', () => {
     it('should find wells by lease ID', async () => {
-      // Given - Create wells with same lease
+      // Given - Create lease first
       const leaseId = '550e8400-e29b-41d4-a716-446655440777';
+      await db.insert(leases).values({
+        id: leaseId,
+        organizationId: TEST_ORG_ID,
+        name: 'Test Lease',
+        leaseNumber: 'TEST-001',
+        lessor: 'Test Lessor',
+        lessee: 'Test Lessee',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // Create wells with same lease
       const well1 = createTestWell({
         id: '550e8400-e29b-41d4-a716-446655440008',
         apiNumber: '4212345683',
@@ -405,5 +427,15 @@ describe('WellRepository Integration', () => {
       const existsAfter = await repository.existsByApiNumber(apiNumber);
       expect(existsAfter).toBe(false);
     });
+  });
+
+  afterAll(async () => {
+    // Clean up test organization
+    try {
+      await db.delete(organizations).where(eq(organizations.id, TEST_ORG_ID));
+    } catch (error) {
+      // Ignore cleanup errors
+      console.warn('Cleanup error (ignored):', error);
+    }
   });
 });

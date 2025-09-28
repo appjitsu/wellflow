@@ -1,15 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { MaintenanceScheduleCompletedEvent } from '../maintenance-schedule-completed.event';
 
 describe('MaintenanceScheduleCompletedEvent', () => {
-  let service: any;
+  let service: MaintenanceScheduleCompletedEvent;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [MaintenanceScheduleCompletedEvent],
     }).compile();
 
-    service =
-      module.get<MaintenanceScheduleCompletedEvent>(/* MaintenanceScheduleCompletedEvent */);
+    service = module.get<MaintenanceScheduleCompletedEvent>(
+      MaintenanceScheduleCompletedEvent,
+    );
   });
 
   it('should be defined', () => {

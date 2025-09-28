@@ -2,7 +2,7 @@ import {
   DrillingProgram,
   DrillingProgramPersistence,
 } from '../drilling-program.entity';
-import { DrillingProgramStatus } from '../enums/drilling-program-status.enum';
+import { DrillingProgramStatus } from '../../enums/drilling-program-status.enum';
 
 describe('DrillingProgram Entity', () => {
   const validId = 'drilling-program-123';

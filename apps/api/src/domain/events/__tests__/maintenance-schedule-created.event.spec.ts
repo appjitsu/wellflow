@@ -1,18 +1,26 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { MaintenanceScheduleCreatedEvent } from '../maintenance-schedule-created.event';
 
 describe('MaintenanceScheduleCreatedEvent', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<MaintenanceScheduleCreatedEvent>(/* MaintenanceScheduleCreatedEvent */);
+  it('should be defined', () => {
+    const event = new MaintenanceScheduleCreatedEvent(
+      'id',
+      'orgId',
+      'equipId',
+      'status',
+    );
+    expect(event).toBeDefined();
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should have correct properties', () => {
+    const event = new MaintenanceScheduleCreatedEvent(
+      'id',
+      'orgId',
+      'equipId',
+      'status',
+    );
+    expect(event.id).toBe('id');
+    expect(event.organizationId).toBe('orgId');
+    expect(event.equipmentId).toBe('equipId');
+    expect(event.status).toBe('status');
   });
 });

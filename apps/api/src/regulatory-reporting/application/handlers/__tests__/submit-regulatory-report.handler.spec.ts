@@ -1,18 +1,31 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { SubmitRegulatoryReportHandler } from '../submit-regulatory-report.handler';
+import { ReportSubmissionService } from '../../services/report-submission.service';
 
 describe('SubmitRegulatoryReportHandler', () => {
-  let service: any;
+  let handler: SubmitRegulatoryReportHandler;
 
   beforeEach(async () => {
+    const mockReportSubmissionService = {
+      submit: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        SubmitRegulatoryReportHandler,
+        {
+          provide: ReportSubmissionService,
+          useValue: mockReportSubmissionService,
+        },
+      ],
     }).compile();
 
-    service =
-      module.get<SubmitRegulatoryReportHandler>(/* SubmitRegulatoryReportHandler */);
+    handler = module.get<SubmitRegulatoryReportHandler>(
+      SubmitRegulatoryReportHandler,
+    );
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(handler).toBeDefined();
   });
 });

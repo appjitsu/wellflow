@@ -30,7 +30,6 @@ export function useUsers(): UseUsersReturn {
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch users';
       setError(errorMessage);
-      console.error('Error fetching users:', err);
     } finally {
       setLoading(false);
     }
@@ -103,20 +102,6 @@ export function useUsers(): UseUsersReturn {
       return updatedUser;
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to assign role';
-      setError(errorMessage);
-      throw err;
-    }
-  }, []);
-
-  // Toggle user active status
-  const toggleUserStatus = useCallback(async (id: string, isActive: boolean): Promise<User> => {
-    try {
-      setError(null);
-      const updatedUser = await userApi.toggleUserStatus(id, isActive);
-      setUsers((prevUsers) => prevUsers.map((user) => (user.id === id ? updatedUser : user)));
-      return updatedUser;
-    } catch (err) {
-      const errorMessage = err instanceof ApiError ? err.message : 'Failed to update user status';
       setError(errorMessage);
       throw err;
     }

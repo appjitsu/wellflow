@@ -1,10 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GetMaintenanceSchedulesByOrganizationHandler } from '../get-maintenance-schedules-by-organization.handler';
-import { IMaintenanceScheduleRepository } from '../../../domain/repositories/maintenance-schedule.repository.interface';
 
 describe('GetMaintenanceSchedulesByOrganizationHandler', () => {
   let handler: GetMaintenanceSchedulesByOrganizationHandler;
-  let maintenanceScheduleRepository: IMaintenanceScheduleRepository;
 
   beforeEach(async () => {
     const mockMaintenanceScheduleRepository = {
@@ -24,7 +22,6 @@ describe('GetMaintenanceSchedulesByOrganizationHandler', () => {
     handler = module.get<GetMaintenanceSchedulesByOrganizationHandler>(
       GetMaintenanceSchedulesByOrganizationHandler,
     );
-    maintenanceScheduleRepository = module.get('MaintenanceScheduleRepository');
   });
 
   it('should be defined', () => {

@@ -1,18 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { GenerateRegulatoryReportCommand } from '../generate-regulatory-report.command';
 
 describe('GenerateRegulatoryReportCommand', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<GenerateRegulatoryReportCommand>(/* GenerateRegulatoryReportCommand */);
-  });
-
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should create a valid command', () => {
+    const command = new GenerateRegulatoryReportCommand(
+      'org-123',
+      'TX',
+      'PR',
+      '2023-01',
+      'user-456',
+    );
+    expect(command).toBeDefined();
+    expect(command.organizationId).toBe('org-123');
+    expect(command.jurisdiction).toBe('TX');
   });
 });

@@ -1,11 +1,13 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useState } from 'react';
 
 interface QueryProviderProps {
-  children: React.ReactNode;
+  readonly children: React.ReactNode | any;
 }
 
 /**

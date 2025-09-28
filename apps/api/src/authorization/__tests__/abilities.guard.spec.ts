@@ -99,6 +99,7 @@ describe('AbilitiesGuard', () => {
       const user: User = {
         id: 'user-1',
         email: 'user@example.com',
+        organizationId: 'org-123',
         roles: ['operator'],
       };
 
@@ -127,6 +128,7 @@ describe('AbilitiesGuard', () => {
       const user: User = {
         id: 'user-1',
         email: 'user@example.com',
+        organizationId: 'org-123',
         roles: ['viewer'],
       };
 
@@ -159,6 +161,7 @@ describe('AbilitiesGuard', () => {
       const user: User = {
         id: 'user-1',
         email: 'user@example.com',
+        organizationId: 'org-123',
         roles: ['operator'],
       };
 
@@ -194,6 +197,7 @@ describe('AbilitiesGuard', () => {
       const user: User = {
         id: 'user-1',
         email: 'user@example.com',
+        organizationId: 'org-123',
         roles: ['operator'],
       };
 
@@ -227,6 +231,7 @@ describe('AbilitiesGuard', () => {
       const user: User = {
         id: 'user-1',
         email: 'user@example.com',
+        organizationId: 'org-123',
         roles: ['admin'],
       };
 

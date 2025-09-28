@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Test, TestingModule } from '@nestjs/testing';
 import { EventBus } from '@nestjs/cqrs';
 import { ConflictException, BadRequestException } from '@nestjs/common';
@@ -8,7 +7,6 @@ import { WellRepository } from '../../../domain/repositories/well.repository.int
 import { Well } from '../../../domain/entities/well.entity';
 import { ApiNumber } from '../../../domain/value-objects/api-number';
 import { Location } from '../../../domain/value-objects/location';
-import { Coordinates } from '../../../domain/value-objects/coordinates';
 import { WellType } from '../../../domain/enums/well-status.enum';
 import { UnitOfWork } from '../../../infrastructure/repositories/unit-of-work';
 import { AuditLogService } from '../../services/audit-log.service';
@@ -45,7 +43,7 @@ describe('CreateWellHandler', () => {
 
     // Set up default mocks
     mockRandomUUID.mockReturnValue('well-123');
-    MockWell.mockImplementation((id) => ({
+    MockWell.mockImplementation((id: string) => ({
       id,
       getDomainEvents: jest.fn().mockReturnValue([]),
       clearDomainEvents: jest.fn(),

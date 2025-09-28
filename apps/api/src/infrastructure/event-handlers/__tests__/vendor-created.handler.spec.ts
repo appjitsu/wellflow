@@ -1,17 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { VendorCreatedHandler } from '../vendor-created.handler';
 
 describe('VendorCreatedHandler', () => {
-  let service: any;
+  let handler: VendorCreatedHandler;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [VendorCreatedHandler],
     }).compile();
 
-    service = module.get<VendorCreatedHandler>(/* VendorCreatedHandler */);
+    handler = module.get<VendorCreatedHandler>(VendorCreatedHandler);
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(handler).toBeDefined();
   });
 });

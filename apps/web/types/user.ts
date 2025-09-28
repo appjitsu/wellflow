@@ -70,7 +70,7 @@ export interface UserFormData {
   role: UserRole;
   phone?: string;
   organizationId: string;
-  isActive: boolean;
+  isActive?: boolean;
 }
 
 export interface InviteFormData {
@@ -83,25 +83,25 @@ export interface InviteFormData {
 
 // Component prop types
 export interface UserListProps {
-  users: User[];
-  loading?: boolean;
-  onEdit: (user: User) => void;
-  onDelete: (userId: string) => void;
-  onAssignRole: (userId: string, role: UserRole) => void;
-  onToggleStatus: (userId: string, isActive: boolean) => void;
+  readonly users: User[];
+  readonly loading?: boolean;
+  readonly onEdit: (user: User) => void;
+  readonly onDelete: (userId: string) => void;
+  readonly onAssignRole: (userId: string, role: UserRole) => void;
+  readonly onToggleStatus: (userId: string, isActive: boolean) => void;
 }
 
 export interface UserFormProps {
-  user?: User;
-  onSubmit: (data: UserFormData) => Promise<void>;
-  onCancel: () => void;
-  loading?: boolean;
+  readonly user?: User;
+  readonly onSubmit: (data: UserFormData) => Promise<void>;
+  readonly onCancel: () => void;
+  readonly loading?: boolean;
 }
 
 export interface InviteUserFormProps {
-  onSubmit: (data: InviteFormData) => Promise<void>;
-  onCancel: () => void;
-  loading?: boolean;
+  readonly onSubmit: (data: InviteFormData) => Promise<void>;
+  readonly onCancel: () => void;
+  readonly loading?: boolean;
 }
 
 // Filter and sort types

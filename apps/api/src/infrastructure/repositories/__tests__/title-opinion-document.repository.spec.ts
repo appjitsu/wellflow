@@ -1,15 +1,26 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { TitleOpinionDocumentRepositoryImpl } from '../title-opinion-document.repository';
+import { DatabaseService } from '../../../database/database.service';
 
 describe('TitleOpinionDocumentRepositoryImpl', () => {
-  let service: any;
+  let service: TitleOpinionDocumentRepositoryImpl;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        TitleOpinionDocumentRepositoryImpl,
+        {
+          provide: DatabaseService,
+          useValue: {
+            getDb: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
-    service =
-      module.get<TitleOpinionDocumentRepositoryImpl>(/* TitleOpinionDocumentRepositoryImpl */);
+    service = module.get<TitleOpinionDocumentRepositoryImpl>(
+      TitleOpinionDocumentRepositoryImpl,
+    );
   });
 
   it('should be defined', () => {

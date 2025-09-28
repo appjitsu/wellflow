@@ -1,6 +1,5 @@
 import { validate } from 'class-validator';
 import { CreatePermitDto } from '../create-permit.dto';
-import { PermitType } from '../../../../domain/value-objects/permit-type.vo';
 
 describe('CreatePermitDto', () => {
   it('should be defined', () => {

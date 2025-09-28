@@ -4,7 +4,7 @@ import { Reflector } from '@nestjs/core';
 import { TenantGuard } from '../tenant.guard';
 import { TenantContextService } from '../tenant-context.service';
 import { TenantRlsService } from '../tenant-rls.service';
-import { SetTenantContextUseCase } from '../../application/use-cases/set-tenant-context.use-case';
+import { SetTenantContextUseCase } from '@/application/use-cases/set-tenant-context.use-case';
 
 describe('TenantGuard', () => {
   let guard: TenantGuard;

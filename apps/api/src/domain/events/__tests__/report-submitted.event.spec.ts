@@ -1,17 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { ReportSubmittedEvent } from '../report-submitted.event';
 
 describe('ReportSubmittedEvent', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<ReportSubmittedEvent>(/* ReportSubmittedEvent */);
-  });
-
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should create a valid event', () => {
+    const event = new ReportSubmittedEvent(
+      'report-123',
+      'PR',
+      'TX_RRC',
+      'ext-456',
+    );
+    expect(event).toBeDefined();
+    expect(event.eventType).toBe('ReportSubmitted');
+    expect(event.aggregateId).toBe('report-123');
   });
 });

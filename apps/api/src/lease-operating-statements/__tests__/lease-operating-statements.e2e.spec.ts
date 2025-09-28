@@ -11,10 +11,7 @@ import { AuthorizationModule } from '../../authorization/authorization.module';
 import { JwtAuthGuard } from '../../presentation/guards/jwt-auth.guard';
 import { AbilitiesGuard } from '../../authorization/abilities.guard';
 import { DatabaseService } from '../../database/database.service';
-import {
-  ExpenseCategory,
-  ExpenseType,
-} from '../../../domain/enums/los-status.enum';
+import { ExpenseCategory, ExpenseType } from '@/domain/enums/los-status.enum';
 import { TestingModule, Test } from '@nestjs/testing';
 import request from 'supertest';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
@@ -141,7 +138,7 @@ describe('LeaseOperatingStatements (e2e)', () => {
               version: 1,
             });
           }
-          // eslint-disable-next-line no-secrets/no-secrets
+
           if (query.constructor.name === 'GetLosByOrganizationQuery') {
             return Promise.resolve([
               {

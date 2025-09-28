@@ -54,12 +54,12 @@ describe('ERPIntegrationAdapter', () => {
 
       // Mock circuit breaker and retry
       (service as any).circuitBreakerService.execute.mockImplementation(
-        async (serviceName: string, fn: any) => fn(),
+        (serviceName: string, fn: any) => fn(),
       );
       (
         service as any
       ).retryService.executeWithExponentialBackoff.mockImplementation(
-        async (fn: any) => fn(),
+        (fn: any) => fn(),
       );
 
       const result = await service.submitInvoice(mockInvoice);
@@ -103,12 +103,12 @@ describe('ERPIntegrationAdapter', () => {
 
       // Mock circuit breaker and retry
       (service as any).circuitBreakerService.execute.mockImplementation(
-        async (serviceName: string, fn: any) => fn(),
+        (serviceName: string, fn: any) => fn(),
       );
       (
         service as any
       ).retryService.executeWithExponentialBackoff.mockImplementation(
-        async (fn: any) => fn(),
+        (fn: any) => fn(),
       );
 
       const result = await service.submitInvoice(mockInvoice);

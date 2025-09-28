@@ -1,5 +1,4 @@
-import { Injectable, Inject, Logger, Scope } from '@nestjs/common';
-import { REQUEST } from '@nestjs/core';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { Request } from 'express';
 import type { AuditLogRepository } from '../../domain/repositories/audit-log.repository.interface';
 
@@ -36,12 +35,14 @@ interface AuditRequestContext {
   requestId?: string;
   sessionId?: string;
   correlationId?: string;
+  endpoint?: string;
+  method?: string;
 }
 
 /**
  * Audit log service - handles all audit logging operations
  */
-@Injectable({ scope: Scope.REQUEST })
+@Injectable()
 export class AuditLogService {
   private readonly logger = new Logger(AuditLogService.name);
   private context: AuditRequestContext = {};
@@ -49,43 +50,50 @@ export class AuditLogService {
   constructor(
     @Inject('AuditLogRepository')
     private readonly auditLogRepository: AuditLogRepository,
-    @Inject(REQUEST) private readonly request: EnhancedRequest,
   ) {
-    this.initializeContext();
+    // Context will be set per request via setContext method
   }
 
   /**
-   * Initialize request context from HTTP request
+   * Set request context for audit logging
+   */
+  setContext(request: EnhancedRequest): void {
+    this.context = {
+      userId: request.user?.id,
+      organizationId: request.user?.organizationId,
+      ipAddress: this.getClientIp(request),
+      userAgent: request.headers?.['user-agent'] as string,
+      requestId: request.requestId,
+      sessionId: request.sessionId,
+      correlationId: request.correlationId,
+      endpoint: request.route?.path,
+      method: request.method,
+    };
+  }
+
+  /**
+   * Initialize request context from HTTP request (deprecated - use setContext)
    */
   private initializeContext(): void {
-    if (this.request) {
-      this.context = {
-        userId: this.request.user?.id,
-        organizationId: this.request.user?.organizationId,
-        ipAddress: this.getClientIp(),
-        userAgent: this.request.get('User-Agent'),
-        requestId: this.request.requestId,
-        sessionId: this.request.sessionId,
-        correlationId: this.request.correlationId,
-      };
-    }
+    // No longer used - context set via setContext method
   }
 
   /**
    * Get client IP address from request
    */
-  private getClientIp(): string | undefined {
-    const forwarded = this.request?.get('X-Forwarded-For');
+  private getClientIp(request: EnhancedRequest): string | undefined {
+    // Use headers object directly instead of get() method
+    const forwarded = request?.headers?.['x-forwarded-for'] as string;
     if (forwarded) {
       return forwarded.split(',')[0]?.trim();
     }
 
-    const realIp = this.request?.get('X-Real-IP');
+    const realIp = request?.headers?.['x-real-ip'] as string;
     if (realIp) {
       return realIp;
     }
 
-    return this.request?.ip || this.request?.socket?.remoteAddress;
+    return request?.ip || request?.socket?.remoteAddress;
   }
 
   /**
@@ -190,12 +198,12 @@ export class AuditLogService {
           ...metadata,
           sessionId: this.context.sessionId,
           correlationId: this.context.correlationId,
-          endpoint: this.request?.route?.path,
-          method: this.request?.method,
+          endpoint: this.context.endpoint,
+          method: this.context.method,
         },
         requestId: this.context.requestId,
-        endpoint: this.request?.route?.path,
-        method: this.request?.method,
+        endpoint: this.context.endpoint,
+        method: this.context.method,
       });
 
       await this.auditLogRepository.save(auditLog);
@@ -508,12 +516,12 @@ export class AuditLogService {
             ...entry.metadata,
             sessionId: this.context.sessionId,
             correlationId: this.context.correlationId,
-            endpoint: this.request?.route?.path,
-            method: this.request?.method,
+            endpoint: this.context.endpoint,
+            method: this.context.method,
           },
           requestId: this.context.requestId,
-          endpoint: this.request?.route?.path,
-          method: this.request?.method,
+          endpoint: this.context.endpoint,
+          method: this.context.method,
         }),
       );
 

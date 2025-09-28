@@ -390,7 +390,7 @@ describe('GetVendorsWithExpiringQualificationsHandler', () => {
         'org-123',
         30,
       );
-      const nonErrorException = { message: 'Non-error exception', code: 500 };
+      const nonErrorException = new Error('Non-error exception');
       vendorRepository.findWithExpiringQualifications.mockImplementation(() =>
         Promise.reject(nonErrorException),
       );

@@ -129,7 +129,7 @@ export const vendors = pgTable(
     overallRatingIdx: index('vendors_overall_rating_idx').on(
       table.overallRating,
     ),
-    // eslint-disable-next-line no-secrets/no-secrets
+
     qualificationExpiryIdx: index('vendors_qualification_expiry_idx').on(
       table.qualificationExpiryDate,
     ),

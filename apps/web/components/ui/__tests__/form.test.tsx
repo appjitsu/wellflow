@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-require-imports */
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { useForm } from 'react-hook-form';
@@ -510,7 +511,7 @@ describe('Form composition', () => {
               <FormControl>
                 <input {...field} type='email' placeholder='Enter your email' />
               </FormControl>
-              <FormDescription>We'll never share your email.</FormDescription>
+              <FormDescription>We&apos;ll never share your email.</FormDescription>
               <FormMessage />
             </FormItem>
           )}

@@ -30,7 +30,7 @@ export const hseIncidents = pgTable(
 
     // Incident identification
     incidentNumber: varchar('incident_number', { length: 50 }).notNull(),
-    // eslint-disable-next-line no-secrets/no-secrets
+
     incidentType: varchar('incident_type', { length: 50 }).notNull(), // spill|release|injury|fatality|near_miss|equipment_failure|well_control|fire|explosion
     severity: varchar('severity', { length: 10 }).notNull(), // low|medium|high|critical
 

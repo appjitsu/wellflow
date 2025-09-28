@@ -1,17 +1,7 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { users } from '../users';
 
-describe('users', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<users>(/* users */);
-  });
-
+describe('users schema', () => {
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(users).toBeDefined();
   });
 });

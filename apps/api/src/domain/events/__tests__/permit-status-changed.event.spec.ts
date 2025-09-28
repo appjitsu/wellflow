@@ -1,18 +1,17 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { PermitStatusChangedEvent } from '../permit-status-changed.event';
 
 describe('PermitStatusChangedEvent', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<PermitStatusChangedEvent>(/* PermitStatusChangedEvent */);
-  });
-
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    const event = new PermitStatusChangedEvent(
+      'permit-123',
+      'pending',
+      'approved',
+    );
+
+    expect(event).toBeDefined();
+    expect(event.eventType).toBe('PermitStatusChanged');
+    expect(event.aggregateId).toBe('permit-123');
+    expect(event.oldStatus).toBe('pending');
+    expect(event.newStatus).toBe('approved');
   });
 });

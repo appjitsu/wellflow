@@ -1,17 +1,27 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import {
+  AndSpecification,
+  ISpecification,
+  SpecificationMetadata,
+} from '../specification.interface';
 
 describe('AndSpecification', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<AndSpecification>(/* AndSpecification */);
-  });
-
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    const dummySpec: ISpecification<any> = {
+      isSatisfiedBy: () => Promise.resolve(true),
+      getMetadata: (): SpecificationMetadata => ({
+        name: 'dummy',
+        description: 'dummy spec',
+        priority: 1,
+        category: 'test',
+        tags: [],
+      }),
+      and: () => dummySpec,
+      or: () => dummySpec,
+      not: () => dummySpec,
+    };
+
+    const spec = new AndSpecification(dummySpec, dummySpec);
+    expect(spec).toBeDefined();
+    expect(spec.getMetadata().name).toContain('And');
   });
 });

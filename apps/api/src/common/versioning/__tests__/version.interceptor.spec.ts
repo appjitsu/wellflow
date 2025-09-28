@@ -1,17 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { VersionInterceptor } from '../version.interceptor';
+import { VersionService } from '../version.service';
 
 describe('VersionInterceptor', () => {
-  let service: any;
+  let interceptor: VersionInterceptor;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [VersionInterceptor, VersionService],
     }).compile();
 
-    service = module.get<VersionInterceptor>(/* VersionInterceptor */);
+    interceptor = module.get(VersionInterceptor);
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(interceptor).toBeDefined();
   });
 });

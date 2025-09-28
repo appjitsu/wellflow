@@ -1,18 +1,23 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { PermitRenewalApprovedEvent } from '../permit-renewal-approved.event';
 
 describe('PermitRenewalApprovedEvent', () => {
-  let service: any;
+  let event: PermitRenewalApprovedEvent;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<PermitRenewalApprovedEvent>(/* PermitRenewalApprovedEvent */);
+  beforeEach(() => {
+    event = new PermitRenewalApprovedEvent(
+      'permit-123',
+      'user-123',
+      new Date('2024-12-31'),
+    );
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(event).toBeDefined();
+  });
+
+  it('should store all constructor parameters', () => {
+    expect(event.aggregateId).toBe('permit-123');
+    expect(event.approvedByUserId).toBe('user-123');
+    expect(event.newExpirationDate).toEqual(new Date('2024-12-31'));
   });
 });

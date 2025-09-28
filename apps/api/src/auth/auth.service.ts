@@ -4,6 +4,9 @@ import {
   Inject,
   UnauthorizedException,
   ConflictException,
+  BadRequestException,
+  NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -17,6 +20,12 @@ import {
   AuditResourceType,
 } from '../domain/entities/audit-log.entity';
 import { EmailService } from '../application/services/email.service';
+import {
+  SuspiciousActivityDetectorService,
+  LoginAttemptContext,
+} from '../application/services/suspicious-activity-detector.service';
+import type { PasswordHistoryRepository } from '../domain/repositories/password-history.repository.interface';
+import { PasswordHistory } from '../domain/entities/password-history.entity';
 import {
   OrganizationsService,
   CreateOrganizationDto,
@@ -85,14 +94,19 @@ export interface LoginResponse {
  */
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @Inject('UserRepository')
     private readonly userRepository: AuthUserRepository,
+    @Inject('PasswordHistoryRepository')
+    private readonly passwordHistoryRepository: PasswordHistoryRepository,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly auditLogService: AuditLogService,
     private readonly emailService: EmailService,
     private readonly organizationsService: OrganizationsService,
+    private readonly suspiciousActivityDetector: SuspiciousActivityDetectorService,
   ) {}
 
   /**
@@ -198,6 +212,48 @@ export class AuthService {
     userAgent?: string,
   ): Promise<User | null> {
     const user = await this.userRepository.findByEmail(email);
+
+    // Analyze for suspicious activity before proceeding
+    const loginContext: LoginAttemptContext = {
+      userId: user?.getId(),
+      email,
+      ipAddress,
+      userAgent,
+      timestamp: new Date(),
+      success: false, // Will be updated later if successful
+      failedAttempts: user?.getFailedLoginAttempts(),
+      isAccountLocked: user?.isAccountLocked(),
+    };
+
+    const suspiciousActivity =
+      await this.suspiciousActivityDetector.analyzeLoginAttempt(loginContext);
+
+    if (
+      suspiciousActivity.isSuspicious &&
+      suspiciousActivity.riskLevel === 'CRITICAL'
+    ) {
+      // For critical risk, deny access immediately
+      await this.auditLogService.logFailure(
+        AuditAction.LOGIN,
+        AuditResourceType.USER,
+        user?.getId() || 'unknown',
+        'Login blocked due to critical suspicious activity',
+        {},
+        {
+          businessContext: {
+            email,
+            suspiciousActivity: true,
+            riskLevel: suspiciousActivity.riskLevel,
+            reasons: suspiciousActivity.reasons,
+          },
+          ipAddress,
+          userAgent,
+        },
+      );
+      throw new UnauthorizedException(
+        'Access temporarily restricted due to suspicious activity',
+      );
+    }
 
     if (!user) {
       // Log failed login attempt (user not found)
@@ -602,6 +658,158 @@ export class AuthService {
         },
       );
       throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+  }
+
+  /**
+   * Initiate password reset process
+   * Sends password reset email if user exists
+   */
+  async forgotPassword(email: string): Promise<void> {
+    const user = await this.userRepository.findByEmail(email);
+
+    if (!user) {
+      // Don't reveal if user exists or not for security
+      await this.auditLogService.logFailure(
+        AuditAction.UPDATE,
+        AuditResourceType.USER,
+        'unknown',
+        'Password reset requested for non-existent user',
+        {},
+        {
+          businessContext: { email, action: 'forgot_password' },
+        },
+      );
+      return; // Return success even if user doesn't exist
+    }
+
+    // Generate password reset token
+    const resetToken = AuthToken.createPasswordResetToken();
+    user.setPasswordResetToken(
+      resetToken.getValue(),
+      resetToken.getExpiresAt(),
+    );
+
+    await this.userRepository.save(user);
+
+    // Send password reset email
+    await this.emailService.sendPasswordResetEmail(
+      user.getId(),
+      user.getOrganizationId(),
+      user.getEmail().getValue(),
+      user.getFirstName(),
+      user.getLastName(),
+      resetToken.getValue(),
+    );
+
+    // Log successful password reset request
+    await this.auditLogService.logSuccess(
+      AuditAction.UPDATE,
+      AuditResourceType.USER,
+      user.getId(),
+      {},
+      {
+        businessContext: {
+          action: 'password_reset_requested',
+          email: user.getEmail().getValue(),
+        },
+      },
+    );
+  }
+
+  /**
+   * Reset password using token
+   * Validates token and updates password with history check
+   */
+  async resetPassword(
+    userId: string,
+    token: string,
+    newPassword: string,
+  ): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundException(USER_NOT_FOUND_MESSAGE);
+    }
+
+    // Validate reset token
+    if (!user.validatePasswordResetToken(token)) {
+      await this.auditLogService.logFailure(
+        AuditAction.UPDATE,
+        AuditResourceType.USER,
+        userId,
+        'Invalid or expired password reset token',
+        {},
+        {
+          businessContext: {
+            action: 'password_reset_failed',
+            email: user.getEmail().getValue(),
+            reason: 'invalid_token',
+          },
+        },
+      );
+      throw new BadRequestException('Invalid or expired password reset token');
+    }
+
+    // Get password history for validation
+    const passwordHistory = await this.getPasswordHistoryHashes(userId);
+
+    // Update password with history validation
+    await user.changePasswordWithHistory(newPassword, passwordHistory);
+
+    // Clear password reset token
+    user.clearPasswordResetToken();
+
+    await this.userRepository.save(user);
+
+    // Add new password to history
+    const passwordHash = user.getPasswordHash();
+    if (passwordHash) {
+      await this.addPasswordToHistory(userId, passwordHash);
+    }
+
+    // Log successful password reset
+    await this.auditLogService.logSuccess(
+      AuditAction.UPDATE,
+      AuditResourceType.USER,
+      userId,
+      {},
+      {
+        businessContext: {
+          action: 'password_reset_completed',
+          email: user.getEmail().getValue(),
+        },
+      },
+    );
+  }
+
+  /**
+   * Get password history hashes for a user
+   */
+  private async getPasswordHistoryHashes(userId: string): Promise<string[]> {
+    try {
+      return await this.passwordHistoryRepository.getPasswordHashesByUserId(
+        userId,
+        5,
+      );
+    } catch (error) {
+      this.logger.error('Error getting password history hashes:', error);
+      return []; // Return empty array on error to allow password change
+    }
+  }
+
+  /**
+   * Add password to history
+   */
+  private async addPasswordToHistory(
+    userId: string,
+    passwordHash: string,
+  ): Promise<void> {
+    try {
+      const passwordHistoryEntry = PasswordHistory.create(userId, passwordHash);
+      await this.passwordHistoryRepository.save(passwordHistoryEntry);
+    } catch (error) {
+      this.logger.error('Error adding password to history:', error);
+      // Don't throw error here as it's not critical for the password change operation
     }
   }
 }

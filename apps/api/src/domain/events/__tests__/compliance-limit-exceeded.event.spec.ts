@@ -1,18 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { ComplianceLimitExceededEvent } from '../compliance-limit-exceeded.event';
 
 describe('ComplianceLimitExceededEvent', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<ComplianceLimitExceededEvent>(/* ComplianceLimitExceededEvent */);
-  });
-
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should create a valid event', () => {
+    const event = new ComplianceLimitExceededEvent(
+      'monitor-123',
+      'point-456',
+      'NOx',
+      150,
+      100,
+    );
+    expect(event).toBeDefined();
+    expect(event.eventType).toBe('ComplianceLimitExceeded');
+    expect(event.aggregateId).toBe('monitor-123');
   });
 });

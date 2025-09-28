@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState } from 'react';
 import { createAbilityForUser } from '../../lib/abilities';
 
@@ -32,6 +34,7 @@ const mockUsers: User[] = [
 ];
 
 export default function RBACDemo() {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const [selectedUser, setSelectedUser] = useState<User>(mockUsers[0]!);
   const ability = createAbilityForUser(selectedUser);
 

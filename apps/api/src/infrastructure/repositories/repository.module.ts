@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../../database/database.module';
 import { DatabaseService } from '../../database/database.service';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import type * as schema from '../../database/schema';
 import { UnitOfWork } from './unit-of-work';
 import { AuditLogService } from '../../application/services/audit-log.service';
 
@@ -57,7 +55,6 @@ import { RegulatoryOutboxService } from '../events/regulatory-outbox.service';
       useClass: AuditLogRepositoryImpl,
     },
     {
-      // eslint-disable-next-line no-secrets/no-secrets
       provide: 'RegulatoryEventPublisher',
       useClass: RegulatoryOutboxService,
     },
@@ -219,7 +216,6 @@ import { RegulatoryOutboxService } from '../events/regulatory-outbox.service';
 
     // Regulatory Repositories
     {
-      // eslint-disable-next-line no-secrets/no-secrets
       provide: 'RegulatoryUnitOfWork',
       useFactory: (
         databaseService: DatabaseService,
@@ -256,7 +252,7 @@ import { RegulatoryOutboxService } from '../events/regulatory-outbox.service';
     AuditLogService,
     RegulatoryDomainEventPublisher,
     'AuditLogRepository',
-    // eslint-disable-next-line no-secrets/no-secrets
+
     'RegulatoryEventPublisher',
     'OwnerPaymentRepository',
     'CashCallRepository',
@@ -279,7 +275,7 @@ import { RegulatoryOutboxService } from '../events/regulatory-outbox.service';
     'DailyDrillingReportRepository',
     'MaintenanceScheduleRepository',
     'PartnersRepository',
-    // eslint-disable-next-line no-secrets/no-secrets
+
     'RegulatoryUnitOfWork',
     'HSEIncidentRepository',
     'EnvironmentalMonitoringRepository',

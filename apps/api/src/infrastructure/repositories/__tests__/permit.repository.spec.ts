@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PermitRepositoryImpl } from '../permit.repository';
 import { Permit } from '../../../domain/entities/permit.entity';
 import { PermitType } from '../../../domain/value-objects/permit-type.vo';
-import { PermitStatus } from '../../../domain/value-objects/permit-status.vo';
 
 describe('PermitRepositoryImpl', () => {
   let repository: PermitRepositoryImpl;
@@ -13,10 +12,11 @@ describe('PermitRepositoryImpl', () => {
       select: jest.fn().mockReturnThis(),
       from: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockImplementation(() => Promise.resolve([])),
       offset: jest.fn().mockReturnThis(),
       insert: jest.fn().mockReturnThis(),
       values: jest.fn().mockReturnThis(),
+      onConflictDoUpdate: jest.fn().mockImplementation(() => Promise.resolve()),
       update: jest.fn().mockReturnThis(),
       set: jest.fn().mockReturnThis(),
       delete: jest.fn().mockReturnThis(),
@@ -54,7 +54,7 @@ describe('PermitRepositoryImpl', () => {
         updatedAt: new Date(),
       };
 
-      mockDb.execute.mockResolvedValue([mockPermitData]);
+      mockDb.limit.mockResolvedValue([mockPermitData]);
 
       const result = await repository.findById('permit-123');
 
@@ -66,7 +66,7 @@ describe('PermitRepositoryImpl', () => {
     });
 
     it('should return null when not found', async () => {
-      mockDb.execute.mockResolvedValue([]);
+      mockDb.limit.mockResolvedValue([]);
 
       const result = await repository.findById('non-existent');
 
@@ -84,7 +84,7 @@ describe('PermitRepositoryImpl', () => {
         'user-456',
       );
 
-      mockDb.execute.mockResolvedValue(undefined);
+      mockDb.onConflictDoUpdate.mockResolvedValue(undefined);
 
       await expect(repository.save(permit)).resolves.toBeUndefined();
 

@@ -1,10 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GetAfesByOrganizationHandler } from '../get-afes-by-organization.handler';
-import { IAfeRepository } from '../../../domain/repositories/afe.repository.interface';
 
 describe('GetAfesByOrganizationHandler', () => {
   let handler: GetAfesByOrganizationHandler;
-  let afeRepository: IAfeRepository;
 
   beforeEach(async () => {
     const mockAfeRepository = {
@@ -25,7 +23,6 @@ describe('GetAfesByOrganizationHandler', () => {
     handler = module.get<GetAfesByOrganizationHandler>(
       GetAfesByOrganizationHandler,
     );
-    afeRepository = module.get('AfeRepository');
   });
 
   it('should be defined', () => {

@@ -1,3 +1,4 @@
+/* eslint-disable no-process-env */
 import { Client } from 'pg';
 
 export default async function globalTeardown() {

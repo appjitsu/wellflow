@@ -1,18 +1,28 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { GetLosByOrganizationHandler } from '../get-los-by-organization.handler';
 
 describe('GetLosByOrganizationHandler', () => {
-  let service: any;
+  let handler: GetLosByOrganizationHandler;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        GetLosByOrganizationHandler,
+        {
+          provide: 'LosRepository',
+          useValue: {
+            findByOrganizationId: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
-    service =
-      module.get<GetLosByOrganizationHandler>(/* GetLosByOrganizationHandler */);
+    handler = module.get<GetLosByOrganizationHandler>(
+      GetLosByOrganizationHandler,
+    );
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(handler).toBeDefined();
   });
 });

@@ -30,7 +30,7 @@ export const regulatoryReports = pgTable(
 
     // Report identification
     reportType: varchar('report_type', { length: 50 }).notNull(), // production|environmental|hse|permit|waste
-    // eslint-disable-next-line no-secrets/no-secrets
+
     reportSubType: varchar('report_sub_type', { length: 50 }), // form_pr|w3x|h10|spcc|tier2|etc
     regulatoryAgency: varchar('regulatory_agency', { length: 50 }).notNull(), // RRC|EPA|TCEQ|state_agency
 

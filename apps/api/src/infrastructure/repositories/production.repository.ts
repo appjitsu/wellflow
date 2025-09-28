@@ -1,11 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { eq, and, gte, lte, desc, sum, avg, count } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { BaseRepository } from './base.repository';
 import { DatabaseService } from '../../database/database.service';
 import { AuditResourceType } from '../../domain/entities/audit-log.entity';
 import { productionRecords } from '../../database/schema';
-import * as schema from '../../database/schema';
 import {
   ProductionRepository as IProductionRepository,
   CreateProductionRecordDto,

@@ -5,7 +5,6 @@ import {
   IncidentType,
 } from '../../../domain/enums/environmental-incident.enums';
 
-// eslint-disable-next-line no-secrets/no-secrets
 describe('DrizzleEnvironmentalIncidentRepository', () => {
   function makeIncident() {
     return new EnvironmentalIncident({

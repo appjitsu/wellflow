@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request, Response, NextFunction } from 'express';
 import { SecurityHeadersMiddleware } from '../security-headers.middleware';
-import { AppConfigService } from '../../config/app.config';
+import { AppConfigService } from '@/config/app.config';
 
 describe('SecurityHeadersMiddleware', () => {
   let middleware: SecurityHeadersMiddleware;

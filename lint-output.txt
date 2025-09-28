@@ -1,0 +1,82 @@
+pnpm run lint
+
+> wellflow@ lint /Users/jason/projects/wellflow
+> turbo run lint
+
+╭──────────────────────────────────────────────────────────────────────────╮
+│                                                                          │
+│                     Update available v2.5.6 ≫ v2.5.8                     │
+│    Changelog: https://github.com/vercel/turborepo/releases/tag/v2.5.8    │
+│          Run "pnpm dlx @turbo/codemod@latest update" to update           │
+│                                                                          │
+│          Follow @turborepo for updates: https://x.com/turborepo          │
+╰──────────────────────────────────────────────────────────────────────────╯
+turbo 2.5.6
+
+• Packages in scope: @repo/eslint-config, @repo/typescript-config, @repo/ui, api, docs, queue-ui, web
+• Running lint in 7 packages
+• Remote caching disabled
+┌─ @repo/ui#lint > cache hit, replaying logs de020d00395fb3be 
+
+> @repo/ui@0.0.0 lint /Users/jason/projects/wellflow/packages/ui
+> eslint . --max-warnings 0
+└─ @repo/ui#lint ──
+┌─ queue-ui#lint > cache hit, replaying logs a8a95ad88c816edc 
+
+> queue-ui@0.0.1 lint /Users/jason/projects/wellflow/apps/queue-ui
+> eslint "src/**/*.ts" --fix
+└─ queue-ui#lint ──
+┌─ docs#lint > cache hit, replaying logs 932614eaeea5e073 
+
+> docs@0.1.0 lint /Users/jason/projects/wellflow/apps/docs
+> eslint . --max-warnings 0
+└─ docs#lint ──
+┌─ web#lint > cache hit, replaying logs b4afff1e3a9ca57e 
+
+> web@0.1.2 lint /Users/jason/projects/wellflow/apps/web
+> eslint . --max-warnings 0
+└─ web#lint ──
+┌─ api#lint > cache miss, executing c7f7a2a75e118803 
+
+
+> api@0.0.2 lint /Users/jason/projects/wellflow/apps/api
+> eslint "{src,apps,libs,test}/**/*.ts" --max-warnings=0
+
+
+/Users/jason/projects/wellflow/apps/api/src/auth/infrastructure/__tests__/password-history.repository.spec.ts
+  356:9  error  Either remove this useless object instantiation of "PasswordHistory" or use it  sonarjs/constructor-for-side-effects
+
+/Users/jason/projects/wellflow/apps/api/src/auth/infrastructure/password-history.repository.ts
+  52:106  error  Define a constant instead of duplicating this literal 4 times  sonarjs/no-duplicate-string
+
+/Users/jason/projects/wellflow/apps/api/src/domain/entities/__tests__/password-history.entity.spec.ts
+   57:9   error  Remove this use of the "void" operator  sonarjs/void-use
+   68:9   error  Remove this use of the "void" operator  sonarjs/void-use
+   81:9   error  Remove this use of the "void" operator  sonarjs/void-use
+   92:9   error  Remove this use of the "void" operator  sonarjs/void-use
+  168:11  error  Remove this use of the "void" operator  sonarjs/void-use
+
+/Users/jason/projects/wellflow/apps/api/src/infrastructure/repositories/vendor.repository.ts
+   29:13  error  'schema' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   29:13  error  Remove this unused import of 'schema'                                     sonarjs/unused-import
+  664:7   error  Unsafe assignment of an `any` value                                       @typescript-eslint/no-unsafe-assignment
+
+/Users/jason/projects/wellflow/apps/api/src/presentation/controllers/__tests__/cash-calls.controller.spec.ts
+  13:6  error  'CashCallStatus' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  20:6  error  'CashCallType' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+
+✖ 12 problems (12 errors, 0 warnings)
+
+ ELIFECYCLE  Command failed with exit code 1.
+command finished with error: command (/Users/jason/projects/wellflow/apps/api) /Users/jason/Library/pnpm/.tools/@pnpm+macos-arm64/9.0.0/bin/pnpm run lint exited (1)
+└─ api#lint ──
+api#lint: command (/Users/jason/projects/wellflow/apps/api) /Users/jason/Library/pnpm/.tools/@pnpm+macos-arm64/9.0.0/bin/pnpm run lint exited (1)
+
+ Tasks:    4 successful, 5 total
+Cached:    4 cached, 5 total
+  Time:    57.894s 
+Failed:    api#lint
+
+    ...Finishing writing to cache...                                                                                                                                                    >   ...Finishing writing to cache...                                                                                                                                                     ERROR  run failed: command  exited (1)
+ ELIFECYCLE  Command failed with exit code 1.
+%                                                                                                                                                                                       

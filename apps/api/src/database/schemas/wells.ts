@@ -74,7 +74,7 @@ export const wells = pgTable(
     // Business rule constraints
     wellsApiNumberFormatCheck: check(
       'api_format',
-      sql`LENGTH(api_number) = 14 AND api_number ~ '^[0-9]+$'`,
+      sql`LENGTH(api_number) = 10 AND api_number ~ '^[0-9]+$'`,
     ),
     totalDepthPositiveCheck: check(
       'wells_total_depth_positive_check',

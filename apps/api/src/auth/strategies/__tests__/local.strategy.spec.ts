@@ -3,7 +3,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
 import { LocalStrategy } from '../local.strategy';
-import { AuthService } from '../auth.service';
+import { AuthService } from '../../auth.service';
 import { User, UserRole } from '../../../domain/entities/user.entity';
 import { Email } from '../../../domain/value-objects/email';
 import { Password } from '../../../domain/value-objects/password';
@@ -101,10 +101,9 @@ describe('LocalStrategy', () => {
       mockAuthService.validateUserCredentials.mockResolvedValue(null);
 
       const mockRequest = {
-        // eslint-disable-next-line sonarjs/no-hardcoded-ip
         ip: '192.168.1.100',
         headers: {},
-        // eslint-disable-next-line sonarjs/no-hardcoded-ip
+
         connection: { remoteAddress: '192.168.1.100' },
         socket: null,
         get: jest.fn(() => null),
@@ -121,7 +120,7 @@ describe('LocalStrategy', () => {
       expect(mockAuthService.validateUserCredentials).toHaveBeenCalledWith(
         'invalid@example.com',
         'wrongpassword',
-        // eslint-disable-next-line sonarjs/no-hardcoded-ip
+
         '192.168.1.100',
         undefined, // userAgent
       );
@@ -230,10 +229,9 @@ describe('LocalStrategy', () => {
       mockAuthService.validateUserCredentials.mockResolvedValue(testUser);
 
       const mockRequest = {
-        // eslint-disable-next-line sonarjs/no-hardcoded-ip
         ip: '10.0.0.1',
         headers: {},
-        // eslint-disable-next-line sonarjs/no-hardcoded-ip
+
         connection: { remoteAddress: '10.0.0.1' },
         socket: null,
         get: jest.fn(() => null),
@@ -248,7 +246,7 @@ describe('LocalStrategy', () => {
       expect(mockAuthService.validateUserCredentials).toHaveBeenCalledWith(
         'test@example.com',
         'StrongAuth123!',
-        // eslint-disable-next-line sonarjs/no-hardcoded-ip
+
         '10.0.0.1', // Fallback to connection.remoteAddress
         undefined, // userAgent
       );
@@ -256,10 +254,9 @@ describe('LocalStrategy', () => {
 
     it('should handle different user roles correctly', async () => {
       const testCases = [
-        { role: UserRole.ADMIN, email: 'admin@example.com' },
-        { role: UserRole.OPERATOR, email: 'operator@example.com' },
-        { role: UserRole.VIEWER, email: 'viewer@example.com' },
-        { role: UserRole.REGULATOR, email: 'regulator@example.com' },
+        { role: UserRole.OWNER, email: 'owner@example.com' },
+        { role: UserRole.MANAGER, email: 'manager@example.com' },
+        { role: UserRole.PUMPER, email: 'pumper@example.com' },
       ];
 
       for (const testCase of testCases) {
@@ -340,7 +337,7 @@ describe('LocalStrategy', () => {
         Email.create('field.operator@oilcompany.com'),
         'Field',
         'Operator',
-        UserRole.OPERATOR,
+        UserRole.MANAGER,
         '+1234567890',
         (await Password.create('StrongAuth123!')).getHashedValue(),
         true,
@@ -349,10 +346,9 @@ describe('LocalStrategy', () => {
       mockAuthService.validateUserCredentials.mockResolvedValue(operatorUser);
 
       const mockRequest = {
-        // eslint-disable-next-line sonarjs/no-hardcoded-ip
         ip: '192.168.100.50', // Field office IP
         headers: {},
-        // eslint-disable-next-line sonarjs/no-hardcoded-ip
+
         connection: { remoteAddress: '192.168.100.50' },
         socket: null,
         get: jest.fn(() => null),
@@ -364,12 +360,12 @@ describe('LocalStrategy', () => {
         'StrongAuth123!',
       );
 
-      expect(result.role).toBe(UserRole.OPERATOR);
+      expect(result.role).toBe(UserRole.MANAGER);
       expect(result.organizationId).toBe('oil-company-456');
       expect(mockAuthService.validateUserCredentials).toHaveBeenCalledWith(
         'field.operator@oilcompany.com',
         'StrongAuth123!',
-        // eslint-disable-next-line sonarjs/no-hardcoded-ip
+
         '192.168.100.50',
         undefined, // userAgent
       );
@@ -382,7 +378,7 @@ describe('LocalStrategy', () => {
         Email.create('inspector@agency.gov'),
         'Regulatory',
         'Inspector',
-        UserRole.REGULATOR,
+        UserRole.OWNER,
         '+1234567890',
         (await Password.create('StrongAuth123!')).getHashedValue(),
         true,
@@ -404,7 +400,7 @@ describe('LocalStrategy', () => {
         'StrongAuth123!',
       );
 
-      expect(result.role).toBe(UserRole.REGULATOR);
+      expect(result.role).toBe(UserRole.OWNER);
       expect(result.organizationId).toBe('regulatory-agency-789');
       expect(mockAuthService.validateUserCredentials).toHaveBeenCalledWith(
         'inspector@agency.gov',

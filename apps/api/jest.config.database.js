@@ -49,11 +49,11 @@ module.exports = {
   },
 
   // Environment variables for tests
-  setupFiles: ['<rootDir>/database/__tests__/env.ts'],
+  setupFiles: ['<rootDir>/database/env.ts'],
 
   // Global setup and teardown
-  globalSetup: '<rootDir>/database/__tests__/global-setup.ts',
-  globalTeardown: '<rootDir>/database/__tests__/global-teardown.ts',
+  globalSetup: '<rootDir>/database/global-setup.ts',
+  globalTeardown: '<rootDir>/database/global-teardown.ts',
 
   // Transform configuration
   transform: {

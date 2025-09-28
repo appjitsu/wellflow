@@ -1,18 +1,18 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { VendorRatingUpdatedEvent } from '../vendor-rating-updated.event';
+import { VendorRating } from '../../enums/vendor-status.enum';
 
 describe('VendorRatingUpdatedEvent', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<VendorRatingUpdatedEvent>(/* VendorRatingUpdatedEvent */);
-  });
-
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    const event = new VendorRatingUpdatedEvent(
+      'vendor1',
+      'org1',
+      VendorRating.EXCELLENT,
+      VendorRating.GOOD,
+      'user1',
+    );
+    expect(event).toBeDefined();
+    expect(event.vendorId).toBe('vendor1');
+    expect(event.oldRating).toBe(VendorRating.EXCELLENT);
+    expect(event.newRating).toBe(VendorRating.GOOD);
   });
 });

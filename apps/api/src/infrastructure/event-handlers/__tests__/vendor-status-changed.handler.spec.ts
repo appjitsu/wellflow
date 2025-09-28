@@ -1,18 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { VendorStatusChangedHandler } from '../vendor-status-changed.handler';
 
 describe('VendorStatusChangedHandler', () => {
-  let service: any;
+  let handler: VendorStatusChangedHandler;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [VendorStatusChangedHandler],
     }).compile();
 
-    service =
-      module.get<VendorStatusChangedHandler>(/* VendorStatusChangedHandler */);
+    handler = module.get<VendorStatusChangedHandler>(
+      VendorStatusChangedHandler,
+    );
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(handler).toBeDefined();
   });
 });

@@ -3,7 +3,6 @@ import { CreatePermitHandler } from '../create-permit.handler';
 import { CreatePermitCommand } from '../../commands/create-permit.command';
 import { PermitRepository } from '../../../domain/repositories/permit.repository';
 import { Permit } from '../../../domain/entities/permit.entity';
-import { PermitType } from '../../../domain/value-objects/permit-type.vo';
 
 describe('CreatePermitHandler', () => {
   let handler: CreatePermitHandler;

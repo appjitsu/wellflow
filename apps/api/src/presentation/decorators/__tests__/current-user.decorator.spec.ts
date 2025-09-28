@@ -1,5 +1,5 @@
 import { ExecutionContext } from '@nestjs/common';
-import { CurrentUser } from '../current-user.decorator';
+import { CurrentUser, currentUserFactory } from '../current-user.decorator';
 
 describe('CurrentUser Decorator', () => {
   let mockExecutionContext: ExecutionContext;
@@ -34,7 +34,7 @@ describe('CurrentUser Decorator', () => {
 
       mockRequest.user = mockUser;
 
-      const result = CurrentUser(null, mockExecutionContext);
+      const result = currentUserFactory(null, mockExecutionContext) as any;
 
       expect(result).toEqual(mockUser);
     });
@@ -42,7 +42,7 @@ describe('CurrentUser Decorator', () => {
     it('should return undefined when no user is present', () => {
       mockRequest.user = undefined;
 
-      const result = CurrentUser(null, mockExecutionContext);
+      const result = currentUserFactory(null, mockExecutionContext) as any;
 
       expect(result).toBeUndefined();
     });
@@ -50,7 +50,7 @@ describe('CurrentUser Decorator', () => {
     it('should return null when user is null', () => {
       mockRequest.user = null;
 
-      const result = CurrentUser(null, mockExecutionContext);
+      const result = currentUserFactory(null, mockExecutionContext) as any;
 
       expect(result).toBeNull();
     });
@@ -58,7 +58,7 @@ describe('CurrentUser Decorator', () => {
     it('should handle empty user object', () => {
       mockRequest.user = {};
 
-      const result = CurrentUser(null, mockExecutionContext);
+      const result = currentUserFactory(null, mockExecutionContext) as any;
 
       expect(result).toEqual({});
     });
@@ -77,7 +77,7 @@ describe('CurrentUser Decorator', () => {
 
       mockRequest.user = operatorUser;
 
-      const result = CurrentUser(null, mockExecutionContext);
+      const result = currentUserFactory(null, mockExecutionContext) as any;
 
       expect(result).toEqual(operatorUser);
       expect(result.roles).toContain('OPERATOR');
@@ -95,7 +95,7 @@ describe('CurrentUser Decorator', () => {
 
       mockRequest.user = regulatorUser;
 
-      const result = CurrentUser(null, mockExecutionContext);
+      const result = currentUserFactory(null, mockExecutionContext) as any;
 
       expect(result).toEqual(regulatorUser);
       expect(result.roles).toContain('REGULATOR');
@@ -113,7 +113,7 @@ describe('CurrentUser Decorator', () => {
 
       mockRequest.user = adminUser;
 
-      const result = CurrentUser(null, mockExecutionContext);
+      const result = currentUserFactory(null, mockExecutionContext) as any;
 
       expect(result).toEqual(adminUser);
       expect(result.roles).toContain('ADMIN');
@@ -130,7 +130,7 @@ describe('CurrentUser Decorator', () => {
 
       mockRequest.user = viewerUser;
 
-      const result = CurrentUser(null, mockExecutionContext);
+      const result = currentUserFactory(null, mockExecutionContext) as any;
 
       expect(result).toEqual(viewerUser);
       expect(result.roles).toContain('VIEWER');
@@ -159,7 +159,7 @@ describe('CurrentUser Decorator', () => {
 
       mockRequest.user = complexUser;
 
-      const result = CurrentUser(null, mockExecutionContext);
+      const result = currentUserFactory(null, mockExecutionContext) as any;
 
       expect(result).toEqual(complexUser);
       expect(result.profile.professional.roles).toContain('ENGINEER');
@@ -175,7 +175,7 @@ describe('CurrentUser Decorator', () => {
 
       mockRequest.user = userWithArrays;
 
-      const result = CurrentUser(null, mockExecutionContext);
+      const result = currentUserFactory(null, mockExecutionContext) as any;
 
       expect(result).toEqual(userWithArrays);
       expect(result.roles).toHaveLength(3);
@@ -193,7 +193,7 @@ describe('CurrentUser Decorator', () => {
 
       mockRequest.user = userWithSpecialChars;
 
-      const result = CurrentUser(null, mockExecutionContext);
+      const result = currentUserFactory(null, mockExecutionContext) as any;
 
       expect(result).toEqual(userWithSpecialChars);
       expect(result.name).toBe('José María González');
@@ -213,8 +213,11 @@ describe('CurrentUser Decorator', () => {
       const mockUser = { id: 'user-123' };
       mockRequest.user = mockUser;
 
-      const result1 = CurrentUser(null, mockExecutionContext);
-      const result2 = CurrentUser('someData', mockExecutionContext);
+      const result1 = currentUserFactory(null, mockExecutionContext) as any;
+      const result2 = currentUserFactory(
+        'someData',
+        mockExecutionContext,
+      ) as any;
 
       expect(result1).toEqual(mockUser);
       expect(result2).toEqual(mockUser);
@@ -231,7 +234,7 @@ describe('CurrentUser Decorator', () => {
 
       mockExecutionContext.switchToHttp = mockSwitchToHttp;
 
-      const result = CurrentUser(null, mockExecutionContext);
+      const result = currentUserFactory(null, mockExecutionContext) as any;
 
       expect(mockSwitchToHttp).toHaveBeenCalled();
       expect(mockGetRequest).toHaveBeenCalled();
@@ -251,7 +254,10 @@ describe('CurrentUser Decorator', () => {
       mockRequest.user = user;
 
       // Simulate how it would be used in a controller
-      const extractedUser = CurrentUser(null, mockExecutionContext);
+      const extractedUser = currentUserFactory(
+        null,
+        mockExecutionContext,
+      ) as any;
 
       expect(extractedUser).toEqual(user);
       expect(extractedUser.roles).toContain('OPERATOR');
@@ -268,7 +274,7 @@ describe('CurrentUser Decorator', () => {
 
       mockRequest.user = jwtUser;
 
-      const result = CurrentUser(null, mockExecutionContext);
+      const result = currentUserFactory(null, mockExecutionContext) as any;
 
       expect(result).toEqual(jwtUser);
       expect(result.iat).toBeDefined();

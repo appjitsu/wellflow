@@ -32,7 +32,7 @@ export const environmentalMonitoring = pgTable(
       length: 100,
     }).notNull(),
     monitoringType: varchar('monitoring_type', { length: 50 }).notNull(), // air|water|waste|ghg|continuous_emission|ldar
-    // eslint-disable-next-line no-secrets/no-secrets
+
     monitoringCategory: varchar('monitoring_category', { length: 50 }), // emissions|quality|discharge|leak_detection
 
     // Location and facility
@@ -137,7 +137,7 @@ export const wasteManagement = pgTable(
 
     // Waste identification
     wasteManifestId: varchar('waste_manifest_id', { length: 100 }).notNull(),
-    // eslint-disable-next-line no-secrets/no-secrets
+
     wasteType: varchar('waste_type', { length: 50 }).notNull(), // produced_water|drilling_waste|hazardous|non_hazardous|special_waste
     wasteCategory: varchar('waste_category', { length: 50 }), // liquid|solid|sludge|slurry
 

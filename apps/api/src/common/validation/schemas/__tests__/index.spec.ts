@@ -1,17 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import * as schemas from '../index';
 
-describe('index', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<index>(/* index */);
-  });
-
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+describe('Validation Schemas Index', () => {
+  it('should export all schemas', () => {
+    expect(schemas.userSchemas).toBeDefined();
+    expect(schemas.organizationSchemas).toBeDefined();
+    expect(schemas.leaseSchemas).toBeDefined();
+    expect(schemas.wellSchemas).toBeDefined();
+    expect(schemas.productionSchemas).toBeDefined();
+    expect(schemas.partnerSchemas).toBeDefined();
   });
 });

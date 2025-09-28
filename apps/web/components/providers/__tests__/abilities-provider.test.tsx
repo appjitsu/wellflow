@@ -38,6 +38,7 @@ describe('AbilitiesProvider', () => {
       email: 'admin@example.com',
       roles: ['ADMIN'],
       operatorId: 'operator-1',
+      organizationId: 'org-1',
     };
 
     render(
@@ -57,6 +58,7 @@ describe('AbilitiesProvider', () => {
       email: 'admin@example.com',
       roles: ['ADMIN'],
       operatorId: 'operator-1',
+      organizationId: 'org-1',
     };
 
     const viewerUser = {
@@ -64,6 +66,7 @@ describe('AbilitiesProvider', () => {
       email: 'viewer@example.com',
       roles: ['VIEWER'],
       operatorId: 'operator-1',
+      organizationId: 'org-1',
     };
 
     const { rerender } = render(
@@ -105,6 +108,7 @@ describe('AbilitiesProvider', () => {
       email: 'operator@example.com',
       roles: ['OPERATOR'],
       operatorId: 'operator-1',
+      organizationId: 'org-1',
     };
 
     const ConditionalComponent = () => {
@@ -145,6 +149,7 @@ describe('AbilitiesProvider', () => {
       email: 'operator@example.com',
       roles: ['OPERATOR'],
       operatorId: 'operator-1',
+      organizationId: 'org-1',
     };
 
     const BasicPermissionsComponent = () => {

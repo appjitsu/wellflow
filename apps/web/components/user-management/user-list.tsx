@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable sonarjs/prefer-read-only-props */
+
 import { useState } from 'react';
 import { MoreHorizontal, Edit, Trash2, UserCheck, UserX, Shield } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -18,7 +20,7 @@ import {
   DropdownMenuSubTrigger,
 } from '../ui/dropdown-menu';
 import { Skeleton } from '../ui/skeleton';
-import { Can } from '../providers/abilities-provider';
+import { useAbilities } from '../providers/abilities-provider';
 import type { UserListProps, User, UserRole } from '../../types/user';
 
 /**
@@ -38,6 +40,7 @@ export function UserList({
   onAssignRole,
   onToggleStatus,
 }: UserListProps) {
+  const { Can } = useAbilities();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   // Get user initials for avatar

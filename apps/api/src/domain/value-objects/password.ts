@@ -52,6 +52,26 @@ export class Password {
   }
 
   /**
+   * Create a new Password with password history validation
+   * Prevents reuse of the last 5 passwords
+   */
+  static async createWithHistoryValidation(
+    plainTextPassword: string,
+    passwordHistory: string[],
+  ): Promise<Password> {
+    Password.validatePasswordStrength(plainTextPassword);
+
+    // Check against password history
+    await Password.validateAgainstHistory(plainTextPassword, passwordHistory);
+
+    const hashedValue = await bcrypt.hash(
+      plainTextPassword,
+      Password.SALT_ROUNDS,
+    );
+    return new Password(hashedValue);
+  }
+
+  /**
    * Create a Password from an already hashed value (for loading from database)
    */
   static fromHash(hashedValue: string): Password {
@@ -59,6 +79,31 @@ export class Password {
       throw new Error('Hashed password value is required');
     }
     return new Password(hashedValue);
+  }
+
+  /**
+   * Validate password against history to prevent reuse
+   */
+  private static async validateAgainstHistory(
+    plainTextPassword: string,
+    passwordHistory: string[],
+  ): Promise<void> {
+    if (!passwordHistory || passwordHistory.length === 0) {
+      return; // No history to check against
+    }
+
+    // Check if the new password matches any of the previous passwords
+    for (const historicalPasswordHash of passwordHistory) {
+      const matches = await bcrypt.compare(
+        plainTextPassword,
+        historicalPasswordHash,
+      );
+      if (matches) {
+        throw new Error(
+          'Password cannot be the same as any of your last 5 passwords. Please choose a different password.',
+        );
+      }
+    }
   }
 
   /**
@@ -126,9 +171,8 @@ export class Password {
       );
     }
 
-    // eslint-disable-next-line no-secrets/no-secrets
     const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    // eslint-disable-next-line no-secrets/no-secrets
+
     const lowercase = 'abcdefghijklmnopqrstuvwxyz';
     const numbers = '0123456789';
     const special = '!@#$%^&*()_+-=[]{}|;:,.<>?';

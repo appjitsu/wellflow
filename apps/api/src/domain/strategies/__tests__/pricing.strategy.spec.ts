@@ -1,18 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { StandardMarketPricingStrategy } from '../pricing.strategy';
 
 describe('StandardMarketPricingStrategy', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<StandardMarketPricingStrategy>(/* StandardMarketPricingStrategy */);
-  });
-
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    const strategy = new StandardMarketPricingStrategy();
+    expect(strategy).toBeDefined();
   });
 });

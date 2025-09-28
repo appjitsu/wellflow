@@ -1,18 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { NinetyDayRenewalStrategy } from '../permit-renewal-notification.strategy';
 
 describe('NinetyDayRenewalStrategy', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<NinetyDayRenewalStrategy>(/* NinetyDayRenewalStrategy */);
-  });
-
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    const strategy = new NinetyDayRenewalStrategy();
+    expect(strategy).toBeDefined();
   });
 });

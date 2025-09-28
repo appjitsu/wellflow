@@ -1,14 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { EPARegulatoryACL } from '../epa-regulatory-acl';
 
 describe('EPARegulatoryACL', () => {
-  let service: any;
+  let service: EPARegulatoryACL;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [EPARegulatoryACL],
     }).compile();
 
-    service = module.get<EPARegulatoryACL>(/* EPARegulatoryACL */);
+    service = module.get<EPARegulatoryACL>(EPARegulatoryACL);
   });
 
   it('should be defined', () => {

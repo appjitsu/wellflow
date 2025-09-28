@@ -1,18 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { DivisionOrderUpdatedEvent } from '../division-order-updated.event';
 
 describe('DivisionOrderUpdatedEvent', () => {
-  let service: any;
+  let event: DivisionOrderUpdatedEvent;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [DivisionOrderUpdatedEvent],
     }).compile();
 
-    service =
-      module.get<DivisionOrderUpdatedEvent>(/* DivisionOrderUpdatedEvent */);
+    event = module.get<DivisionOrderUpdatedEvent>(DivisionOrderUpdatedEvent);
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(event).toBeDefined();
   });
 });

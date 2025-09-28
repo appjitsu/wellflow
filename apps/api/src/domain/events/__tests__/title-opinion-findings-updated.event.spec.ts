@@ -1,18 +1,19 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { TitleOpinionFindingsUpdatedEvent } from '../title-opinion-findings-updated.event';
 
 describe('TitleOpinionFindingsUpdatedEvent', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<TitleOpinionFindingsUpdatedEvent>(/* TitleOpinionFindingsUpdatedEvent */);
-  });
-
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    const event = new TitleOpinionFindingsUpdatedEvent(
+      'opinion-123',
+      'user-456',
+      'Old findings',
+      'New findings',
+      'Old recs',
+      'New recs',
+    );
+
+    expect(event).toBeDefined();
+    expect(event.eventType).toBe('TitleOpinionFindingsUpdated');
+    expect(event.titleOpinionId).toBe('opinion-123');
+    expect(event.updatedBy).toBe('user-456');
   });
 });

@@ -1,18 +1,10 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { PermitExpiringSoonSpecification } from '../compliance.specifications';
 
 describe('PermitExpiringSoonSpecification', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service =
-      module.get<PermitExpiringSoonSpecification>(/* PermitExpiringSoonSpecification */);
-  });
-
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    const spec = new PermitExpiringSoonSpecification(30);
+
+    expect(spec).toBeDefined();
+    expect(spec.getMetadata().name).toBe('PermitExpiringSoon');
   });
 });

@@ -6,12 +6,13 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
-import { User, UserRole } from '../domain/entities/user.entity';
-import { Email } from '../domain/value-objects/email';
-import { Password } from '../domain/value-objects/password';
-import { AuditLogService } from '../application/services/audit-log.service';
-import { EmailService } from '../application/services/email.service';
-import { OrganizationsService } from '../organizations/organizations.service';
+import { User, UserRole } from '@/domain/entities/user.entity';
+import { Email } from '@/domain/value-objects/email';
+import { Password } from '@/domain/value-objects/password';
+import { AuditLogService } from '@/application/services/audit-log.service';
+import { EmailService } from '@/application/services/email.service';
+import { OrganizationsService } from '@/organizations/organizations.service';
+import { SuspiciousActivityDetectorService } from '@/application/services/suspicious-activity-detector.service';
 
 /**
  * Integration Test for Authentication System
@@ -46,6 +47,24 @@ describe('Authentication System Integration', () => {
 
   const mockOrganizationsService = {
     createOrganization: jest.fn(),
+  };
+
+  const mockPasswordHistoryRepository = {
+    save: jest.fn(),
+    getPasswordHashesByUserId: jest.fn(),
+    cleanupOldEntries: jest.fn(),
+  };
+
+  const mockSuspiciousActivityDetectorService = {
+    analyzeLoginAttempt: jest.fn().mockResolvedValue({
+      isSuspicious: false,
+      riskLevel: 'LOW',
+      reasons: [],
+      recommendedActions: [],
+    }),
+    detectSuspiciousLogin: jest.fn(),
+    detectBruteForce: jest.fn(),
+    logSuspiciousActivity: jest.fn(),
   };
 
   const mockConfigService = {
@@ -97,6 +116,14 @@ describe('Authentication System Integration', () => {
         {
           provide: ConfigService,
           useValue: mockConfigService,
+        },
+        {
+          provide: 'PasswordHistoryRepository',
+          useValue: mockPasswordHistoryRepository,
+        },
+        {
+          provide: SuspiciousActivityDetectorService,
+          useValue: mockSuspiciousActivityDetectorService,
         },
       ],
     }).compile();
@@ -354,7 +381,7 @@ describe('Authentication System Integration', () => {
 
       const registerData = {
         email: 'owner@newcompany.com',
-        // eslint-disable-next-line sonarjs/no-hardcoded-passwords
+
         password: 'MyStr0ngP@ssw0rd2024!',
         firstName: 'Jane',
         lastName: 'Smith',
@@ -382,7 +409,7 @@ describe('Authentication System Integration', () => {
 
       const registerData = {
         email: 'owner@newcompany.com',
-        // eslint-disable-next-line sonarjs/no-hardcoded-passwords
+
         password: 'MyStr0ngP@ssw0rd2024!',
         firstName: 'Jane',
         lastName: 'Smith',
@@ -402,7 +429,7 @@ describe('Authentication System Integration', () => {
 
       const registerData = {
         email: 'user@existingcompany.com',
-        // eslint-disable-next-line sonarjs/no-hardcoded-passwords
+
         password: 'MyStr0ngP@ssw0rd2024!',
         firstName: 'John',
         lastName: 'Doe',

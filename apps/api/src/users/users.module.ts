@@ -6,8 +6,6 @@ import { DatabaseModule } from '../database/database.module';
 import { RedisModule } from '../redis/redis.module';
 import { AuthorizationModule } from '../authorization/authorization.module';
 import { ValidationModule } from '../common/validation/validation.module';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import type * as schema from '../database/schema';
 
 @Module({
   imports: [DatabaseModule, RedisModule, AuthorizationModule, ValidationModule],

@@ -1,11 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { eq, ilike, and } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { BaseRepository } from './base.repository';
 import { DatabaseService } from '../../database/database.service';
 import { AuditResourceType } from '../../domain/entities/audit-log.entity';
 import { organizations } from '../../database/schema';
-import * as schema from '../../database/schema';
 
 /**
  * Organization Repository Implementation

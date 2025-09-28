@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { eq, and, desc, like, sql } from 'drizzle-orm';
 import { IAfeRepository } from '../../domain/repositories/afe.repository.interface';
 import { Afe } from '../../domain/entities/afe.entity';

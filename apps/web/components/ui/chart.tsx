@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable react/no-danger, security/detect-object-injection */
+
 import * as React from 'react';
 import * as RechartsPrimitive from 'recharts';
 
@@ -94,7 +96,16 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
 
-const ChartTooltipContent = React.forwardRef<
+const ChartTooltipContent: React.ForwardRefExoticComponent<
+  React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
+    React.ComponentProps<'div'> & {
+      hideLabel?: boolean;
+      hideIndicator?: boolean;
+      indicator?: 'line' | 'dot' | 'dashed';
+      nameKey?: string;
+      labelKey?: string;
+    } & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
     React.ComponentProps<'div'> & {

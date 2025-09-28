@@ -1,17 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { ReportOverdueEvent } from '../report-overdue.event';
 
 describe('ReportOverdueEvent', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<ReportOverdueEvent>(/* ReportOverdueEvent */);
-  });
-
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should create a valid event', () => {
+    const event = new ReportOverdueEvent(
+      'report-123',
+      'PR',
+      'TX_RRC',
+      new Date('2023-02-01'),
+    );
+    expect(event).toBeDefined();
+    expect(event.eventType).toBe('ReportOverdue');
+    expect(event.aggregateId).toBe('report-123');
   });
 });

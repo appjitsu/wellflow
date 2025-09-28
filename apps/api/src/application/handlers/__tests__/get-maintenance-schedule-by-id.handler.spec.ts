@@ -1,18 +1,28 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { GetMaintenanceScheduleByIdHandler } from '../get-maintenance-schedule-by-id.handler';
 
 describe('GetMaintenanceScheduleByIdHandler', () => {
-  let service: any;
+  let handler: GetMaintenanceScheduleByIdHandler;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        GetMaintenanceScheduleByIdHandler,
+        {
+          provide: 'MaintenanceScheduleRepository',
+          useValue: {
+            findById: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
-    service =
-      module.get<GetMaintenanceScheduleByIdHandler>(/* GetMaintenanceScheduleByIdHandler */);
+    handler = module.get<GetMaintenanceScheduleByIdHandler>(
+      GetMaintenanceScheduleByIdHandler,
+    );
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(handler).toBeDefined();
   });
 });

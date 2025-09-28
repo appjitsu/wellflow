@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { LeasesService } from '../leases.service';
-import type { LeaseRepository } from '../domain/repositories/lease.repository.interface';
-import { TenantContextService } from '../common/tenant/tenant-context.service';
+import type { LeaseRepository } from '../../domain/repositories/lease.repository.interface';
+import { TenantContextService } from '../../common/tenant/tenant-context.service';
 
 describe('LeasesService', () => {
   let service: LeasesService;

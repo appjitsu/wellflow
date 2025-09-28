@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LogRocketService } from '../logrocket.service';
-import { AppConfigService } from '../config/app.config';
+import { AppConfigService } from '../../config/app.config';
 import LogRocket from 'logrocket';
 
 // Mock LogRocket

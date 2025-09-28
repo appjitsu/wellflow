@@ -48,7 +48,11 @@ class DecimalPrecisionConstraint implements ValidatorConstraintInterface {
       string | undefined,
     ];
 
-    if (!isNumeric(integerPart) || integerPart.length > maxIntegerDigits) {
+    if (
+      !isNumeric(integerPart) ||
+      (maxIntegerDigits > 0 && integerPart.length > maxIntegerDigits) ||
+      (maxIntegerDigits === 0 && integerPart !== '' && integerPart !== '0')
+    ) {
       return false;
     }
 

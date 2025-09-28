@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { eq } from 'drizzle-orm';
-import * as schema from '../../database/schema';
 import { jibStatements } from '../../database/schemas/jib-statements';
 import {
   JibStatement,

@@ -1,8 +1,9 @@
 // Authentication hooks using React Query
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { authApi, type ChangePasswordRequest, type ProfileUpdateRequest } from '../lib/api/auth';
-import type { User, ActivityEvent } from '../types/user';
+import type { User } from '../types/user';
 
 // Query keys for React Query
 export const authKeys = {
@@ -49,7 +50,6 @@ export function useUpdateProfile() {
       });
     },
     onError: (error: any) => {
-      console.error('Failed to update profile:', error);
       toast.error('Failed to update profile', {
         description: error?.message || 'Please try again later',
       });
@@ -75,7 +75,6 @@ export function useChangePassword() {
       });
     },
     onError: (error: any) => {
-      console.error('Failed to change password:', error);
       toast.error('Failed to change password', {
         description: error?.message || 'Please check your current password and try again',
       });
@@ -123,7 +122,6 @@ export function useLogin() {
       });
     },
     onError: (error: any) => {
-      console.error('Login failed:', error);
       toast.error('Login failed', {
         description: error?.message || 'Please check your credentials and try again',
       });
@@ -150,7 +148,6 @@ export function useLogout() {
       toast.success('Logged out successfully');
     },
     onError: (error: any) => {
-      console.error('Logout failed:', error);
       // Still clear tokens even if API call fails
       localStorage.removeItem('auth_token');
       localStorage.removeItem('refresh_token');

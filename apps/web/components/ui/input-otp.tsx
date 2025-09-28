@@ -1,25 +1,28 @@
 'use client';
 
+/* eslint-disable security/detect-object-injection */
 import * as React from 'react';
 import { OTPInput, OTPInputContext } from 'input-otp';
+
 import { Dot } from 'lucide-react';
 
 import { cn } from '../../lib/utils';
 
-const InputOTP = React.forwardRef<
-  React.ElementRef<typeof OTPInput>,
-  React.ComponentPropsWithoutRef<typeof OTPInput>
->(({ className, containerClassName, ...props }, ref) => (
-  <OTPInput
-    ref={ref}
-    containerClassName={cn(
-      'flex items-center gap-2 has-[:disabled]:opacity-50',
-      containerClassName
-    )}
-    className={cn('disabled:cursor-not-allowed', className)}
-    {...props}
-  />
-));
+const InputOTP: React.ForwardRefExoticComponent<React.ComponentPropsWithoutRef<typeof OTPInput>> =
+  React.forwardRef<
+    React.ElementRef<typeof OTPInput>,
+    React.ComponentPropsWithoutRef<typeof OTPInput>
+  >(({ className, containerClassName, ...props }, ref) => (
+    <OTPInput
+      ref={ref}
+      containerClassName={cn(
+        'flex items-center gap-2 has-[:disabled]:opacity-50',
+        containerClassName
+      )}
+      className={cn('disabled:cursor-not-allowed', className)}
+      {...props}
+    />
+  ));
 InputOTP.displayName = 'InputOTP';
 
 const InputOTPGroup = React.forwardRef<
@@ -34,8 +37,12 @@ const InputOTPSlot = React.forwardRef<
   React.ElementRef<'div'>,
   React.ComponentPropsWithoutRef<'div'> & { index: number }
 >(({ index, className, ...props }, ref) => {
-  const inputOTPContext = React.useContext(OTPInputContext);
-  const { char, hasFakeCaret, isActive } = inputOTPContext.slots[index];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const inputOTPContext = React.useContext(OTPInputContext as any) as {
+    slots: Array<{ char: string; hasFakeCaret: boolean; isActive: boolean }>;
+  };
+  const slot = inputOTPContext.slots[index] || { char: '', hasFakeCaret: false, isActive: false };
+  const { char, hasFakeCaret, isActive } = slot;
 
   return (
     <div

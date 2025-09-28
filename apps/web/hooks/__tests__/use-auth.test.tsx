@@ -1,4 +1,5 @@
 // Auth hooks tests
+/* eslint-disable sonarjs/no-hardcoded-passwords, sonarjs/no-hardcoded-ip */
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -31,9 +32,11 @@ const createWrapper = () => {
     },
   });
 
-  return ({ children }: { children: React.ReactNode }) => (
+  const TestWrapper = ({ children }: { children: React.ReactNode | any }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
+  TestWrapper.displayName = 'TestWrapper';
+  return TestWrapper;
 };
 
 describe('Auth Hooks', () => {

@@ -1,17 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { organizations, users, leases } from '../index';
 
-describe('index', () => {
-  let service: any;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
-
-    service = module.get<index>(/* index */);
+describe('schemas index', () => {
+  it('should export organizations', () => {
+    expect(organizations).toBeDefined();
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should export users', () => {
+    expect(users).toBeDefined();
+  });
+
+  it('should export leases', () => {
+    expect(leases).toBeDefined();
   });
 });

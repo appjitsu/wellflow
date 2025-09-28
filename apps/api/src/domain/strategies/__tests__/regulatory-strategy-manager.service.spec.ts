@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { RegulatoryStrategyManagerService } from '../regulatory-strategy-manager.service';
 
 describe('RegulatoryStrategyManagerService', () => {
-  let service: any;
+  let service: RegulatoryStrategyManagerService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [RegulatoryStrategyManagerService],
     }).compile();
 
-    service =
-      module.get<RegulatoryStrategyManagerService>(/* RegulatoryStrategyManagerService */);
+    service = module.get(RegulatoryStrategyManagerService);
   });
 
   it('should be defined', () => {

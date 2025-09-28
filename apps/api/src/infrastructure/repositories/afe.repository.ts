@@ -1,11 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { eq, and, gte, lte, desc, sum } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { BaseRepository } from './base.repository';
 import { DatabaseService } from '../../database/database.service';
 import { AuditResourceType } from '../../domain/entities/audit-log.entity';
 import { afes, afeLineItems, afeApprovals } from '../../database/schema';
-import * as schema from '../../database/schema';
 
 /**
  * AFE (Authorization for Expenditure) Repository Implementation

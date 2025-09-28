@@ -1,17 +1,25 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { PerformanceTestCommand } from '../performance-test.command';
 
 describe('PerformanceTestCommand', () => {
-  let service: any;
+  let command: PerformanceTestCommand;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [],
-    }).compile();
+  beforeEach(() => {
+    const mockPerformanceTestService = {
+      runPerformanceTestSuite: jest.fn(),
+    };
+    const mockConfigService = {
+      get: jest.fn(),
+    };
+    const mockDb = {} as any;
 
-    service = module.get<PerformanceTestCommand>(/* PerformanceTestCommand */);
+    command = new PerformanceTestCommand(
+      mockPerformanceTestService as any,
+      mockConfigService as any,
+      mockDb,
+    );
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(command).toBeDefined();
   });
 });

@@ -1,14 +1,28 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { LogRocketService } from '../logrocket.service';
+import { AppConfigService } from '../../config/app.config';
 
-describe('LogRocketModule', () => {
-  let service: any;
+describe('LogRocketService', () => {
+  let service: LogRocketService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        LogRocketService,
+        {
+          provide: AppConfigService,
+          useValue: {
+            get: jest.fn(),
+            isProduction: jest.fn(),
+            getLogRocketConfig: jest.fn(),
+            logRocketAppId: 'test-app-id',
+            nodeEnv: 'test',
+          },
+        },
+      ],
     }).compile();
 
-    service = module.get<LogRocketModule>(/* LogRocketModule */);
+    service = module.get<LogRocketService>(LogRocketService);
   });
 
   it('should be defined', () => {

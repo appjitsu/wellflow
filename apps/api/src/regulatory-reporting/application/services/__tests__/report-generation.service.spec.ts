@@ -1,15 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ReportGenerationService } from '../report-generation.service';
 
 describe('ReportGenerationService', () => {
-  let service: any;
+  let service: ReportGenerationService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        ReportGenerationService,
+        {
+          provide: 'ReportInstanceRepository',
+          useValue: {
+            save: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
-    service =
-      module.get<ReportGenerationService>(/* ReportGenerationService */);
+    service = module.get<ReportGenerationService>(ReportGenerationService);
   });
 
   it('should be defined', () => {

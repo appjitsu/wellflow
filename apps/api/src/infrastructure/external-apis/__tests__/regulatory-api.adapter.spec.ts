@@ -1,9 +1,6 @@
 import {
   RegulatoryApiAdapter,
   RegulatoryReport,
-  SubmissionResult,
-  SubmissionStatus,
-  ValidationResult,
   HttpClient,
 } from '../regulatory-api.adapter';
 import { CircuitBreakerService } from '../../../common/resilience/circuit-breaker.service';

@@ -1,9 +1,10 @@
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from '../../../database/database.module';
 import { DatabaseService } from '../../../database/database.service';
-import { RepositoryModule } from '../repository.module';
 import { LeaseRepository } from '../lease.repository';
 import { Test, TestingModule } from '@nestjs/testing';
+import { organizations } from '../../../database/schemas/organizations';
+import { eq } from 'drizzle-orm';
 
 /**
  * Lease Repository Integration Tests
@@ -46,6 +47,49 @@ describe('LeaseRepository Integration', () => {
     // Initialize the database
     await databaseService.onModuleInit();
     db = databaseService.getDb();
+
+    // Clean up any existing test data more thoroughly
+    try {
+      // First clean up leases that might reference the organization
+      await db
+        .delete(require('../../../database/schema').leases)
+        .where(
+          require('drizzle-orm').eq(
+            require('../../../database/schema').leases.organizationId,
+            TEST_ORG_ID,
+          ),
+        );
+    } catch (error) {
+      // Ignore cleanup errors
+      console.warn('Cleanup error (ignored):', error);
+    }
+
+    try {
+      await db.delete(organizations).where(eq(organizations.id, TEST_ORG_ID));
+    } catch (error) {
+      // Ignore cleanup errors
+      console.warn('Cleanup error (ignored):', error);
+    }
+
+    // Create test organization with upsert-like behavior
+    try {
+      await db.insert(organizations).values({
+        id: TEST_ORG_ID,
+        name: 'Test Organization LLC',
+        taxId: '12-3456789',
+      });
+    } catch (error) {
+      // If organization already exists, that's fine - we'll use it
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      if (
+        !errorMessage.includes('duplicate key') &&
+        !errorMessage.includes('unique constraint')
+      ) {
+        throw error;
+      }
+      // Organization already exists, continue with the test
+    }
   });
 
   beforeEach(async () => {
@@ -61,6 +105,7 @@ describe('LeaseRepository Integration', () => {
         );
     } catch (error) {
       // Ignore cleanup errors
+      console.warn('Cleanup error (ignored):', error);
     }
   });
 
@@ -77,6 +122,15 @@ describe('LeaseRepository Integration', () => {
         );
     } catch (error) {
       // Ignore cleanup errors
+      console.warn('Cleanup error (ignored):', error);
+    }
+
+    // Clean up test organization
+    try {
+      await db.delete(organizations).where(eq(organizations.id, TEST_ORG_ID));
+    } catch (error) {
+      // Ignore cleanup errors
+      console.warn('Cleanup error (ignored):', error);
     }
   });
 
@@ -202,9 +256,9 @@ describe('LeaseRepository Integration', () => {
 
       // Then - Verify correct leases found
       expect(activeLeases).toHaveLength(1);
-      expect(activeLeases[0].name).toBe('Active Lease');
+      expect(activeLeases[0]?.name).toBe('Active Lease');
       expect(expiredLeases).toHaveLength(1);
-      expect(expiredLeases[0].name).toBe('Expired Lease');
+      expect(expiredLeases[0]?.name).toBe('Expired Lease');
     });
   });
 
@@ -238,7 +292,7 @@ describe('LeaseRepository Integration', () => {
 
       // Then - Only the soon-to-expire lease should be found
       expect(expiring).toHaveLength(1);
-      expect(expiring[0].name).toBe('Expiring Soon');
+      expect(expiring[0]?.name).toBe('Expiring Soon');
     });
   });
 

@@ -1,5 +1,8 @@
 import { ExecutionContext } from '@nestjs/common';
-import { CurrentOrganization } from '../current-organization.decorator';
+import {
+  currentOrganizationFactory,
+  CurrentOrganization,
+} from '../current-organization.decorator';
 
 describe('CurrentOrganization Decorator', () => {
   let mockExecutionContext: ExecutionContext;
@@ -30,7 +33,7 @@ describe('CurrentOrganization Decorator', () => {
         organizationId: 'org-123',
       };
 
-      const result = CurrentOrganization(null, mockExecutionContext);
+      const result = currentOrganizationFactory(null, mockExecutionContext);
 
       expect(result).toBe('org-123');
     });
@@ -38,7 +41,7 @@ describe('CurrentOrganization Decorator', () => {
     it('should return undefined when user has no organizationId', () => {
       mockRequest.user = {};
 
-      const result = CurrentOrganization(null, mockExecutionContext);
+      const result = currentOrganizationFactory(null, mockExecutionContext);
 
       expect(result).toBeUndefined();
     });
@@ -46,7 +49,7 @@ describe('CurrentOrganization Decorator', () => {
     it('should return undefined when user is undefined', () => {
       mockRequest.user = undefined;
 
-      const result = CurrentOrganization(null, mockExecutionContext);
+      const result = currentOrganizationFactory(null, mockExecutionContext);
 
       expect(result).toBeUndefined();
     });
@@ -54,7 +57,7 @@ describe('CurrentOrganization Decorator', () => {
     it('should return undefined when user is null', () => {
       mockRequest.user = null;
 
-      const result = CurrentOrganization(null, mockExecutionContext);
+      const result = currentOrganizationFactory(null, mockExecutionContext);
 
       expect(result).toBeUndefined();
     });
@@ -64,7 +67,7 @@ describe('CurrentOrganization Decorator', () => {
         organizationId: '',
       };
 
-      const result = CurrentOrganization(null, mockExecutionContext);
+      const result = currentOrganizationFactory(null, mockExecutionContext);
 
       expect(result).toBe('');
     });
@@ -76,7 +79,7 @@ describe('CurrentOrganization Decorator', () => {
         organizationId: 'texas-oil-company',
       };
 
-      const result = CurrentOrganization(null, mockExecutionContext);
+      const result = currentOrganizationFactory(null, mockExecutionContext);
 
       expect(result).toBe('texas-oil-company');
     });
@@ -86,7 +89,7 @@ describe('CurrentOrganization Decorator', () => {
         organizationId: 'texas-railroad-commission',
       };
 
-      const result = CurrentOrganization(null, mockExecutionContext);
+      const result = currentOrganizationFactory(null, mockExecutionContext);
 
       expect(result).toBe('texas-railroad-commission');
     });
@@ -96,7 +99,7 @@ describe('CurrentOrganization Decorator', () => {
         organizationId: 'halliburton-services',
       };
 
-      const result = CurrentOrganization(null, mockExecutionContext);
+      const result = currentOrganizationFactory(null, mockExecutionContext);
 
       expect(result).toBe('halliburton-services');
     });
@@ -106,7 +109,7 @@ describe('CurrentOrganization Decorator', () => {
         organizationId: 'us-department-energy',
       };
 
-      const result = CurrentOrganization(null, mockExecutionContext);
+      const result = currentOrganizationFactory(null, mockExecutionContext);
 
       expect(result).toBe('us-department-energy');
     });
@@ -118,7 +121,7 @@ describe('CurrentOrganization Decorator', () => {
         organizationId: 'org_123-special',
       };
 
-      const result = CurrentOrganization(null, mockExecutionContext);
+      const result = currentOrganizationFactory(null, mockExecutionContext);
 
       expect(result).toBe('org_123-special');
     });
@@ -128,7 +131,7 @@ describe('CurrentOrganization Decorator', () => {
         organizationId: '12345',
       };
 
-      const result = CurrentOrganization(null, mockExecutionContext);
+      const result = currentOrganizationFactory(null, mockExecutionContext);
 
       expect(result).toBe('12345');
     });
@@ -139,7 +142,7 @@ describe('CurrentOrganization Decorator', () => {
         organizationId: longOrgId,
       };
 
-      const result = CurrentOrganization(null, mockExecutionContext);
+      const result = currentOrganizationFactory(null, mockExecutionContext);
 
       expect(result).toBe(longOrgId);
     });
@@ -158,8 +161,11 @@ describe('CurrentOrganization Decorator', () => {
         organizationId: 'org-123',
       };
 
-      const result1 = CurrentOrganization(null, mockExecutionContext);
-      const result2 = CurrentOrganization('someData', mockExecutionContext);
+      const result1 = currentOrganizationFactory(null, mockExecutionContext);
+      const result2 = currentOrganizationFactory(
+        'someData',
+        mockExecutionContext,
+      );
 
       expect(result1).toBe('org-123');
       expect(result2).toBe('org-123');
@@ -177,7 +183,7 @@ describe('CurrentOrganization Decorator', () => {
 
       mockExecutionContext.switchToHttp = mockSwitchToHttp;
 
-      const result = CurrentOrganization(null, mockExecutionContext);
+      const result = currentOrganizationFactory(null, mockExecutionContext);
 
       expect(mockSwitchToHttp).toHaveBeenCalled();
       expect(mockGetRequest).toHaveBeenCalled();
@@ -191,7 +197,7 @@ describe('CurrentOrganization Decorator', () => {
         organizationId: 'tenant-456',
       };
 
-      const result = CurrentOrganization(null, mockExecutionContext);
+      const result = currentOrganizationFactory(null, mockExecutionContext);
 
       expect(result).toBe('tenant-456');
     });
@@ -201,7 +207,7 @@ describe('CurrentOrganization Decorator', () => {
         organizationId: 'oil-company-a',
       };
 
-      const result = CurrentOrganization(null, mockExecutionContext);
+      const result = currentOrganizationFactory(null, mockExecutionContext);
 
       expect(result).toBe('oil-company-a');
     });
@@ -211,7 +217,7 @@ describe('CurrentOrganization Decorator', () => {
         organizationId: 'regulatory-agency',
       };
 
-      const result = CurrentOrganization(null, mockExecutionContext);
+      const result = currentOrganizationFactory(null, mockExecutionContext);
 
       expect(result).toBe('regulatory-agency');
     });

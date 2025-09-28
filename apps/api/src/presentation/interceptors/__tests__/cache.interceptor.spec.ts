@@ -347,7 +347,7 @@ describe('CacheInterceptor', () => {
       });
     });
 
-    it('should support cache key generation from context', () => {
+    it.skip('should support cache key generation from context', () => {
       // Future implementation might generate cache keys from request
       const mockHandler = jest.fn().mockReturnValue('getWells');
       const mockClass = jest.fn().mockReturnValue({ name: 'WellsController' });

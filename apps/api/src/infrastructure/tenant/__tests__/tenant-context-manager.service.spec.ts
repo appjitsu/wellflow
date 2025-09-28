@@ -1,15 +1,24 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { TenantContextManagerService } from '../tenant-context-manager.service';
+import { TenantIsolationDomainService } from '../../../domain/services/tenant-isolation.domain-service';
 
 describe('TenantContextManagerService', () => {
-  let service: any;
+  let service: TenantContextManagerService;
 
   beforeEach(async () => {
+    const mockTenantIsolationDomainService = {} as any;
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [],
+      providers: [
+        TenantContextManagerService,
+        {
+          provide: TenantIsolationDomainService,
+          useValue: mockTenantIsolationDomainService,
+        },
+      ],
     }).compile();
 
-    service =
-      module.get<TenantContextManagerService>(/* TenantContextManagerService */);
+    service = await module.resolve(TenantContextManagerService);
   });
 
   it('should be defined', () => {

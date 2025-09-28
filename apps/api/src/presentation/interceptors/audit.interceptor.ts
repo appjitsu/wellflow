@@ -45,7 +45,7 @@ export class AuditInterceptor implements NestInterceptor {
         this.logger.log(
           `Audit: ${method} ${url} - User: ${user?.id || 'anonymous'} - Completed in: ${duration}ms`,
         );
-        return throwError(() => error);
+        return throwError(() => error as Error);
       }),
     );
   }
