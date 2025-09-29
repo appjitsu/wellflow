@@ -32,8 +32,12 @@ const createWrapper = () => {
     },
   });
 
-  const TestWrapper = ({ children }: { children: React.ReactNode | any }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  // eslint-disable-next-line react/prop-types
+  const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+    <QueryClientProvider client={queryClient}>
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      {children as any}
+    </QueryClientProvider>
   );
   TestWrapper.displayName = 'TestWrapper';
   return TestWrapper;

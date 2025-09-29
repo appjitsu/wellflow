@@ -8,6 +8,7 @@ import { CircuitBreakerService } from '../../common/resilience/circuit-breaker.s
 import { RetryService } from '../../common/resilience/retry.service';
 import { RESILIENCE_CONFIG } from '../../common/resilience/resilience.config';
 import { ErrorFactory } from '../../common/errors/domain-errors';
+import { SSRFProtectionService } from '../../common/security/ssrf-protection.service';
 
 /**
  * Anti-Corruption Layer Interface for ERP integration
@@ -155,6 +156,7 @@ export class ERPIntegrationAdapter implements IErpAdapter {
     private readonly circuitBreakerService: CircuitBreakerService,
     @Inject(RetryService)
     private readonly retryService: RetryService,
+    private readonly ssrfProtectionService: SSRFProtectionService,
   ) {
     // Register circuit breaker for ERP service
     this.circuitBreakerService.registerCircuitBreaker('erp', {
@@ -174,6 +176,30 @@ export class ERPIntegrationAdapter implements IErpAdapter {
       this.logger.log(
         `Submitting invoice ${domainInvoice.invoiceNumber} to ERP system`,
       );
+
+      // OWASP API10:2023 - SSRF Protection for external API consumption
+      const submitUrl = `${this.erpBaseUrl}/api/v2/invoices/submit`;
+      const ssrfResult =
+        await this.ssrfProtectionService.validateURL(submitUrl);
+
+      if (!ssrfResult.isAllowed) {
+        const errorMessage = `SSRF protection blocked ERP API request: ${ssrfResult.reason}`;
+        this.logger.error(errorMessage, {
+          invoiceNumber: domainInvoice.invoiceNumber,
+          blockedBy: ssrfResult.blockedBy,
+          requestId: ssrfResult.requestId,
+        });
+        throw ErrorFactory.externalApi(errorMessage, 'erp', 'submitInvoice', {
+          invoiceNumber: domainInvoice.invoiceNumber,
+          blockedBy: ssrfResult.blockedBy,
+          requestId: ssrfResult.requestId,
+        });
+      }
+
+      this.logger.debug('SSRF validation passed for ERP invoice submission', {
+        invoiceNumber: domainInvoice.invoiceNumber,
+        requestId: ssrfResult.requestId,
+      });
 
       // Execute with circuit breaker and retry
       const result = await this.circuitBreakerService.execute(
@@ -339,6 +365,31 @@ export class ERPIntegrationAdapter implements IErpAdapter {
       const dateParam = asOfDate
         ? `?as_of_date=${asOfDate.toISOString().split('T')[0]}`
         : '';
+
+      // OWASP API10:2023 - SSRF Protection for external API consumption
+      const balanceUrl = `${this.erpBaseUrl}/api/v2/accounts/${accountCode}/balance${dateParam}`;
+      const ssrfResult =
+        await this.ssrfProtectionService.validateURL(balanceUrl);
+
+      if (!ssrfResult.isAllowed) {
+        const errorMessage = `SSRF protection blocked ERP balance API request: ${ssrfResult.reason}`;
+        this.logger.error(errorMessage, {
+          accountCode,
+          blockedBy: ssrfResult.blockedBy,
+          requestId: ssrfResult.requestId,
+        });
+        throw ErrorFactory.externalApi(
+          errorMessage,
+          'erp',
+          'getAccountBalance',
+          {
+            accountCode,
+            blockedBy: ssrfResult.blockedBy,
+            requestId: ssrfResult.requestId,
+          },
+        );
+      }
+
       const headers = this.buildERPHeaders();
 
       const response = await this.httpClient.get<{

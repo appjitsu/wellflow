@@ -76,12 +76,16 @@ describe('SecuritySettings', () => {
     expect(currentPasswordInput).toHaveAttribute('type', 'password');
 
     // Click first toggle button (current password)
-    await user.click(toggleButtons[0]!);
-    expect(currentPasswordInput).toHaveAttribute('type', 'text');
+    const firstToggleButton = toggleButtons[0];
+    expect(firstToggleButton).toBeDefined();
+    if (firstToggleButton) {
+      await user.click(firstToggleButton);
+      expect(currentPasswordInput).toHaveAttribute('type', 'text');
 
-    // Click again to hide
-    await user.click(toggleButtons[0]!);
-    expect(currentPasswordInput).toHaveAttribute('type', 'password');
+      // Click again to hide
+      await user.click(firstToggleButton);
+      expect(currentPasswordInput).toHaveAttribute('type', 'password');
+    }
   });
 
   it('should display password strength indicator', async () => {
