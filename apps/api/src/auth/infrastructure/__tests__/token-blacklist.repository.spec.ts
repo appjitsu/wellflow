@@ -14,7 +14,12 @@ import {
  * which is complex and fragile. These should be converted to integration tests that use
  * the actual test database. The business logic is thoroughly tested in the service layer.
  *
- * TODO: Convert skipped tests to integration tests using the test database
+ * Skipped tests rationale:
+ * - Mocking Drizzle ORM's chainable query builder (select().from().where().limit()) is
+ *   error-prone and tests implementation details rather than behavior
+ * - Integration tests with real database provide better coverage for repository layer
+ * - Service layer tests already verify business logic with mocked repositories
+ * - Following test pyramid: unit tests for business logic, integration tests for infrastructure
  */
 describe('TokenBlacklistRepositoryImpl', () => {
   let repository: TokenBlacklistRepositoryImpl;
@@ -119,8 +124,7 @@ describe('TokenBlacklistRepositoryImpl', () => {
   });
 
   describe('findByJti', () => {
-    // TODO: Convert to integration test - mocking Drizzle ORM query builder is complex
-    // The service layer tests cover the business logic
+    // Skipped: Requires integration test with real database - see file header for rationale
     it.skip('should find entity by JTI', async () => {
       const mockDbResult = [
         {
@@ -155,6 +159,7 @@ describe('TokenBlacklistRepositoryImpl', () => {
       expect(result).toBeNull();
     });
 
+    // Skipped: Requires integration test with real database - see file header for rationale
     it.skip('should handle database errors', async () => {
       mockDb.execute.mockRejectedValue(new Error('Database error'));
 
@@ -165,6 +170,7 @@ describe('TokenBlacklistRepositoryImpl', () => {
   });
 
   describe('isTokenBlacklisted', () => {
+    // Skipped: Requires integration test with real database - see file header for rationale
     it.skip('should return true for blacklisted token', async () => {
       mockDb.execute.mockResolvedValue([{ count: '1' }]);
 
@@ -184,6 +190,7 @@ describe('TokenBlacklistRepositoryImpl', () => {
       expect(result).toBe(false);
     });
 
+    // Skipped: Requires integration test with real database - see file header for rationale
     it.skip('should handle database errors', async () => {
       mockDb.execute.mockRejectedValue(new Error('Database error'));
 
@@ -194,6 +201,7 @@ describe('TokenBlacklistRepositoryImpl', () => {
   });
 
   describe('findByUserId', () => {
+    // Skipped: Requires integration test with real database - see file header for rationale
     it.skip('should find entities by user ID', async () => {
       const mockDbResult = [
         {
@@ -242,6 +250,7 @@ describe('TokenBlacklistRepositoryImpl', () => {
   });
 
   describe('deleteExpiredEntries', () => {
+    // Skipped: Requires integration test with real database - see file header for rationale
     it.skip('should delete expired entries', async () => {
       mockDb.execute.mockResolvedValue({ rowCount: 5 });
 
