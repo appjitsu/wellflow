@@ -117,6 +117,15 @@ describe('Password Reset Integration', () => {
           provide: OrganizationsService,
           useValue: {},
         },
+        {
+          provide: 'TokenBlacklistService',
+          useValue: {
+            blacklistToken: jest.fn().mockResolvedValue(undefined),
+            isTokenBlacklisted: jest.fn().mockResolvedValue(false),
+            blacklistAllUserTokens: jest.fn().mockResolvedValue(undefined),
+            cleanupExpiredEntries: jest.fn().mockResolvedValue(0),
+          },
+        },
       ],
     }).compile();
 

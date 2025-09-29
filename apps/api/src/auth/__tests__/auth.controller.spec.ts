@@ -47,6 +47,19 @@ describe('AuthController', () => {
           provide: JwtAuthGuard,
           useValue: { canActivate: jest.fn(() => true) },
         },
+        {
+          provide: 'EnhancedRateLimiterService',
+          useValue: {
+            checkRateLimit: jest.fn().mockResolvedValue({ allowed: true }),
+          },
+        },
+        {
+          provide: 'MetricsService',
+          useValue: {
+            incrementCounter: jest.fn(),
+            recordHistogram: jest.fn(),
+          },
+        },
       ],
     }).compile();
 

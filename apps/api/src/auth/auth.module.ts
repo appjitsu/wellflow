@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
@@ -8,6 +8,8 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { AuthUserRepositoryImpl } from './infrastructure/auth-user.repository';
 import { PasswordHistoryRepositoryImpl } from './infrastructure/password-history.repository';
+import { TokenBlacklistRepositoryImpl } from './infrastructure/token-blacklist.repository';
+import { TokenBlacklistService } from './services/token-blacklist.service';
 import { DatabaseModule } from '../database/database.module';
 import { DatabaseService } from '../database/database.service';
 import { AuditLogService } from '../application/services/audit-log.service';
@@ -17,6 +19,8 @@ import { JobsModule } from '../jobs/jobs.module';
 import { OrganizationsModule } from '../organizations/organizations.module';
 import { RepositoryModule } from '../infrastructure/repositories/repository.module';
 import { AuthorizationModule } from '../authorization/authorization.module';
+import { RateLimitingModule } from '../common/rate-limiting/rate-limiting.module';
+import { MonitoringModule } from '../monitoring/monitoring.module';
 
 /**
  * Authentication Module
@@ -66,6 +70,8 @@ import { AuthorizationModule } from '../authorization/authorization.module';
     AuthorizationModule, // For AbilitiesFactory
     JobsModule, // For email notifications
     OrganizationsModule, // For organization creation
+    RateLimitingModule, // For enhanced rate limiting
+    MonitoringModule, // For metrics service
   ],
 
   providers: [
@@ -94,6 +100,32 @@ import { AuthorizationModule } from '../authorization/authorization.module';
       inject: [DatabaseService],
     },
 
+    // Token blacklist repository
+    {
+      provide: 'TokenBlacklistRepository',
+      useFactory: (databaseService: DatabaseService) => {
+        return new TokenBlacklistRepositoryImpl(databaseService);
+      },
+      inject: [DatabaseService],
+    },
+
+    // Token blacklist service
+    {
+      provide: 'TokenBlacklistService',
+      useFactory: (
+        tokenBlacklistRepository: TokenBlacklistRepositoryImpl,
+        jwtService: JwtService,
+        auditLogService: AuditLogService,
+      ) => {
+        return new TokenBlacklistService(
+          tokenBlacklistRepository,
+          jwtService,
+          auditLogService,
+        );
+      },
+      inject: ['TokenBlacklistRepository', JwtService, AuditLogService],
+    },
+
     // Audit logging service (existing service)
     AuditLogService,
 
@@ -111,9 +143,11 @@ import { AuthorizationModule } from '../authorization/authorization.module';
     AuthService,
     JwtStrategy,
     LocalStrategy,
+    'TokenBlacklistService',
 
     // Export for testing and integration
     'UserRepository',
+    'TokenBlacklistRepository',
   ],
 })
 export class AuthModule {

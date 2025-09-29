@@ -42,6 +42,13 @@ describe('JwtStrategy', () => {
           provide: ConfigService,
           useValue: mockConfigService,
         },
+        {
+          provide: 'TokenBlacklistService',
+          useValue: {
+            isTokenBlacklisted: jest.fn().mockResolvedValue(false),
+            blacklistToken: jest.fn().mockResolvedValue(undefined),
+          },
+        },
       ],
     }).compile();
 
@@ -77,7 +84,13 @@ describe('JwtStrategy', () => {
         exp: Math.floor(Date.now() / 1000) + 3600,
       };
 
-      const result = await strategy.validate(payload);
+      const mockRequest = {
+        headers: {
+          authorization: 'Bearer valid-token',
+        },
+      } as any;
+
+      const result = await strategy.validate(mockRequest, payload);
 
       expect(result).toEqual({
         id: 'user-123',
@@ -105,7 +118,13 @@ describe('JwtStrategy', () => {
         exp: Math.floor(Date.now() / 1000) + 3600,
       };
 
-      await expect(strategy.validate(payload)).rejects.toThrow(
+      const mockRequest = {
+        headers: {
+          authorization: 'Bearer valid-token',
+        },
+      } as any;
+
+      await expect(strategy.validate(mockRequest, payload)).rejects.toThrow(
         UnauthorizedException,
       );
       expect(mockAuthService.validateUserById).toHaveBeenCalledWith(
@@ -137,7 +156,13 @@ describe('JwtStrategy', () => {
         exp: Math.floor(Date.now() / 1000) + 3600,
       };
 
-      const result = await strategy.validate(payload);
+      const mockRequest = {
+        headers: {
+          authorization: 'Bearer valid-token',
+        },
+      } as any;
+
+      const result = await strategy.validate(mockRequest, payload);
       expect(result.isEmailVerified).toBe(false);
       expect(result.id).toBe('user-123');
     });
@@ -173,7 +198,13 @@ describe('JwtStrategy', () => {
           exp: Math.floor(Date.now() / 1000) + 3600,
         };
 
-        const result = await strategy.validate(payload);
+        const mockRequest = {
+          headers: {
+            authorization: 'Bearer valid-token',
+          },
+        } as any;
+
+        const result = await strategy.validate(mockRequest, payload);
 
         expect(result.role).toBe(testCase.role);
         expect(result.id).toBe(`user-${testCase.role}`);
@@ -206,7 +237,13 @@ describe('JwtStrategy', () => {
         exp: Math.floor(Date.now() / 1000) + 3600,
       };
 
-      const result = await strategy.validate(payload);
+      const mockRequest = {
+        headers: {
+          authorization: 'Bearer valid-token',
+        },
+      } as any;
+
+      const result = await strategy.validate(mockRequest, payload);
 
       expect(result.organizationId).toBe('org-specific');
     });
@@ -225,7 +262,13 @@ describe('JwtStrategy', () => {
         exp: Math.floor(Date.now() / 1000) + 3600,
       };
 
-      await expect(strategy.validate(payload)).rejects.toThrow(
+      const mockRequest = {
+        headers: {
+          authorization: 'Bearer valid-token',
+        },
+      } as any;
+
+      await expect(strategy.validate(mockRequest, payload)).rejects.toThrow(
         UnauthorizedException,
       );
     });
@@ -267,7 +310,13 @@ describe('JwtStrategy', () => {
         exp: Math.floor(Date.now() / 1000) + 3600,
       };
 
-      const result = await strategy.validate(payload);
+      const mockRequest = {
+        headers: {
+          authorization: 'Bearer valid-token',
+        },
+      } as any;
+
+      const result = await strategy.validate(mockRequest, payload);
 
       expect(result.role).toBe(UserRole.PUMPER);
       expect(result.organizationId).toBe('oil-company-456');
@@ -297,7 +346,13 @@ describe('JwtStrategy', () => {
         exp: Math.floor(Date.now() / 1000) + 3600,
       };
 
-      const result = await strategy.validate(payload);
+      const mockRequest = {
+        headers: {
+          authorization: 'Bearer valid-token',
+        },
+      } as any;
+
+      const result = await strategy.validate(mockRequest, payload);
 
       expect(result.role).toBe(UserRole.OWNER);
       expect(result.organizationId).toBe('oil-company-789');
