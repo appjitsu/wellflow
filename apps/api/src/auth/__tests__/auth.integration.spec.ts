@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import * as request from 'supertest';
+
+import request from 'supertest';
 import { AuthModule } from '../auth.module';
 import { DatabaseModule } from '../../database/database.module';
 import { ConfigModule } from '@nestjs/config';
@@ -10,7 +10,7 @@ import { AuthService } from '../auth.service';
 
 describe('Auth Integration Tests', () => {
   let app: INestApplication;
-  let jwtService: JwtService;
+
   let tokenBlacklistService: TokenBlacklistService;
   let authService: AuthService;
 
@@ -35,7 +35,6 @@ describe('Auth Integration Tests', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    jwtService = moduleFixture.get<JwtService>(JwtService);
     tokenBlacklistService = moduleFixture.get<TokenBlacklistService>(
       'TokenBlacklistService',
     );

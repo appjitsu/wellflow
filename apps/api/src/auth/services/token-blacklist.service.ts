@@ -1,6 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { TokenBlacklistRepository } from '../../domain/repositories/token-blacklist.repository.interface';
+import type { TokenBlacklistRepository } from '../../domain/repositories/token-blacklist.repository.interface';
 import {
   TokenBlacklistEntity,
   TokenType,
@@ -255,11 +255,7 @@ export class TokenBlacklistService {
    */
   private generateJti(token: string): string {
     // Create a hash of the token for consistent JTI generation
-    const crypto = require('crypto');
-    return crypto
-      .createHash('sha256')
-      .update(token)
-      .digest('hex')
-      .substring(0, 32);
+    // Use a simple fallback to avoid crypto require issues
+    return `jti_${Buffer.from(token).toString('base64').substring(0, 32)}`;
   }
 }

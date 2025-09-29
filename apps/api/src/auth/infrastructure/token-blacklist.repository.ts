@@ -1,10 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { eq, and, lt, count } from 'drizzle-orm';
 import { TokenBlacklistRepository } from '../../domain/repositories/token-blacklist.repository.interface';
-import {
-  TokenBlacklistEntity,
-  TokenType,
-} from '../../domain/entities/token-blacklist.entity';
+import { TokenBlacklistEntity } from '../../domain/entities/token-blacklist.entity';
 import { tokenBlacklist } from '../../database/schemas/token-blacklist';
 import { DatabaseService } from '../../database/database.service';
 
@@ -54,11 +51,11 @@ export class TokenBlacklistRepositoryImpl implements TokenBlacklistRepository {
         .where(eq(tokenBlacklist.jti, jti))
         .limit(1);
 
-      if (result.length === 0) {
+      if (result.length === 0 || !result[0]) {
         return null;
       }
 
-      return this.mapToEntity(result[0]!);
+      return this.mapToEntity(result[0]);
     } catch (error) {
       this.logger.error('Error finding token blacklist entry by JTI:', error);
       return null;
@@ -78,7 +75,7 @@ export class TokenBlacklistRepositoryImpl implements TokenBlacklistRepository {
           and(
             eq(tokenBlacklist.jti, jti),
             // Only consider non-expired entries
-            lt(new Date(), tokenBlacklist.expiresAt),
+            lt(tokenBlacklist.expiresAt, new Date()),
           ),
         );
 

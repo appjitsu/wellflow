@@ -22,12 +22,25 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
+
 import { EnhancedRateLimitGuard } from '../common/rate-limiting/enhanced-rate-limit.guard';
 import { AuthService, RegisterUserDto } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 
 // eslint-disable-next-line sonarjs/no-duplicate-string
 const EXAMPLE_USER_ID = '123e4567-e89b-12d3-a456-426614174000';
+
+interface AuthenticatedRequestWithHeaders {
+  user: AuthenticatedUser;
+  headers: {
+    authorization?: string;
+    'user-agent'?: string;
+  };
+  ip?: string;
+  connection?: {
+    remoteAddress?: string;
+  };
+}
 import { RegisterDto } from './dto/register.dto';
 import {
   LoginResponseDto,
@@ -407,7 +420,7 @@ export class AuthController {
   })
   async logout(
     @Request()
-    req: { user: AuthenticatedUser; headers: { authorization?: string } },
+    req: AuthenticatedRequestWithHeaders,
     @Body() body?: { refreshToken?: string },
   ): Promise<{ message: string; loggedOutAt: Date }> {
     // Extract access token from Authorization header
@@ -418,7 +431,7 @@ export class AuthController {
 
     if (accessToken) {
       // Get IP address and user agent for audit logging
-      const ipAddress = req['ip'] || req['connection']?.['remoteAddress'];
+      const ipAddress = req.ip || req.connection?.remoteAddress;
       const userAgent = req.headers['user-agent'];
 
       // Blacklist tokens
