@@ -1,6 +1,6 @@
 // Settings E2E Tests
 /* eslint-disable sonarjs/no-hardcoded-ip */
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 // Mock user data
 const mockUser = {

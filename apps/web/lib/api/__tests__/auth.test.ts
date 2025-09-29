@@ -204,9 +204,15 @@ describe('Auth API', () => {
       // Check that timestamps are converted to Date objects
       expect(result).toHaveLength(2);
       const activities = result as ActivityEvent[];
-      expect(activities[0]!.timestamp).toBeInstanceOf(Date);
-      expect(activities[1]!.timestamp).toBeInstanceOf(Date);
-      expect(activities[0]!.timestamp.toISOString()).toBe('2024-01-01T10:00:00.000Z');
+      const firstActivity = activities[0];
+      const secondActivity = activities[1];
+      expect(firstActivity).toBeDefined();
+      expect(secondActivity).toBeDefined();
+      if (firstActivity && secondActivity) {
+        expect(firstActivity.timestamp).toBeInstanceOf(Date);
+        expect(secondActivity.timestamp).toBeInstanceOf(Date);
+        expect(firstActivity.timestamp.toISOString()).toBe('2024-01-01T10:00:00.000Z');
+      }
     });
   });
 
@@ -273,7 +279,20 @@ describe('Auth API', () => {
         ok: false,
         status: 500,
         json: jest.fn().mockRejectedValue(new Error('Invalid JSON')),
-      } as any);
+        headers: new Headers(),
+        redirected: false,
+        statusText: 'Internal Server Error',
+        type: 'basic',
+        url: '',
+        clone: jest.fn(),
+        body: null,
+        bodyUsed: false,
+        arrayBuffer: jest.fn(),
+        blob: jest.fn(),
+        formData: jest.fn(),
+        text: jest.fn(),
+        bytes: jest.fn(),
+      } as unknown as Response);
 
       await expect(authApi.getCurrentProfile()).rejects.toThrow(ApiError);
     });

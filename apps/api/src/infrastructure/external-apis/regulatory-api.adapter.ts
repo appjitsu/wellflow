@@ -4,6 +4,8 @@ import { RetryService } from '../../common/resilience/retry.service';
 import { RESILIENCE_CONFIG } from '../../common/resilience/resilience.config';
 import { ErrorFactory } from '../../common/errors/domain-errors';
 import { AuditLogService } from '../../application/services/audit-log.service';
+import { SSRFProtectionService } from '../../common/security/ssrf-protection.service';
+import { ApiResponseValidatorService } from '../../common/security/api-response-validator.service';
 
 /**
  * Anti-Corruption Layer Interfaces
@@ -197,6 +199,8 @@ export class RegulatoryApiAdapter implements IRegulatoryApiAdapter {
     @Inject(RetryService)
     private readonly retryService: RetryService,
     private readonly auditLogService: AuditLogService,
+    private readonly ssrfProtectionService: SSRFProtectionService,
+    private readonly apiResponseValidator: ApiResponseValidatorService,
   ) {
     // Register circuit breaker for regulatory API
     this.circuitBreakerService.registerCircuitBreaker(this.SERVICE_NAME, {
@@ -219,6 +223,40 @@ export class RegulatoryApiAdapter implements IRegulatoryApiAdapter {
         `Submitting regulatory report ${domainReport.id} for well ${domainReport.wellId}`,
       );
 
+      // OWASP API10:2023 - SSRF Protection for external API consumption
+      const submitUrl = `${this.apiBaseUrl}/v1/reports/submit`;
+      const ssrfResult =
+        await this.ssrfProtectionService.validateURL(submitUrl);
+
+      if (!ssrfResult.isAllowed) {
+        const errorMessage = `SSRF protection blocked regulatory API request: ${ssrfResult.reason}`;
+        this.logger.error(errorMessage, {
+          reportId: domainReport.id,
+          wellId: domainReport.wellId,
+          blockedBy: ssrfResult.blockedBy,
+          requestId: ssrfResult.requestId,
+        });
+        throw ErrorFactory.externalApi(
+          errorMessage,
+          this.SERVICE_NAME,
+          'submitReport',
+          {
+            reportId: domainReport.id,
+            wellId: domainReport.wellId,
+            blockedBy: ssrfResult.blockedBy,
+            requestId: ssrfResult.requestId,
+          },
+        );
+      }
+
+      this.logger.debug(
+        'SSRF validation passed for regulatory API submission',
+        {
+          reportId: domainReport.id,
+          requestId: ssrfResult.requestId,
+        },
+      );
+
       // Execute with circuit breaker and retry
       const result = await this.circuitBreakerService.execute(
         this.SERVICE_NAME,
@@ -238,8 +276,41 @@ export class RegulatoryApiAdapter implements IRegulatoryApiAdapter {
                   { headers },
                 );
 
+              // OWASP API10:2023 - Enhanced response validation
+              const validationResult =
+                await this.apiResponseValidator.validateResponse(
+                  response.data,
+                  'application/json',
+                  this.SERVICE_NAME,
+                  'submitReport',
+                );
+
+              if (!validationResult.isValid) {
+                const errorMessage = `Response validation failed: ${validationResult.violations?.map((v) => v.description).join(', ')}`;
+                this.logger.error(errorMessage, {
+                  reportId: domainReport.id,
+                  violations: validationResult.violations,
+                  requestId: validationResult.requestId,
+                });
+                throw ErrorFactory.externalApi(
+                  errorMessage,
+                  this.SERVICE_NAME,
+                  'submitReport',
+                  {
+                    reportId: domainReport.id,
+                    violations: validationResult.violations,
+                    requestId: validationResult.requestId,
+                  },
+                );
+              }
+
+              // Use sanitized response if available
+              const responseData =
+                (validationResult.sanitizedResponse as ExternalSubmissionResponse) ||
+                response.data;
+
               // Translate response back to domain format
-              return this.translateSubmissionResponse(response.data);
+              return this.translateSubmissionResponse(responseData);
             },
             3, // max attempts
             1000, // initial delay
@@ -338,6 +409,30 @@ export class RegulatoryApiAdapter implements IRegulatoryApiAdapter {
     externalReferenceId: string,
   ): Promise<SubmissionStatus> {
     try {
+      // OWASP API10:2023 - SSRF Protection for external API consumption
+      const statusUrl = `${this.apiBaseUrl}/v1/reports/status/${externalReferenceId}`;
+      const ssrfResult =
+        await this.ssrfProtectionService.validateURL(statusUrl);
+
+      if (!ssrfResult.isAllowed) {
+        const errorMessage = `SSRF protection blocked regulatory API status request: ${ssrfResult.reason}`;
+        this.logger.error(errorMessage, {
+          externalReferenceId,
+          blockedBy: ssrfResult.blockedBy,
+          requestId: ssrfResult.requestId,
+        });
+        throw ErrorFactory.externalApi(
+          errorMessage,
+          this.SERVICE_NAME,
+          'getSubmissionStatus',
+          {
+            externalReferenceId,
+            blockedBy: ssrfResult.blockedBy,
+            requestId: ssrfResult.requestId,
+          },
+        );
+      }
+
       const headers = this.buildHeaders();
       const response = await this.httpClient.get<{
         status: string;
@@ -375,6 +470,32 @@ export class RegulatoryApiAdapter implements IRegulatoryApiAdapter {
     domainReport: RegulatoryReport,
   ): Promise<ValidationResult> {
     try {
+      // OWASP API10:2023 - SSRF Protection for external API consumption
+      const validateUrl = `${this.apiBaseUrl}/v1/reports/validate`;
+      const ssrfResult =
+        await this.ssrfProtectionService.validateURL(validateUrl);
+
+      if (!ssrfResult.isAllowed) {
+        const errorMessage = `SSRF protection blocked regulatory API validation request: ${ssrfResult.reason}`;
+        this.logger.error(errorMessage, {
+          reportId: domainReport.id,
+          wellId: domainReport.wellId,
+          blockedBy: ssrfResult.blockedBy,
+          requestId: ssrfResult.requestId,
+        });
+        throw ErrorFactory.externalApi(
+          errorMessage,
+          this.SERVICE_NAME,
+          'validateReport',
+          {
+            reportId: domainReport.id,
+            wellId: domainReport.wellId,
+            blockedBy: ssrfResult.blockedBy,
+            requestId: ssrfResult.requestId,
+          },
+        );
+      }
+
       const externalPayload = this.translateToExternalFormat(domainReport);
       const headers = this.buildHeaders();
 

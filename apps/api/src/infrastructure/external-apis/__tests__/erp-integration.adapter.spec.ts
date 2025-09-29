@@ -13,6 +13,13 @@ describe('ERPIntegrationAdapter', () => {
       delete: jest.fn(),
     } as any;
 
+    const mockSSRFProtectionService = {
+      validateURL: jest.fn().mockResolvedValue({
+        isAllowed: true,
+        requestId: 'test-request-id',
+      }),
+    };
+
     // Mock the constructor dependencies
     service = new (ERPIntegrationAdapter as any)(
       httpClient,
@@ -21,6 +28,7 @@ describe('ERPIntegrationAdapter', () => {
       'company-123',
       { registerCircuitBreaker: jest.fn(), execute: jest.fn() },
       { executeWithExponentialBackoff: jest.fn() },
+      mockSSRFProtectionService,
     );
   });
 

@@ -38,6 +38,17 @@ describe('RegulatoryApiAdapter', () => {
       logApiCall: jest.fn(),
     } as any;
 
+    const mockSSRFProtectionService = {
+      validateURL: jest.fn().mockResolvedValue({
+        isAllowed: true,
+        requestId: 'test-request-id',
+      }),
+    };
+
+    const mockApiResponseValidator = {
+      validateResponse: jest.fn().mockReturnValue({ isValid: true }),
+    };
+
     service = new RegulatoryApiAdapter(
       httpClient as HttpClient,
       mockApiBaseUrl,
@@ -45,6 +56,8 @@ describe('RegulatoryApiAdapter', () => {
       circuitBreakerService,
       retryService,
       auditLogService,
+      mockSSRFProtectionService as any,
+      mockApiResponseValidator as any,
     );
   });
 
