@@ -17,6 +17,7 @@ export enum BlacklistReason {
   PASSWORD_CHANGE = 'password_change',
   ACCOUNT_LOCKED = 'account_locked',
   ADMIN_ACTION = 'admin_action',
+  SUSPICIOUS_ACTIVITY = 'suspicious_activity',
 }
 
 /**
@@ -132,6 +133,17 @@ export class TokenBlacklistEntity {
     return `${tokenTypeDisplay} token blacklisted due to ${reasonDisplay}`;
   }
 
+  /**
+   * Get display information for the blacklist entry
+   * Returns a formatted string with token type and reason
+   */
+  getDisplayInfo(): string {
+    const tokenTypeDisplay =
+      this.tokenType === TokenType.ACCESS ? 'Access Token' : 'Refresh Token';
+    const reasonDisplay = this.reason.replace(/_/g, ' ');
+    return `${tokenTypeDisplay} blacklisted due to ${reasonDisplay}`;
+  }
+
   // Factory Methods
 
   /**
@@ -240,6 +252,8 @@ export class TokenBlacklistEntity {
     if (isNaN(expiresAt.getTime())) {
       throw new Error('Expiration date must be a valid Date');
     }
+    // Note: We don't validate future date here because tokens can be blacklisted
+    // after they've already expired (e.g., during cleanup operations)
   }
 
   // Utility Methods

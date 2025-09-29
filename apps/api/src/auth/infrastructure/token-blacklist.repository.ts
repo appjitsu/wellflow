@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { eq, and, lt, count } from 'drizzle-orm';
+import { eq, and, lt, gt, count, desc } from 'drizzle-orm';
 import { TokenBlacklistRepository } from '../../domain/repositories/token-blacklist.repository.interface';
 import { TokenBlacklistEntity } from '../../domain/entities/token-blacklist.entity';
 import { tokenBlacklist } from '../../database/schemas/token-blacklist';
@@ -74,8 +74,8 @@ export class TokenBlacklistRepositoryImpl implements TokenBlacklistRepository {
         .where(
           and(
             eq(tokenBlacklist.jti, jti),
-            // Only consider non-expired entries
-            lt(tokenBlacklist.expiresAt, new Date()),
+            // Only consider non-expired entries (expiresAt > now)
+            gt(tokenBlacklist.expiresAt, new Date()),
           ),
         );
 
@@ -97,7 +97,7 @@ export class TokenBlacklistRepositoryImpl implements TokenBlacklistRepository {
         .select()
         .from(tokenBlacklist)
         .where(eq(tokenBlacklist.userId, userId))
-        .orderBy(tokenBlacklist.blacklistedAt);
+        .orderBy(desc(tokenBlacklist.blacklistedAt));
 
       return result.map((row) => this.mapToEntity(row));
     } catch (error) {
