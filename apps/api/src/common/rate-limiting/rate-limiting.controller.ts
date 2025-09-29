@@ -23,13 +23,17 @@ import {
   UserTier,
   RateLimitConfig,
 } from './enhanced-rate-limiter.service';
+import { ExternalThreatIntelligenceService } from './external-threat-intelligence/external-threat-intelligence.service';
 
 @ApiTags('Rate Limiting')
 @ApiBearerAuth()
 @Controller('rate-limiting')
 @UseGuards(JwtAuthGuard, AbilitiesGuard)
 export class RateLimitingController {
-  constructor(private readonly rateLimiter: EnhancedRateLimiterService) {}
+  constructor(
+    private readonly rateLimiter: EnhancedRateLimiterService,
+    private readonly threatIntelligence: ExternalThreatIntelligenceService,
+  ) {}
 
   @Get('config')
   @ApiOperation({ summary: 'Get rate limiting configuration' })
@@ -117,5 +121,25 @@ export class RateLimitingController {
       message: 'Blocked requests tracking not yet implemented',
       timestamp: new Date().toISOString(),
     });
+  }
+
+  @Get('test-ip/:ip')
+  @ApiOperation({ summary: 'Test IP reputation checking' })
+  @ApiResponse({ status: 200, description: 'IP reputation analysis' })
+  @CheckAbilities({ action: 'read' as Actions, subject: 'all' })
+  async testIP(@Param('ip') ip: string) {
+    try {
+      const analysis = await this.threatIntelligence.analyzeIP(ip);
+      return {
+        ip,
+        analysis,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to analyze IP: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }

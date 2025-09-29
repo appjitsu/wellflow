@@ -1,5 +1,9 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { Redis } from 'ioredis';
+import { DDoSProtectionService } from './ddos-protection.service';
+import { IPReputationService } from './ip-reputation.service';
+import { BypassTokenService } from './bypass-token.service';
+import { RateLimitMonitoringService } from './rate-limit-monitoring.service';
 
 export enum UserTier {
   FREE = 'free',
@@ -127,17 +131,238 @@ export class EnhancedRateLimiterService {
   constructor(
     @Inject('REDIS_CONNECTION')
     private readonly redis: Redis | null,
+    private readonly ddosProtectionService: DDoSProtectionService,
+    private readonly ipReputationService: IPReputationService,
+    private readonly bypassTokenService: BypassTokenService,
+    private readonly rateLimitMonitoringService: RateLimitMonitoringService,
   ) {}
 
   /**
-   * Check rate limit for a user
+   * Check rate limit for a user with enhanced DDoS protection
    */
   async checkRateLimit(
     userId: string,
     userTier: UserTier,
     endpoint?: string,
     method?: string,
+    ipAddress?: string,
+    userAgent?: string,
+    bypassToken?: string,
   ): Promise<RateLimitResult> {
+    try {
+      // Check bypass token first
+      const bypassResult = await this.checkBypassToken(
+        bypassToken,
+        ipAddress,
+        userTier,
+      );
+      if (bypassResult) return bypassResult;
+
+      // Check DDoS protection and IP reputation
+      const securityCheck = await this.checkSecurityProtections(
+        ipAddress,
+        endpoint,
+        method,
+        userAgent,
+        userTier,
+      );
+      if (securityCheck) return securityCheck;
+
+      // Get rate limit configuration
+      const config = this.getRateLimitConfig(userTier);
+      if (!config) {
+        return this.checkRateLimit(
+          userId,
+          UserTier.FREE,
+          endpoint,
+          method,
+          ipAddress,
+          userAgent,
+          bypassToken,
+        );
+      }
+
+      // Perform rate limit check
+      return await this.performRateLimitCheck(
+        userId,
+        config,
+        endpoint,
+        method,
+        userTier,
+      );
+    } catch (error) {
+      this.logger.error('Rate limiting check failed:', error);
+      // Fail open - allow request if Redis fails
+      return {
+        allowed: true,
+        remaining: 999,
+        resetTime: new Date(Date.now() + 60000), // 1 minute fallback
+        tier: userTier,
+      };
+    }
+  }
+
+  /**
+   * Check if bypass token is valid and return appropriate result
+   */
+  private async checkBypassToken(
+    bypassToken: string | undefined,
+    ipAddress: string | undefined,
+    userTier: UserTier,
+  ): Promise<RateLimitResult | null> {
+    if (!bypassToken || !ipAddress) return null;
+
+    const bypassResult = await this.bypassTokenService.validateAndUseToken(
+      bypassToken,
+      ipAddress,
+    );
+
+    if (bypassResult.isValid) {
+      await this.rateLimitMonitoringService.recordBypassTokenUsage(
+        ipAddress,
+        bypassToken,
+        bypassResult.token?.reason || 'Emergency bypass',
+      );
+
+      return {
+        allowed: true,
+        remaining: 999999, // Unlimited for bypass
+        resetTime: new Date(Date.now() + 60000),
+        tier: userTier,
+        isBurstUsed: false,
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * Check DDoS protection and IP reputation security measures
+   */
+  private async checkSecurityProtections(
+    ipAddress: string | undefined,
+    endpoint: string | undefined,
+    method: string | undefined,
+    userAgent: string | undefined,
+    userTier: UserTier,
+  ): Promise<RateLimitResult | null> {
+    if (!ipAddress) return null;
+
+    // Check DDoS protection
+    const ddosCheck = await this.checkDDoSProtection(
+      ipAddress,
+      endpoint,
+      method,
+      userAgent,
+      userTier,
+    );
+    if (ddosCheck) return ddosCheck;
+
+    // Update IP reputation
+    await this.ipReputationService.updateIPReputation(ipAddress, {
+      type: 'request',
+      endpoint,
+      userAgent,
+      statusCode: 200,
+    });
+
+    // Check IP reputation blocking
+    const reputationCheck = await this.checkIPReputationBlocking(
+      ipAddress,
+      userTier,
+    );
+    if (reputationCheck) return reputationCheck;
+
+    return null;
+  }
+
+  /**
+   * Check DDoS protection measures
+   */
+  private async checkDDoSProtection(
+    ipAddress: string,
+    endpoint: string | undefined,
+    method: string | undefined,
+    userAgent: string | undefined,
+    userTier: UserTier,
+  ): Promise<RateLimitResult | null> {
+    // Check if IP is blocked
+    const isBlocked = await this.ddosProtectionService.isIPBlocked(ipAddress);
+    if (isBlocked) {
+      await this.rateLimitMonitoringService.recordRateLimitEvent(
+        'blocked',
+        ipAddress,
+        { reason: 'IP blocked by DDoS protection' },
+      );
+
+      return {
+        allowed: false,
+        remaining: 0,
+        resetTime: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
+        tier: userTier,
+        retryAfter: 15 * 60,
+      };
+    }
+
+    // Analyze request for DDoS patterns
+    if (endpoint && method && userAgent) {
+      const ddosResult = await this.ddosProtectionService.analyzeRequest(
+        ipAddress,
+        endpoint,
+        method,
+        userAgent,
+        200, // Assume success for now
+        0, // Response time will be set later
+      );
+
+      if (ddosResult.isAttack) {
+        await this.ddosProtectionService.applyMitigation(ddosResult);
+        this.rateLimitMonitoringService.recordDDoSDetection(ddosResult);
+
+        return {
+          allowed: false,
+          remaining: 0,
+          resetTime: new Date(Date.now() + 15 * 60 * 1000),
+          tier: userTier,
+          retryAfter: 15 * 60,
+        };
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Check if IP should be blocked based on reputation
+   */
+  private async checkIPReputationBlocking(
+    ipAddress: string,
+    userTier: UserTier,
+  ): Promise<RateLimitResult | null> {
+    const blockCheck = await this.ipReputationService.shouldBlockIP(ipAddress);
+    if (blockCheck.shouldBlock) {
+      await this.rateLimitMonitoringService.recordRateLimitEvent(
+        'blocked',
+        ipAddress,
+        { reason: blockCheck.reason },
+      );
+
+      return {
+        allowed: false,
+        remaining: 0,
+        resetTime: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
+        tier: userTier,
+        retryAfter: 60 * 60,
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * Get rate limit configuration for a tier
+   */
+  private getRateLimitConfig(userTier: UserTier): RateLimitConfig | null {
     const config = Object.prototype.hasOwnProperty.call(
       this.tierConfigs,
       userTier,
@@ -148,93 +373,117 @@ export class EnhancedRateLimiterService {
 
     if (!config) {
       this.logger.warn(`Unknown user tier: ${userTier}, falling back to FREE`);
-      return this.checkRateLimit(userId, UserTier.FREE, endpoint, method);
+      return null;
     }
 
+    return config;
+  }
+
+  /**
+   * Perform the actual rate limiting check using Redis
+   */
+  private async performRateLimitCheck(
+    userId: string,
+    config: RateLimitConfig,
+    endpoint: string | undefined,
+    method: string | undefined,
+    userTier: UserTier,
+  ): Promise<RateLimitResult> {
     const key = `ratelimit:${userId}:${config.windowMs}`;
     const burstKey = `ratelimit:burst:${userId}`;
 
-    try {
-      // If Redis is not available, allow all requests (fallback mode)
-      if (!this.redis) {
-        this.logger.warn('Redis not available, allowing all requests');
-        return {
-          allowed: true,
-          remaining: config.requests,
-          resetTime: new Date(Date.now() + config.windowMs),
-          tier: userTier,
-        };
-      }
-
-      // Use Redis atomic operations for rate limiting
-      const now = Date.now();
-      const windowStart = now - config.windowMs;
-
-      // Get current request count
-      const currentCount = await this.redis.zcount(key, windowStart, now);
-      const burstCount = parseInt((await this.redis.get(burstKey)) || '0');
-
-      const totalRequests = currentCount + burstCount;
-      const allowedRequests = config.requests + (config.burstAllowance || 0);
-
-      let isAllowed = totalRequests < allowedRequests;
-      let isBurstUsed = false;
-
-      // If regular limit exceeded, check burst allowance
-      if (
-        !isAllowed &&
-        currentCount >= config.requests &&
-        burstCount < (config.burstAllowance || 0)
-      ) {
-        isAllowed = true;
-        isBurstUsed = true;
-
-        // Increment burst counter
-        await this.redis.incr(burstKey);
-        await this.redis.expire(burstKey, Math.floor(config.windowMs / 1000));
-      }
-
-      // Record this request
-      await this.redis.zadd(key, now, `${now}:${endpoint}:${method}`);
-      await this.redis.expire(key, Math.floor(config.windowMs / 1000) + 60); // Extra minute for cleanup
-
-      // Clean old entries
-      await this.redis.zremrangebyscore(key, '-inf', windowStart);
-
-      const remaining = Math.max(0, allowedRequests - totalRequests - 1);
-      const resetTime = new Date(now + config.windowMs);
-
-      const result: RateLimitResult = {
-        allowed: isAllowed,
-        remaining,
-        resetTime,
-        tier: userTier,
-        isBurstUsed,
-      };
-
-      if (!isAllowed) {
-        result.retryAfter = Math.ceil(config.windowMs / 1000);
-      }
-
-      return result;
-    } catch (error) {
-      this.logger.error('Rate limiting check failed:', error);
-      // Fail open - allow request if Redis fails
+    // If Redis is not available, allow all requests (fallback mode)
+    if (!this.redis) {
+      this.logger.warn('Redis not available, allowing all requests');
       return {
         allowed: true,
-        remaining: 999,
+        remaining: config.requests,
         resetTime: new Date(Date.now() + config.windowMs),
         tier: userTier,
       };
     }
+
+    // Use Redis atomic operations for rate limiting
+    const now = Date.now();
+    const windowStart = now - config.windowMs;
+
+    // Get current request count
+    const currentCount = await this.redis.zcount(key, windowStart, now);
+    const burstCount = parseInt((await this.redis.get(burstKey)) || '0');
+
+    const totalRequests = currentCount + burstCount;
+    const allowedRequests = config.requests + (config.burstAllowance || 0);
+
+    let isAllowed = totalRequests < allowedRequests;
+    let isBurstUsed = false;
+
+    // If regular limit exceeded, check burst allowance
+    if (
+      !isAllowed &&
+      currentCount >= config.requests &&
+      burstCount < (config.burstAllowance || 0)
+    ) {
+      isAllowed = true;
+      isBurstUsed = true;
+
+      // Increment burst counter
+      await this.redis.incr(burstKey);
+      await this.redis.expire(burstKey, Math.floor(config.windowMs / 1000));
+    }
+
+    // Record this request
+    await this.redis.zadd(key, now, `${now}:${endpoint}:${method}`);
+    await this.redis.expire(key, Math.floor(config.windowMs / 1000) + 60); // Extra minute for cleanup
+
+    // Clean old entries
+    await this.redis.zremrangebyscore(key, '-inf', windowStart);
+
+    return this.buildRateLimitResponse(
+      isAllowed,
+      allowedRequests,
+      totalRequests,
+      config.windowMs,
+      userTier,
+      isBurstUsed,
+    );
+  }
+
+  /**
+   * Build the rate limit response
+   */
+  private buildRateLimitResponse(
+    isAllowed: boolean,
+    allowedRequests: number,
+    totalRequests: number,
+    windowMs: number,
+    userTier: UserTier,
+    isBurstUsed: boolean,
+  ): RateLimitResult {
+    const now = Date.now();
+    const remaining = Math.max(0, allowedRequests - totalRequests - 1);
+    const resetTime = new Date(now + windowMs);
+
+    const result: RateLimitResult = {
+      allowed: isAllowed,
+      remaining,
+      resetTime,
+      tier: userTier,
+      isBurstUsed,
+    };
+
+    if (!isAllowed) {
+      result.retryAfter = Math.ceil(windowMs / 1000);
+    }
+
+    return result;
   }
 
   /**
    * Detect potential abuse patterns
    */
   async detectAbuse(
-    userId: string,
-    ipAddress: string,
+    _userId: string,
+    _ipAddress: string,
     recentRequests: RequestPattern[],
   ): Promise<AbuseDetectionResult> {
     const patterns: string[] = [];

@@ -1,5 +1,6 @@
 import { Module, Global } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { Redis } from 'ioredis';
 import { CacheService } from './cache.service';
 import { MemoryCacheService } from './memory-cache.service';
 import { RedisCacheService } from './redis-cache.service';
@@ -19,11 +20,36 @@ import { RedisCacheService } from './redis-cache.service';
     },
     {
       provide: 'REDIS_CONNECTION',
-      useFactory: () => {
-        // For now, return null to make RedisCacheService optional
-        // This can be replaced with actual Redis connection later
-        return null;
+      useFactory: async (configService: ConfigService) => {
+        const redisUrl = configService.get<string>(
+          'REDIS_URL',
+          'redis://localhost:6379',
+        );
+
+        const redis = new Redis(redisUrl, {
+          maxRetriesPerRequest: null,
+          enableReadyCheck: false,
+          lazyConnect: true,
+        });
+
+        redis.on('error', (err) => {
+          console.error('Rate Limiting Redis Connection Error:', err);
+        });
+
+        redis.on('connect', () => {
+          console.log('✅ Rate Limiting Redis connected successfully');
+        });
+
+        try {
+          await redis.connect();
+          return redis;
+        } catch (error) {
+          console.error('❌ Rate Limiting Redis connection failed:', error);
+          // Return null to allow graceful degradation
+          return null;
+        }
       },
+      inject: [ConfigService],
     },
     CacheService,
     RedisCacheService,

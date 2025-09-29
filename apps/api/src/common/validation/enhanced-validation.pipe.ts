@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { validate, ValidationError } from 'class-validator';
 import { plainToClass } from 'class-transformer';
+import sanitizeHtml from 'sanitize-html';
 import { AuditLogService } from '../../application/services/audit-log.service';
 import {
   AuditResourceType,
@@ -280,11 +281,12 @@ export class EnhancedValidationPipe implements PipeTransform<unknown> {
         sanitized[key] &&
         typeof sanitized[key] === 'string'
       ) {
-        // Basic HTML sanitization - remove script tags, etc.
-        sanitized[key] = sanitized[key]
-          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-          .replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '')
-          .replace(/javascript:/gi, '');
+        // Use sanitize-html for robust HTML sanitization
+        sanitized[key] = sanitizeHtml(String(sanitized[key]), {
+          allowedTags: ['p', 'br', 'strong', 'em', 'u', 'ol', 'ul', 'li'], // Allow basic formatting
+          allowedAttributes: {},
+          allowedSchemes: ['http', 'https', 'mailto'],
+        });
       }
     });
     /* eslint-enable security/detect-object-injection */

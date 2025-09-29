@@ -1,0 +1,28 @@
+{
+  "enabled": true,
+  "defaultAction": "block",
+  "logBlocked": true,
+  "customRules": {
+    "allowedIPs": ["127.0.0.1", "::1"],
+    "blockedIPs": [],
+    "allowedCIDRs": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"],
+    "blockedCIDRs": []
+  },
+  "rateLimiting": {
+    "enabled": true,
+    "windowMs": 900000,
+    "maxRequests": 100,
+    "blockDuration": 3600000
+  },
+  "whitelist": {
+    "enabled": true,
+    "description": "IPs and CIDRs that are always allowed, even if in threat feeds",
+    "ips": ["127.0.0.1", "::1"],
+    "cidrs": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+  },
+  "monitoring": {
+    "alertOnNewThreats": true,
+    "alertThreshold": 10,
+    "reportingInterval": "0 0 * * *"
+  }
+}

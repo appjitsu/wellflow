@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import sanitizeHtml from 'sanitize-html';
 import { AuditLogService } from '../../application/services/audit-log.service';
 import {
   AuditAction,
@@ -79,6 +80,7 @@ export class ApiResponseValidatorService {
   };
 
   // XSS detection patterns
+  // Instead of brittle regex patterns, use a robust HTML sanitizer (sanitize-html)
   private readonly xssPatterns = [
     /<script[^>]*>.*?<\/script>/gi,
     /<iframe[^>]*>.*?<\/iframe>/gi,
@@ -438,24 +440,27 @@ export class ApiResponseValidatorService {
   }
 
   /**
+   * Sanitize HTML to remove dangerous tags and attributes using sanitize-html.
+   */
+  private sanitizeHtmlInput(input: string): string {
+    return sanitizeHtml(input, {
+      allowedTags: sanitizeHtml.defaults.allowedTags,
+      allowedAttributes: {
+        ...sanitizeHtml.defaults.allowedAttributes,
+      },
+    });
+  }
+
+  /**
    * Sanitize string content
    */
   private sanitizeString(input: string): string {
-    let sanitized = input;
-
-    // Remove script tags
-    sanitized = sanitized.replace(/<script[^>]*>.*?<\/script>/gi, '');
-
-    // Remove iframe tags
-    sanitized = sanitized.replace(/<iframe[^>]*>.*?<\/iframe>/gi, '');
-
-    // Remove javascript: protocols
-    sanitized = sanitized.replace(/javascript:/gi, '');
-
-    // Remove event handlers
-    sanitized = sanitized.replace(/on\w+\s*=/gi, '');
-
-    return sanitized;
+    // Use sanitize-html to robustly remove scripts, iframes, event handlers, and javascript: URLs
+    return sanitizeHtml(input, {
+      allowedTags: [], // Disallow all tags by default
+      allowedAttributes: {}, // Disallow all attributes
+      allowedSchemes: ['http', 'https', 'mailto'], // Disallow 'javascript:' protocol
+    });
   }
 
   /**

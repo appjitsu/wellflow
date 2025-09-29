@@ -6,6 +6,7 @@ import {
   Logger,
   Optional,
 } from '@nestjs/common';
+import sanitizeHtml from 'sanitize-html';
 import { AuditLogService } from '../../application/services/audit-log.service';
 import {
   AuditResourceType,
@@ -305,18 +306,15 @@ export class SecurityValidationPipe implements PipeTransform<unknown> {
   }
 
   private sanitizeString(str: string): string {
+    // Use sanitize-html for robust XSS protection instead of brittle regex patterns
+    const sanitized = sanitizeHtml(str, {
+      allowedTags: [], // Disallow all HTML tags by default
+      allowedAttributes: {}, // Disallow all attributes
+      allowedSchemes: ['http', 'https', 'mailto'], // Disallow 'javascript:', 'vbscript:', 'data:' protocols
+    });
+
     return (
-      str
-        // Remove script tags
-        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-        // Remove iframe tags
-        .replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '')
-        // Remove javascript: protocols
-        .replace(/javascript:/gi, '')
-        // Remove vbscript: protocols
-        .replace(/vbscript:/gi, '')
-        // Remove data: URLs that might contain scripts
-        .replace(/data:text\/html/gi, '')
+      sanitized
         // Remove null bytes
         .replace(/\0/g, '')
         // Remove control characters (except tabs and newlines)
