@@ -33,7 +33,12 @@ redis.on('error', (err: Error) => {
 });
 
 // Initialize BullMQ queues
-const queueNames = ['data-validation', 'report-generation', 'email-notifications'];
+const queueNames = [
+  'data-validation',
+  'report-generation',
+  'email-notifications',
+  'threat-intelligence',
+];
 const queues = queueNames.map((name) => new Queue(name, { connection: redis }));
 
 // Create Bull-Board

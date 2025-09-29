@@ -103,6 +103,7 @@ files = [
     '''docs/.*\.md$''',
     '''README\.md$''',
     '''CHANGELOG\.md$''',
+    '''SECURITY_SETUP\.md$''',
     '''LICENSE$''',
     '''\.env\.example$''',
 ]

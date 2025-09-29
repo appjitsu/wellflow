@@ -4,6 +4,12 @@
 # or for false positives that cannot be resolved through allowlist rules
 
 # Production secrets that need to be moved to environment variables
+
+# Documentation placeholder values in SECURITY_SETUP.md (false positives)
+cdf88e0a3667a686a9f85d0cf8bd0201552c3649:SECURITY_SETUP.md:monitoring-tokens:49
+cdf88e0a3667a686a9f85d0cf8bd0201552c3649:SECURITY_SETUP.md:monitoring-tokens:59
+cdf88e0a3667a686a9f85d0cf8bd0201552c3649:SECURITY_SETUP.md:monitoring-tokens:60
+cdf88e0a3667a686a9f85d0cf8bd0201552c3649:SECURITY_SETUP.md:monitoring-tokens:63
 # These should be removed from the repository and added to secure environment configuration
 
 # UPLOADTHING secrets - these should be moved to environment variables

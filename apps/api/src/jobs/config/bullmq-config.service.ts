@@ -106,6 +106,31 @@ export class BullMQConfigService implements OnModuleInit, OnModuleDestroy {
         maxStalledCount: 2,
       },
     },
+    {
+      name: 'threat-intelligence',
+      options: {
+        defaultJobOptions: {
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 5000,
+          },
+          removeOnComplete: 50,
+          removeOnFail: 25,
+          // No default delay - jobs should execute immediately unless explicitly delayed
+        },
+      },
+      workerOptions: {
+        concurrency: 2, // Network I/O operations
+        limiter: {
+          max: 5,
+          duration: 1000,
+        },
+        // Remove stalled jobs after 5 minutes
+        stalledInterval: 5 * 60 * 1000,
+        maxStalledCount: 1,
+      },
+    },
   ];
 
   constructor(private configService: ConfigService) {}
@@ -218,6 +243,9 @@ export class BullMQConfigService implements OnModuleInit, OnModuleDestroy {
    * Get Redis connection for BullMQ
    */
   getRedisConnection(): Redis {
+    if (!this.redisConnection) {
+      throw new Error('Redis connection not initialized');
+    }
     return this.redisConnection;
   }
 
@@ -226,5 +254,39 @@ export class BullMQConfigService implements OnModuleInit, OnModuleDestroy {
    */
   getQueueConfig(name: string): QueueConfig | undefined {
     return this.queueConfigs.find((config) => config.name === name);
+  }
+
+  /**
+   * Check if BullMQ is fully initialized
+   */
+  isInitialized(): boolean {
+    return (
+      this.redisConnection != null &&
+      this.redisConnection.status === 'ready' &&
+      this.queues.size === this.queueConfigs.length
+    );
+  }
+
+  /**
+   * Wait for BullMQ to be fully initialized
+   */
+  async waitForInitialization(maxRetries = 10, delayMs = 1000): Promise<void> {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      if (this.isInitialized()) {
+        console.log(`✅ BullMQ fully initialized on attempt ${attempt}`);
+        return;
+      }
+
+      if (attempt < maxRetries) {
+        console.log(
+          `⏳ Waiting for BullMQ initialization (attempt ${attempt}/${maxRetries})`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      } else {
+        throw new Error(
+          `BullMQ failed to initialize after ${maxRetries} attempts`,
+        );
+      }
+    }
   }
 }

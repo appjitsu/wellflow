@@ -1,0 +1,36 @@
+{
+  "enabled": true,
+  "cacheTTL": 86400,
+  "updateInterval": "0 */6 * * *",
+  "feeds": [
+    {
+      "name": "blocklist-de",
+      "url": "https://lists.blocklist.de/lists/all.txt",
+      "updateInterval": "0 */6 * * *",
+      "enabled": true,
+      "description": "Blocklist.de All Malicious IPs",
+      "format": "ip",
+      "parser": "line"
+    },
+    {
+      "name": "firehol-level2",
+      "url": "https://iplists.firehol.org/files/firehol_level2.netset",
+      "updateInterval": "0 */4 * * *",
+      "enabled": true,
+      "description": "FireHOL Level 2 - Attack IPs (includes CIDR blocks)",
+      "format": "mixed",
+      "parser": "line",
+      "skipComments": true,
+      "commentPrefix": "#"
+    },
+    {
+      "name": "stopforumspam",
+      "url": "https://www.stopforumspam.com/downloads/toxic_ip_cidr.txt",
+      "updateInterval": "0 */3 * * *",
+      "enabled": true,
+      "description": "StopForumSpam - Toxic IP Addresses (CIDR format)",
+      "format": "cidr",
+      "parser": "line"
+    }
+  ]
+}

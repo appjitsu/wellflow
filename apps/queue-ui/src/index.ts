@@ -8,9 +8,9 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { ExpressAdapter } from '@bull-board/express';
 import { Queue } from 'bullmq';
 import { Redis } from 'ioredis';
-import { authMiddleware } from './middleware/auth.middleware';
-import { errorHandler } from './middleware/error.middleware';
-import { logger } from './utils/logger';
+import { authMiddleware } from './middleware/auth.middleware.js';
+import { errorHandler } from './middleware/error.middleware.js';
+import { logger } from './utils/logger.js';
 
 // Load environment variables
 config();
@@ -29,7 +29,7 @@ config();
  */
 
 const app = express();
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3003;
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 
 // Security middleware
@@ -90,7 +90,12 @@ redis.on('error', (err: Error) => {
 });
 
 // Initialize BullMQ queues
-const queueNames = ['data-validation', 'report-generation', 'email-notifications'];
+const queueNames = [
+  'data-validation',
+  'report-generation',
+  'email-notifications',
+  'threat-intelligence',
+];
 const queues = queueNames.map((name) => new Queue(name, { connection: redis }));
 
 // Create Bull-Board

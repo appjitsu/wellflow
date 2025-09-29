@@ -110,6 +110,7 @@
     "@tanstack/react-query-devtools": "5.90.2",
     "@tanstack/react-table": "8.21.3",
     "bcrypt": "6.0.0",
+    "ip-cidr": "4.0.2",
     "passport-local": "1.0.0"
   }
 }

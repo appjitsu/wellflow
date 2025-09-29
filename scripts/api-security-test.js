@@ -1175,7 +1175,7 @@ class APISecurityTester {
     for (const url of maliciousUrls) {
       try {
         // This should be blocked by SSRF protection
-        const response = await this.makeRequest('POST', '/external-api/test', {
+        await this.makeRequest('POST', '/external-api/test', {
           url: url,
         });
 
@@ -1329,7 +1329,7 @@ class APISecurityTester {
       for (const contentType of contentTypes) {
         try {
           // This would need a test endpoint that simulates different content types
-          const response = await this.makeRequest('POST', '/test/content-type', {
+          await this.makeRequest('POST', '/test/content-type', {
             contentType: contentType,
           });
 

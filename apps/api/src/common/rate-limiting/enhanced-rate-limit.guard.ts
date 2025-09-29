@@ -46,12 +46,18 @@ export class EnhancedRateLimitGuard implements CanActivate {
     const ipAddress = this.getClientIp(request);
 
     try {
-      // Check rate limit
+      // Check rate limit with enhanced DDoS protection
+      const bypassToken = request.headers['x-bypass-token'] as string;
+      const userAgent = request.headers['user-agent'] as string;
+
       const rateLimitResult = await this.rateLimiter.checkRateLimit(
         userId || 'anonymous',
         userTier,
         endpoint,
         method,
+        ipAddress,
+        userAgent,
+        bypassToken,
       );
 
       // Record API request metrics

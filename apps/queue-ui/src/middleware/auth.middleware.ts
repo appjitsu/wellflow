@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { logger } from '../utils/logger';
+import { logger } from '../utils/logger.js';
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -27,6 +27,12 @@ export function authMiddleware(
   res: Response,
   next: NextFunction
 ): void | Response {
+  // Skip authentication in development mode
+  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production') {
+    logger.info(`🔓 Development mode: Skipping auth for ${req.method} ${req.path}`);
+    return next();
+  }
+
   // Skip authentication for health check, API info endpoints, static assets, and Bull Board API
   if (
     req.path === '/health' ||
