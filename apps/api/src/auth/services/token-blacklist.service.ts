@@ -124,6 +124,7 @@ export class TokenBlacklistService {
       const payload = this.decodeToken(token);
       if (!payload) {
         // If we can't decode the token, consider it invalid but not blacklisted
+        this.logger.warn('Could not decode token for blacklist check');
         return false;
       }
 

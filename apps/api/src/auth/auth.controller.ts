@@ -10,6 +10,7 @@ import {
   Param,
   Query,
   HttpException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
@@ -285,12 +286,20 @@ export class AuthController {
       );
     }
 
-    await this.authService.verifyEmail(userId, token);
+    try {
+      await this.authService.verifyEmail(userId, token);
 
-    return {
-      message: 'Email verified successfully. You can now log in.',
-      verifiedAt: new Date(),
-    };
+      return {
+        message: 'Email verified successfully. You can now log in.',
+        verifiedAt: new Date(),
+      };
+    } catch (error) {
+      // Convert verification errors to 401 Unauthorized
+      if (error instanceof Error) {
+        throw new UnauthorizedException(error.message);
+      }
+      throw new UnauthorizedException('Email verification failed');
+    }
   }
 
   /**

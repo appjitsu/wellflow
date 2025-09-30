@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { randomBytes } from 'crypto';
 import { User, UserRole } from '../domain/entities/user.entity';
 import { AuthToken } from '../domain/value-objects/auth-token';
 import { TokenBlacklistService } from './services/token-blacklist.service';
@@ -363,6 +364,10 @@ export class AuthService {
     user: User,
     rememberMe: boolean = false,
   ): { accessToken: string; refreshToken: string } {
+    // Generate unique JTI for each token
+    const accessJti = randomBytes(16).toString('hex');
+    const refreshJti = randomBytes(16).toString('hex');
+
     const payload: JwtPayload = {
       sub: user.getId(),
       email: user.getEmail().getValue(),
@@ -370,18 +375,24 @@ export class AuthService {
       role: user.getRole(),
     };
 
-    const accessToken = this.jwtService.sign(payload, {
-      expiresIn: this.configService.get<string>('JWT_EXPIRES_IN', '15m'),
-    });
+    const accessToken = this.jwtService.sign(
+      { ...payload, jti: accessJti },
+      {
+        expiresIn: this.configService.get<string>('JWT_EXPIRES_IN', '15m'),
+      },
+    );
 
     // Generate refresh token with extended expiry for remember me
     const refreshTokenExpiry = rememberMe
       ? this.configService.get<string>('JWT_REMEMBER_ME_EXPIRES_IN', '30d')
       : this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d');
 
-    const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: refreshTokenExpiry,
-    });
+    const refreshToken = this.jwtService.sign(
+      { ...payload, jti: refreshJti },
+      {
+        expiresIn: refreshTokenExpiry,
+      },
+    );
 
     return { accessToken, refreshToken };
   }
