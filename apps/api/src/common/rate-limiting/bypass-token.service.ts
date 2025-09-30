@@ -260,12 +260,16 @@ export class BypassTokenService {
         const tokenData = await this.redis.get(key);
         if (tokenData) {
           const token = JSON.parse(tokenData) as BypassToken;
-          if (token.createdBy === userId && new Date() <= token.expiresAt) {
+          // Convert string dates back to Date objects for comparison
+          const expiresAt = new Date(token.expiresAt);
+          const createdAt = new Date(token.createdAt);
+
+          if (token.createdBy === userId && new Date() <= expiresAt) {
             // Remove the actual token from the response for security
             const tokenWithoutSecret = {
               hashedToken: token.hashedToken,
-              expiresAt: token.expiresAt,
-              createdAt: token.createdAt,
+              expiresAt: expiresAt,
+              createdAt: createdAt,
               createdBy: token.createdBy,
               usageCount: token.usageCount,
               maxUsage: token.maxUsage,
@@ -316,7 +320,9 @@ export class BypassTokenService {
           const token = JSON.parse(tokenData) as BypassToken;
           totalUsage += token.usageCount;
 
-          if (now <= token.expiresAt) {
+          // Convert string date back to Date object for comparison
+          const expiresAt = new Date(token.expiresAt);
+          if (now <= expiresAt) {
             activeTokens++;
           } else {
             expiredTokens++;

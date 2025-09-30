@@ -6,6 +6,9 @@ import { JobQueueService } from '../services/job-queue.service';
 import { JobMetricsService } from '../services/job-metrics.service';
 import { JobSchedulerService } from '../services/job-scheduler.service';
 import { BullMQConfigService } from '../config/bullmq-config.service';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { SentryModule } from '../../sentry/sentry.module';
+import { LogRocketModule } from '../../logrocket/logrocket.module';
 
 import {
   LeaseDataValidationJobData,
@@ -60,6 +63,9 @@ describe('Jobs Integration', () => {
           isGlobal: true,
           envFilePath: '.env.test',
         }),
+        EventEmitterModule.forRoot(),
+        SentryModule,
+        LogRocketModule,
         JobsModule,
       ],
     })

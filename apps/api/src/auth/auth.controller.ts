@@ -10,6 +10,7 @@ import {
   Param,
   Query,
   HttpException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
@@ -22,11 +23,25 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
+
+import { EnhancedRateLimitGuard } from '../common/rate-limiting/enhanced-rate-limit.guard';
 import { AuthService, RegisterUserDto } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 
 // eslint-disable-next-line sonarjs/no-duplicate-string
 const EXAMPLE_USER_ID = '123e4567-e89b-12d3-a456-426614174000';
+
+interface AuthenticatedRequestWithHeaders {
+  user: AuthenticatedUser;
+  headers: {
+    authorization?: string;
+    'user-agent'?: string;
+  };
+  ip?: string;
+  connection?: {
+    remoteAddress?: string;
+  };
+}
 import { RegisterDto } from './dto/register.dto';
 import {
   LoginResponseDto,
@@ -78,8 +93,8 @@ export class AuthController {
    */
   @Post('register')
   @Public() // Bypass JWT authentication for registration
+  @UseGuards(EnhancedRateLimitGuard) // Enhanced rate limiting with threat intelligence
   @HttpCode(HttpStatus.CREATED)
-  @Throttle({ [RATE_LIMIT_TIERS.AUTH]: { limit: 10, ttl: 60000 } }) // Strict rate limiting for registration
   @ApiOperation({
     summary: 'Register a new user',
     description:
@@ -145,9 +160,8 @@ export class AuthController {
    */
   @Post('login')
   @Public() // Bypass JWT authentication for login
-  @UseGuards(AuthGuard('local')) // Use Local Strategy for credential validation
+  @UseGuards(AuthGuard('local'), EnhancedRateLimitGuard) // Use Local Strategy + Enhanced Rate Limiting
   @HttpCode(HttpStatus.OK)
-  @Throttle({ [RATE_LIMIT_TIERS.AUTH]: { limit: 10, ttl: 60000 } }) // Moderate rate limiting for login
   @ApiOperation({
     summary: 'User login',
     description:
@@ -220,6 +234,72 @@ export class AuthController {
       message: 'Email verified successfully. You can now log in.',
       verifiedAt: new Date(),
     };
+  }
+
+  /**
+   * Email Verification (Alternative Format)
+   * Verifies user email address using verification token in URL path
+   * This endpoint matches the format specified in the ticket: GET /auth/verify/:token
+   */
+  @Get('verify/:token')
+  @Public() // Public endpoint for email verification
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ [RATE_LIMIT_TIERS.DEFAULT]: { limit: 60, ttl: 60000 } })
+  @ApiOperation({
+    summary: 'Verify email address (alternative format)',
+    description:
+      'Verifies user email address using the verification token in the URL path. This is an alternative to the POST endpoint.',
+  })
+  @ApiParam({
+    name: 'token',
+    description: 'Email verification token',
+    example: 'abc123def456ghi789',
+  })
+  @ApiQuery({
+    name: 'userId',
+    description: 'User ID',
+    example: EXAMPLE_USER_ID,
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Email verified successfully',
+    type: EmailVerificationResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Invalid or expired verification token',
+    type: AuthErrorResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Missing user ID parameter',
+    type: AuthErrorResponseDto,
+  })
+  async verifyEmailByToken(
+    @Param('token') token: string,
+    @Query('userId') userId?: string,
+  ): Promise<EmailVerificationResponseDto> {
+    if (!userId) {
+      throw new HttpException(
+        'User ID is required as a query parameter',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    try {
+      await this.authService.verifyEmail(userId, token);
+
+      return {
+        message: 'Email verified successfully. You can now log in.',
+        verifiedAt: new Date(),
+      };
+    } catch (error) {
+      // Convert verification errors to 401 Unauthorized
+      if (error instanceof Error) {
+        throw new UnauthorizedException(error.message);
+      }
+      throw new UnauthorizedException('Email verification failed');
+    }
   }
 
   /**
@@ -325,15 +405,16 @@ export class AuthController {
   }
 
   /**
-   * Logout (placeholder for future refresh token blacklisting)
-   * Currently returns success message
+   * Logout with Token Blacklisting
+   * Blacklists the current access token and optional refresh token
    */
   @Post('logout')
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'User logout',
-    description: 'Logs out the user (future: blacklists refresh token).',
+    description:
+      'Logs out the user and blacklists JWT tokens to prevent reuse.',
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -342,14 +423,38 @@ export class AuthController {
       type: 'object',
       properties: {
         message: { type: 'string', example: 'Logout successful' },
+        loggedOutAt: { type: 'string', format: 'date-time' },
       },
     },
   })
-  logout(@Request() _req: { user: AuthenticatedUser }) {
-    // Note: Refresh token blacklisting will be implemented in Phase 4
-    // For now, client-side token removal is sufficient
+  async logout(
+    @Request()
+    req: AuthenticatedRequestWithHeaders,
+    @Body() body?: { refreshToken?: string },
+  ): Promise<{ message: string; loggedOutAt: Date }> {
+    // Extract access token from Authorization header
+    const authHeader = req.headers.authorization;
+    const accessToken = authHeader?.startsWith('Bearer ')
+      ? authHeader.substring(7)
+      : '';
+
+    if (accessToken) {
+      // Get IP address and user agent for audit logging
+      const ipAddress = req.ip || req.connection?.remoteAddress;
+      const userAgent = req.headers['user-agent'];
+
+      // Blacklist tokens
+      await this.authService.logout(
+        accessToken,
+        body?.refreshToken,
+        ipAddress,
+        userAgent,
+      );
+    }
+
     return {
       message: 'Logout successful',
+      loggedOutAt: new Date(),
     };
   }
 
@@ -483,8 +588,8 @@ export class AuthController {
    */
   @Post('forgot-password')
   @Public() // Public endpoint for password reset
+  @UseGuards(EnhancedRateLimitGuard) // Enhanced rate limiting with threat intelligence
   @HttpCode(HttpStatus.OK)
-  @Throttle({ [RATE_LIMIT_TIERS.STRICT]: { limit: 3, ttl: 300000 } }) // Very strict rate limiting - 3 per 5 minutes
   @ApiOperation({
     summary: 'Request password reset',
     description:

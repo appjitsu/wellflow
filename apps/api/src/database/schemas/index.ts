@@ -129,6 +129,7 @@ export { outboxEvents } from './outbox-events';
 // Audit and security
 export { auditLogs } from './audit-logs';
 export { passwordHistory } from './password-history';
+export { tokenBlacklist } from './token-blacklist';
 
 // Relations
 export * from './relations';

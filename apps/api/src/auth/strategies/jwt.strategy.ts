@@ -1,8 +1,11 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Inject } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
+import { Request } from 'express';
 import { AuthService } from '../auth.service';
+import { TokenBlacklistService } from '../services/token-blacklist.service';
+import { User } from '../../domain/entities/user.entity';
 
 /**
  * JWT Payload Interface
@@ -13,6 +16,7 @@ export interface JwtPayload {
   email: string;
   organizationId: string;
   role: string;
+  jti?: string; // JWT ID for token blacklisting
   iat?: number; // Issued at
   exp?: number; // Expires at
 }
@@ -45,6 +49,8 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     private readonly configService: ConfigService,
     private readonly authService: AuthService,
+    @Inject('TokenBlacklistService')
+    private readonly tokenBlacklistService: TokenBlacklistService,
   ) {
     // Validate JWT secret is configured
     const jwtSecret = configService.get<string>('JWT_SECRET');
@@ -57,6 +63,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       ignoreExpiration: false,
       secretOrKey: jwtSecret,
       algorithms: ['HS256'], // Explicit algorithm specification for security
+      passReqToCallback: true, // Pass request to callback to access raw token
     });
   }
 
@@ -64,37 +71,19 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
    * Validate JWT payload and return user information
    * This method is called by Passport after JWT signature verification
    *
+   * @param req - Express request object (contains raw token)
    * @param payload - Decoded JWT payload
    * @returns AuthenticatedUser object or throws UnauthorizedException
    */
-  async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
+  async validate(
+    req: Request,
+    payload: JwtPayload,
+  ): Promise<AuthenticatedUser> {
     try {
-      // Validate payload structure
-      if (
-        !payload.sub ||
-        !payload.email ||
-        !payload.organizationId ||
-        !payload.role
-      ) {
-        throw new UnauthorizedException('Invalid token payload structure');
-      }
-
-      // Get user from database to ensure they still exist and are active
-      const user = await this.authService.validateUserById(payload.sub);
-
-      if (!user) {
-        throw new UnauthorizedException('User not found or inactive');
-      }
-
-      // Verify the payload data matches current user data
-      if (
-        user.getEmail().getValue() !== payload.email ||
-        user.getOrganizationId() !== payload.organizationId
-      ) {
-        throw new UnauthorizedException(
-          'Token payload does not match user data',
-        );
-      }
+      this.validatePayloadStructure(payload);
+      await this.checkTokenBlacklist(req);
+      const user = await this.validateUser(payload);
+      this.verifyPayloadMatchesUser(user, payload);
 
       // Check if user account is locked
       if (user.isAccountLocked()) {
@@ -139,5 +128,57 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
    */
   getStrategyName(): string {
     return 'jwt';
+  }
+
+  /**
+   * Validate payload structure
+   */
+  private validatePayloadStructure(payload: JwtPayload): void {
+    if (
+      !payload.sub ||
+      !payload.email ||
+      !payload.organizationId ||
+      !payload.role
+    ) {
+      throw new UnauthorizedException('Invalid token payload structure');
+    }
+  }
+
+  /**
+   * Check if token is blacklisted
+   */
+  private async checkTokenBlacklist(req: Request): Promise<void> {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      const isBlacklisted =
+        await this.tokenBlacklistService.isTokenBlacklisted(token);
+      if (isBlacklisted) {
+        throw new UnauthorizedException('Token has been revoked');
+      }
+    }
+  }
+
+  /**
+   * Validate user exists and is active
+   */
+  private async validateUser(payload: JwtPayload) {
+    const user = await this.authService.validateUserById(payload.sub);
+    if (!user) {
+      throw new UnauthorizedException('User not found or inactive');
+    }
+    return user;
+  }
+
+  /**
+   * Verify payload matches current user data
+   */
+  private verifyPayloadMatchesUser(user: User, payload: JwtPayload): void {
+    if (
+      user.getEmail().getValue() !== payload.email ||
+      user.getOrganizationId() !== payload.organizationId
+    ) {
+      throw new UnauthorizedException('Token payload does not match user data');
+    }
   }
 }

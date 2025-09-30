@@ -3,6 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import { AppModule } from '../../app.module';
 import request from 'supertest';
 import { randomUUID } from 'crypto';
+import { EnhancedRateLimiterService } from '../../common/rate-limiting/enhanced-rate-limiter.service';
 
 /**
  * End-to-End Tests for Password Security Features
@@ -18,7 +19,14 @@ describe('Password Security E2E', () => {
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(EnhancedRateLimiterService)
+      .useValue({
+        checkRateLimit: jest
+          .fn()
+          .mockResolvedValue({ allowed: true, remaining: 1000 }),
+      })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     await app.init();

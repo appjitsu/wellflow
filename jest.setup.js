@@ -25,9 +25,8 @@ process.env.LOGROCKET_APP_ID = 'test/test';
 process.env.DATADOG_API_KEY = 'test-datadog-key';
 
 // Security and compliance test settings
-// Generate secure random secrets for testing to avoid hardcoded values
-process.env.JWT_SECRET =
-  process.env.JWT_SECRET || require('crypto').randomBytes(32).toString('hex');
+// Use consistent test secrets for predictable test behavior
+process.env.JWT_SECRET = 'test-jwt-secret-for-testing-only';
 process.env.ENCRYPTION_KEY =
   process.env.ENCRYPTION_KEY || require('crypto').randomBytes(32).toString('hex');
 process.env.API_KEY = process.env.API_KEY || require('crypto').randomBytes(16).toString('hex');

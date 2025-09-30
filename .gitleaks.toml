@@ -106,6 +106,8 @@ files = [
     '''SECURITY_SETUP\.md$''',
     '''LICENSE$''',
     '''\.env\.example$''',
+    '''jest\.setup\.js$''',
+    '''jest\.global-setup\.js$''',
 ]
 
 # Regex patterns to allowlist
@@ -139,6 +141,14 @@ regexes = [
     '''NEXT_PUBLIC_LOGROCKET_APP_ID=your-org/your-project-name''',
     '''-----BEGIN PRIVATE KEY-----\nxxx\n-----END PRIVATE KEY-----''',
     '''test-encryption-key-32-characters.*''',
+]
+
+# Stopwords to allowlist (exact matches)
+stopwords = [
+    '''test-jwt-secret-for-testing-only''',
+    '''test-jwt-secret-key-for-testing-only''',
+    '''test-datadog-key''',
+    '''test-api-key''',
 ]
 
 # Paths to allowlist (directories to ignore)

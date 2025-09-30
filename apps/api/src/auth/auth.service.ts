@@ -1,4 +1,3 @@
-// eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
 import {
   Injectable,
   Inject,
@@ -10,8 +9,11 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { randomBytes } from 'crypto';
 import { User, UserRole } from '../domain/entities/user.entity';
 import { AuthToken } from '../domain/value-objects/auth-token';
+import { TokenBlacklistService } from './services/token-blacklist.service';
+import { TokenType } from '../domain/entities/token-blacklist.entity';
 
 import { JwtPayload, AuthenticatedUser } from './strategies/jwt.strategy';
 import { AuditLogService } from '../application/services/audit-log.service';
@@ -107,6 +109,8 @@ export class AuthService {
     private readonly emailService: EmailService,
     private readonly organizationsService: OrganizationsService,
     private readonly suspiciousActivityDetector: SuspiciousActivityDetectorService,
+    @Inject('TokenBlacklistService')
+    private readonly tokenBlacklistService: TokenBlacklistService,
   ) {}
 
   /**
@@ -360,6 +364,10 @@ export class AuthService {
     user: User,
     rememberMe: boolean = false,
   ): { accessToken: string; refreshToken: string } {
+    // Generate unique JTI for each token
+    const accessJti = randomBytes(16).toString('hex');
+    const refreshJti = randomBytes(16).toString('hex');
+
     const payload: JwtPayload = {
       sub: user.getId(),
       email: user.getEmail().getValue(),
@@ -367,18 +375,24 @@ export class AuthService {
       role: user.getRole(),
     };
 
-    const accessToken = this.jwtService.sign(payload, {
-      expiresIn: this.configService.get<string>('JWT_EXPIRES_IN', '15m'),
-    });
+    const accessToken = this.jwtService.sign(
+      { ...payload, jti: accessJti },
+      {
+        expiresIn: this.configService.get<string>('JWT_EXPIRES_IN', '15m'),
+      },
+    );
 
     // Generate refresh token with extended expiry for remember me
     const refreshTokenExpiry = rememberMe
       ? this.configService.get<string>('JWT_REMEMBER_ME_EXPIRES_IN', '30d')
       : this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d');
 
-    const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: refreshTokenExpiry,
-    });
+    const refreshToken = this.jwtService.sign(
+      { ...payload, jti: refreshJti },
+      {
+        expiresIn: refreshTokenExpiry,
+      },
+    );
 
     return { accessToken, refreshToken };
   }
@@ -416,6 +430,43 @@ export class AuthService {
       },
       expiresIn,
     };
+  }
+
+  /**
+   * Logout user and blacklist tokens
+   */
+  async logout(
+    accessToken: string,
+    refreshToken?: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<void> {
+    try {
+      // Blacklist the access token
+      await this.tokenBlacklistService.blacklistToken(
+        accessToken,
+        TokenType.ACCESS,
+        undefined, // Use default logout reason
+        ipAddress,
+        userAgent,
+      );
+
+      // Blacklist the refresh token if provided
+      if (refreshToken) {
+        await this.tokenBlacklistService.blacklistToken(
+          refreshToken,
+          TokenType.REFRESH,
+          undefined, // Use default logout reason
+          ipAddress,
+          userAgent,
+        );
+      }
+
+      this.logger.log('User logged out successfully with token blacklisting');
+    } catch (error) {
+      this.logger.error('Error during logout:', error);
+      // Don't throw error for logout - it should always succeed from user perspective
+    }
   }
 
   /**
@@ -618,12 +669,15 @@ export class AuthService {
     refreshToken: string,
   ): Promise<{ accessToken: string; refreshToken: string }> {
     try {
-      // Verify the refresh token
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const payload = this.jwtService.verify(refreshToken);
+      // Verify the refresh token with proper typing
+      const payload: JwtPayload = this.jwtService.verify(refreshToken);
+
+      // Validate payload structure
+      if (!payload.sub || !payload.email || !payload.organizationId) {
+        throw new UnauthorizedException('Invalid refresh token payload');
+      }
 
       // Get user to ensure they still exist and are active
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
       const user = await this.userRepository.findById(payload.sub);
       if (!user || !user.isAccountActive()) {
         throw new UnauthorizedException('User not found or inactive');

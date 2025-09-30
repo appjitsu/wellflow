@@ -41,12 +41,21 @@ async function setupTestDatabase() {
     await client.end();
   }
 
-  // Run database setup - use SQL migration file directly
+  // Run database setup - use SQL migration files directly
   try {
+    // Run all migrations in order
     execSync(
       'psql -h localhost -p 5432 -U jason -d wellflow_test -f /Users/jason/projects/wellflow/apps/api/src/database/migrations/0000_bored_namorita.sql',
       { stdio: 'inherit' }
     );
+    console.log('✓ Migration 0000 applied');
+
+    execSync(
+      'psql -h localhost -p 5432 -U jason -d wellflow_test -f /Users/jason/projects/wellflow/apps/api/src/database/migrations/0001_flat_amazoness.sql',
+      { stdio: 'inherit' }
+    );
+    console.log('✓ Migration 0001 applied');
+
     console.log('✓ Database schema created from SQL migrations');
   } catch (error) {
     console.error('Error setting up database schema:', error);

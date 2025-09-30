@@ -179,6 +179,26 @@ export class MetricsService {
     this.apiMetrics.set(key, existing);
   }
 
+  /**
+   * Increment a counter metric
+   * Stub implementation for rate limiting metrics
+   */
+  increment(_metric: string, _tags?: Record<string, string>): void {
+    // Stub implementation - could be extended to store metrics
+    // For now, just log at debug level
+    this.logger.debug(`Metric incremented: ${_metric}`);
+  }
+
+  /**
+   * Set a gauge metric value
+   * Stub implementation for rate limiting metrics
+   */
+  gauge(_metric: string, _value: number, _tags?: Record<string, string>): void {
+    // Stub implementation - could be extended to store metrics
+    // For now, just log at debug level
+    this.logger.debug(`Gauge set: ${_metric} = ${_value}`);
+  }
+
   private async getMemoryMetrics() {
     await Promise.resolve(); // Ensure async nature
     const memUsage = process.memoryUsage();

@@ -1,7 +1,8 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { RedisModule } from '../redis/redis.module';
 import { AuthorizationModule } from '../authorization/authorization.module';
+import { RateLimitingModule } from '../common/rate-limiting/rate-limiting.module';
 import { JobQueueService } from './services/job-queue.service';
 import { JobErrorHandlerService } from './services/job-error-handler.service';
 import { JobSchedulerService } from './services/job-scheduler.service';
@@ -17,7 +18,12 @@ import { JobSchedulerController } from './controllers/job-scheduler.controller';
 import { JobMetricsController } from './controllers/job-metrics.controller';
 
 @Module({
-  imports: [ConfigModule, RedisModule, AuthorizationModule],
+  imports: [
+    ConfigModule,
+    RedisModule,
+    AuthorizationModule,
+    forwardRef(() => RateLimitingModule),
+  ],
   controllers: [
     JobMonitoringController,
     JobSchedulerController,
