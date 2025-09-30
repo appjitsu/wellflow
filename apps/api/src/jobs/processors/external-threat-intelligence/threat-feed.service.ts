@@ -57,7 +57,7 @@ export interface ThreatFeedConfig {
  * Threat Feed Service
  *
  * Downloads and manages IP blacklists from various threat intelligence sources
- * Uses load-ip-set for reliable parsing and updates feeds on schedule
+ * Uses custom SimpleIPSet implementation for reliable parsing and updates feeds on schedule
  */
 @Injectable()
 export class ThreatFeedService {
@@ -110,7 +110,7 @@ export class ThreatFeedService {
   }
 
   /**
-   * Update a specific threat feed using load-ip-set
+   * Update a specific threat feed using custom IP set implementation
    */
   async updateFeed(feed: ThreatFeed): Promise<void> {
     if (!this.validateFeedUpdate(feed)) {
