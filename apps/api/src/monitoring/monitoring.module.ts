@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { CqrsModule } from '@nestjs/cqrs';
 import { MonitoringController } from './monitoring.controller';
 import { MetricsService } from './metrics.service';
 import { DatabaseModule } from '../database/database.module';
@@ -15,6 +16,7 @@ import { MonitoringModule as InfrastructureMonitoringModule } from '../infrastru
 
 @Module({
   imports: [
+    CqrsModule,
     DatabaseModule,
     RedisModule,
     HealthModule,

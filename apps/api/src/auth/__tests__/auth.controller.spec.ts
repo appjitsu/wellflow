@@ -5,6 +5,8 @@ import { Reflector } from '@nestjs/core';
 import { AbilitiesGuard } from '../../authorization/abilities.guard';
 import { JwtAuthGuard } from '../../presentation/guards/jwt-auth.guard';
 import { AbilitiesFactory } from '../../authorization/abilities.factory';
+import { EnhancedRateLimiterService } from '../../common/rate-limiting/enhanced-rate-limiter.service';
+import { MetricsService } from '../../monitoring/metrics.service';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -48,16 +50,17 @@ describe('AuthController', () => {
           useValue: { canActivate: jest.fn(() => true) },
         },
         {
-          provide: 'EnhancedRateLimiterService',
+          provide: EnhancedRateLimiterService,
           useValue: {
             checkRateLimit: jest.fn().mockResolvedValue({ allowed: true }),
           },
         },
         {
-          provide: 'MetricsService',
+          provide: MetricsService,
           useValue: {
             incrementCounter: jest.fn(),
             recordHistogram: jest.fn(),
+            recordApiRequest: jest.fn(),
           },
         },
       ],

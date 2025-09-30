@@ -10,6 +10,7 @@ import {
 } from './ddos-protection.service';
 import { IPReputationService } from './ip-reputation.service';
 import { BypassTokenService } from './bypass-token.service';
+import { MetricsService } from '../../monitoring/metrics.service';
 
 export interface RateLimitAlert {
   type:
@@ -59,6 +60,7 @@ export class RateLimitMonitoringService {
 
   constructor(
     private readonly eventEmitter: EventEmitter2,
+    private readonly metricsService: MetricsService,
     private readonly ddosProtectionService: DDoSProtectionService,
     private readonly ipReputationService: IPReputationService,
     private readonly bypassTokenService: BypassTokenService,
@@ -104,6 +106,11 @@ export class RateLimitMonitoringService {
     try {
       if (result.isAttack) {
         // Record DDoS attack metrics
+        this.metricsService.increment('rate_limit.ddos_attacks.total', {
+          ip_address: result.ipAddress,
+          risk_score: result.riskScore.toString(),
+        });
+
         this.logger.warn('DDoS attack detected', {
           ip_address: result.ipAddress,
           risk_score: result.riskScore.toString(),
@@ -111,6 +118,11 @@ export class RateLimitMonitoringService {
 
         // Check if alert should be sent
         if (result.riskScore >= this.alertThresholds.ddosAttackScore) {
+          this.metricsService.increment('rate_limit.alerts.total', {
+            type: 'ddos_attack',
+            severity: result.riskScore >= 90 ? 'critical' : 'high',
+          });
+
           this.sendAlert({
             type: 'ddos_attack',
             severity: result.riskScore >= 90 ? 'critical' : 'high',
@@ -148,7 +160,11 @@ export class RateLimitMonitoringService {
     reason: string,
   ): Promise<void> {
     try {
-      // Record bypass token usage
+      // Record bypass token usage metrics
+      this.metricsService.increment('bypass_token.usage.total', {
+        ip_address: ipAddress,
+      });
+
       this.logger.debug('Bypass token usage recorded', {
         ip_address: ipAddress,
       });
@@ -259,6 +275,21 @@ export class RateLimitMonitoringService {
       if (this.metricsBuffer.length > this.maxBufferSize) {
         this.metricsBuffer.shift();
       }
+
+      // Record metrics to metrics service
+      this.metricsService.gauge('rate_limit.ddos_attacks', metrics.ddosAttacks);
+      this.metricsService.gauge(
+        'rate_limit.blocked_requests',
+        metrics.blockedRequests,
+      );
+      this.metricsService.gauge(
+        'rate_limit.high_risk_ips',
+        metrics.highRiskIPs,
+      );
+      this.metricsService.gauge(
+        'rate_limit.bypass_token_usage',
+        metrics.bypassTokenUsage,
+      );
 
       // Record metrics for monitoring
       this.logger.debug('Rate limit metrics collected', {

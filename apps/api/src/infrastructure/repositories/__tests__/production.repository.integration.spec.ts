@@ -82,48 +82,28 @@ describe('ProductionRepository Integration', () => {
       console.warn('Cleanup error (ignored):', error);
     }
 
-    // Create test organization with upsert-like behavior
-    try {
-      await db.insert(organizations).values({
+    // Create test organization using onConflictDoNothing to handle duplicates
+    await db
+      .insert(organizations)
+      .values({
         id: TEST_ORG_ID,
         name: 'Test Organization LLC',
         taxId: '12-3456789',
-      });
-    } catch (error) {
-      // If organization already exists, that's fine - we'll use it
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      if (
-        !errorMessage.includes('duplicate key') &&
-        !errorMessage.includes('unique constraint')
-      ) {
-        throw error;
-      }
-      // Organization already exists, continue with the test
-    }
+      })
+      .onConflictDoNothing();
 
-    // Create test well with upsert-like behavior
-    try {
-      await db.insert(wells).values({
+    // Create test well using onConflictDoNothing to handle duplicates
+    await db
+      .insert(wells)
+      .values({
         id: TEST_WELL_ID,
         organizationId: TEST_ORG_ID,
         wellName: 'Test Well #1',
         apiNumber: '4212345678',
         status: 'active',
         wellType: 'oil',
-      });
-    } catch (error) {
-      // If well already exists, that's fine - we'll use it
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      if (
-        !errorMessage.includes('duplicate key') &&
-        !errorMessage.includes('unique constraint')
-      ) {
-        throw error;
-      }
-      // Well already exists, continue with the test
-    }
+      })
+      .onConflictDoNothing();
   });
 
   beforeEach(async () => {

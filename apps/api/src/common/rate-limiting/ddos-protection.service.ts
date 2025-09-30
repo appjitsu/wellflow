@@ -118,7 +118,8 @@ export class DDoSProtectionService {
       const volumetricPattern = await this.checkVolumetricAttack(ipAddress);
       if (volumetricPattern) {
         patterns.push(volumetricPattern);
-        riskScore += 30;
+        // Volumetric attacks are high severity (0.9 confidence) - should trigger on their own
+        riskScore += 60;
       }
 
       // Check protocol patterns
@@ -362,6 +363,13 @@ export class DDoSProtectionService {
     if (!userAgent || userAgent.trim().length === 0) {
       indicators.push('Missing User-Agent header');
       confidence += 0.3;
+    }
+
+    // Check for security scanning tools (high confidence)
+    const securityScannerPatterns = [/sqlmap/i, /nikto/i, /nmap/i, /burp/i];
+    if (securityScannerPatterns.some((pattern) => pattern.test(userAgent))) {
+      indicators.push('Security scanner detected');
+      confidence += 0.5;
     }
 
     // Check for bot-like user agents

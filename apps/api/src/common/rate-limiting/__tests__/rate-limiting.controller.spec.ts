@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RateLimitingController } from '../rate-limiting.controller';
 import { EnhancedRateLimiterService } from '../enhanced-rate-limiter.service';
+import { ExternalThreatIntelligenceService } from '../external-threat-intelligence';
 import { AbilitiesFactory } from '../../../authorization/abilities.factory';
 
 describe('RateLimitingController', () => {
@@ -11,6 +12,11 @@ describe('RateLimitingController', () => {
     getUserRateLimitStatus: jest.fn(),
     updateUserTier: jest.fn(),
     resetUserLimits: jest.fn(),
+  };
+
+  const mockExternalThreatIntelligenceService = {
+    checkIPReputation: jest.fn(),
+    getThreatFeeds: jest.fn(),
   };
 
   const mockJwtAuthGuard = { canActivate: jest.fn(() => true) };
@@ -24,6 +30,10 @@ describe('RateLimitingController', () => {
         {
           provide: EnhancedRateLimiterService,
           useValue: mockRateLimiterService,
+        },
+        {
+          provide: ExternalThreatIntelligenceService,
+          useValue: mockExternalThreatIntelligenceService,
         },
         {
           provide: 'Reflector',

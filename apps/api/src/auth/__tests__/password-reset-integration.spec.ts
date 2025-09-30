@@ -18,6 +18,11 @@ import { Password } from '../../domain/value-objects/password';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { randomUUID } from 'crypto';
+import { EnhancedRateLimiterService } from '../../common/rate-limiting/enhanced-rate-limiter.service';
+import { MetricsService } from '../../monitoring/metrics.service';
+import { Reflector } from '@nestjs/core';
+import { AbilitiesGuard } from '../../authorization/abilities.guard';
+import { JwtAuthGuard } from '../../presentation/guards/jwt-auth.guard';
 
 /**
  * Integration Tests for Password Reset Flow
@@ -125,6 +130,29 @@ describe('Password Reset Integration', () => {
             blacklistAllUserTokens: jest.fn().mockResolvedValue(undefined),
             cleanupExpiredEntries: jest.fn().mockResolvedValue(0),
           },
+        },
+        {
+          provide: EnhancedRateLimiterService,
+          useValue: {
+            checkRateLimit: jest.fn().mockResolvedValue({ allowed: true }),
+          },
+        },
+        {
+          provide: MetricsService,
+          useValue: {
+            incrementCounter: jest.fn(),
+            recordHistogram: jest.fn(),
+            recordApiRequest: jest.fn(),
+          },
+        },
+        Reflector,
+        {
+          provide: AbilitiesGuard,
+          useValue: { canActivate: jest.fn(() => true) },
+        },
+        {
+          provide: JwtAuthGuard,
+          useValue: { canActivate: jest.fn(() => true) },
         },
       ],
     }).compile();
